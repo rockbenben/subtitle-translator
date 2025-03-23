@@ -12,7 +12,7 @@
 
 Compared to traditional subtitle translation tools, Subtitle Translator excels with its **batch processing, high-speed translation, translation caching, and automatic format adaptation**, significantly improving workflow efficiency. It is ideal for use in film and TV, education, and content creation.  
 
-👉 **Try it online**: <https://tools.newzone.top/zh/subtitle-translator>  
+👉 **Try it online**: <https://tools.newzone.top/en/subtitle-translator>  
 
 ## Key Features
 
