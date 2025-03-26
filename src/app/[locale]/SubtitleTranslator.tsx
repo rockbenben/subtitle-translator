@@ -383,7 +383,12 @@ const SubtitleTranslator = () => {
           <Space.Compact>
             <Select showSearch value={translationMethod} onChange={(e) => setTranslationMethod(e)} options={categorizedOptions} style={{ minWidth: 150 }} />
             {config?.apiKey !== undefined && translationMethod !== "llm" && (
-              <Input.Password placeholder={`${t("enter")} ${translationMethod} API Key`} value={config.apiKey} onChange={(e) => handleConfigChange(translationMethod, "apiKey", e.target.value)} />
+              <Input.Password
+                autoComplete="off"
+                placeholder={`${t("enter")} ${translationMethod} API Key`}
+                value={config.apiKey}
+                onChange={(e) => handleConfigChange(translationMethod, "apiKey", e.target.value)}
+              />
             )}
           </Space.Compact>
         </Form.Item>

@@ -61,7 +61,12 @@ const TranslationSettings = () => {
 
             {config?.apiKey !== undefined && (
               <Form.Item label={`${currentService?.label} API Key`} required={service !== "llm"}>
-                <Input.Password placeholder={`${tCommon("enter")} ${currentService?.label} API Key`} value={config.apiKey} onChange={(e) => handleConfigChange(service, "apiKey", e.target.value)} />
+                <Input.Password
+                  autoComplete="off"
+                  placeholder={`${tCommon("enter")} ${currentService?.label} API Key`}
+                  value={config.apiKey}
+                  onChange={(e) => handleConfigChange(service, "apiKey", e.target.value)}
+                />
               </Form.Item>
             )}
 
