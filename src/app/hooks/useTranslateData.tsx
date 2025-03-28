@@ -252,7 +252,7 @@ const useTranslateData = () => {
         ...config,
       };
 
-      const cacheSuffix = await generateCacheSuffix(sourceLanguage, targetLanguage, translationMethod, { model: config?.model, temperature: config?.temperature, sysPrompt, userPrompt });
+      const cacheSuffix = await generateCacheSuffix(sourceLanguage, currentTargetLang, translationMethod, { model: config?.model, temperature: config?.temperature, sysPrompt, userPrompt });
 
       if (config?.chunkSize === undefined) {
         // 按行并发翻译，每一行翻译出错时通过 p-retry 进行重试
