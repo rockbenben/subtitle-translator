@@ -335,7 +335,7 @@ const SubtitleTranslator = () => {
   };
 
   const handleExtractText = () => {
-    if (!sourceText) {
+    if (!sourceText.trim()) {
       messageApi.error(tSubtitle("noSourceText"));
       return;
     }
@@ -523,7 +523,7 @@ const SubtitleTranslator = () => {
         <Modal title={t("translating")} open={translateInProgress} footer={null} closable={false}>
           <div className="text-center">
             <Progress type="circle" percent={Math.round(progressPercent * 100) / 100} />
-            {multiLanguageMode && target_langs.length > 0 && <p className="mt-4">{`${t("multiTranslating")} {target_langs.length}`}</p>}
+            {multiLanguageMode && target_langs.length > 0 && <p className="mt-4">{`${t("multiTranslating")} ${target_langs.length}`}</p>}
           </div>
         </Modal>
       )}

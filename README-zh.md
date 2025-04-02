@@ -106,3 +106,32 @@ Subtitle Translator 允许 **将同一个字幕文件翻译成多种语言**，�
 - DeepL API 不支持在网页上使用，所以 Subtitle Translator 在服务器端提供了一个专门的 DeepL 翻译转发接口，该接口仅用于数据转发，不会收集任何用户数据。用户可以选择在本地环境中部署并使用这一接口。
 - Subtitle Translator 不会储存你的 API Key，所有数据均缓存在本地浏览器中。
 - GTX Web 接口对服务器压力过大，改为仅在本地运行。另外，避免在全局代理环境下使用 GTX Web 接口，以免出现翻译错误。
+
+## 项目部署
+
+Subtitle Translator 可部署到 CloudFlare、Vercel 或任意服务器。
+
+System Requirements:
+
+- [Node.js 18.18](https://nodejs.org/) or later.
+- macOS, Windows (including WSL), and Linux are supported.
+
+```shell
+# Installation（安装依赖）
+yarn
+
+# Local Development (本地开发)
+yarn dev
+
+# build and start (构建并启动)
+yarn build && yarn start
+
+# Deploy for a single language（单一语言部署）
+yarn build:lang en
+yarn build:lang zh
+yarn build:lang zh-hant
+```
+
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+You can start editing the page by modifying `src/app/[locale]/page.tsx`. The page auto-updates as you edit the file.

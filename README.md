@@ -114,3 +114,32 @@ When using Subtitle Translator, keep in mind:
 ✅ **AI-powered translation refinement**  
 
 Subtitle Translator will continue to evolve based on user feedback. If you find this tool helpful, feel free to contribute or suggest improvements! 🚀
+
+## Deployment  
+
+Subtitle Translator can be deployed on Cloudflare, Vercel, or any server.
+
+System Requirements:
+
+- [Node.js 18.18](https://nodejs.org/) or later.
+- macOS, Windows (including WSL), and Linux are supported.
+
+```shell
+# Installation
+yarn
+
+# Local Development
+yarn dev
+
+# build and start
+yarn build && yarn start
+
+# Deploy for a single language
+yarn build:lang en
+yarn build:lang zh
+yarn build:lang zh-hant
+```
+
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+You can start editing the page by modifying `src/app/[locale]/page.tsx`. The page auto-updates as you edit the file.

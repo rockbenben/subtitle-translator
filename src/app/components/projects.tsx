@@ -217,7 +217,7 @@ export const AppMenu = () => {
   const menuItems = [
     {
       label: <Link href={`/${locale}`}>{t("tools.subtitleTranslator.title")}</Link>,
-      key: "home",
+      key: "subtitle-translator",
     },
     {
       label: t("navigation.translate"),
