@@ -31,7 +31,7 @@ try {
   // 辅助函数：更新文件中的 redirect 调用
   const updateRedirect = (filePath) => {
     let content = fs.readFileSync(filePath, "utf8");
-    content = content.replace(/redirect\("\/en"\)/g, `redirect("/${lang}")`);
+    content = content.replace(/redirect\(".*?"\)/g, `redirect("/${lang}")`);
     fs.writeFileSync(filePath, content, "utf8");
   };
 
@@ -42,7 +42,7 @@ try {
   // 修改 Navigation 文件：隐藏语言切换栏
   let navigationContent = backup.navigation;
   // 根据实际情况调整正则表达式以匹配语言切换栏代码块
-  navigationContent = navigationContent.replace(/\{!HIDE_LANGUAGE_SWITCH_PAGES\.includes\(pathname\)\s*&&\s*\([\s\S]*?<Dropdown\s+menu=\{\{[\s\S]*?<\/Dropdown>\s*\)\s*\}/g, "");
+  navigationContent = navigationContent.replace(/<Dropdown\s+menu=\{\{[\s\S]*?<\/Dropdown>/g, "");
   fs.writeFileSync(navigationPath, navigationContent, "utf8");
 
   console.log(`Temp update done (临时更新完成): using language "${lang}" and hide language switch bar (使用语言 "${lang}" 并隐藏语言切换栏)`);

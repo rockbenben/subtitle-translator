@@ -26,9 +26,6 @@ const LANGUAGES = [
   { key: "ar", label: "العربية" },
   { key: "bn", label: "বাংলা" },
 ] as const;
-
-const HIDE_LANGUAGE_SWITCH_PAGES = ["/zh/aishort-translate", "/zh/chinese-conversion", "/zh/regex-matcher", "/zh/text-processor"];
-
 const SOCIAL_LINKS = {
   github: "https://github.com/rockbenben/subtitle-translator",
   discord: "https://discord.gg/PZTQfJ4GjX",
@@ -122,13 +119,11 @@ export function Navigation() {
           />
 
           <Space size={token.marginSM}>
-            {!HIDE_LANGUAGE_SWITCH_PAGES.includes(pathname) && (
               <Dropdown menu={{ items: languageItems }} placement="bottomRight">
                 <Button type="text" icon={<GlobalOutlined />}>
                   {LANGUAGES.find((l) => l.key === locale)?.label || "English"}
                 </Button>
               </Dropdown>
-            )}
 
             <Space size={token.marginXS}>
               {isChineseLocale && (
