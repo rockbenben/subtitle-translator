@@ -60,7 +60,10 @@
     "textProcessed": "Texte traité avec succès",
     "updateCount": "Nombre total d'entrées mises à jour",
     "startProcess": "Démarrer le traitement",
-    "result": "Résultat"
+    "result": "Résultat",
+    "hideResultsTooltip": "Cocher cette option masque l'aperçu des résultats pour éviter que la page ne charge de grandes quantités de données et ne provoque un décalage de la page.",
+    "hideResults": "Masquer l'aperçu des résultats",
+    "multiValueHint": "S'il y a plusieurs valeurs, séparez-les par des espaces."
   },
   "json": {
     "title": "Traduction JSON Multilingue - Assistant pour Développeurs en i18n Internationalisation & Localisation | JSONTranslate",
@@ -144,7 +147,7 @@
     "description": "Un outil efficace pour segmenter de longs textes par nombre de caractères ou par phrases complètes. Idéal pour gérer les limites de tokens pour DeepSeek, ChatGPT et d'autres modèles d'IA, ainsi que pour l'édition de documents et l'optimisation de contenus sur les réseaux sociaux. Prend en charge la segmentation automatique et l'export en masse, améliorant ainsi la gestion et l'efficacité du traitement de texte.",
     "keywords": "text splitter, segmentation de texte long, traitement de texte, découpage par caractères, limite de caractères ChatGPT, traitement de texte IA, séparation de phrases, outil TXT, segmentation d'article, export en masse, gestion des tokens LLM, optimisation de texte",
     "clientTitle": "Outil de Segmentation de Texte",
-    "clientDescription": "Cet outil segmente automatiquement de longs textes en plusieurs parties, en prenant en charge à la fois le découpage par nombre de caractères et par phrases complètes. Idéal pour les entrées destinées à ChatGPT ou autres modèles d'IA, pour l'édition de documents et bien plus. Il permet également l'export en masse, facilitant ainsi la gestion et le traitement des textes. Pour les textes non encodés en UTF-8 (par exemple en français), veuillez importer via un fichier ; le système détectera automatiquement l'encodage pour éviter les problèmes d'affichage.",
+    "clientDescription": "Cet outil segmente automatiquement de longs textes en plusieurs parties, en prenant en charge à la fois le découpage par nombre de caractères et par phrases complètes. Idéal pour les entrées destinées à ChatGPT ou autres modèles d'IA, pour l'édition de documents et bien plus. Il permet également l'export en masse, facilitant ainsi la gestion et le traitement des textes. Pour les textes non encodés en UTF-8 (par exemple en français), veuillez importer via un fichier ; le système détectera automatiquement l'encodage pour éviter les problèmes d'affichage. L'ordre de priorité de division est le suivant : symboles personnalisés → fin de phrase → limite de nombre de caractères.",
     "textSplit": "Le texte a été découpé avec succès",
     "noExportableText": "Aucun texte exportable détecté. Veuillez vérifier votre saisie et réessayer.",
     "exportedMergedText": "Le texte fusionné a été exporté.",
@@ -153,7 +156,9 @@
     "splitCharacterCount": "Nombre de caractères pour le découpage",
     "exportFileName": "Nom du fichier exporté",
     "setExportFileName": "Définissez le nom du fichier exporté ; si laissé vide, le nom du fichier original ou un nom par défaut sera utilisé",
-    "splitBySentence": "Préférer découper par phrases complètes (。！？)",
+    "splitByCustomSymbol": "Division de symboles personnalisée",
+    "customSplitSymbol": "Symboles de division personnalisés",
+    "splitBySentence": "Je préfère diviser par phrases complètes (.!?)",
     "splitText": "Découper le texte",
     "segment": "Segment",
     "mergeText": "Fusionner tous les textes découpés, séparés par deux sauts de ligne",
@@ -329,18 +334,6 @@
       "title": "Outil de Segmentation de Texte",
       "description": "Découpez de longs textes en segments selon des règles spécifiques."
     },
-    "chineseConversion": {
-      "title": "Conversion Chinoise",
-      "description": "Convertissez entre le chinois simplifié, le chinois traditionnel (Taïwan), le chinois traditionnel (Hong Kong) et les nouveaux caractères japonais."
-    },
-    "regexMatcher": {
-      "title": "Assistant de Texte",
-      "description": "Outil intégré pour la correspondance regex, le tri, le filtrage et le traitement en masse de texte."
-    },
-    "textProcessor": {
-      "title": "Processeur Multi-Règles",
-      "description": "Un outil personnalisé pour traiter le texte selon diverses règles définies par l'utilisateur."
-    },
     "jsonValueExtractor": {
       "title": "Extracteur de Valeurs JSON",
       "description": "Extrayez en masse les valeurs des clés spécifiées à partir de données JSON."
@@ -376,10 +369,6 @@
     "dataParserImgPrompt": {
       "title": "Convertisseur IMGPrompt",
       "description": "Générez en masse des données JSON pour IMGPrompt."
-    },
-    "aishortTranslate": {
-      "title": "Traducteur AIShort",
-      "description": "Traduction en un clic pour ChatGPT Shortcut dans 13 langues."
     }
   },
   "navigation": {
@@ -391,10 +380,10 @@
     "otherTools": "Autres Outils"
   },
   "Metadata": {
-    "title": "Ensemble d'Outils AI - Traduction Multilingue, Traitement de Texte & Édition JSON | Essentiel pour un Développement & un Travail de Bureau Efficaces",
+    "title": "Tools By AI - Traduction Multilingue, Traitement de Texte & Édition JSON | Essentiel pour un Développement & un Travail de Bureau Efficaces",
     "description": "Découvrez un ensemble d'outils pilotés par l'IA regroupant la traduction de sous-titres, la traduction JSON i18n, la traduction de fichiers Markdown, la segmentation de texte, la conversion chinoise, la correspondance regex, l'extraction de valeurs JSON, l'édition de nœuds, le remplacement de clés, la correspondance et mise à jour de données, le parsing de signets, et la conversion de données. Parfait pour les développeurs et créateurs gérant des tâches de traduction multilingue et de traitement de texte.",
-    "keywords": "Outils IA, traduction multilingue, traitement de texte, traduction de sous-titres, édition JSON, traduction Markdown, segmentation de texte, conversion chinoise, correspondance regex, extraction de valeurs JSON, édition de nœuds, remplacement de clés, correspondance mise à jour, parsing de signets, conversion de données",
-    "homeTitle": "Ensemble d'Outils AI",
+    "keywords": "traduction multilingue, traitement de texte, traduction de sous-titres, édition JSON, traduction Markdown, segmentation de texte, conversion chinoise, correspondance regex, extraction de valeurs JSON, édition de nœuds, remplacement de clés, correspondance mise à jour, parsing de signets, conversion de données",
+    "homeTitle": "Tools By AI",
     "homeDescription": "Un ensemble d'outils AI regroupant traduction multilingue, traitement de texte, édition JSON et bien plus pour aider les développeurs et créateurs à gérer efficacement leurs tâches de traduction et de traitement de texte."
   },
   "languages": {

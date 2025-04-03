@@ -60,7 +60,10 @@
     "textProcessed": "Testo elaborato con successo",
     "updateCount": "Totale voci aggiornate",
     "startProcess": "Avvia Elaborazione",
-    "result": "Risultato"
+    "result": "Risultato",
+    "hideResultsTooltip": "Selezionando questa opzione si nasconde l'anteprima dei risultati per evitare che la pagina carichi grandi quantità di dati, rallentandola.",
+    "hideResults": "Nascondi anteprima risultati",
+    "multiValueHint": "Se sono presenti più valori, separarli con spazi."
   },
   "json": {
     "title": "Traduzione Multilingue di JSON - Assistente per Internazionalizzazione & Localizzazione i18n | JSONTranslate",
@@ -144,7 +147,7 @@
     "description": "Uno strumento efficiente per dividere testi lunghi in segmenti, basato sul numero di caratteri o frasi complete. Ideale per gestire i limiti di token per DeepSeek, ChatGPT e altri LLM, nonché per l'editing di documenti e l'ottimizzazione dei contenuti sui social media. Supporta la segmentazione automatica e l'esportazione in blocco, migliorando la gestione e l'efficienza di copia del testo.",
     "keywords": "text splitter, segmentazione testi lunghi, elaborazione testi, divisione per caratteri, limite caratteri ChatGPT, elaborazione testi AI, divisione per frasi, text splitter TXT, segmentazione articoli, esportazione in blocco, gestione token LLM, ottimizzazione testi",
     "clientTitle": "Text Splitter",
-    "clientDescription": "Text Splitter divide automaticamente testi lunghi in segmenti, supportando sia la conta dei caratteri che la divisione per frasi complete, ideale per input a ChatGPT, modelli AI, editing di documenti e altro ancora. Supporta anche l'esportazione in blocco, migliorando la gestione e l'efficienza dell'elaborazione del testo. Per testi non UTF-8 (come il francese), importa tramite caricamento file; il sistema rileverà automaticamente la codifica per evitare testo illeggibile.",
+    "clientDescription": "Text Splitter divide automaticamente testi lunghi in segmenti, supportando sia la conta dei caratteri che la divisione per frasi complete, ideale per input a ChatGPT, modelli AI, editing di documenti e altro ancora. Supporta anche l'esportazione in blocco, migliorando la gestione e l'efficienza dell'elaborazione del testo. Per testi non UTF-8 (come il francese), importa tramite caricamento file; il sistema rileverà automaticamente la codifica per evitare testo illeggibile. L'ordine di priorità suddiviso è: simboli personalizzati → fine frase → limite conteggio caratteri.",
     "textSplit": "Il testo è stato diviso con successo",
     "noExportableText": "Nessun testo esportabile rilevato. Verifica l'input e riprova.",
     "exportedMergedText": "Il testo diviso unito è stato esportato.",
@@ -153,7 +156,9 @@
     "splitCharacterCount": "Conteggio Caratteri Divisi",
     "exportFileName": "Nome del File Esportato",
     "setExportFileName": "Imposta il nome del file esportato; se lasciato vuoto, verrà usato il nome originale o un nome predefinito",
-    "splitBySentence": "Preferisci dividere per frasi complete in cinese (。！？)",
+    "splitByCustomSymbol": "Divisione simboli personalizzata",
+    "customSplitSymbol": "Simboli di divisione personalizzati",
+    "splitBySentence": "Preferisco dividere in frasi complete (.!?)",
     "splitText": "Dividi Testo",
     "segment": "Segmento",
     "mergeText": "Unisci tutti i testi divisi, separati da due interruzioni di linea",
@@ -329,18 +334,6 @@
       "title": "Text Splitter",
       "description": "Dividi testi lunghi in segmenti basati su regole specifiche"
     },
-    "chineseConversion": {
-      "title": "Conversione Cinese",
-      "description": "Converti tra Cinese Semplificato, Cinese Tradizionale (Taiwan), Cinese Tradizionale (Hong Kong) e Nuovi Caratteri Giapponesi"
-    },
-    "regexMatcher": {
-      "title": "Assistente Testuale",
-      "description": "Strumento integrato per abbinamento regex, ordinamento, filtraggio e elaborazione batch di testo"
-    },
-    "textProcessor": {
-      "title": "Processore Multi-Regola",
-      "description": "Uno strumento personalizzato per gestire testi con varie regole di elaborazione definite dall'utente"
-    },
     "jsonValueExtractor": {
       "title": "Estrattore di Valori JSON",
       "description": "Estrai i valori delle chiavi specificate dai dati JSON in blocco"
@@ -376,10 +369,6 @@
     "dataParserImgPrompt": {
       "title": "Convertitore IMGPrompt",
       "description": "Genera in blocco dati JSON per IMGPrompt"
-    },
-    "aishortTranslate": {
-      "title": "Translator AIShort",
-      "description": "Traduzione con un clic per ChatGPT Shortcut in 13 lingue"
     }
   },
   "navigation": {
@@ -391,10 +380,10 @@
     "otherTools": "Altri Strumenti"
   },
   "Metadata": {
-    "title": "Suite di Strumenti AI - Traduzione Multilingue, Elaborazione Testi & Editing JSON | Essenziale per uno Sviluppo ed Lavoro d'Ufficio Efficiente",
+    "title": "Tools By AI - Traduzione Multilingue, Elaborazione Testi & Editing JSON | Essenziale per uno Sviluppo ed Lavoro d'Ufficio Efficiente",
     "description": "Scopri una suite di strumenti AI tutto-in-uno che include traduzione di sottotitoli, traduzione JSON i18n, traduzione di testi Markdown, divisione di testi, conversione cinese, abbinamento regex, estrazione di valori JSON, editing di nodi, sostituzione chiavi, abbinamento e aggiornamento dei dati, parsing dei segnalibri e conversione dei dati. Perfetta per sviluppatori e creatori che gestiscono compiti di traduzione multilingue ed elaborazione testi.",
-    "keywords": "Strumenti AI, Traduzione Multilingue, Elaborazione Testi, Traduzione Sottotitoli, Editing JSON, Traduzione Markdown, Divisione Testi, Conversione Cinese, Abbinamento Regex, Estrazione Valori JSON, Editing Nodi, Sostituzione Chiavi, Abbinamento e Aggiornamento Dati, Parsing Segnalibri, Conversione Dati",
-    "homeTitle": "Suite di Strumenti AI",
+    "keywords": "Traduzione Multilingue, Elaborazione Testi, Traduzione Sottotitoli, Editing JSON, Traduzione Markdown, Divisione Testi, Conversione Cinese, Abbinamento Regex, Estrazione Valori JSON, Editing Nodi, Sostituzione Chiavi, Abbinamento e Aggiornamento Dati, Parsing Segnalibri, Conversione Dati",
+    "homeTitle": "Tools By AI",
     "homeDescription": "Una suite di strumenti AI che include traduzione multilingue, elaborazione testi, editing JSON e altro per aiutare sviluppatori e creatori a gestire efficacemente compiti di traduzione multilingue ed elaborazione testi."
   },
   "languages": {

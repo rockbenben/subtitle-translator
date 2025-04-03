@@ -60,7 +60,10 @@
     "textProcessed": "Text erfolgreich verarbeitet",
     "updateCount": "Insgesamt aktualisierte Einträge",
     "startProcess": "Verarbeitung starten",
-    "result": "Ergebnis"
+    "result": "Ergebnis",
+    "hideResultsTooltip": "Wenn Sie diese Option aktivieren, wird die Ergebnisvorschau ausgeblendet, um zu verhindern, dass die Seite große Datenmengen lädt und dadurch Verzögerungen auftreten.",
+    "hideResults": "Ergebnisvorschau ausblenden",
+    "multiValueHint": "Wenn mehr als ein Wert vorhanden ist, trennen Sie diese durch Leerzeichen."
   },
   "json": {
     "title": "Mehrsprachige JSON-Übersetzung - i18n Internationalisierung & Lokalisierung Entwicklerassistent | JSONTranslate",
@@ -144,7 +147,7 @@
     "description": "Ein effizientes Tool zum Aufteilen langer Texte nach Zeichenanzahl oder vollständigen Sätzen. Ideal zur Verwaltung von Token-Grenzen für DeepSeek, ChatGPT und andere KI-LLMs sowie für Dokumentbearbeitung und die Optimierung von Social-Media-Inhalten. Unterstützt automatische Segmentierung und Massenexport, wodurch die Textverwaltung und Kopiereffizienz verbessert werden.",
     "keywords": "Text Splitter, Segmentierung langer Texte, Textverarbeitung, Aufteilen nach Zeichen, ChatGPT-Zeichengrenze, KI-Textverarbeitung, Satztrennung, TXT-Text-Splitter, Artikel-Segmentierung, Massenexport von Texten, LLM-Token-Management, Textoptimierung",
     "clientTitle": "Text Splitter",
-    "clientDescription": "Der Text Splitter teilt lange Texte automatisch in Segmente auf, unterstützt sowohl die Aufteilung nach Zeichenanzahl als auch nach vollständigen Sätzen – ideal für ChatGPT, KI-Modelle, Dokumentbearbeitung und mehr. Er unterstützt auch den Massenexport, was die Textverwaltung und -verarbeitung verbessert. Für Nicht-UTF-8-Texte (z.B. Französisch) bitte per Datei-Upload importieren; das System erkennt automatisch die Kodierung, um Zeichensalat zu vermeiden.",
+    "clientDescription": "Der Text Splitter teilt lange Texte automatisch in Segmente auf, unterstützt sowohl die Aufteilung nach Zeichenanzahl als auch nach vollständigen Sätzen – ideal für ChatGPT, KI-Modelle, Dokumentbearbeitung und mehr. Er unterstützt auch den Massenexport, was die Textverwaltung und -verarbeitung verbessert. Für Nicht-UTF-8-Texte (z.B. Französisch) bitte per Datei-Upload importieren; das System erkennt automatisch die Kodierung, um Zeichensalat zu vermeiden. Die Reihenfolge der Aufteilung ist: benutzerdefinierte Symbole → Satzende → Zeichenanzahlbegrenzung.",
     "textSplit": "Text wurde erfolgreich aufgeteilt",
     "noExportableText": "Kein exportierbarer Text erkannt. Bitte überprüfen Sie Ihre Eingabe und versuchen Sie es erneut.",
     "exportedMergedText": "Der zusammengeführte geteilte Text wurde exportiert.",
@@ -153,7 +156,9 @@
     "splitCharacterCount": "Zeichenanzahl der Aufteilung",
     "exportFileName": "Exportdateiname",
     "setExportFileName": "Legen Sie den Exportdateinamen fest; bleibt das Feld leer, wird der Originaldateiname oder ein Standardname verwendet",
-    "splitBySentence": "Bevorzugen Sie die Aufteilung nach vollständigen Sätzen (z. B. 。！？)",
+    "splitByCustomSymbol": "Benutzerdefinierte Symbolaufteilung",
+    "customSplitSymbol": "Benutzerdefinierte Split-Symbole",
+    "splitBySentence": "Bevorzuge Aufteilung nach vollständigen Sätzen (.!?)",
     "splitText": "Text aufteilen",
     "segment": "Segment",
     "mergeText": "Alle aufgeteilten Texte zusammenführen, getrennt durch zwei Zeilenumbrüche",
@@ -329,18 +334,6 @@
       "title": "Text Splitter",
       "description": "Teilen Sie lange Texte in Segmente basierend auf spezifischen Regeln auf"
     },
-    "chineseConversion": {
-      "title": "Chinesische Konvertierung",
-      "description": "Konvertieren Sie zwischen vereinfachtem Chinesisch, traditionellem Chinesisch (Taiwan), traditionellem Chinesisch (Hongkong) und neuen japanischen Schriftzeichen"
-    },
-    "regexMatcher": {
-      "title": "Text-Assistent",
-      "description": "Integriertes Tool für Regex-Abgleiche, Sortierung, Filterung und Batch-Textverarbeitung"
-    },
-    "textProcessor": {
-      "title": "Mehrfach-Regelprozessor",
-      "description": "Ein benutzerdefiniertes Tool zur Verarbeitung von Texten mit verschiedenen benutzerdefinierten Regeln"
-    },
     "jsonValueExtractor": {
       "title": "JSON-Werte-Extraktor",
       "description": "Extrahieren Sie in Batches die Werte der angegebenen Schlüssel aus JSON-Daten"
@@ -376,10 +369,6 @@
     "dataParserImgPrompt": {
       "title": "IMGPrompt-Konverter",
       "description": "Erzeugen Sie in Batches JSON-Daten für IMGPrompt"
-    },
-    "aishortTranslate": {
-      "title": "AIShort-Übersetzer",
-      "description": "Ein-Klick-Übersetzung für ChatGPT Shortcut in 13 Sprachen"
     }
   },
   "navigation": {
@@ -391,10 +380,10 @@
     "otherTools": "Weitere Tools"
   },
   "Metadata": {
-    "title": "AI-Toolset - Mehrsprachige Übersetzung, Textverarbeitung & JSON-Bearbeitung | Unverzichtbar für effiziente Entwicklung & Büroarbeit",
+    "title": "Tools By AI Toolset - Mehrsprachige Übersetzung, Textverarbeitung & JSON-Bearbeitung | Unverzichtbar für effiziente Entwicklung & Büroarbeit",
     "description": "Entdecken Sie ein All-in-One AI-Toolset mit Funktionen wie Untertitelübersetzung, i18n JSON-Übersetzung, Markdown-Textübersetzung, Textaufteilung, chinesischer Konvertierung, Regex-Abgleich, JSON-Werteextraktion, Knotenbearbeitung, Schlüsselersetzung, Datenabgleich & Aktualisierung, Lesezeichenparsing und Datenkonvertierung. Perfekt für Entwickler und Content-Ersteller, die mehrsprachige Übersetzungs- und Textverarbeitungsaufgaben bewältigen müssen.",
-    "keywords": "AI-Tools, Mehrsprachige Übersetzung, Textverarbeitung, Untertitelübersetzung, JSON-Bearbeitung, Markdown-Übersetzung, Textaufteilung, Chinesische Konvertierung, Regex-Abgleich, JSON-Werteextraktion, Knotenbearbeitung, Schlüsselersetzung, Datenabgleich & Aktualisierung, Lesezeichenparsing, Datenkonvertierung",
-    "homeTitle": "AI-Toolset",
+    "keywords": "Mehrsprachige Übersetzung, Textverarbeitung, Untertitelübersetzung, JSON-Bearbeitung, Markdown-Übersetzung, Textaufteilung, Chinesische Konvertierung, Regex-Abgleich, JSON-Werteextraktion, Knotenbearbeitung, Schlüsselersetzung, Datenabgleich & Aktualisierung, Lesezeichenparsing, Datenkonvertierung",
+    "homeTitle": "Tools By AI Toolset",
     "homeDescription": "Ein AI-Toolset mit mehrsprachiger Übersetzung, Textverarbeitung, JSON-Bearbeitung und mehr, das Entwicklern und Content-Erstellern hilft, mehrsprachige Übersetzungs- und Textverarbeitungsaufgaben effizient zu bewältigen."
   },
   "languages": {

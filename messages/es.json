@@ -60,7 +60,10 @@
     "textProcessed": "Texto procesado exitosamente",
     "updateCount": "Total de entradas actualizadas",
     "startProcess": "Iniciar Procesamiento",
-    "result": "Resultado"
+    "result": "Resultado",
+    "hideResultsTooltip": "Al marcar esta opción se oculta la vista previa de los resultados para evitar que la página cargue grandes cantidades de datos y provoque retrasos.",
+    "hideResults": "Ocultar la vista previa de los resultados",
+    "multiValueHint": "Si hay más de un valor, sepárelos con espacios."
   },
   "json": {
     "title": "Traducción Multilingüe de JSON - Asistente para Internacionalización y Localización i18n | JSONTranslate",
@@ -144,7 +147,7 @@
     "description": "Una herramienta eficiente que divide textos largos en segmentos según el número de caracteres o por oraciones completas. Ideal para gestionar límites de tokens en DeepSeek, ChatGPT y otros modelos AI, así como para la edición de documentos y la optimización de contenidos para redes sociales. Soporta segmentación automática y exportación en bloque, mejorando la gestión y eficiencia del copiado de textos.",
     "keywords": "divisor de texto, segmentación de texto largo, procesamiento de texto, división por caracteres, límite de caracteres ChatGPT, procesamiento de textos AI, división por oraciones, divisor de TXT, segmentación de artículos, exportación en bloque, gestión de tokens LLM, optimización de texto",
     "clientTitle": "Divisor de Texto",
-    "clientDescription": "El divisor de texto divide automáticamente textos largos en segmentos, soportando tanto el recuento de caracteres como la división por oraciones completas, ideal para entradas en ChatGPT, modelos AI, edición de documentos y más. También soporta la exportación en bloque, mejorando la eficiencia en la gestión y procesamiento de textos. Para textos no codificados en UTF-8 (por ejemplo, francés), impórtelos mediante subida de archivos; el sistema detectará automáticamente la codificación para evitar textos ilegibles.",
+    "clientDescription": "El divisor de texto divide automáticamente textos largos en segmentos, soportando tanto el recuento de caracteres como la división por oraciones completas, ideal para entradas en ChatGPT, modelos AI, edición de documentos y más. También soporta la exportación en bloque, mejorando la eficiencia en la gestión y procesamiento de textos. Para textos no codificados en UTF-8 (por ejemplo, francés), impórtelos mediante subida de archivos; el sistema detectará automáticamente la codificación para evitar textos ilegibles. El orden de prioridad dividida es: símbolos personalizados → final de la oración → límite de número de caracteres.",
     "textSplit": "El texto se ha dividido exitosamente",
     "noExportableText": "No se detectó texto exportable. Por favor, verifique su entrada e intente de nuevo.",
     "exportedMergedText": "Se ha exportado el texto dividido fusionado.",
@@ -153,7 +156,9 @@
     "splitCharacterCount": "Cantidad de Caracteres Divididos",
     "exportFileName": "Nombre del Archivo de Exportación",
     "setExportFileName": "Configure el nombre del archivo de exportación; si se deja en blanco, se usará el nombre del archivo original o uno predeterminado",
-    "splitBySentence": "Preferir dividir por oraciones completas en chino (。！？)",
+    "splitByCustomSymbol": "División de símbolos personalizada",
+    "customSplitSymbol": "Símbolos de división personalizados",
+    "splitBySentence": "Prefiero dividir por oraciones completas (.!?)",
     "splitText": "Dividir Texto",
     "segment": "Segmento",
     "mergeText": "Fusionar todos los textos divididos, separados por dos saltos de línea",
@@ -329,18 +334,6 @@
       "title": "Divisor de Texto",
       "description": "Divide textos largos en segmentos según reglas específicas."
     },
-    "chineseConversion": {
-      "title": "Conversión de Chino",
-      "description": "Convierta entre chino simplificado, chino tradicional (Taiwán), chino tradicional (Hong Kong) y japonés (nuevos caracteres)."
-    },
-    "regexMatcher": {
-      "title": "Asistente de Texto",
-      "description": "Herramienta integrada para coincidencia con expresiones regulares, ordenación, filtrado y procesamiento masivo de textos."
-    },
-    "textProcessor": {
-      "title": "Procesador Multi-Reglas",
-      "description": "Herramienta personalizada para el manejo de textos con diversas reglas de procesamiento definidas por el usuario."
-    },
     "jsonValueExtractor": {
       "title": "Extractor de Valores de JSON",
       "description": "Extrae en bloque los valores de claves especificadas de datos JSON."
@@ -376,10 +369,6 @@
     "dataParserImgPrompt": {
       "title": "Conversor IMGPrompt",
       "description": "Genere datos JSON en bloque para IMGPrompt."
-    },
-    "aishortTranslate": {
-      "title": "Traductor AIShort",
-      "description": "Traducción con un clic para ChatGPT Shortcut a 13 idiomas."
     }
   },
   "navigation": {
@@ -391,10 +380,10 @@
     "otherTools": "Otras Herramientas"
   },
   "Metadata": {
-    "title": "Conjunto de Herramientas AI - Traducción Multilingüe, Procesamiento de Texto y Edición de JSON | Esencial para el Desarrollo Eficiente y el Trabajo de Oficina",
+    "title": "Tools By AI - Traducción Multilingüe, Procesamiento de Texto y Edición de JSON | Esencial para el Desarrollo Eficiente y el Trabajo de Oficina",
     "description": "Descubra un conjunto de herramientas AI todo en uno que incluye traducción de subtítulos, traducción JSON i18n, traducción de archivos Markdown, división de textos, conversión de chino, coincidencia con expresiones regulares, extracción de valores JSON, edición de nodos, reemplazo de claves, actualización de datos, análisis de marcadores y conversión de datos. Perfecto para desarrolladores y creadores que manejan tareas de traducción multilingüe y procesamiento de textos.",
-    "keywords": "Herramientas AI, Traducción Multilingüe, Procesamiento de Texto, Traducción de Subtítulos, Edición de JSON, Traducción Markdown, División de Texto, Conversión de Chino, Coincidencia con Regex, Extracción de Valores JSON, Edición de Nodos, Reemplazo de Claves, Actualización de Datos, Análisis de Marcadores, Conversión de Datos",
-    "homeTitle": "Conjunto de Herramientas AI",
+    "keywords": "Traducción Multilingüe, Procesamiento de Texto, Traducción de Subtítulos, Edición de JSON, Traducción Markdown, División de Texto, Conversión de Chino, Coincidencia con Regex, Extracción de Valores JSON, Edición de Nodos, Reemplazo de Claves, Actualización de Datos, Análisis de Marcadores, Conversión de Datos",
+    "homeTitle": "Tools By AI",
     "homeDescription": "Un conjunto de herramientas AI que incluye traducción multilingüe, procesamiento de texto, edición de JSON y más, para ayudar a desarrolladores y creadores a gestionar de forma eficiente tareas de traducción multilingüe y procesamiento de textos."
   },
   "languages": {

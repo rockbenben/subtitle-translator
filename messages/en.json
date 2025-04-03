@@ -60,7 +60,10 @@
     "textProcessed": "Text processed successfully",
     "updateCount": "Total entries updated",
     "startProcess": "Start Processing",
-    "result": "Result"
+    "result": "Result",
+    "hideResultsTooltip": "Hides the results preview to prevent the page from loading large amounts of data and causing the page to lag.",
+    "hideResults": "Hide results preview",
+    "multiValueHint": "If there is more than one value, separate them by spaces."
   },
   "json": {
     "title": "Multilingual JSON Translation - i18n Internationalization & Localization Developer Assistant | JSONTranslate",
@@ -144,7 +147,7 @@
     "description": "An efficient text splitting tool that segments long texts by character count or complete sentences. Ideal for managing token limits for DeepSeek, ChatGPT, and other AI LLMs, as well as for document editing and social media content optimization. Supports automatic segmentation and bulk export, improving text management and copying efficiency.",
     "keywords": "text splitter, long text segmentation, text processing, split by characters, ChatGPT character limit, AI text processing, sentence splitting, TXT text splitter, article segmentation, bulk export text, LLM token management, text optimization",
     "clientTitle": "Text Splitter",
-    "clientDescription": "The text splitter automatically divides long texts into segments, supporting both character count and complete sentence splitting, ideal for ChatGPT, AI model inputs, document editing, and more. It also supports bulk export, enhancing text management and processing efficiency. For non-UTF-8 texts (such as French), please import via file upload; the system will automatically detect the encoding to prevent garbled text.",
+    "clientDescription": "The text splitter automatically divides long texts into segments, supporting both character count and complete sentence splitting, ideal for ChatGPT, AI model inputs, document editing, and more. It also supports bulk export, enhancing text management and processing efficiency. For non-UTF-8 texts (such as French), please import via file upload; the system will automatically detect the encoding to prevent garbled text. The split priority order is: custom symbols → end of sentence → character count limit.",
     "textSplit": "Text has been successfully split",
     "noExportableText": "No exportable text detected. Please check your input and try again.",
     "exportedMergedText": "Merged split text has been exported.",
@@ -153,7 +156,9 @@
     "splitCharacterCount": "Split Character Count",
     "exportFileName": "Export File Name",
     "setExportFileName": "Set the export file name; if left blank, the original file name or a default name will be used",
-    "splitBySentence": "Prefer splitting by complete Chinese sentences (。！？)",
+    "splitByCustomSymbol": "Customized Symbol Splitting",
+    "customSplitSymbol": "Customized Split Symbols",
+    "splitBySentence": "Prefer splitting by complete sentences (.!?)",
     "splitText": "Split Text",
     "segment": "Segment",
     "mergeText": "Merge all split texts, separated by two line breaks",
@@ -329,18 +334,6 @@
       "title": "Text Splitter",
       "description": "Split long texts into segments based on specific rules"
     },
-    "chineseConversion": {
-      "title": "Chinese Conversion",
-      "description": "Convert between Simplified Chinese, Traditional Chinese (Taiwan), Traditional Chinese (Hong Kong), and Japanese New Characters"
-    },
-    "regexMatcher": {
-      "title": "Text Assistant",
-      "description": "Integrated tool for regex matching, sorting, filtering, and batch text processing"
-    },
-    "textProcessor": {
-      "title": "Multi-Rule Processor",
-      "description": "A custom tool for handling text with various user-defined processing rules"
-    },
     "jsonValueExtractor": {
       "title": "JSON Value Extractor",
       "description": "Extract the values of specified keys from JSON data in batch"
@@ -376,10 +369,6 @@
     "dataParserImgPrompt": {
       "title": "IMGPrompt Converter",
       "description": "Generate JSON data in bulk for IMGPrompt"
-    },
-    "aishortTranslate": {
-      "title": "AIShort Translator",
-      "description": "One-click translation for ChatGPT Shortcut into 13 languages"
     }
   },
   "navigation": {
@@ -391,10 +380,10 @@
     "otherTools": "Other Tools"
   },
   "Metadata": {
-    "title": "AI Toolset - Multilingual Translation, Text Processing & JSON Editing | Essential for Efficient Development & Office Work",
+    "title": "Tools By AI Toolset - Multilingual Translation, Text Processing & JSON Editing | Essential for Efficient Development & Office Work",
     "description": "Discover an all-in-one AI-driven toolset featuring subtitle translation, i18n JSON translation, Markdown text translation, text splitting, Chinese conversion, regex matching, JSON value extraction, node editing, key replacement, data match & update, bookmark parsing, and data conversion. Perfect for developers and creators handling multilingual translation and text processing tasks.",
-    "keywords": "AI Tools, Multilingual Translation, Text Processing, Subtitle Translation, JSON Editing, Markdown Translation, Text Splitting, Chinese Conversion, Regex Matching, JSON Value Extraction, Node Editing, Key Replacement, Data Match Update, Bookmark Parsing, Data Conversion",
-    "homeTitle": "AI Toolset",
+    "keywords": "Multilingual Translation, Text Processing, Subtitle Translation, JSON Editing, Markdown Translation, Text Splitting, Chinese Conversion, Regex Matching, JSON Value Extraction, Node Editing, Key Replacement, Data Match Update, Bookmark Parsing, Data Conversion",
+    "homeTitle": "Tools By AI Toolset",
     "homeDescription": "An AI toolset featuring multilingual translation, text processing, JSON editing, and more to help developers and creators efficiently handle multilingual translation and text processing tasks."
   },
   "languages": {

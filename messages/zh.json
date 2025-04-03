@@ -60,7 +60,10 @@
     "textProcessed": "文本已成功处理",
     "updateCount": "共更新了条目数",
     "startProcess": "开始处理",
-    "result": "处理结果"
+    "result": "处理结果",
+    "hideResultsTooltip": "选中此选项会隐藏结果预览，以防加载大量数据导致页面卡顿",
+    "hideResults": "隐藏结果预览",
+    "multiValueHint": "若存在多个值，请以空格分隔"
   },
   "json": {
     "title": "多语言 JSON 翻译工具 - i18n 国际化 & 本地化开发助手 | JSONTranslate",
@@ -144,7 +147,7 @@
     "description": "高效文本分割工具，可按字符数或整句拆分长文本，适用于 DeepSeek、ChatGPT 及各类 AI LLM 的 token 限制、文档编辑、社交媒体内容优化等场景。支持自动分段与批量导出，提高文本管理与复制效率。",
     "keywords": "文本分割, 长文本分段, 文本处理, 按字符数分割, ChatGPT字符限制, AI文本处理, 文本按句子拆分, TXT文本分割, 文章拆分工具, 批量导出文本, LLM token 处理, 文本优化",
     "clientTitle": "文本分割器",
-    "clientDescription": "文本分割器可将长文本自动拆分为若干段，支持按字符数或整句分割，适用于 ChatGPT、AI 模型输入、文档编辑等需求。支持批量导出，提高文本管理与处理效率。对于法语等非 UTF-8 编码的文本，请通过上传方式导入，系统将自动判定编码，以避免乱码问题。",
+    "clientDescription": "文本分割器可将长文本自动拆分为若干段，支持按字符数或整句分割，适用于 ChatGPT、AI 模型输入、文档编辑等需求。支持批量导出，提高文本管理与处理效率。对于法语等非 UTF-8 编码的文本，请通过上传方式导入，系统将自动判定编码，以避免乱码问题。分割优先级顺序为：自定义符号 → 句子结尾 → 字符数量限制。",
     "textSplit": "文本已成功分割",
     "noExportableText": "未检测到可导出的文本，请检查输入内容后重试。",
     "exportedMergedText": "已导出合并后的分割文本。",
@@ -153,7 +156,9 @@
     "splitCharacterCount": "分割字符数",
     "exportFileName": "导出文件命名",
     "setExportFileName": "设置导出文件名称，留空则使用原文件名或默认名称",
-    "splitBySentence": "优先按中文整句（。！？）分割",
+    "splitByCustomSymbol": "自定义符号分割",
+    "customSplitSymbol": "自定义分割符号",
+    "splitBySentence": "优先按整句（。！？）分割",
     "splitText": "分割文本",
     "segment": "段",
     "mergeText": "合并所有分割的文本，并用两个换行符分隔",
@@ -329,20 +334,8 @@
       "title": "文本分割",
       "description": "将长文本按照特定规则进行分割"
     },
-    "chineseConversion": {
-      "title": "简繁转换",
-      "description": "简体、台湾繁体、香港繁体和日本新字体间的互换"
-    },
-    "regexMatcher": {
-      "title": "文本助手",
-      "description": "集成正则匹配、排序、过滤等功能，进行文本批量处理"
-    },
-    "textProcessor": {
-      "title": "多规则处理",
-      "description": "自用工具，定制多种规则处理工具"
-    },
     "jsonValueExtractor": {
-      "title": "JSON 值提取工具",
+      "title": "JSON 值提取",
       "description": "从 JSON 数据中批量提取特定键名的值"
     },
     "jsonNodeEdit": {
@@ -376,10 +369,6 @@
     "dataParserImgPrompt": {
       "title": "IMGPrompt 数据转换",
       "description": "为 IMGPrompt 批量生成 JSON 数据"
-    },
-    "aishortTranslate": {
-      "title": "AIShort 多语言翻译",
-      "description": "一键翻译 ChatGPT Shortcut 的 13 种语言"
     }
   },
   "navigation": {
@@ -391,10 +380,10 @@
     "otherTools": "其他工具"
   },
   "Metadata": {
-    "title": "AI 工具集 - 多语言翻译、文本处理与 JSON 编辑 | 高效开发与办公必备",
+    "title": "ToolsByAI 工具集 - 多语言翻译、文本处理与 JSON 编辑 | 高效开发与办公必备",
     "description": "探索由 AI 驱动的一站式工具集，包括字幕翻译、i18n JSON 翻译、Markdown 文本翻译、文本分割、简繁转换、正则匹配、JSON 值提取、节点编辑、键值替换、数据匹配更新、书签与数据解析等，助力开发者与创作者高效解决多语言翻译和文本处理需求。",
-    "keywords": "AI 工具, 多语言翻译, 文本处理, 字幕翻译, JSON 编辑, Markdown 翻译, 文本分割, 简繁转换, 正则匹配, JSON 值提取, 节点编辑, 键值替换, 数据匹配更新, 书签解析, 数据转换",
-    "homeTitle": "AI 工具集",
+    "keywords": "多语言翻译, 文本处理, 字幕翻译, JSON 编辑, Markdown 翻译, 文本分割, 简繁转换, 正则匹配, JSON 值提取, 节点编辑, 键值替换, 数据匹配更新, 书签解析, 数据转换",
+    "homeTitle": "ToolsByAI 工具集",
     "homeDescription": "多语言翻译、文本处理、JSON 编辑等 AI 工具集，助力开发者与创作者高效解决多语言翻译和文本处理需求"
   },
   "languages": {

@@ -4,6 +4,7 @@ import {
   ExperimentOutlined,
   ScissorOutlined,
   FileTextOutlined,
+  FontSizeOutlined,
   CodeOutlined,
   GlobalOutlined,
   BookOutlined,
@@ -24,6 +25,14 @@ import {
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useLocale } from "next-intl";
+
+// 排除当前项目 "subtitle-translator",
+const projectCategories = {
+  translate: ["json-translate", "md-translator", "aishort-translate"],
+  textParser: ["text-splitter", "chinese-conversion", "novel-processor", "regex-matcher", "text-processor"],
+  jsonParser: ["json-value-extractor", "json-node-edit", "json-value-transformer", "json-value-swapper", "json-node-inserter", "json-sort-classify", "json-match-update"],
+  dataParser: ["data-parser/flare", "data-parser/img-prompt"],
+};
 
 export const projects = [
   {
@@ -51,22 +60,29 @@ export const projects = [
     icon: <ScissorOutlined />,
   },
   {
-    titleKey: "tools.chineseConversion.title",
-    descriptionKey: "tools.chineseConversion.description",
+    titleKey: "简繁转换",
+    descriptionKey: "批量转换简体、台湾繁体、香港繁体和日本新字体",
     key: "chinese-conversion",
     icon: <SwapOutlined />,
     onlyzh: true,
   },
   {
-    titleKey: "tools.regexMatcher.title",
-    descriptionKey: "tools.regexMatcher.description",
+    titleKey: "正则文本助手",
+    descriptionKey: "集成正则匹配、排序、过滤等功能，进行文本批量处理",
     key: "regex-matcher",
     icon: <CodeOutlined />,
     onlyzh: true,
   },
   {
-    titleKey: "tools.textProcessor.title",
-    descriptionKey: "tools.textProcessor.description",
+    titleKey: "小说文本处理",
+    descriptionKey: "批量处理不规范格式的小说长文本",
+    key: "novel-processor",
+    icon: <FontSizeOutlined />,
+    onlyzh: true,
+  },
+  {
+    titleKey: "自用文本处理",
+    descriptionKey: "自用多种规则的文本处理工具",
     key: "text-processor",
     icon: <ProfileOutlined />,
     onlyzh: true,
@@ -126,65 +142,44 @@ export const projects = [
     icon: <UnorderedListOutlined />,
   },
   {
-    titleKey: "tools.aishortTranslate.title",
-    descriptionKey: "tools.aishortTranslate.description",
+    titleKey: "AIShort 多语言翻译",
+    descriptionKey: "一键翻译 ChatGPT Shortcut 13 种语言",
     key: "aishort-translate",
     icon: <GlobalOutlined />,
     onlyzh: true,
   },
 ];
 
+const projectsMap = projects.reduce((acc, project) => {
+  acc[project.key] = project;
+  return acc;
+}, {});
+
 export const AppMenu = () => {
   const t = useTranslations();
   const locale = useLocale();
+  const isChineseLocale = locale === "zh" || locale === "zh-hant";
 
-  // Function to create translated menu item from project
-  const createMenuItem = (project) => {
-    // Skip items that are Chinese-only when not in Chinese locale
-    if (project.onlyzh && locale !== "zh") {
+  const createMenuItem = (projectKey) => {
+    const project = projectsMap[projectKey];
+    if (!project || (project.onlyzh && locale !== "zh")) {
       return null;
     }
-
     return {
-      label: <Link href={`https://tools.newzone.top/${locale}/${project.key}`}>{t(project.titleKey)}</Link>,
+      label: <Link href={`/${locale}/${project.key}`}>{project.onlyzh && locale === "zh" ? project.titleKey : t(project.titleKey)}</Link>,
       key: project.key,
       icon: project.icon,
     };
   };
 
-  // Group projects by category
-  // 排除当前项目 "subtitle-translator",
-  const translateItems = projects
-    .filter((p) => ["json-translate", "md-translator", "aishort-translate"].includes(p.key))
-    .map(createMenuItem)
-    .filter(Boolean);
-
-  const textParserItems = projects
-    .filter((p) => ["text-splitter", "chinese-conversion", "regex-matcher", "text-processor"].includes(p.key))
-    .map(createMenuItem)
-    .filter(Boolean);
-
-  const jsonParserItems = projects
-    .filter((p) => p.key.startsWith("json-") && p.key !== "json-translate")
-    .map(createMenuItem)
-    .filter(Boolean);
-
-  const dataParserItems = projects
-    .filter((p) => p.key.startsWith("data-parser/"))
-    .map(createMenuItem)
-    .filter(Boolean);
-
-  const getAishortLink = () => {
-    if (locale === "zh" || locale === "zh-hant") {
-      return "https://www.aishort.top/";
-    }
-    return `https://www.aishort.top/${locale}`;
+  const generateCategoryItems = (categoryKeys) => {
+    return categoryKeys.map(createMenuItem).filter(Boolean);
   };
 
   const otherToolsItems = [
     {
       label: (
-        <a href={getAishortLink()} target="_blank" rel="noopener noreferrer">
+        <a href={isChineseLocale ? "https://www.aishort.top/" : `https://www.aishort.top/${locale}`} target="_blank" rel="noopener noreferrer">
           ChatGPT Shortcut
         </a>
       ),
@@ -202,8 +197,7 @@ export const AppMenu = () => {
     },
   ];
 
-  // Only add LearnData link for non-Chinese locales
-  if (locale === "zh") {
+  if (isChineseLocale) {
     otherToolsItems.push({
       label: (
         <a href="https://newzone.top/" target="_blank" rel="noopener noreferrer">
@@ -214,6 +208,7 @@ export const AppMenu = () => {
       icon: <BookOutlined />,
     });
   }
+
   const menuItems = [
     {
       label: <Link href={`/${locale}`}>{t("tools.subtitleTranslator.title")}</Link>,
@@ -223,25 +218,25 @@ export const AppMenu = () => {
       label: t("navigation.translate"),
       key: "translate",
       icon: <GlobalOutlined />,
-      children: translateItems,
+      children: generateCategoryItems(projectCategories.translate),
     },
     {
       label: t("navigation.textParser"),
       key: "textParser",
       icon: <FileTextOutlined />,
-      children: textParserItems,
+      children: generateCategoryItems(projectCategories.textParser),
     },
     {
       label: t("navigation.jsonParser"),
       key: "jsonParser",
       icon: <DatabaseOutlined />,
-      children: jsonParserItems,
+      children: generateCategoryItems(projectCategories.jsonParser),
     },
     {
       label: t("navigation.dataParser"),
       key: "dataParser",
       icon: <FileSearchOutlined />,
-      children: dataParserItems,
+      children: generateCategoryItems(projectCategories.dataParser),
     },
     {
       label: t("navigation.otherTools"),

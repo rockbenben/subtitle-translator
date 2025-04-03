@@ -60,7 +60,10 @@
     "textProcessed": "텍스트 처리가 완료되었습니다",
     "updateCount": "업데이트된 전체 항목 수",
     "startProcess": "처리 시작",
-    "result": "결과"
+    "result": "결과",
+    "hideResultsTooltip": "이 옵션을 선택하면 결과 미리보기가 숨겨져 페이지에 많은 양의 데이터가 로드되어 페이지가 지연되는 것을 방지합니다.",
+    "hideResults": "결과 미리보기 숨기기",
+    "multiValueHint": "값이 두 개 이상인 경우 공백으로 구분하세요."
   },
   "json": {
     "title": "다국어 JSON 번역 - i18n 국제화 및 현지화 개발자 도구 | JSONTranslate",
@@ -144,7 +147,7 @@
     "description": "긴 텍스트를 문자 수 또는 완전한 문장 단위로 분할하는 효율적인 도구입니다. DeepSeek, ChatGPT 등의 AI LLM 토큰 제한 관리뿐 아니라 문서 편집 및 소셜 미디어 콘텐츠 최적화에도 적합합니다. 자동 분할 및 일괄 내보내기를 지원하여 텍스트 관리와 복사 효율을 높입니다.",
     "keywords": "텍스트 분할, 장문 분할, 텍스트 처리, 문자 단위 분할, ChatGPT 문자 제한, AI 텍스트 처리, 문장 분할, TXT 텍스트 분할, 기사 분할, 일괄 내보내기, LLM 토큰 관리, 텍스트 최적화",
     "clientTitle": "텍스트 분할 도구",
-    "clientDescription": "이 도구는 긴 텍스트를 자동으로 여러 구간으로 분할합니다. 문자 수 기준 분할과 완전한 문장 단위 분할을 지원하여 ChatGPT, AI 모델 입력 및 문서 편집에 이상적입니다. 또한 분할된 텍스트를 일괄 내보내어 텍스트 관리 및 처리 효율을 향상시킵니다. 비 UTF-8 텍스트(예: 프랑스어)의 경우 파일 업로드 시 시스템이 자동으로 인코딩을 감지하여 문자 깨짐을 방지합니다.",
+    "clientDescription": "이 도구는 긴 텍스트를 자동으로 여러 구간으로 분할합니다. 문자 수 기준 분할과 완전한 문장 단위 분할을 지원하여 ChatGPT, AI 모델 입력 및 문서 편집에 이상적입니다. 또한 분할된 텍스트를 일괄 내보내어 텍스트 관리 및 처리 효율을 향상시킵니다. 비 UTF-8 텍스트(예: 프랑스어)의 경우 파일 업로드 시 시스템이 자동으로 인코딩을 감지하여 문자 깨짐을 방지합니다. 분할된 우선순위 순서는 다음과 같습니다: 사용자 정의 기호 → 문장 끝 → 문자 수 제한.",
     "textSplit": "텍스트 분할이 완료되었습니다",
     "noExportableText": "내보낼 텍스트가 없습니다. 입력 내용을 확인한 후 다시 시도해 주십시오.",
     "exportedMergedText": "병합된 분할 텍스트가 내보내졌습니다.",
@@ -153,7 +156,9 @@
     "splitCharacterCount": "분할 문자 수",
     "exportFileName": "내보낼 파일 이름",
     "setExportFileName": "내보낼 파일 이름을 설정해 주십시오. 비워둘 경우 원본 파일 이름 또는 기본 이름이 사용됩니다",
-    "splitBySentence": "완전한 한국어 문장 단위로 분할 (。！？)",
+    "splitByCustomSymbol": "사용자 지정 심볼 분할",
+    "customSplitSymbol": "사용자 지정 분할 기호",
+    "splitBySentence": "완전한 문장으로 나누는 것을 선호합니다(.!?)",
     "splitText": "텍스트 분할",
     "segment": "분할",
     "mergeText": "모든 분할 텍스트 병합 (두 줄 바꿈으로 구분)",
@@ -329,18 +334,6 @@
       "title": "텍스트 분할기",
       "description": "특정 규칙에 따라 긴 텍스트를 여러 구간으로 분할합니다"
     },
-    "chineseConversion": {
-      "title": "중국어 변환 도구",
-      "description": "간체 중국어, 번체 중국어(대만), 번체 중국어(홍콩) 및 일본어 신자체 간의 변환"
-    },
-    "regexMatcher": {
-      "title": "텍스트 어시스턴트",
-      "description": "정규식 매칭, 정렬, 필터링 및 일괄 텍스트 처리를 위한 통합 도구"
-    },
-    "textProcessor": {
-      "title": "다중 규칙 처리기",
-      "description": "사용자 정의 처리 규칙으로 텍스트를 다루기 위한 커스텀 도구"
-    },
     "jsonValueExtractor": {
       "title": "JSON 값 추출기",
       "description": "JSON 데이터에서 지정된 키의 값을 일괄적으로 추출합니다"
@@ -376,10 +369,6 @@
     "dataParserImgPrompt": {
       "title": "IMGPrompt 변환기",
       "description": "IMGPrompt용 JSON 데이터를 일괄 생성합니다"
-    },
-    "aishortTranslate": {
-      "title": "AIShort 번역기",
-      "description": "ChatGPT Shortcut을 13개 언어로 한 번에 번역합니다"
     }
   },
   "navigation": {
@@ -391,10 +380,10 @@
     "otherTools": "기타 도구"
   },
   "Metadata": {
-    "title": "AI 도구 모음 - 다국어 번역, 텍스트 처리 및 JSON 편집 | 효율적인 개발 및 사무 작업을 위한 필수 도구",
+    "title": "Tools By AI - 다국어 번역, 텍스트 처리 및 JSON 편집 | 효율적인 개발 및 사무 작업을 위한 필수 도구",
     "description": "자막 번역, i18n JSON 번역, Markdown 번역, 텍스트 분할, 중국어 변환, 정규식 매칭, JSON 값 추출, 노드 편집, 키 교체, 데이터 매칭 및 업데이트, 북마크 파싱, 데이터 변환 등 다양한 AI 도구가 포함된 올인원 도구 모음을 만나보십시오. 개발자와 크리에이터가 다국어 번역 및 텍스트 처리 작업을 효율적으로 수행할 수 있도록 돕습니다.",
-    "keywords": "AI 도구, 다국어 번역, 텍스트 처리, 자막 번역, JSON 편집, Markdown 번역, 텍스트 분할, 중국어 변환, 정규식 매칭, JSON 값 추출, 노드 편집, 키 교체, 데이터 매칭 업데이트, 북마크 파싱, 데이터 변환",
-    "homeTitle": "AI 도구 모음",
+    "keywords": "다국어 번역, 텍스트 처리, 자막 번역, JSON 편집, Markdown 번역, 텍스트 분할, 중국어 변환, 정규식 매칭, JSON 값 추출, 노드 편집, 키 교체, 데이터 매칭 업데이트, 북마크 파싱, 데이터 변환",
+    "homeTitle": "Tools By AI",
     "homeDescription": "다국어 번역, 텍스트 처리, JSON 편집 등 다양한 기능을 갖춘 AI 도구 모음으로, 개발자와 크리에이터가 효율적으로 작업할 수 있도록 돕습니다."
   },
   "languages": {
