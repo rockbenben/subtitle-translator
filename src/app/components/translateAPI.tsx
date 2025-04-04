@@ -273,11 +273,13 @@ const translationServices = {
       body: JSON.stringify(requestBody),
     });
 
+    const data = await response.json();
+
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const errorMessage = data.error || `HTTP error! status: ${response.status}`;
+      throw new Error(errorMessage);
     }
 
-    const data = await response.json();
     return data.translations[0].text;
   },
 
@@ -296,11 +298,13 @@ const translationServices = {
       body: JSON.stringify(requestBody),
     });
 
+    const data = await response.json();
+
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const errorMessage = data.error || `HTTP error! status: ${response.status}`;
+      throw new Error(errorMessage);
     }
 
-    const data = await response.json();
     return data.data;
   },
 
@@ -317,11 +321,13 @@ const translationServices = {
       body: JSON.stringify([{ Text: text }]),
     });
 
+    const data = await response.json();
+
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const errorMessage = data.error || `HTTP error! status: ${response.status}`;
+      throw new Error(errorMessage);
     }
 
-    const data = await response.json();
     return data[0].translations[0].text;
   },
 
