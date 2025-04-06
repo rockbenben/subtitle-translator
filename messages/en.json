@@ -1,5 +1,6 @@
 {
   "common": {
+    "userGuide": "How to Use",
     "privacyNotice": "All API keys and data are stored only in your local browser to ensure privacy and security. If you encounter any issues or have suggestions, please feel free to contact us through our community or feedback page.",
     "bigNotice": "When importing large files, your browser may become unresponsive. It is recommended to optimize large files.",
     "dragAndDropText": "Click or drag files here to upload (supports TXT, MD, JSON, and other text formats)",

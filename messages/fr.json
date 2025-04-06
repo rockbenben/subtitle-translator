@@ -1,5 +1,6 @@
 {
   "common": {
+    "userGuide": "Comment utiliser",
     "privacyNotice": "Toutes les clés API et toutes les données sont stockées uniquement dans votre navigateur local afin d'assurer confidentialité et sécurité. Si vous rencontrez des problèmes ou avez des suggestions, n'hésitez pas à nous contacter via notre communauté ou notre page de retours.",
     "bigNotice": "Lors de l'importation de fichiers volumineux, votre navigateur peut devenir non réactif. Il est recommandé d'optimiser les fichiers de grande taille.",
     "dragAndDropText": "Cliquez ou faites glisser des fichiers ici pour les télécharger (prend en charge TXT, MD, JSON et autres formats de texte)",

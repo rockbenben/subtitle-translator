@@ -1,5 +1,6 @@
 {
   "common": {
+    "userGuide": "Anwendung",
     "privacyNotice": "Alle API-Schlüssel und Daten werden ausschließlich in Ihrem lokalen Browser gespeichert, um Privatsphäre und Sicherheit zu gewährleisten. Sollten Sie auf Probleme stoßen oder Verbesserungsvorschläge haben, kontaktieren Sie uns bitte über unsere Community- oder Feedback-Seite.",
     "bigNotice": "Beim Import großer Dateien kann Ihr Browser möglicherweise nicht mehr reagieren. Es wird empfohlen, große Dateien zu optimieren.",
     "dragAndDropText": "Klicken oder ziehen Sie Dateien hierher, um sie hochzuladen (unterstützt TXT, MD, JSON und andere Textformate)",

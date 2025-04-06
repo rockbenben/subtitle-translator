@@ -1,5 +1,6 @@
 {
   "common": {
+    "userGuide": "Come usare",
     "privacyNotice": "Tutte le chiavi API e i dati vengono memorizzati solo nel tuo browser locale per garantire privacy e sicurezza. Se incontri problemi o hai suggerimenti, non esitare a contattarci tramite la nostra community o pagina di feedback.",
     "bigNotice": "Durante l'importazione di file di grandi dimensioni, il tuo browser potrebbe non rispondere. Si consiglia di ottimizzare i file di grandi dimensioni.",
     "dragAndDropText": "Clicca o trascina i file qui per caricarli (supporta formati TXT, MD, JSON e altri formati di testo)",
