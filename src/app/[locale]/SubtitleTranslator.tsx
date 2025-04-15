@@ -232,7 +232,7 @@ const SubtitleTranslator = () => {
             const translatedText = finalTranslatedLines[i];
 
             // 根据位置设置字幕行
-            const isOriginalFirst = bilingualPosition === "below";
+            const isOriginalFirst = bilingualPosition === "above";
             const firstText = isOriginalFirst ? originalText : translatedText;
             const secondText = isOriginalFirst ? translatedText : originalText;
 
