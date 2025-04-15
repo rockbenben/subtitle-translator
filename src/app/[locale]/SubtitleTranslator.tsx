@@ -242,8 +242,8 @@ const SubtitleTranslator = () => {
               subtitles[key].second += `\\N${secondText}`;
             } else {
               subtitles[key] = {
-                first: `Dialogue: 0,${assStartTime},${assEndTime},Default,NTP,0000,0000,0000,,${firstText}`,
-                second: `Dialogue: 0,${assStartTime},${assEndTime},Secondary,NTP,0000,0000,0000,,${secondText}`,
+                first: `Dialogue: 0,${assStartTime},${assEndTime},Secondary,NTP,0000,0000,0000,,${firstText}`,
+                second: `Dialogue: 0,${assStartTime},${assEndTime},Default,NTP,0000,0000,0000,,${secondText}`,
               };
             }
           });
