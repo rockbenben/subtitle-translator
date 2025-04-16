@@ -5,8 +5,7 @@ import { Tabs, TabsProps, Typography } from "antd";
 import { VideoCameraOutlined, QuestionCircleOutlined } from "@ant-design/icons";
 import TranslationSettings from "@/app/components/TranslationSettings";
 import SubtitleTranslator from "./SubtitleTranslator";
-import { useTranslations } from "next-intl";
-import { useLocale } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 
 const { Title, Paragraph } = Typography;
 
