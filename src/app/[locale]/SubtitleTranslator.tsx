@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Flex, Card, Button, Input, Upload, Form, Space, message, Select, Modal, Checkbox, Progress, Tooltip, Radio, Switch } from "antd";
 import { CopyOutlined, DownloadOutlined, InboxOutlined } from "@ant-design/icons";
 import { downloadFile, VTT_SRT_TIME, detectSubtitleFormat, getOutputFileExtension, isValidSubtitleLine, convertTimeToAss, assHeader } from "@/app/utils";
-import { categorizedOptions } from "@/app/components/translateAPI";
+import { categorizedOptions, findMethodLabel } from "@/app/components/translateAPI";
 import { useLanguageOptions, filterLanguageOption } from "@/app/components/languages";
 import { useCopyToClipboard } from "@/app/hooks/useCopyToClipboard";
 import useFileUpload from "@/app/hooks/useFileUpload";
@@ -383,12 +383,14 @@ const SubtitleTranslator = () => {
           <Space.Compact>
             <Select showSearch value={translationMethod} onChange={(e) => setTranslationMethod(e)} options={categorizedOptions} style={{ minWidth: 150 }} />
             {config?.apiKey !== undefined && translationMethod !== "llm" && (
-              <Input.Password
-                autoComplete="off"
-                placeholder={`${t("enter")} ${translationMethod} API Key`}
-                value={config.apiKey}
-                onChange={(e) => handleConfigChange(translationMethod, "apiKey", e.target.value)}
-              />
+              <Tooltip title={`${t("enter")} ${findMethodLabel(translationMethod)} API Key`}>
+                <Input.Password
+                  autoComplete="off"
+                  placeholder={`API Key ${findMethodLabel(translationMethod)} `}
+                  value={config.apiKey}
+                  onChange={(e) => handleConfigChange(translationMethod, "apiKey", e.target.value)}
+                />
+              </Tooltip>
             )}
           </Space.Compact>
         </Form.Item>
