@@ -83,7 +83,7 @@ const useTranslateData = () => {
 
   const getCurrentConfig = () => {
     let effectiveMethod = translationMethod;
-    if (!translationConfigs[effectiveMethod] || !defaultConfigs[effectiveMethod]) {
+    if (!translationConfigs[effectiveMethod] && !defaultConfigs[effectiveMethod]) {
       setTranslationMethod(DEFAULT_API);
       effectiveMethod = DEFAULT_API;
     }

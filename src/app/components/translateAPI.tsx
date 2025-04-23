@@ -15,15 +15,25 @@ export const TRANSLATION_SERVICES = [
   { value: "deeplx", label: "DeepLX (Free)", docs: "https://deeplx.owo.network/endpoints/free.html" },
   { value: "deepseek", label: "DeepSeek", docs: "https://api-docs.deepseek.com/zh-cn/" },
   { value: "openai", label: "OpenAI", docs: "https://platform.openai.com/docs/api-reference/chat" },
+  {
+    value: "azureopenai",
+    label: "Azure OpenAI",
+    docs: "https://learn.microsoft.com/zh-cn/azure/ai-services/openai/concepts/models",
+  },
   { value: "siliconflow", label: "SiliconFlow", docs: "https://docs.siliconflow.cn/api-reference/chat-completions/chat-completions" },
   { value: "groq", label: "Groq", docs: "https://console.groq.com/docs/text-chat" },
   { value: "llm", label: "Custom LLM" },
   //{ value: "webgoogletranslate", label: "GTX Web (Free&Slow)" },
 ];
 
+export const findMethodLabel = (method) => {
+  const service = TRANSLATION_SERVICES.find((s) => s.value === method);
+  return service ? service.label : method;
+};
+
 type TranslationMethod = (typeof TRANSLATION_SERVICES)[number]["value"];
 
-export const LLM_MODELS = ["deepseek", "openai", "siliconflow", "groq", "llm"];
+export const LLM_MODELS = ["deepseek", "openai", "azureopenai", "siliconflow", "groq", "llm"];
 
 export const categorizedOptions = [
   ...TRANSLATION_SERVICES.filter((s) => !LLM_MODELS.includes(s.value)),
@@ -59,6 +69,14 @@ export const defaultConfigs = {
   openai: {
     apiKey: "",
     model: "gpt-4o-mini",
+    temperature: 1.3,
+    limit: 20,
+  },
+  azureopenai: {
+    url: "",
+    apiKey: "",
+    model: "gpt-4o-mini",
+    apiVersion: "2024-07-18",
     temperature: 1.3,
     limit: 20,
   },
@@ -120,6 +138,7 @@ interface TranslateTextParams {
   region?: string;
   url?: string;
   model?: string;
+  apiVersion?: string;
   temperature?: number;
   sysPrompt?: string;
   userPrompt?: string;
@@ -381,6 +400,30 @@ const translationServices = {
     return data.choices[0].message.content.trim();
   },
 
+  azureopenai: async (params: TranslateTextParams) => {
+    const { text, targetLanguage, sourceLanguage, apiKey, url, model, apiVersion, temperature, sysPrompt, userPrompt } = params;
+    const prompt = getAIModelPrompt(text, userPrompt, targetLanguage, sourceLanguage);
+    const endpoint = url.replace(/\/+$/, "");
+    const requestUrl = `${endpoint}/openai/deployments/${model}/chat/completions?api-version=${apiVersion}`;
+    const response = await fetch(requestUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "api-key": apiKey,
+      },
+      body: JSON.stringify({
+        messages: [
+          { role: "system", content: sysPrompt },
+          { role: "user", content: prompt },
+        ],
+        temperature: Number(temperature),
+      }),
+    });
+
+    const data = await response.json();
+    return data.choices[0].message.content.trim();
+  },
+
   siliconflow: async (params: TranslateTextParams) => {
     const { text, targetLanguage, sourceLanguage, apiKey, model, temperature, sysPrompt, userPrompt } = params;
     const prompt = getAIModelPrompt(text, userPrompt, targetLanguage, sourceLanguage);
@@ -503,7 +546,7 @@ export const testTranslation = async (translationMethod, config, sysPrompt, user
 
 const translateText = async (params: TranslateTextParams): Promise<string | null> => {
   try {
-    const { text, cacheSuffix, translationMethod, targetLanguage, sourceLanguage, useCache = true, apiKey, region = "eastasia", url, model, temperature, sysPrompt, userPrompt } = params;
+    const { text, cacheSuffix, translationMethod, targetLanguage, sourceLanguage, useCache = true, apiKey, region = "eastasia", url, model, apiVersion, temperature, sysPrompt, userPrompt } = params;
 
     if (!/[a-zA-Z\p{L}]/u.test(text) || sourceLanguage === targetLanguage) {
       return text;

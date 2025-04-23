@@ -50,9 +50,18 @@ const TranslationSettings = () => {
           }>
           <Form layout="vertical">
             {config?.url !== undefined && (
-              <Form.Item label={`API ${t("url")}`} extra={service === "llm" ? t("urlExtra") : t("deeplxUrlExtra")} required={service === "llm"}>
+              <Form.Item
+                label={`API ${t("url")}`}
+                extra={service === "llm" ? t("urlExtra") : service === "azureopenai" ? undefined : t("deeplxUrlExtra")}
+                required={service === "llm" || service === "azureopenai"}>
                 <Input
-                  placeholder={service === "llm" ? `${tCommon("example")}: http://127.0.0.1:11434/v1/chat/completions` : `${tCommon("example")}: http://192.168.2.3:32770/translate`}
+                  placeholder={
+                    service === "llm"
+                      ? `${tCommon("example")}: http://127.0.0.1:11434/v1/chat/completions`
+                      : service === "azureopenai"
+                      ? `${tCommon("example")}: https://your-resource-name.openai.azure.com`
+                      : `${tCommon("example")}: http://192.168.2.3:32770/translate`
+                  }
                   value={config?.url}
                   onChange={(e) => handleConfigChange(service, "url", e.target.value)}
                 />
@@ -70,7 +79,7 @@ const TranslationSettings = () => {
               </Form.Item>
             )}
 
-            {service === "azure" && (
+            {config?.region !== undefined && (
               <Form.Item label="Azure Region" required>
                 <Input placeholder={`${tCommon("enter")} Azure API Region`} value={config?.region} onChange={(e) => handleConfigChange(service, "region", e.target.value)} />
               </Form.Item>
@@ -82,6 +91,11 @@ const TranslationSettings = () => {
               </Form.Item>
             )}
 
+            {config?.apiVersion !== undefined && (
+              <Form.Item label={`LLM API Version`} extra={`${tCommon("example")}: 2024-07-18`}>
+                <Input value={config.apiVersion} onChange={(e) => handleConfigChange(service, "apiVersion", e.target.value)} />
+              </Form.Item>
+            )}
             {config?.temperature !== undefined && (
               <Form.Item label="Temperature" extra={t("temperatureExtra")}>
                 <Input type="number" value={config.temperature} onChange={(e) => handleConfigChange(service, "temperature", e.target.value)} />
@@ -108,15 +122,15 @@ const TranslationSettings = () => {
               </Form.Item>
             )}
 
-            <Form.Item label={t("limit")} extra={t("limitExtra")}>
-              <Input type="number" value={config?.limit} onChange={(e) => handleConfigChange(service, "limit", e.target.value)} />
-            </Form.Item>
-
             {config?.delayTime !== undefined && (
               <Form.Item label={`${t("delayTime")} (ms)`}>
                 <Input type="number" value={config.delayTime} onChange={(e) => handleConfigChange(service, "delayTime", e.target.value)} />
               </Form.Item>
             )}
+
+            <Form.Item label={t("limit")} extra={t("limitExtra")}>
+              <Input type="number" value={config?.limit} onChange={(e) => handleConfigChange(service, "limit", e.target.value)} />
+            </Form.Item>
 
             <div className="mt-4 pt-4 border-t">
               <Text type="secondary">
