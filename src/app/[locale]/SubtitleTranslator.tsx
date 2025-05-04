@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { Flex, Card, Button, Input, Upload, Form, Space, message, Select, Modal, Checkbox, Progress, Tooltip, Radio, Switch } from "antd";
+import React, { useState, useEffect, useMemo } from "react";
+import { Flex, Card, Button, Typography, Input, Upload, Form, Space, message, Select, Modal, Checkbox, Progress, Tooltip, Radio, Switch, Spin } from "antd";
 import { CopyOutlined, DownloadOutlined, InboxOutlined } from "@ant-design/icons";
-import { downloadFile, VTT_SRT_TIME, detectSubtitleFormat, getOutputFileExtension, isValidSubtitleLine, convertTimeToAss, assHeader } from "@/app/utils";
+import { getTextStats, downloadFile, VTT_SRT_TIME, LRC_TIME_REGEX, detectSubtitleFormat, getOutputFileExtension, filterSubLines, convertTimeToAss, assHeader } from "@/app/utils";
 import { categorizedOptions, findMethodLabel } from "@/app/components/translateAPI";
 import { useLanguageOptions, filterLanguageOption } from "@/app/components/languages";
 import { useCopyToClipboard } from "@/app/hooks/useCopyToClipboard";
@@ -13,6 +13,7 @@ import { useTranslations } from "next-intl";
 
 const { TextArea } = Input;
 const { Dragger } = Upload;
+const { Paragraph } = Typography;
 
 const SubtitleTranslator = () => {
   const tSubtitle = useTranslations("subtitle");
@@ -20,8 +21,21 @@ const SubtitleTranslator = () => {
 
   const { sourceOptions, targetOptions } = useLanguageOptions();
   const { copyToClipboard } = useCopyToClipboard();
-  const { fileList, multipleFiles, readFile, sourceText, setSourceText, uploadMode, singleFileMode, setSingleFileMode, handleFileUpload, handleUploadRemove, handleUploadChange, resetUpload } =
-    useFileUpload();
+  const {
+    isFileProcessing,
+    fileList,
+    multipleFiles,
+    readFile,
+    sourceText,
+    setSourceText,
+    uploadMode,
+    singleFileMode,
+    setSingleFileMode,
+    handleFileUpload,
+    handleUploadRemove,
+    handleUploadChange,
+    resetUpload,
+  } = useFileUpload();
   const {
     translationMethod,
     setTranslationMethod,
@@ -51,6 +65,9 @@ const SubtitleTranslator = () => {
   } = useTranslateData();
   const [messageApi, contextHolder] = message.useMessage();
 
+  const sourceStats = useMemo(() => getTextStats(sourceText), [sourceText]);
+  const resultStats = useMemo(() => getTextStats(translatedText), [translatedText]);
+
   const [bilingualSubtitle, setBilingualSubtitle] = useState(false);
   const [bilingualPosition, setBilingualPosition] = useState("below"); // 'above' or 'below'
 
@@ -58,82 +75,6 @@ const SubtitleTranslator = () => {
     setExtractedText("");
     setTranslatedText("");
   }, [sourceText]);
-
-  const filterContentLines = (lines: string[], fileType: string) => {
-    const contentLines: string[] = [];
-    const contentIndices: number[] = [];
-    const styleBlockLines: string[] = [];
-    let startExtracting = false;
-    let assContentStartIndex = 9;
-    let formatFound = false;
-
-    if (fileType === "ass") {
-      const eventIndex = lines.findIndex((line) => line.trim() === "[Events]");
-      if (eventIndex !== -1) {
-        for (let i = eventIndex; i < lines.length; i++) {
-          if (lines[i].startsWith("Format:")) {
-            const formatLine = lines[i];
-            assContentStartIndex = formatLine.split(",").length - 1;
-            formatFound = true;
-            break;
-          }
-        }
-      }
-
-      if (!formatFound) {
-        const dialogueLines = lines.filter((line) => line.startsWith("Dialogue:")).slice(0, 100);
-        if (dialogueLines.length > 0) {
-          const commaCounts = dialogueLines.map((line) => line.split(",").length - 1);
-          assContentStartIndex = Math.min(...commaCounts);
-        }
-      }
-    }
-
-    lines.forEach((line, index) => {
-      let isContent = false;
-      const trimmedLine = line.trim();
-
-      if (fileType === "srt" || fileType === "vtt") {
-        if (!startExtracting) {
-          const isTimecode = /^[\d:,]+ --> [\d:,]+$/.test(line) || /^[\d:.]+ --> [\d:.]+$/.test(line);
-          if (isTimecode) {
-            startExtracting = true;
-          }
-        }
-
-        if (startExtracting) {
-          if (fileType === "vtt") {
-            const isTimecode = /^[\d:.]+ --> [\d:.]+$/.test(trimmedLine);
-            const isWebVTTHeader = trimmedLine.startsWith("WEBVTT");
-            const isComment = trimmedLine.startsWith("#");
-            isContent = isValidSubtitleLine(line) && !isTimecode && !isWebVTTHeader && !isComment;
-          } else {
-            const isTimecode = /^[\d:,]+ --> [\d:,]+$/.test(trimmedLine);
-            isContent = isValidSubtitleLine(line) && !isTimecode;
-          }
-        }
-      } else if (fileType === "ass") {
-        if (!startExtracting && trimmedLine.startsWith("Dialogue:")) {
-          startExtracting = true;
-        }
-
-        if (startExtracting) {
-          const parts = line.split(",");
-          isContent = line.startsWith("Dialogue:") && parts.length > assContentStartIndex;
-          if (isContent) {
-            line = parts.slice(assContentStartIndex).join(",").trim();
-          }
-        }
-      }
-
-      if (isContent) {
-        contentLines.push(line);
-        contentIndices.push(index);
-      }
-    });
-
-    return { contentLines, contentIndices, styleBlockLines };
-  };
 
   const performTranslation = async (sourceText: string, fileNameSet?: string, fileIndex?: number, totalFiles?: number) => {
     const lines = sourceText.split("\n");
@@ -165,7 +106,7 @@ const SubtitleTranslator = () => {
       }
     }
 
-    const { contentLines, contentIndices, styleBlockLines } = filterContentLines(lines, fileType);
+    const { contentLines, contentIndices, styleBlockLines } = filterSubLines(lines, fileType);
 
     // Determine target languages to translate to
     const targetLanguagesToUse = multiLanguageMode ? target_langs : [targetLanguage];
@@ -195,6 +136,27 @@ const SubtitleTranslator = () => {
             } else {
               translatedTextArray[index] = `${prefix}${finalTranslatedLines[i]}`;
             }
+          } else if (fileType === "lrc") {
+            const originalLine = lines[index];
+            // 提取原始行中的所有时间标记
+            const timeMatches = originalLine.match(new RegExp(LRC_TIME_REGEX.source, "g")) || [];
+            const timePrefix = timeMatches.join("");
+
+            if (bilingualSubtitle) {
+              const translatedLine = finalTranslatedLines[i];
+              const originalContent = originalLine.replace(new RegExp(LRC_TIME_REGEX.source, "g"), "").trim();
+
+              if (bilingualPosition === "below") {
+                // 原文在上，翻译在下
+                translatedTextArray[index] = `${timePrefix} ${originalContent} / ${translatedLine}`;
+              } else {
+                // 翻译在上，原文在下
+                translatedTextArray[index] = `${timePrefix} ${translatedLine} / ${originalContent}`;
+              }
+            } else {
+              // 仅显示翻译
+              translatedTextArray[index] = `${timePrefix} ${finalTranslatedLines[i]}`;
+            }
           } else {
             // 非 .ass 文件处理
             translatedTextArray[index] = bilingualSubtitle ? `${lines[index]}\n${finalTranslatedLines[i]}` : finalTranslatedLines[i];
@@ -203,8 +165,8 @@ const SubtitleTranslator = () => {
 
         let finalSubtitle = "";
 
-        // 处理非 .ass 文件的双语模式，将内容转换为 .ass 格式
-        if (fileType !== "ass" && bilingualSubtitle) {
+        // 处理双语模式下的 SRT 和 VTT 字幕，则将内容转换为 .ass 格式
+        if (bilingualSubtitle && (fileType === "srt" || fileType === "vtt")) {
           let subtitles = {};
           // 处理时间线和双语字幕的对齐
           contentIndices.forEach((index, i) => {
@@ -344,8 +306,8 @@ const SubtitleTranslator = () => {
     if (fileType === "error") {
       messageApi.error(tSubtitle("unsupportedSub"));
     }
-    const { contentLines } = filterContentLines(lines, fileType);
-    const extractedText = contentLines.join("\n");
+    const { contentLines } = filterSubLines(lines, fileType);
+    const extractedText = contentLines.join("\n").trim();
 
     if (!extractedText) {
       messageApi.error(tSubtitle("noExtractedText"));
@@ -359,11 +321,11 @@ const SubtitleTranslator = () => {
   const config = getCurrentConfig();
 
   return (
-    <>
+    <Spin spinning={isFileProcessing} size="large">
       {contextHolder}
       <Dragger
         customRequest={({ file }) => handleFileUpload(file as File)}
-        accept=".srt,.ass,.vtt"
+        accept=".srt,.ass,.vtt,.lrc"
         multiple={!singleFileMode}
         showUploadList
         beforeUpload={singleFileMode ? resetUpload : undefined}
@@ -376,7 +338,20 @@ const SubtitleTranslator = () => {
         <p className="ant-upload-text">{tSubtitle("dragAndDropText")}</p>
       </Dragger>
       {uploadMode === "single" && (
-        <TextArea placeholder={tSubtitle("pasteUploadContent")} value={sourceText} onChange={(e) => setSourceText(e.target.value)} rows={8} className="mt-1 mb-2" allowClear />
+        <TextArea
+          placeholder={tSubtitle("pasteUploadContent")}
+          value={sourceStats.displayText}
+          onChange={!sourceStats.isTooLong ? (e) => setSourceText(e.target.value) : undefined}
+          rows={8}
+          className="mt-1 mb-2"
+          allowClear
+          readOnly={sourceStats.isTooLong}
+        />
+      )}
+      {sourceText && (
+        <Paragraph type="secondary" className="-mt-1 mb-2">
+          {t("inputStatsTitle")}: {sourceStats.charCount} {t("charLabel")}, {sourceStats.lineCount} {t("lineLabel")}
+        </Paragraph>
       )}
       <Form layout="inline" labelWrap className="gap-1 mb-2">
         <Form.Item label={t("translationAPI")}>
@@ -504,7 +479,10 @@ const SubtitleTranslator = () => {
                   </Button>
                 </Space>
               }>
-              <TextArea value={translatedText} rows={10} readOnly />
+              <TextArea value={resultStats.displayText} rows={10} readOnly />
+              <Paragraph type="secondary" className="-mb-2">
+                {t("outputStatsTitle")}: {resultStats.charCount} {t("charLabel")}, {resultStats.lineCount} {t("lineLabel")}
+              </Paragraph>
             </Card>
           )}
           {extractedText && (
@@ -529,7 +507,7 @@ const SubtitleTranslator = () => {
           </div>
         </Modal>
       )}
-    </>
+    </Spin>
   );
 };
 
