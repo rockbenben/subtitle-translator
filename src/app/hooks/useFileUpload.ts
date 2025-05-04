@@ -4,13 +4,15 @@ import type { UploadFile, UploadProps } from "antd";
 import jschardet from "jschardet";
 
 const useFileUpload = () => {
-  const [multipleFiles, setMultipleFiles] = useState<File[]>([]);
   const [sourceText, setSourceText] = useState<string>("");
+  const [multipleFiles, setMultipleFiles] = useState<File[]>([]);
   const [uploadMode, setUploadMode] = useState<"single" | "multiple">("single");
   const [fileList, setFileList] = useState<UploadFile[]>([]);
   const [singleFileMode, setSingleFileMode] = useState(false);
+  const [isFileProcessing, setIsFileProcessing] = useState<boolean>(false);
 
   const readFile = (file: File, callback: (text: string) => void) => {
+    setIsFileProcessing(true);
     const reader = new FileReader();
 
     reader.onload = (e) => {
@@ -30,10 +32,12 @@ const useFileUpload = () => {
       const decoder = new TextDecoder(detected.encoding || "utf-8");
       const text = decoder.decode(uint8Array).replace(/\r\n/g, "\n");
       callback(text);
+      setIsFileProcessing(false);
     };
 
     reader.onerror = (error) => {
       console.error("读取文件出错：", error);
+      setIsFileProcessing(false);
     };
     reader.readAsArrayBuffer(file);
   };
@@ -117,6 +121,7 @@ const useFileUpload = () => {
   };
 
   return {
+    isFileProcessing,
     fileList,
     multipleFiles,
     readFile,
