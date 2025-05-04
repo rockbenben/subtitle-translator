@@ -6,28 +6,41 @@
  * @param {string} input - 待处理和解析的字符串。
  * @return {any} 解析后的 JSON 数据。
  */
-export const preprocessJson = (input: string): any => {
+const tryParse = (str: string): any => {
   try {
-    return JSON.parse(input); // 直接解析
+    return JSON.parse(str);
   } catch {
-    let fixedInput = input.trim().replace(/,\s*$/, ""); // 去除末尾逗号
-
-    // 修复未加引号的 JSON 键名（仅适用于简单情况）
-    //fixedInput = fixedInput.replace(/([{,]\s*)([a-zA-Z0-9_]+)(\s*:\s*)/g, '$1"$2"$3');
-    fixedInput = fixedInput.replace(/(['"])?([a-zA-Z0-9_\.]+)(['"])?:/g, '"$2":');
-
-    try {
-      return JSON.parse(fixedInput);
-    } catch {
-      // 依次尝试用 {} 或 [] 包裹
-      for (const wrapper of ["{}", "[]"]) {
-        try {
-          return JSON.parse(wrapper[0] + fixedInput + wrapper[1]);
-        } catch {
-          continue;
-        }
+    for (const wrapper of ["{}", "[]"]) {
+      try {
+        return JSON.parse(wrapper[0] + str + wrapper[1]);
+      } catch {
+        continue;
       }
     }
+    return null;
+  }
+};
+export const preprocessJson = (input: string): any => {
+  let parsed = tryParse(input);
+  if (parsed !== null) return parsed;
+
+  const trimmed = input.trim().replace(/,\s*$/, "");
+  parsed = tryParse(trimmed);
+  if (parsed !== null) return parsed;
+
+  // 定义懒加载转换函数，每次调用时生成新的转换字符串
+  const candidates: Array<() => string> = [
+    () => trimmed.replace(/([{,]\s*)([a-zA-Z0-9_\.]+)(\s*:\s*)/g, '$1"$2"$3'),
+    () => `{${trimmed}}`.replace(/([{,]\s*)([a-zA-Z0-9_\.]+)(\s*:\s*)/g, '$1"$2"$3'),
+    () => `[${trimmed}]`.replace(/([{,]\s*)([a-zA-Z0-9_\.]+)(\s*:\s*)/g, '$1"$2"$3'),
+    () => trimmed.replace(/(['"])?([a-zA-Z0-9_\.]+)(['"])?:/g, '"$2":'),
+  ];
+
+  // 依次尝试每个转换后的字符串
+  for (const candidate of candidates) {
+    const transformed = candidate();
+    parsed = tryParse(transformed);
+    if (parsed !== null) return parsed;
   }
 
   throw new Error("Unable to parse JSON 无法解析 JSON 数据。");
