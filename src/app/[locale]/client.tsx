@@ -57,7 +57,7 @@ const ClientPage = () => {
         </a>{" "}
         {tSubtitle("clientDescription")} {t("privacyNotice")}
       </Paragraph>
-      <Tabs activeKey={activeKey} onChange={handleTabChange} items={items} type="card" className="w-full" destroyInactiveTabPane={true} animated={{ inkBar: true, tabPane: true }} />
+      <Tabs activeKey={activeKey} onChange={handleTabChange} items={items} type="card" className="w-full" destroyOnHidden={true} animated={{ inkBar: true, tabPane: true }} />
     </>
   );
 };
