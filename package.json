@@ -1,6 +1,6 @@
 {
   "name": "subtitle-translator",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "license": "MIT",
   "scripts": {
     "dev": "next dev",
@@ -14,14 +14,14 @@
   "dependencies": {
     "@ant-design/nextjs-registry": "^1.0.2",
     "@next/third-parties": "14.2.28",
-    "antd": "^5.24.8",
-    "deepl-node": "^1.17.3",
+    "antd": "^5.25.1",
+    "deepl-node": "^1.18.0",
     "file-saver": "^2.0.5",
-    "http-proxy-middleware": "^3.0.3",
+    "http-proxy-middleware": "^3.0.5",
     "jschardet": "^3.1.4",
     "jsonpath-plus": "^10.3.0",
     "next": "14.2.28",
-    "next-intl": "^4.0.3",
+    "next-intl": "^4.1.0",
     "next-sitemap": "^4.2.3",
     "next-themes": "^0.4.6",
     "opencc-js": "^1.0.5",
