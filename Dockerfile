@@ -8,7 +8,8 @@ WORKDIR /app
 COPY package.json yarn.lock ./
 
 # 安装依赖，并清理缓存
-RUN yarn install --frozen-lockfile --network-timeout 100000
+RUN yarn install --frozen-lockfile --network-timeout 100000 && \
+    yarn cache clean
 
 # 复制项目源代码到工作目录
 COPY . .
