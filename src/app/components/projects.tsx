@@ -166,7 +166,7 @@ export const AppMenu = () => {
       return null;
     }
     return {
-      label: <Link href={`/${locale}/${project.key}`}>{project.onlyzh && locale === "zh" ? project.titleKey : t(project.titleKey)}</Link>,
+      label: <Link href={`https://tools.newzone.top/${locale}/${project.key}`}>{project.onlyzh && locale === "zh" ? project.titleKey : t(project.titleKey)}</Link>,
       key: project.key,
       icon: project.icon,
     };
