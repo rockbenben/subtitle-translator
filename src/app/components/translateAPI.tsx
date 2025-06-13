@@ -351,7 +351,7 @@ const translationServices = {
   },
 
   deepseek: async (params: TranslateTextParams) => {
-    const { text, targetLanguage, sourceLanguage, apiKey, temperature, sysPrompt, userPrompt } = params;
+    const { text, targetLanguage, sourceLanguage, apiKey, model, temperature, sysPrompt, userPrompt } = params;
     const prompt = getAIModelPrompt(text, userPrompt, targetLanguage, sourceLanguage);
 
     const response = await fetch("https://api.deepseek.com/chat/completions", {
@@ -365,7 +365,7 @@ const translationServices = {
           { role: "system", content: sysPrompt },
           { role: "user", content: prompt },
         ],
-        model: "deepseek-chat",
+        model: model,
         temperature: Number(temperature),
         stream: false,
         timeout: 600000,
