@@ -157,23 +157,37 @@ const useTranslateData = () => {
       }
     }
 
-    if (translationMethod === "deepl" || translationMethod === "deeplx" || translationMethod === "llm") {
+    if (["deepl", "deeplx", "llm", "gtxFreeAPI"].includes(translationMethod)) {
       setTranslateInProgress(true);
       setProgressPercent(1);
       const tempSysPrompt = translationMethod === "llm" ? sysPrompt : undefined;
       const tempUserPrompt = translationMethod === "llm" ? userPrompt : undefined;
       const testResult = await testTranslation(translationMethod, config, tempSysPrompt, tempUserPrompt);
       if (testResult !== true) {
-        const errorMessage = translationMethod === "deeplx" ? t("deepLXUnavailable") : translationMethod === "deepl" ? t("deeplUnavailable") : t("llmUnavailable");
+        let errorMessage;
+        switch (translationMethod) {
+          case "deeplx":
+            errorMessage = t("deepLXUnavailable");
+            setTranslationMethod(DEFAULT_API);
+            break;
+          case "deepl":
+            errorMessage = t("deeplUnavailable");
+            break;
+          case "llm":
+            errorMessage = t("llmUnavailable");
+            break;
+          case "gtxFreeAPI":
+            errorMessage = "GTX Free 接口当前不可用，请检查您的网络连接。The free Google Translate API (GTX) is currently unavailable. Please check your network connection.";
+            break;
+          default:
+            errorMessage = t("translationError");
+        }
         message.open({
           type: "error",
           content: errorMessage,
           duration: 10,
         });
-        // Switch translation method based on the current one
-        if (translationMethod === "deeplx") {
-          setTranslationMethod(DEFAULT_API);
-        }
+
         setTranslateInProgress(false);
         return false;
       }
