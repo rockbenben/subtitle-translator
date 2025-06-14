@@ -450,7 +450,9 @@
     "swahili": "スワヒリ語",
     "hausa": "ハウサ語",
     "telugu": "テルグ語",
-    "marathi": "マラーティー語"
+    "marathi": "マラーティー語",
+    "urdu": "ウルドゥー語",
+    "croatian": "クロアチア語"
   },
   "CopyToClipboard": {
     "empty": "内容が空です。コピーするものがありません。",

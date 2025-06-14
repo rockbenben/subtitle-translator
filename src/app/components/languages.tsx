@@ -66,6 +66,8 @@ export const languages: LanguageOption[] = [
   { value: "kk", labelKey: "languages.kazakh", nativeLabel: "Қазақ тілі", name: "Kazakh", unsupportedMethods: DEEPL_METHODS },
   { value: "ky", labelKey: "languages.kyrgyz", nativeLabel: "Кыргызча", name: "Kyrgyz", unsupportedMethods: DEEPL_METHODS },
   { value: "tk", labelKey: "languages.turkmen", nativeLabel: "Türkmençe", name: "Turkmen", unsupportedMethods: DEEPL_METHODS },
+  { value: "ur", labelKey: "languages.urdu", nativeLabel: "اردو", name: "Urdu", unsupportedMethods: DEEPL_METHODS },
+  { value: "hr", labelKey: "languages.croatian", nativeLabel: "Hrvatski", name: "Croatian", unsupportedMethods: DEEPL_METHODS },
 ];
 
 import { useTranslations } from "next-intl";

@@ -450,7 +450,9 @@
     "swahili": "Swahili",
     "hausa": "Hausa",
     "telugu": "Telugu",
-    "marathi": "Marathi"
+    "marathi": "Marathi",
+    "urdu": "Urdu",
+    "croatian": "Croatian"
   },
   "CopyToClipboard": {
     "empty": "Content is empty, nothing to copy",

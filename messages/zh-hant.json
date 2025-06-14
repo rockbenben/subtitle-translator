@@ -132,8 +132,8 @@
   },
   "subtitle": {
     "title": "字幕翻譯工具 | 免費批量翻譯字幕（支持 srt、ass、vtt、lrc）| Subtitle Translator",
-    "description": "開源免費的 Subtitle Translator 支持 .srt、.ass、.vtt和.lrc格式字幕的單個或批量翻譯，提供 50+ 種語言互譯方案。藉助 DeepSeek、ChatGPT、自定義 AI 模型以及 Google、DeepL、Azure Translate 多接口，一鍵提取並翻譯字幕內容，免費開源，助力多語言視頻內容處理。",
-    "keywords": "字幕翻譯, srt翻譯, ass翻譯, vtt翻譯, 多語言字幕, 批量字幕翻譯, 免費翻譯, 字幕提取, DeepSeek, ChatGPT, Google翻譯, DeepL翻譯, Azure翻譯, DeepLX",
+    "description": "開源免費的 Subtitle Translator 支持 .srt、.ass、.vtt和.lrc格式字幕的單個或批量翻譯，提供50+種語言互譯方案。藉助 DeepSeek、ChatGPT、自定義 AI 模型以及 Google、DeepL、Azure Translate 多接口，一鍵提取並翻譯字幕和歌詞內容，免費開源，助力多語言視頻內容處理。",
+    "keywords": "字幕翻譯, srt翻譯, ass翻譯, vtt翻譯, lrc翻譯, 多語言字幕, 批量字幕翻譯, 免費翻譯, 字幕提取, 歌詞翻譯, DeepSeek, ChatGPT, Google翻譯, DeepL翻譯, Azure翻譯, DeepLX",
     "clientTitle": "字幕翻譯工具",
     "clientDescription": "支持 .srt、.ass、.vtt和.lrc格式字幕的單個或批量翻譯。上傳或粘貼字幕內容，選擇目標語言，一鍵提取並快速完成翻譯。",
     "dragAndDropText": "點擊或拖拽字幕文件到此處上傳（支持 ASS、SRT、VTT、LRC 格式）",
@@ -450,7 +450,9 @@
     "swahili": "斯瓦希里語",
     "hausa": "豪薩語",
     "telugu": "泰盧固語",
-    "marathi": "馬拉地語"
+    "marathi": "馬拉地語",
+    "urdu": "烏爾都語",
+    "croatian": "克羅地亞語"
   },
   "CopyToClipboard": {
     "empty": "內容爲空，無需複製",
