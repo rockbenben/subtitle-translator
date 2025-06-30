@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import { Flex, Card, Button, Typography, Input, Upload, Form, Space, message, Select, Modal, Checkbox, Progress, Tooltip, Radio, Switch, Spin } from "antd";
-import { CopyOutlined, DownloadOutlined, InboxOutlined } from "@ant-design/icons";
-import { getTextStats, downloadFile, VTT_SRT_TIME, LRC_TIME_REGEX, detectSubtitleFormat, getOutputFileExtension, filterSubLines, convertTimeToAss, assHeader } from "@/app/utils";
+import { CopyOutlined, DownloadOutlined, InboxOutlined, UploadOutlined } from "@ant-design/icons";
+import { getTextStats, downloadFile } from "@/app/utils";
+import { VTT_SRT_TIME, LRC_TIME_REGEX, detectSubtitleFormat, getOutputFileExtension, filterSubLines, convertTimeToAss, assHeader } from "@/app/utils/subtitleUtils";
 import { categorizedOptions, findMethodLabel } from "@/app/components/translateAPI";
 import { useLanguageOptions, filterLanguageOption } from "@/app/components/languages";
 import { useCopyToClipboard } from "@/app/hooks/useCopyToClipboard";
@@ -37,6 +38,8 @@ const SubtitleTranslator = () => {
     resetUpload,
   } = useFileUpload();
   const {
+    exportSettings,
+    importSettings,
     translationMethod,
     setTranslationMethod,
     translateContent,
@@ -446,6 +449,24 @@ const SubtitleTranslator = () => {
         <Button type="primary" block onClick={() => (uploadMode === "single" ? handleTranslate(performTranslation, sourceText) : handleMultipleTranslate())} disabled={translateInProgress}>
           {multiLanguageMode ? `${t("translate")} | ${t("totalLanguages")}${target_langs.length || 0}` : t("translate")}
         </Button>
+        <Tooltip title={t("exportSettingTooltip")}>
+          <Button
+            icon={<DownloadOutlined />}
+            onClick={async () => {
+              await exportSettings();
+            }}>
+            {t("exportSetting")}
+          </Button>
+        </Tooltip>
+        <Tooltip title={t("importSettingTooltip")}>
+          <Button
+            icon={<UploadOutlined />}
+            onClick={async () => {
+              await importSettings();
+            }}>
+            {t("importSetting")}
+          </Button>
+        </Tooltip>
         <Tooltip title={t("resetUploadTooltip")}>
           <Button
             onClick={() => {

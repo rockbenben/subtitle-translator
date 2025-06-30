@@ -68,7 +68,17 @@
     "result": "Result",
     "hideResultsTooltip": "Hides the results preview to prevent the page from loading large amounts of data and causing the page to lag.",
     "hideResults": "Hide results preview",
-    "multiValueHint": "If there is more than one value, separate them by spaces."
+    "multiValueHint": "If there is more than one value, separate them by spaces.",
+    "exportSetting": "Export Config",
+    "importSetting": "Import Config",
+    "exportSettingTooltip": "Download current configuration",
+    "importSettingTooltip": "Import configuration from a local file",
+    "exportSettingSuccess": "Configuration exported successfully! Please check your downloaded file.",
+    "exportSettingError": "Export failed, please try again later.",
+    "importSettingSuccess": "Configuration imported successfully!",
+    "importSettingError": "Import failed, please try again later.",
+    "importSettingparseError": "The configuration file format is incorrect or corrupted.",
+    "importSettingreadFileError": "Failed to read the file, please try again."
   },
   "json": {
     "title": "Multilingual JSON Translation - i18n Internationalization & Localization Developer Assistant | JSONTranslate",

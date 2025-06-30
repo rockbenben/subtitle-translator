@@ -68,7 +68,17 @@
     "result": "النتيجة",
     "hideResultsTooltip": "يؤدي تحديد هذا الخيار إلى إخفاء معاينة النتائج لمنع الصفحة من تحميل كميات كبيرة من البيانات والتسبب في تأخر الصفحة.",
     "hideResults": "إخفاء معاينة النتائج",
-    "multiValueHint": "إذا كان هناك أكثر من قيمة، قم بفصلها بمسافات."
+    "multiValueHint": "إذا كان هناك أكثر من قيمة، قم بفصلها بمسافات.",
+    "exportSetting": "تصدير التكوين",
+    "importSetting": "استيراد التكوين",
+    "exportSettingTooltip": "تنزيل التكوين الحالي",
+    "importSettingTooltip": "استيراد التكوين من ملف محلي",
+    "exportSettingSuccess": "تم تصدير التكوين بنجاح! يرجى التحقق من الملف الذي تم تنزيله.",
+    "exportSettingError": "فشل التصدير، يرجى المحاولة مرة أخرى لاحقًا.",
+    "importSettingSuccess": "تم استيراد التكوين بنجاح!",
+    "importSettingError": "فشل الاستيراد، يرجى المحاولة مرة أخرى لاحقًا.",
+    "importSettingparseError": "تنسيق ملف التكوين غير صحيح أو تالف.",
+    "importSettingreadFileError": "فشل في قراءة الملف، يرجى المحاولة مرة أخرى."
   },
   "json": {
     "title": "ترجمة JSON متعددة اللغات - مساعد المطور للتدويل والتعريب | JSONTranslate",

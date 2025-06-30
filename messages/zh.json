@@ -68,7 +68,17 @@
     "result": "处理结果",
     "hideResultsTooltip": "选中此选项会隐藏结果预览，以防加载大量数据导致页面卡顿",
     "hideResults": "隐藏结果预览",
-    "multiValueHint": "若存在多个值，请以空格分隔"
+    "multiValueHint": "若存在多个值，请以空格分隔",
+    "exportSetting": "导出设置",
+    "importSetting": "导入设置",
+    "exportSettingTooltip": "下载当前设置",
+    "importSettingTooltip": "从本地文件导入设置",
+    "exportSettingSuccess": "设置导出成功！请检查您的下载文件。",
+    "exportSettingError": "导出失败，请稍后重试。",
+    "importSettingSuccess": "设置导入成功！",
+    "importSettingError": "导入失败，请稍后重试。",
+    "importSettingparseError": "设置文件格式错误或已损坏。",
+    "importSettingreadFileError": "文件读取失败，请重试。"
   },
   "json": {
     "title": "多语言 JSON 翻译工具 - i18n 国际化 & 本地化开发助手 | JSONTranslate",

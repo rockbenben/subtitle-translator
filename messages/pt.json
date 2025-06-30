@@ -68,7 +68,17 @@
     "result": "Resultado",
     "hideResultsTooltip": "Marcar esta opção oculta a visualização dos resultados para evitar que a página carregue grandes quantidades de dados e cause lentidão.",
     "hideResults": "Ocultar pré-visualização dos resultados",
-    "multiValueHint": "Se houver mais de um valor, separe-os por espaços."
+    "multiValueHint": "Se houver mais de um valor, separe-os por espaços.",
+    "exportSetting": "Exportar Configuração",
+    "importSetting": "Importar Configuração",
+    "exportSettingTooltip": "Baixar a configuração atual",
+    "importSettingTooltip": "Importar configuração de um arquivo local",
+    "exportSettingSuccess": "Configuração exportada com sucesso! Verifique o arquivo baixado.",
+    "exportSettingError": "A exportação falhou, tente novamente mais tarde.",
+    "importSettingSuccess": "Configuração importada com sucesso!",
+    "importSettingError": "A importação falhou, tente novamente mais tarde.",
+    "importSettingparseError": "O formato do arquivo de configuração está incorreto ou corrompido.",
+    "importSettingreadFileError": "Falha ao ler o arquivo, por favor, tente novamente."
   },
   "json": {
     "title": "Tradução Multilíngue de JSON - Assistente de Desenvolvedor para Internacionalização & Localização (i18n) | JSONTranslate",

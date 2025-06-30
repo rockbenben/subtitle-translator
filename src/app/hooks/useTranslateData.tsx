@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { message } from "antd";
 import { loadFromLocalStorage, saveToLocalStorage } from "@/app/utils/localStorageUtils";
+import useFileUpload from "@/app/hooks/useFileUpload";
+import { downloadFile } from "@/app/utils";
 import { generateCacheSuffix, checkLanguageSupport, splitTextIntoChunks, testTranslation, useTranslation, defaultConfigs, isConfigStructureValid } from "@/app/components/translateAPI";
 import pLimit from "p-limit";
 import pRetry from "p-retry";
@@ -42,13 +44,15 @@ const useTranslateData = () => {
       if (savedConfigs) {
         setTranslationConfigs(savedConfigs);
       }
+
       setSysPrompt(loadFromLocalStorage("sysPrompt") || DEFAULT_SYS_PROMPT);
       setUserPrompt(loadFromLocalStorage("userPrompt") || DEFAULT_USER_PROMPT);
-
       setTranslationMethod(loadFromLocalStorage("translationMethod") || DEFAULT_API);
       setSourceLanguage(loadFromLocalStorage("sourceLanguage") || "auto");
       setTargetLanguage(loadFromLocalStorage("targetLanguage") || "zh");
       setTarget_langs(loadFromLocalStorage("target_langs") || ["zh"]);
+      setMultiLanguageMode(loadFromLocalStorage("multiLanguageMode") ?? false);
+
       setIsClient(true);
     };
     loadState();
@@ -64,8 +68,137 @@ const useTranslateData = () => {
       saveToLocalStorage("sourceLanguage", sourceLanguage);
       saveToLocalStorage("targetLanguage", targetLanguage);
       saveToLocalStorage("target_langs", target_langs);
+      saveToLocalStorage("multiLanguageMode", multiLanguageMode);
     }
-  }, [translationConfigs, sysPrompt, userPrompt, translationMethod, sourceLanguage, targetLanguage, target_langs, isClient]);
+  }, [translationConfigs, sysPrompt, userPrompt, translationMethod, sourceLanguage, targetLanguage, target_langs, multiLanguageMode, isClient]);
+
+  const exportSettings = async () => {
+    try {
+      const settings = {
+        translationConfigs: loadFromLocalStorage("translationConfigs"),
+        sysPrompt: loadFromLocalStorage("sysPrompt"),
+        userPrompt: loadFromLocalStorage("userPrompt"),
+        translationMethod: loadFromLocalStorage("translationMethod"),
+        sourceLanguage: loadFromLocalStorage("sourceLanguage"),
+        targetLanguage: loadFromLocalStorage("targetLanguage"),
+        target_langs: loadFromLocalStorage("target_langs"),
+        multiLanguageMode: loadFromLocalStorage("multiLanguageMode"),
+        exportDate: new Date().toISOString(),
+        version: "1.0",
+      };
+
+      const jsonString = JSON.stringify(settings, null, 2);
+      const fileName = `translation-settings-${new Date().toISOString().split("T")[0]}.json`;
+
+      await downloadFile(jsonString, fileName, "application/json");
+      message.success(t("exportSettingSuccess"));
+    } catch (error) {
+      console.error(t("exportSettingError"), error);
+      message.error(t("exportSettingError"));
+    }
+  };
+
+  const { readFile } = useFileUpload();
+  const importSettings = () => {
+    return new Promise((resolve, reject) => {
+      try {
+        // 创建隐藏的文件输入元素
+        const fileInput = document.createElement("input");
+        fileInput.type = "file";
+        fileInput.accept = ".json";
+        fileInput.style.display = "none";
+
+        fileInput.onchange = (event) => {
+          const file = (event.target as HTMLInputElement).files?.[0];
+          if (!file) {
+            message.warning(t("importSettingparseError"));
+            reject(new Error(t("importSettingparseError")));
+            return;
+          }
+
+          // 使用 useFileUpload 的 readFile 方法
+          readFile(file, (content) => {
+            try {
+              const settings = JSON.parse(content);
+
+              // 验证文件格式
+              if (!settings || typeof settings !== "object") {
+                throw new Error(t("importSettingparseError"));
+              }
+
+              // 导入设置到 localStorage 并更新状态
+              if (settings.translationConfigs !== undefined) {
+                saveToLocalStorage("translationConfigs", settings.translationConfigs);
+                setTranslationConfigs(settings.translationConfigs);
+              }
+
+              if (settings.sysPrompt !== undefined) {
+                saveToLocalStorage("sysPrompt", settings.sysPrompt);
+                setSysPrompt(settings.sysPrompt);
+              }
+
+              if (settings.userPrompt !== undefined) {
+                saveToLocalStorage("userPrompt", settings.userPrompt);
+                setUserPrompt(settings.userPrompt);
+              }
+
+              if (settings.translationMethod !== undefined) {
+                saveToLocalStorage("translationMethod", settings.translationMethod);
+                setTranslationMethod(settings.translationMethod);
+              }
+
+              if (settings.sourceLanguage !== undefined) {
+                saveToLocalStorage("sourceLanguage", settings.sourceLanguage);
+                setSourceLanguage(settings.sourceLanguage);
+              }
+
+              if (settings.targetLanguage !== undefined) {
+                saveToLocalStorage("targetLanguage", settings.targetLanguage);
+                setTargetLanguage(settings.targetLanguage);
+              }
+
+              if (settings.target_langs !== undefined) {
+                saveToLocalStorage("target_langs", settings.target_langs);
+                setTarget_langs(settings.target_langs);
+              }
+
+              if (settings.multiLanguageMode !== undefined) {
+                saveToLocalStorage("multiLanguageMode", settings.multiLanguageMode);
+                setMultiLanguageMode(settings.multiLanguageMode);
+              }
+
+              message.success(t("importSettingSuccess"));
+              resolve(settings);
+            } catch (parseError) {
+              console.error(t("importSettingparseError"), parseError);
+              message.error(t("importSettingparseError"));
+              reject(new Error(t("importSettingparseError")));
+            }
+          });
+        };
+
+        fileInput.onerror = () => {
+          message.error(t("importSettingreadFileError"));
+          reject(new Error(t("importSettingreadFileError")));
+        };
+
+        // 添加到DOM并触发点击
+        document.body.appendChild(fileInput);
+        fileInput.click();
+
+        // 清理DOM元素
+        setTimeout(() => {
+          if (document.body.contains(fileInput)) {
+            document.body.removeChild(fileInput);
+          }
+        }, 1000);
+      } catch (error) {
+        console.error(t("importSettingError"), error);
+        message.error(t("importSettingError"));
+        reject(error);
+      }
+    });
+  };
 
   const handleConfigChange = (method: string, field: string, value: string | number) => {
     setTranslationConfigs((prev) => {
@@ -309,6 +442,8 @@ const useTranslateData = () => {
   };
 
   return {
+    exportSettings,
+    importSettings,
     translationMethod,
     setTranslationMethod,
     translationConfigs,

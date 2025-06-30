@@ -68,7 +68,17 @@
     "result": "結果",
     "hideResultsTooltip": "このオプションをオンにすると、結果のプレビューが非表示になり、ページに大量のデータが読み込まれてページの表示が遅くなるのを防ぎます。",
     "hideResults": "結果のプレビューを非表示",
-    "multiValueHint": "値が複数ある場合は、スペースで区切ります。"
+    "multiValueHint": "値が複数ある場合は、スペースで区切ります。",
+    "exportSetting": "設定のエクスポート",
+    "importSetting": "設定のインポート",
+    "exportSettingTooltip": "現在の設定をダウンロード",
+    "importSettingTooltip": "ローカルファイルから設定をインポート",
+    "exportSettingSuccess": "設定が正常にエクスポートされました。ダウンロードしたファイルを確認してください。",
+    "exportSettingError": "エクスポートに失敗しました。後でもう一度お試しください。",
+    "importSettingSuccess": "設定が正常にインポートされました！",
+    "importSettingError": "インポートに失敗しました。後でもう一度お試しください。",
+    "importSettingparseError": "設定ファイルの形式が正しくないか、破損しています。",
+    "importSettingreadFileError": "ファイルの読み込みに失敗しました。もう一度お試しください。"
   },
   "json": {
     "title": "多言語 JSON 翻訳 - i18n 国際化＆ローカライズ開発者アシスタント | JSONTranslate",
