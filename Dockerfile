@@ -17,6 +17,7 @@ COPY . .
 
 # 设置环境变量
 ENV NODE_ENV=development
+ENV NEXT_TELEMETRY_DISABLED=1
 
 # 暴露端口 3000
 EXPOSE 3000
@@ -26,8 +27,8 @@ RUN yarn dev & \
     NEXT_PID=$! && \
     yarn wait-on http://localhost:3000 && \
     for lang in en zh zh-hant pt it de ru es fr ja ko hi ar bn; do \
-        echo "Warming up /$lang"; \
-        wget -qO- http://localhost:3000/$lang > /dev/null; \
+    echo "Warming up /$lang"; \
+    wget -qO- http://localhost:3000/$lang > /dev/null; \
     done && \
     kill $NEXT_PID
 
