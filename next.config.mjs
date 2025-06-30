@@ -3,7 +3,7 @@ const withNextIntl = createNextIntlPlugin();
 
 // This file is used to configure Static Next.js for the Tauri app.
 const isProd = process.env.NODE_ENV === "production";
-const internalHost = process.env.TAURI_DEV_HOST || "localhost";
+const internalHost = process.env.TAURI_DEV_HOST;
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -16,8 +16,12 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  // Configure assetPrefix or else the server won't properly resolve your assets.
-  assetPrefix: isProd ? "/" : `http://${internalHost}:3000`,
+  // Dynamically set assetPrefix based on environment
+  assetPrefix: isProd
+    ? "/" // production
+    : internalHost
+    ? `http://${internalHost}:3000` // dev + TAURI_DEV_HOST provided
+    : "/", // dev + no TAURI_DEV_HOST
 };
 
 export default withNextIntl(nextConfig);
