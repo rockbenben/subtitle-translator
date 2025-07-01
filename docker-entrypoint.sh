@@ -1,23 +1,23 @@
 #!/bin/sh
+set -e
+# Check if wget exists
+command -v wget >/dev/null 2>&1 || { echo >&2 "wget not found!"; exit 1; }
 
-# 启动 dev server 到后台
+# Start the dev server in the background
 yarn dev &
-
 DEV_PID=$!
 
-# 等待服务就绪
+# Wait until the app is ready
 npx wait-on http://localhost:3000
-
-# 稍作延迟，确保稳定
 sleep 2
 
-# 路由语言列表
+# Route language list
 langs="en zh zh-hant pt it de ru es fr ja ko hi ar bn"
 
 for lang in $langs; do
-  echo "Warming up /$lang..."
-  curl -s http://localhost:3000/$lang > /dev/null || echo "Failed warming $lang"
+  echo "Warming up /$lang"
+  wget --timeout=5 --tries=1 -qO- "http://localhost:3000/$lang" > /dev/null || true
 done
 
-# 保持容器运行
+# Keep the container running
 wait $DEV_PID
