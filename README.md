@@ -117,7 +117,9 @@ Subtitle Translator will continue to evolve based on user feedback. If you find 
 
 ## Deployment  
 
-Subtitle Translator can be deployed on Cloudflare, Vercel, or any server.
+Subtitle Translator can be deployed on Cloudflare, Vercel, EdgeOne, or any server.
+
+[![Use EdgeOne Pages to deploy](https://cdnstatic.tencentcs.com/edgeone/pages/deploy.svg)](https://edgeone.ai/pages/new?repository-url=https%3A%2F%2Fgithub.com%2Frockbenben%2Fsubtitle-translator)
 
 System Requirements:
 
