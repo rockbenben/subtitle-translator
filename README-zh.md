@@ -111,7 +111,7 @@ Subtitle Translator 允许 **将同一个字幕文件翻译成多种语言**，�
 
 Subtitle Translator 可部署到 CloudFlare、Vercel、EdgeOne 或任意服务器。
 
-[![使用 EdgeOne Pages 部署](https://cdnstatic.tencentcs.com/edgeone/pages/deploy.svg)](https://edgeone.ai/pages/new?repository-url=https%3A%2F%2Fgithub.com%2Frockbenben%2Fsubtitle-translator)
+[![使用 EdgeOne Pages 部署](https://cdnstatic.tencentcs.com/edgeone/pages/deploy.svg)](https://edgeone.ai/pages/new?repository-url=https%3A%2F%2Fgithub.com%2Frockbenben%2Fsubtitle-translator&output-directory=out&install-command=yarn+install&build-command=yarn+build%3Alang+zh)
 
 System Requirements:
 
