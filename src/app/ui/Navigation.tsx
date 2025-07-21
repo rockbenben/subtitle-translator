@@ -58,25 +58,19 @@ export function Navigation() {
     router.push(newPath);
   };
 
+  const handleLanguageMenuClick: MenuProps["onClick"] = (e) => {
+    handleLanguageChange(e.key);
+  };
+
   const getSocialIconStyle = () => ({
     fontSize: token.fontSizeXL,
     padding: token.paddingXS,
     color: theme === "light" ? token.colorText : token.colorTextLightSolid,
   });
 
-  // 优化语言菜单项样式和交互
   const languageItems: MenuProps["items"] = LANGUAGES.map((lang) => ({
     key: lang.key,
-    label: (
-      <div
-        style={{
-          padding: `${token.paddingXS}px ${token.paddingLG}px`,
-          cursor: "pointer",
-        }}
-        onClick={() => handleLanguageChange(lang.key)}>
-        {lang.label}
-      </div>
-    ),
+    label: lang.label,
   }));
 
   const bgColor = theme === "light" ? token.colorBgContainer : token.colorBgLayout;
@@ -119,11 +113,16 @@ export function Navigation() {
           />
 
           <Space size={token.marginSM}>
-              <Dropdown menu={{ items: languageItems }} placement="bottomRight">
-                <Button type="text" icon={<GlobalOutlined />}>
-                  {LANGUAGES.find((l) => l.key === locale)?.label || "English"}
-                </Button>
-              </Dropdown>
+            <Dropdown
+              menu={{
+                items: languageItems,
+                onClick: handleLanguageMenuClick,
+              }}
+              placement="bottomRight">
+              <Button type="text" icon={<GlobalOutlined />}>
+                {LANGUAGES.find((l) => l.key === locale)?.label || "English"}
+              </Button>
+            </Dropdown>
 
             <Space size={token.marginXS}>
               {isChineseLocale && (
