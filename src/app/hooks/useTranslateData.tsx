@@ -5,13 +5,19 @@ import { message } from "antd";
 import { loadFromLocalStorage, saveToLocalStorage } from "@/app/utils/localStorageUtils";
 import useFileUpload from "@/app/hooks/useFileUpload";
 import { downloadFile } from "@/app/utils";
-import { generateCacheSuffix, checkLanguageSupport, splitTextIntoChunks, testTranslation, useTranslation, defaultConfigs, isConfigStructureValid } from "@/app/components/translateAPI";
+import { generateCacheSuffix, checkLanguageSupport, splitTextIntoChunks, testTranslation, useTranslation, defaultConfigs, isConfigStructureValid, LLM_MODELS } from "@/app/components/translateAPI";
 import pLimit from "p-limit";
 import pRetry from "p-retry";
 import { useTranslations } from "next-intl";
 
 const DEFAULT_SYS_PROMPT = "You are a professional translator. Respond only with the content, either translated or rewritten. Do not add explanations, comments, or any extra text.";
 const DEFAULT_USER_PROMPT = "Please respect the original meaning, maintain the original format, and rewrite the following content in ${targetLanguage}.\n\n${content}";
+
+// 字幕专用的默认提示词
+const DEFAULT_SUBTITLE_SYS_PROMPT =
+  "You are a professional subtitle translator with expertise in film, TV shows, and video content. You understand the nuances of dialogue, timing constraints, and cultural context. Respond only with the translated subtitle lines, maintaining the original format and timing. Do not add explanations, comments, or any extra text.";
+const DEFAULT_SUBTITLE_USER_PROMPT =
+  "Translate the following subtitle lines from ${sourceLanguage} to ${targetLanguage}. Consider the context and dialogue flow. Maintain natural conversation style and keep the translation concise for subtitle reading. Each line should be translated accurately while preserving the speaker's tone and intent:\n\n${content}";
 const DEFAULT_API = "gtxFreeAPI";
 
 const useTranslateData = () => {
@@ -330,7 +336,7 @@ const useTranslateData = () => {
     return true;
   };
 
-  const handleTranslate = async (performTranslation: Function, sourceText: string) => {
+  const handleTranslate = async (performTranslation: Function, sourceText: string, isSubtitleMode: boolean = false) => {
     setTranslatedText("");
     if (!sourceText.trim()) {
       message.error("No source text provided.");
@@ -345,7 +351,7 @@ const useTranslateData = () => {
     setTranslateInProgress(true);
     setProgressPercent(0);
 
-    await performTranslation(sourceText);
+    await performTranslation(sourceText, undefined, undefined, undefined, isSubtitleMode);
     setTranslateInProgress(false);
     setExtractedText("");
   };
@@ -373,7 +379,7 @@ const useTranslateData = () => {
     }
   }
 
-  const translateContent = async (contentLines: string[], translationMethod: string, currentTargetLang: string, fileIndex: number = 0, totalFiles: number = 1) => {
+  const translateContent = async (contentLines: string[], translationMethod: string, currentTargetLang: string, fileIndex: number = 0, totalFiles: number = 1, isSubtitleMode: boolean = false) => {
     const config = getCurrentConfig();
     // 限制并发数，确保至少为 1
     const concurrency = Math.max(Number(config?.limit) || 10, 1);
@@ -394,12 +400,22 @@ const useTranslateData = () => {
         targetLanguage: currentTargetLang,
         sourceLanguage,
         useCache: useCache,
-        sysPrompt: sysPrompt,
-        userPrompt: userPrompt,
+        sysPrompt: isSubtitleMode ? (sysPrompt === DEFAULT_SYS_PROMPT ? DEFAULT_SUBTITLE_SYS_PROMPT : sysPrompt) : sysPrompt,
+        userPrompt: isSubtitleMode ? (userPrompt === DEFAULT_USER_PROMPT ? DEFAULT_SUBTITLE_USER_PROMPT : userPrompt) : userPrompt,
         ...config,
       };
 
-      const cacheSuffix = await generateCacheSuffix(sourceLanguage, currentTargetLang, translationMethod, { model: config?.model, temperature: config?.temperature, sysPrompt, userPrompt });
+      const cacheSuffix = await generateCacheSuffix(sourceLanguage, currentTargetLang, translationMethod, {
+        model: config?.model,
+        temperature: config?.temperature,
+        sysPrompt: translationConfig.sysPrompt,
+        userPrompt: translationConfig.userPrompt,
+      });
+
+      // 对于字幕翻译且使用AI模型时，启用上下文感知翻译
+      if (isSubtitleMode && LLM_MODELS.includes(translationMethod) && contentLines.length > 1) {
+        return await translateWithContext(contentLines, translationConfig, cacheSuffix, updateProgress);
+      }
 
       if (config?.chunkSize === undefined) {
         // 按行并发翻译，每一行翻译出错时通过 p-retry 进行重试
@@ -439,6 +455,129 @@ const useTranslateData = () => {
       console.error("Error translating content:", error);
       throw error;
     }
+  };
+
+  // 新增：带上下文的翻译函数
+  const translateWithContext = async (contentLines: string[], translationConfig: any, cacheSuffix: string, updateProgress: (current: number, total: number) => void) => {
+    const contextWindow = Math.min(5, contentLines.length); // 上下文窗口大小，不超过总行数
+    const translatedLines = new Array(contentLines.length);
+
+    // 分批处理，每批包含一定的上下文
+    for (let i = 0; i < contentLines.length; i += contextWindow) {
+      const batchEnd = Math.min(i + contextWindow, contentLines.length);
+      const contextStart = Math.max(0, i - Math.floor(contextWindow / 2));
+      const contextEnd = Math.min(contentLines.length, batchEnd + Math.floor(contextWindow / 2));
+
+      // 构建包含上下文的内容
+      const contextLines = contentLines.slice(contextStart, contextEnd);
+      const targetStartIndex = i - contextStart;
+      const targetEndIndex = batchEnd - contextStart;
+
+      // 标记需要翻译的行，为每行添加序号以便识别
+      const contextWithMarkers = contextLines
+        .map((line, index) => {
+          if (index >= targetStartIndex && index < targetEndIndex) {
+            return `[TRANSLATE_${index - targetStartIndex}]${line}[/TRANSLATE_${index - targetStartIndex}]`;
+          }
+          return `[CONTEXT]${line}[/CONTEXT]`;
+        })
+        .join("\n");
+
+      try {
+        const result = await retryTranslate(contextWithMarkers, cacheSuffix, {
+          ...translationConfig,
+          userPrompt: translationConfig.userPrompt.replace(
+            "${content}",
+            `Context: This is part of a subtitle file. Only translate the lines marked with [TRANSLATE_X][/TRANSLATE_X] tags (where X is the line number). Use the [CONTEXT][/CONTEXT] lines for understanding but do not translate them. Maintain the natural flow of dialogue and keep the same numbering in your response.\n\n${contextWithMarkers}`
+          ),
+        });
+
+        // 解析结果，提取翻译的行
+        const translatedBatch = extractTranslatedLinesWithNumbers(result, batchEnd - i);
+
+        // 将翻译结果放入对应位置
+        for (let j = 0; j < translatedBatch.length; j++) {
+          if (i + j < contentLines.length && translatedBatch[j]) {
+            translatedLines[i + j] = translatedBatch[j];
+          }
+        }
+
+        updateProgress(batchEnd, contentLines.length);
+
+        // 添加延迟以避免API限制
+        if (batchEnd < contentLines.length) {
+          await delay(translationConfig.delayTime || 500);
+        }
+      } catch (error) {
+        console.warn(`Context translation failed for batch ${i}-${batchEnd}, falling back to individual translation`);
+        // 回退到逐行翻译
+        for (let j = i; j < batchEnd; j++) {
+          try {
+            translatedLines[j] = await retryTranslate(contentLines[j], cacheSuffix, translationConfig);
+          } catch (lineError) {
+            console.error(`Failed to translate line ${j}:`, lineError);
+            translatedLines[j] = contentLines[j]; // 保持原文
+          }
+          updateProgress(j + 1, contentLines.length);
+        }
+      }
+    }
+
+    // 填补任何缺失的翻译（使用原文）
+    for (let i = 0; i < translatedLines.length; i++) {
+      if (!translatedLines[i]) {
+        translatedLines[i] = contentLines[i];
+      }
+    }
+
+    return translatedLines;
+  };
+
+  // 辅助函数：从AI响应中提取带编号的翻译行
+  const extractTranslatedLinesWithNumbers = (response: string, expectedCount: number): string[] => {
+    const results = new Array(expectedCount);
+
+    // 尝试匹配带编号的翻译标记
+    for (let i = 0; i < expectedCount; i++) {
+      const regex = new RegExp(`\\[TRANSLATE_${i}\\]([\\s\\S]*?)\\[/TRANSLATE_${i}\\]`, "i");
+      const match = response.match(regex);
+      if (match) {
+        results[i] = match[1].trim();
+      }
+    }
+
+    // 如果部分匹配成功，返回结果
+    const successCount = results.filter((r) => r).length;
+    if (successCount > 0) {
+      return results;
+    }
+
+    // 回退：尝试无编号的匹配
+    return extractTranslatedLines(response, expectedCount);
+  };
+
+  // 辅助函数：从AI响应中提取翻译的行
+  const extractTranslatedLines = (response: string, expectedCount: number): string[] => {
+    // 尝试匹配翻译标记之间的内容
+    const translateRegex = /\[TRANSLATE\]([\s\S]*?)\[\/TRANSLATE\]/g;
+    const matches: string[] = [];
+    let match;
+
+    while ((match = translateRegex.exec(response)) !== null) {
+      matches.push(match[1].trim());
+    }
+
+    // 如果匹配的数量正确，返回匹配结果
+    if (matches.length === expectedCount) {
+      return matches;
+    }
+
+    // 否则，尝试按行分割并取前几行
+    const lines = response
+      .split("\n")
+      .filter((line) => line.trim())
+      .slice(0, expectedCount);
+    return lines.length === expectedCount ? lines : new Array(expectedCount).fill("");
   };
 
   return {

@@ -73,13 +73,14 @@ const SubtitleTranslator = () => {
 
   const [bilingualSubtitle, setBilingualSubtitle] = useState(false);
   const [bilingualPosition, setBilingualPosition] = useState("below"); // 'above' or 'below'
+  const [contextAwareTranslation, setContextAwareTranslation] = useState(true); // 上下文感知翻译开关
 
   useEffect(() => {
     setExtractedText("");
     setTranslatedText("");
   }, [sourceText]);
 
-  const performTranslation = async (sourceText: string, fileNameSet?: string, fileIndex?: number, totalFiles?: number) => {
+  const performTranslation = async (sourceText: string, fileNameSet?: string, fileIndex?: number, totalFiles?: number, isSubtitleMode: boolean = true) => {
     const lines = splitTextIntoLines(sourceText);
     const fileType = detectSubtitleFormat(lines);
     if (fileType === "error") {
@@ -124,7 +125,7 @@ const SubtitleTranslator = () => {
     for (const currentTargetLang of targetLanguagesToUse) {
       try {
         // Translate content using the specific target language
-        const finalTranslatedLines = await translateContent(contentLines, translationMethod, currentTargetLang, fileIndex, totalFiles);
+        const finalTranslatedLines = await translateContent(contentLines, translationMethod, currentTargetLang, fileIndex, totalFiles, isSubtitleMode && contextAwareTranslation);
         // Copy array to avoid modifying the original lines
         const translatedTextArray = [...lines];
 
@@ -439,6 +440,11 @@ const SubtitleTranslator = () => {
                 {t("useCache")}
               </Checkbox>
             </Tooltip>
+            <Tooltip title={t("contextAwareTranslationTooltip")}>
+              <Checkbox checked={contextAwareTranslation} onChange={(e) => setContextAwareTranslation(e.target.checked)}>
+                {t("contextAwareTranslation")}
+              </Checkbox>
+            </Tooltip>
             <Tooltip title={t("multiLanguageModeTooltip")}>
               <Switch checked={multiLanguageMode} onChange={(checked) => setMultiLanguageMode(checked)} checkedChildren={t("multiLanguageMode")} unCheckedChildren={t("singleLanguageMode")} />
             </Tooltip>
@@ -446,7 +452,11 @@ const SubtitleTranslator = () => {
         </Form.Item>
       </Form>
       <Flex gap="small">
-        <Button type="primary" block onClick={() => (uploadMode === "single" ? handleTranslate(performTranslation, sourceText) : handleMultipleTranslate())} disabled={translateInProgress}>
+        <Button
+          type="primary"
+          block
+          onClick={() => (uploadMode === "single" ? handleTranslate(performTranslation, sourceText, contextAwareTranslation) : handleMultipleTranslate())}
+          disabled={translateInProgress}>
           {multiLanguageMode ? `${t("translate")} | ${t("totalLanguages")}${target_langs.length || 0}` : t("translate")}
         </Button>
         <Tooltip title={t("exportSettingTooltip")}>
