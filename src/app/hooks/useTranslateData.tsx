@@ -13,11 +13,6 @@ import { useTranslations } from "next-intl";
 const DEFAULT_SYS_PROMPT = "You are a professional translator. Respond only with the content, either translated or rewritten. Do not add explanations, comments, or any extra text.";
 const DEFAULT_USER_PROMPT = "Please respect the original meaning, maintain the original format, and rewrite the following content in ${targetLanguage}.\n\n${content}";
 
-// 字幕专用的默认提示词
-const DEFAULT_SUBTITLE_SYS_PROMPT =
-  "You are a professional subtitle translator with expertise in film, TV shows, and video content. You understand the nuances of dialogue, timing constraints, and cultural context. Respond only with the translated subtitle lines, maintaining the original format and timing. Do not add explanations, comments, or any extra text.";
-const DEFAULT_SUBTITLE_USER_PROMPT =
-  "Translate the following subtitle lines from ${sourceLanguage} to ${targetLanguage}. Consider the context and dialogue flow. Maintain natural conversation style and keep the translation concise for subtitle reading. Each line should be translated accurately while preserving the speaker's tone and intent:\n\n${content}";
 const DEFAULT_API = "gtxFreeAPI";
 
 const useTranslateData = () => {
@@ -400,16 +395,16 @@ const useTranslateData = () => {
         targetLanguage: currentTargetLang,
         sourceLanguage,
         useCache: useCache,
-        sysPrompt: isSubtitleMode ? (sysPrompt === DEFAULT_SYS_PROMPT ? DEFAULT_SUBTITLE_SYS_PROMPT : sysPrompt) : sysPrompt,
-        userPrompt: isSubtitleMode ? (userPrompt === DEFAULT_USER_PROMPT ? DEFAULT_SUBTITLE_USER_PROMPT : userPrompt) : userPrompt,
+        sysPrompt: sysPrompt,
+        userPrompt: userPrompt,
         ...config,
       };
 
       const cacheSuffix = await generateCacheSuffix(sourceLanguage, currentTargetLang, translationMethod, {
         model: config?.model,
         temperature: config?.temperature,
-        sysPrompt: translationConfig.sysPrompt,
-        userPrompt: translationConfig.userPrompt,
+        sysPrompt,
+        userPrompt,
       });
 
       // 对于字幕翻译且使用AI模型时，启用上下文感知翻译
@@ -459,7 +454,7 @@ const useTranslateData = () => {
 
   // 新增：带上下文的翻译函数
   const translateWithContext = async (contentLines: string[], translationConfig: any, cacheSuffix: string, updateProgress: (current: number, total: number) => void) => {
-    const contextWindow = Math.min(5, contentLines.length); // 上下文窗口大小，不超过总行数
+    const contextWindow = Math.min(20, contentLines.length); // 上下文窗口大小，不超过总行数
     const translatedLines = new Array(contentLines.length);
 
     // 分批处理，每批包含一定的上下文
@@ -486,7 +481,7 @@ const useTranslateData = () => {
       try {
         const result = await retryTranslate(contextWithMarkers, cacheSuffix, {
           ...translationConfig,
-          userPrompt: translationConfig.userPrompt.replace(
+          userPrompt: userPrompt.replace(
             "${content}",
             `Context: This is part of a subtitle file. Only translate the lines marked with [TRANSLATE_X][/TRANSLATE_X] tags (where X is the line number). Use the [CONTEXT][/CONTEXT] lines for understanding but do not translate them. Maintain the natural flow of dialogue and keep the same numbering in your response.\n\n${contextWithMarkers}`
           ),
