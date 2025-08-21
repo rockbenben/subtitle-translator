@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { Flex, Card, Button, Typography, Input, Upload, Form, Space, message, Select, Modal, Checkbox, Progress, Tooltip, Radio, Switch, Spin } from "antd";
 import { CopyOutlined, DownloadOutlined, InboxOutlined, UploadOutlined } from "@ant-design/icons";
 import { splitTextIntoLines, getTextStats, downloadFile } from "@/app/utils";
-import { VTT_SRT_TIME, LRC_TIME_REGEX, detectSubtitleFormat, getOutputFileExtension, filterSubLines, convertTimeToAss, assHeader } from "@/app/utils/subtitleUtils";
+import { VTT_SRT_TIME, LRC_TIME_REGEX, detectSubtitleFormat, getOutputFileExtension, filterSubLines, convertTimeToAss, assHeader } from "./subtitleUtils";
 import { categorizedOptions, findMethodLabel, LLM_MODELS } from "@/app/components/translateAPI";
 import { useLanguageOptions, filterLanguageOption } from "@/app/components/languages";
 import { useCopyToClipboard } from "@/app/hooks/useCopyToClipboard";
@@ -78,7 +78,7 @@ const SubtitleTranslator = () => {
   useEffect(() => {
     setExtractedText("");
     setTranslatedText("");
-  }, [sourceText]);
+  }, [sourceText, setExtractedText, setTranslatedText]);
 
   const performTranslation = async (sourceText: string, fileNameSet?: string, fileIndex?: number, totalFiles?: number, isSubtitleMode: boolean = true) => {
     const lines = splitTextIntoLines(sourceText);

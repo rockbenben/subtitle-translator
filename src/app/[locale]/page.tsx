@@ -8,7 +8,6 @@ export async function generateMetadata({ params }) {
   return {
     title: `${t("title")} - Tools by AI`,
     description: t("description"),
-    keywords: t("keywords"),
   };
 }
 
