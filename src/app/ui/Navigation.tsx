@@ -1,9 +1,9 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { Layout, Menu, Space, ConfigProvider, theme as antTheme, Button, Dropdown } from "antd";
+import { Layout, Menu, Space, ConfigProvider, theme as antTheme, Button, Dropdown, Input } from "antd";
 import type { MenuProps } from "antd";
-import { GithubOutlined, QqOutlined, DiscordOutlined, GlobalOutlined, SunOutlined, MoonOutlined } from "@ant-design/icons";
+import { GithubOutlined, QqOutlined, DiscordOutlined, TranslationOutlined, SunOutlined, MoonOutlined, CheckOutlined } from "@ant-design/icons";
 import { useTheme } from "next-themes";
 import { useLocale } from "next-intl";
 import { AppMenu } from "@/app/components/projects";
@@ -11,21 +11,25 @@ import { AppMenu } from "@/app/components/projects";
 const { Header } = Layout;
 
 const LANGUAGES = [
-  { key: "en", label: "English" },
   { key: "zh", label: "中文" },
-  { key: "zh-hant", label: "繁体中文" },
-  { key: "pt", label: "Português" },
-  { key: "it", label: "Italiano" },
-  { key: "de", label: "Deutsch" },
-  { key: "ru", label: "Русский" },
+  { key: "en", label: "English" },
   { key: "es", label: "Español" },
-  { key: "fr", label: "Français" },
-  { key: "ja", label: "日本語" },
-  { key: "ko", label: "한국어" },
   { key: "hi", label: "हिन्दी" },
   { key: "ar", label: "العربية" },
+  { key: "pt", label: "Português" },
+  { key: "fr", label: "Français" },
+  { key: "de", label: "Deutsch" },
+  { key: "ja", label: "日本語" },
+  { key: "ko", label: "한국어" },
+  { key: "ru", label: "Русский" },
+  { key: "vi", label: "Tiếng Việt" },
+  { key: "tr", label: "Türkçe" },
+  { key: "zh-hant", label: "繁体中文" },
   { key: "bn", label: "বাংলা" },
+  { key: "id", label: "Indonesia" },
+  { key: "it", label: "Italiano" },
 ] as const;
+
 const SOCIAL_LINKS = {
   github: "https://github.com/rockbenben/subtitle-translator",
   discord: "https://discord.gg/PZTQfJ4GjX",
@@ -40,9 +44,28 @@ export function Navigation() {
   const { theme, setTheme } = useTheme();
   const { token } = antTheme.useToken();
   const locale = useLocale();
+  const [langOpen, setLangOpen] = useState(false);
+  const [langQuery, setLangQuery] = useState("");
 
   const [current, setCurrent] = useState(pathname);
   const isChineseLocale = locale === "zh" || locale === "zh-hant";
+  const currentLanguage = LANGUAGES.find((l) => l.key === locale)?.label || "English";
+
+  // 语言筛选与布局计算（需放在 early return 之前，避免违反 Hooks 规则）
+  const filteredLanguages = useMemo(() => {
+    const q = langQuery.trim().toLowerCase();
+    if (!q) return LANGUAGES as readonly { key: string; label: string }[];
+    return LANGUAGES.filter((l) => l.label.toLowerCase().includes(q) || l.key.toLowerCase().includes(q));
+  }, [langQuery]);
+  const langGridCols = LANGUAGES.length > 16 ? 3 : 2;
+  // 三列时适当加宽：按列数与单列最小宽度动态计算弹层宽度
+  const perColMin = 140; // 每列最小宽度（px），避免标签被过度挤压
+  const panelGap = 6; // 与 grid gap 保持一致
+  const panelPadding = 16; // 外层 padding: 8 上下合计
+  const langPanelWidth = Math.min(
+    680, // 上限，防止过宽
+    Math.max(420, langGridCols * perColMin + (langGridCols - 1) * panelGap + panelPadding)
+  );
 
   useEffect(() => {
     setMounted(true);
@@ -67,11 +90,6 @@ export function Navigation() {
     padding: token.paddingXS,
     color: theme === "light" ? token.colorText : token.colorTextLightSolid,
   });
-
-  const languageItems: MenuProps["items"] = LANGUAGES.map((lang) => ({
-    key: lang.key,
-    label: lang.label,
-  }));
 
   const bgColor = theme === "light" ? token.colorBgContainer : token.colorBgLayout;
 
@@ -114,13 +132,75 @@ export function Navigation() {
 
           <Space size={token.marginSM}>
             <Dropdown
-              menu={{
-                items: languageItems,
-                onClick: handleLanguageMenuClick,
-              }}
+              open={langOpen}
+              onOpenChange={setLangOpen}
+              trigger={["click"]}
+              destroyOnHidden
+              arrow={{ pointAtCenter: true }}
+              menu={{ items: [] }}
+              popupRender={() => (
+                <div
+                  style={{
+                    width: langPanelWidth,
+                    maxWidth: "90vw",
+                    padding: 8,
+                    background: bgColor,
+                    borderRadius: 8,
+                    boxShadow: theme === "light" ? token.boxShadowSecondary : token.boxShadow,
+                    border: `1px solid ${theme === "light" ? token.colorBorderSecondary : token.colorBorder}`,
+                  }}>
+                  <Input
+                    allowClear
+                    size="small"
+                    aria-label="Search language"
+                    placeholder="Search language / 语言 / Idioma..."
+                    prefix={<TranslationOutlined />}
+                    value={langQuery}
+                    autoFocus={langOpen}
+                    onChange={(e) => setLangQuery(e.target.value)}
+                  />
+                  <div
+                    style={{
+                      marginTop: 8,
+                      maxHeight: 360,
+                      overflowY: "auto",
+                      display: "grid",
+                      gridTemplateColumns: `repeat(${langGridCols}, minmax(${perColMin}px, 1fr))`,
+                      gap: 6,
+                      paddingBottom: 4,
+                    }}>
+                    {filteredLanguages.map((lang) => {
+                      const selected = lang.key === locale;
+                      return (
+                        <Button
+                          key={lang.key}
+                          size="small"
+                          type={selected ? "primary" : "text"}
+                          style={{
+                            justifyContent: "space-between",
+                            display: "flex",
+                            width: "100%",
+                            textAlign: "left",
+                          }}
+                          onClick={() => {
+                            handleLanguageChange(lang.key);
+                            setLangOpen(false);
+                          }}>
+                          <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                            {lang.label}
+                            <span style={{ opacity: 0.7, marginLeft: 6 }}>({lang.key})</span>
+                          </span>
+                          {selected && <CheckOutlined />}
+                        </Button>
+                      );
+                    })}
+                    {filteredLanguages.length === 0 && <div style={{ padding: 8, color: token.colorTextSecondary }}>No match</div>}
+                  </div>
+                </div>
+              )}
               placement="bottomRight">
-              <Button type="text" icon={<GlobalOutlined />}>
-                {LANGUAGES.find((l) => l.key === locale)?.label || "English"}
+              <Button type="text" icon={<TranslationOutlined />}>
+                {currentLanguage}
               </Button>
             </Dropdown>
 
