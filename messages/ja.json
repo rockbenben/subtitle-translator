@@ -84,8 +84,7 @@
   },
   "json": {
     "title": "多言語 JSON 翻訳 - i18n 国際化＆ローカライズ開発者アシスタント | JSONTranslate",
-    "description": "JSONTranslate は、開発者、コンテンツ作成者、プロジェクトマネージャー向けに設計された、軽量かつ効率的な多言語 JSON 翻訳ツールです。DeepSeek、ChatGPT、Google、DeepL、Azure の翻訳 API を活用して、JSON ドキュメントを迅速に複数言語に変換し、国際化およびローカライズプロジェクトを完全にサポートします。",
-    "keywords": "JSONTranslate, JSON翻訳ツール, 国際化, ローカライズ, i18n, 開発者ツール, Crowdin代替, 無料翻訳, 多言語翻訳, 翻訳API, ChatGPT, DeepSeek, Google翻訳, DeepL, Azure翻訳, 自動JSON翻訳, プログラミング言語翻訳",
+    "description": "JSONTranslate は JSON を多言語に高速翻訳する開発者向けツール。DeepSeek・ChatGPT・Google/DeepL/Azure に対応し、構造を保ったまま i18n/ローカライズを効率化します。",
     "clientTitle": "多言語 JSON 翻訳ツール",
     "clientDescription": "JSONTranslate は、開発者やコンテンツ作成者向けに、JSON データの翻訳を効率的かつ軽量に行うソリューションを提供します。DeepSeek、ChatGPT、および主要な翻訳 API に対応しており、国際化およびローカライズプロジェクトを迅速に実現できます。多言語のウェブサイトやアプリケーションの開発、または多言語データセットの取り扱いに最適です。",
     "dragAndDropText": "JSON/TXT ファイルをクリックまたはドラッグ＆ドロップしてアップロード",
@@ -125,8 +124,7 @@
   },
   "markdown": {
     "title": "Markdown ファイル翻訳ツール | 無料マルチAPI翻訳 (DeepSeek, ChatGPT, LLM 等) | MD-translator",
-    "description": "オープンソースの MD-translator は、Markdown ドキュメントを一括で簡単に翻訳し、同時に複数の翻訳先言語に対応します。DeepSeek、ChatGPT、カスタム LLM、Google、DeepL、Azure Translate などの無料翻訳 API に対応しており、オープンソースで効率的な多言語コンテンツの国際化を支援します。",
-    "keywords": "Markdown翻訳, MD翻訳, ファイル翻訳, 一括翻訳, 多言語翻訳, 無料翻訳, DeepSeek, ChatGPT, カスタムLLM, Google翻訳, DeepL翻訳, Azure翻訳",
+    "description": "MD‑translator は Markdown を一括多言語翻訳。DeepSeek・ChatGPT・カスタム LLM・Google/DeepL/Azure 対応。書式・コード・数式を保持し、文書の国際化を効率化。",
     "clientTitle": "Markdown ファイル翻訳ツール",
     "clientDescription": "Markdown ファイルの単一または一括翻訳に対応。テキストをアップロードまたは貼り付け、翻訳先言語を選択し、ワンクリックで翻訳を完了します。",
     "dragAndDropText": "Markdown ファイルをクリックまたはドラッグ＆ドロップしてアップロード（TXT、Markdown 形式対応）",
@@ -144,8 +142,7 @@
   },
   "subtitle": {
     "title": "字幕翻訳ツール | 無料バッチ字幕翻訳（srt、ass、vtt、lrc対応）| Subtitle Translator",
-    "description": "オープンソースかつ無料のSubtitle Translatorは、.srt、.ass、.vtt、.lrc形式の字幕を単一またはバッチで翻訳でき、50以上の言語間翻訳を提供します。DeepSeek、ChatGPT、カスタムAIモデル、Google、DeepL、Azure Translateなど複数のインターフェースを活用し、字幕や歌詞の内容をワンクリックで抽出・翻訳。無料でオープンソース、多言語ビデオコンテンツの処理を支援します。",
-    "keywords": "字幕翻訳、srt翻訳、ass翻訳、vtt翻訳、lrc翻訳、多言語字幕、バッチ字幕翻訳、無料翻訳、字幕抽出、歌詞翻訳、DeepSeek、ChatGPT、Google翻訳、DeepL翻訳、Azure翻訳、DeepLX",
+    "description": ".srt/.ass/.vtt/.lrc を 50+ 言語へ翻訳。DeepSeek・ChatGPT・Google/DeepL/Azure 対応。タイムラインと体裁を維持し、二重表示と一括エクスポートに対応。",
     "clientTitle": "字幕翻訳ツール",
     "clientDescription": ".srt、.ass、.vtt、.lrc形式の字幕を単一またはバッチで翻訳可能。字幕内容をアップロードまたは貼り付け、ターゲット言語を選択し、ワンクリックで翻訳を完了。",
     "dragAndDropText": "ここをクリックまたは字幕ファイルをドラッグ＆ドロップしてアップロード（ASS、SRT、VTT、LRC形式対応）",
@@ -164,9 +161,8 @@
     "bilingualError": "元の字幕形式が複雑すぎる可能性があります。バイリンガル字幕のチェックを外してみてください。"
   },
   "text-splitter": {
-    "title": "テキストスプリッター | 無料長文分割ツール（文字数制限および文単位分割対応）",
-    "description": "効率的なテキスト分割ツールで、長文を文字数または完全な文単位で分割します。DeepSeek、ChatGPT、その他の AI LLM のトークン制限管理、ドキュメント編集、ソーシャルメディアコンテンツ最適化に最適です。自動分割と一括エクスポートに対応し、テキスト管理とコピー効率を向上させます。",
-    "keywords": "テキストスプリッター, 長文分割, テキスト処理, 文字単位分割, ChatGPT文字制限, AIテキスト処理, 文分割, TXT分割, 記事分割, 一括エクスポート, LLMトークン管理, テキスト最適化",
+    "title": "テキスト分割ツール - AIプロンプト、ブログ、メール、SNS向けの長文を無料で分割 | AIツール",
+    "description": "長文の制限に困っている？文字数や文単位でスマート分割し、ChatGPT/LLM のトークン対策・資料作成・SNS 投稿を効率化。自動分割と一括エクスポート対応。",
     "clientTitle": "テキストスプリッター",
     "clientDescription": "このテキストスプリッターは、長文を自動的にセグメントに分割します。文字数および文単位での分割に対応しており、ChatGPT、AIモデルの入力、ドキュメント編集などに最適です。一括エクスポートにも対応しており、テキスト管理と処理効率を向上させます。UTF-8以外のテキスト（例：フランス語）は、ファイルアップロードで取り込んでください。システムがエンコーディングを自動検出し、文字化けを防ぎます。",
     "textSplit": "テキストの分割が完了しました。",
@@ -181,6 +177,13 @@
     "customSplitSymbol": "カスタマイズされた分割シンボル",
     "chineseEndingSymbol": "中国語の語尾",
     "englishEndingSymbol": "英語の語尾",
+    "supportEscapeChars": "エスケープ文字をサポート：\\n(改行)、\\r(復帰)、\\t(タブ)、\\s(スペース)、\\\\(バックスラッシュ)",
+    "emptyForSymbolOnly": "空欄にするとシンボルのみで分割",
+    "splitBySymbol": "シンボルで分割",
+    "splitByChineseParagraph": "中国語分割",
+    "splitByChineseParagraphTooltip": "中国語段落認識アルゴリズムを使用してテキストを処理し、改行で分割",
+    "splitByEnglishParagraph": "英語分割",
+    "splitByEnglishParagraphTooltip": "英語文認識アルゴリズムを使用してテキストを段落に分割",
     "splitText": "テキスト分割",
     "segment": "セグメント",
     "mergeText": "すべての分割テキストを、2行改行で結合する",
@@ -190,15 +193,13 @@
   },
   "img-prompt": {
     "title": "IMGPrompt データ生成器",
-    "description": "IMGPrompt 用データ処理に特化したこのツールは、オブジェクトと属性をカスタマイズして、一括で JSON データを生成することができます。データ形式の変換を簡素化し、迅速な生成、編集、コピー操作を実現します。",
-    "keywords": "IMGPrompt, JSONデータ生成器, オンラインJSONエディタ, データ形式変換, 一括データ処理, カスタムオブジェクト属性, プログラミング支援, データ管理",
+    "description": "IMGPrompt 向け標準 JSON を行入力から一括生成。object/attribute をカスタマイズ、重複チェックと検証、プレビュー・コピー・エクスポートに対応。",
     "clientTitle": "IMGPrompt データ変換器",
     "clientDescription": "IMGPrompt に必要な JSON データを一括で迅速に生成します。各行に表示名と対応する言語名を、タブ（\\t）またはコロン（:）で区切って入力してください。例： 'Illustration: 插图' または 'sketch: 素描'。さらに、IMGPrompt データ内の 'object' と 'attribute' の値をカスタマイズすることも可能です。"
   },
   "flare": {
     "title": "Flare ブックマーク解析・変換ツール | 高速ブックマークインポート＆変換",
-    "description": "Flare ブックマーク解析・変換ツールを使用して、ブックマークデータを迅速に Flare 形式に変換します。『App』モードでアプリ一覧を解析するか、『Bookmark』モードでブックマーク一覧を解析し、アプリとブックマーク間のデータをシームレスに変換します。",
-    "keywords": "Flare, ブックマーク解析, ブックマーク変換, ブックマークインポート, データ変換, Appモード, Bookmarkモード",
+    "description": "ブックマークを高速に Flare 形式へ。App/Bookmark の双方向変換で階層とタグを保ったまま整理・移行。ドラッグ＆ドロップと一括処理で工数を削減。",
     "clientTitle": "Flare ブックマーク解析・変換ツール",
     "clientDescription": "このツールはブックマークデータを Flare 形式に変換します。『App』モードでアプリ一覧、または『Bookmark』モードでブックマーク一覧を解析し、アプリとブックマーク間の双方向変換に対応しています。",
     "dragAndDropText": "ファイルをクリックまたはドラッグ＆ドロップしてアップロードしてください（HTML、JSON 形式対応）",
@@ -210,8 +211,7 @@
   },
   "json-match-update": {
     "title": "JSON データマッチ＆アップデートツール",
-    "description": "このツールは、ターゲット JSON データとソース JSON データをマッチさせ、対応するウェイト値を自動的に更新します。フィールド名をカスタマイズして、シンプルで高速な処理を実現し、複数のデータ形式に対応します。",
-    "keywords": "JSONツール, JSONデータ更新, JSONマッチングツール, JSONデータ処理, JSON自動更新, データ処理ツール, JSON解析, JSONエディタ",
+    "description": "ターゲットと元の JSON をキー照合し、指定フィールドを一括更新。複数形式に対応し、欠落や競合を検知して安全に反映。差分確認に対応。",
     "clientTitle": "JSON データマッチ＆アップデート",
     "clientDescription": "このツールは、ターゲットデータの 'card_id' とソースデータの 'id' を比較し、対応する 'count' 値をソースデータの 'weight' フィールドに更新します。",
     "targetJsonPlaceholder": "ターゲット JSON データを入力してください。",
@@ -224,8 +224,7 @@
   },
   "json-node-edit": {
     "title": "JSON ノード一括編集ツール",
-    "description": "このツールを使用して、JSON ノードを簡単に編集できます。プレフィックス、サフィックスの一括追加やテキストの置換に対応し、データ処理効率を向上させます。",
-    "keywords": "JSONエディタ, JSON一括編集, JSONツール, プレフィックス/サフィックス追加, テキスト置換, 変数編集, JSON一括変更",
+    "description": "パスでノードを特定し、値に接頭辞/接尾辞付与や文字置換を一括適用。複数ノードと入れ子キーに対応し、整形と命名統一を効率化。プレビュー付きで安全に反映。",
     "clientTitle": "JSON ノード一括編集ツール",
     "clientDescription": "このツールでは、JSONデータ内の特定のノードを一括で検索し、その値を編集できます。見つかったノードに対して、プレフィックス、サフィックスの追加、またはテキストの置換を行えます。複数のノード（カンマ区切り、例：'object,attribute'）およびネストされたキー名（例：'zh.title'）の検索に対応しています。",
     "jsonPathsTooltip": "検索する JSON パスを入力してください（複数のパスはカンマで区切る）",
@@ -246,8 +245,7 @@
   },
   "json-node-inserter": {
     "title": "JSON ノード挿入 - 高速編集＆データ構造最適化",
-    "description": "このツールでは、JSONデータ内の指定位置にカスタムノードを一括で挿入できます。配列要素に簡単にノードを追加し、JSONを編集してデータ構造を最適化することで、開発効率を向上させます。注意：数字のみのキー名は、その数値順に自動的に前方にソートされます。",
-    "keywords": "JSONノード挿入, JSON編集ツール, データ構造最適化, 配列ノード追加, 一括挿入, 開発効率, データ処理",
+    "description": "参照ノード直後に新規キーを一括挿入。複数ノードや配列に対応し、構造と順序を維持。数値キーは自動ソート、重複検知で安全に拡張。差分確認に対応。",
     "clientTitle": "JSON ノード挿入ツール",
     "clientDescription": "このツールは、JSONデータ内の指定された参照ノードの後にカスタム新規ノードを一括で挿入することができます。参照ノード名（挿入位置を決定するため）と新規ノード名（複数の場合はカンマで区切る）を入力するだけで、データ構造を最適化し、コード実行効率を向上させます。注意：数字のみのキー名は昇順に自動的にソートされます。",
     "targetNode": "参照ノード",
@@ -257,8 +255,7 @@
   },
   "json-sort-classify": {
     "title": "JSON ソート＆分類ツール",
-    "description": "このツールは、主キーおよび副キーに基づいて JSON 配列を効率的にソートおよび分類します。カスタム JSONPath 式に対応し、正確で高性能なデータ管理を実現します。",
-    "keywords": "JSONソート, JSON分類, JSONデータ処理, ソートツール, 分類ツール, JSON管理, JSONPath, データ管理",
+    "description": "主キー/副キーや JSONPath で配列を並べ替え・分類。安定した再現出力で比較や表示に最適。大規模データも高速処理し、グループ化結果を出力。",
     "clientTitle": "JSON ソート＆分類ツール",
     "clientDescription": "このツールは、特定のルールに基づいて JSON データを再構成するのに役立ちます。主に以下の2つの機能を提供します：\n\n1. **ソート機能：**\n   - **目的：** JSONデータをカスタム順に並べ替えます。\n   - **使用方法：**\n     - 『ソート順序』テキストボックスに、希望する順序（1行につき1つの値）を入力します。空欄の値はデフォルト順となります。\n     - ソートに使用するフィールド名（例：'name'）を入力します。\n     - 『Sort JSON』をクリックして、並べ替えられたデータを取得します。\n\n2. **分類機能：**\n   - **目的：** 主キーと副キーに基づいてデータをグループ化し、並べ替えます。\n   - **使用方法：**\n     - 『主キーフィールド』に、第一階層のグループ化に使用するフィールド名（例：'type'）を入力します。\n     - 『副キーフィールド』に、グループ内でのソートに使用するフィールド名（例：'attribute'）を入力します。\n     - 『Classify and Sort JSON』をクリックして、グループ化とソートを完了します。",
     "sortOrder": "ソート順序",
@@ -283,8 +280,7 @@
   },
   "json-value-extractor": {
     "title": "JSON 値抽出ツール",
-    "description": "このツールを使用して、JSONデータからノードの値を簡単に抽出および整形します。",
-    "keywords": "JSON値抽出, JSON処理, プレフィックス, サフィックス, ノード抽出",
+    "description": "キー名やパスで値を抽出し、接頭辞/接尾辞を付けて整形。重複除去や結合・エクスポート対応。JSONPath とプレースホルダー保護にも対応。",
     "clientTitle": "JSON 値抽出ツール",
     "clientDescription": "キー名またはノードパスで JSON 内のキーと値のペアを検索し、その値を抽出して指定のプレフィックスやサフィックスを追加します。例：",
     "noNodeToExtract": "少なくとも1つの抽出ノードまたはキー名を追加してください。",
@@ -296,8 +292,7 @@
   },
   "json-value-swapper": {
     "title": "JSON キー・バリュー入れ替えツール",
-    "description": "JSON 配列内のキーの値を入れ替えるためのプロフェッショナルツールです。指定されたキーの値を迅速に入れ替えます。",
-    "keywords": "JSONツール, キーバリュー入れ替え, JSON処理, データ変換, フロントエンドツール, 開発者ツール",
+    "description": "配列要素の指定 2 キーの値を一括入れ替え。欠落項目の警告と結果検証に対応し、構造を保った安全な変更が可能。差分確認も可能。並び順を維持。",
     "clientTitle": "JSON キー・バリュー入れ替えツール",
     "clientDescription": "JSONデータをアップロードまたは貼り付け、指定された2つのキー名を選択すると、JSON 配列内のすべてのアイテムでそのキーの値がワンクリックで自動的に入れ替えられます。注意：本ツールは第一階層のキーのみ対応しており、ネストされたキーには対応していません。",
     "swapperKey": "入れ替えるキー",
@@ -309,8 +304,7 @@
   },
   "json-value-transformer": {
     "title": "JSON キー・バリュー変換ツール",
-    "description": "JSONPath クエリ、プリセットテンプレート、一括置換に対応したプロフェッショナルな JSON キー・バリュー変換ツールです。複雑な JSON データ構造の変換や値の移行を簡単に実行できます。",
-    "keywords": "JSONツール, キー・バリュー変換, JSON処理, JSONPath, データ変換, フロントエンドツール, 開発者ツール, データ移行",
+    "description": "JSONPath で位置を特定し、入力/出力キー規則で値を移送。条件付き変換やプレースホルダー保護、検証・テンプレート対応で整合性を確保。",
     "clientTitle": "JSON キー・バリュー変換ツール",
     "clientDescription": "JSON データのキー・バリュー変換およびマッピングを効率的に処理します。入力キーと出力キーのペアを指定すると、JSON データ内で入力キーを検索し、その値を出力キーの値に置換します。正確なデータパス指定のために JSONPath 構文に対応し、プリセットテンプレート（多言語翻訳を含む）を提供、また複雑な値の移行を可能にします。カスタムマッピングルールにも対応しており、ネストされた構造も自動的に処理してデータの整合性と正確性を確保します。",
     "presetMapping": "プリセット・マッピング",
@@ -403,10 +397,16 @@
   },
   "Metadata": {
     "title": "Tools By AI - 多言語翻訳、テキスト処理、JSON 編集 | 効率的な開発とオフィスワークに必須",
-    "description": "字幕翻訳、i18n JSON 翻訳、Markdown 翻訳、テキスト分割、中国語変換、正規表現マッチング、JSON 値抽出、ノード編集、キー置換、データマッチ＆アップデート、ブックマーク解析、データ変換など、オールインワンの AI ツールセットを発見してください。多言語翻訳やテキスト処理を扱う開発者やクリエイターに最適です。",
-    "keywords": "多言語翻訳, テキスト処理, 字幕翻訳, JSON 編集, Markdown 翻訳, テキスト分割, 中国語変換, 正規表現マッチング, JSON 値抽出, ノード編集, キー置換, データマッチアップデート, ブックマーク解析, データ変換",
+    "description": "字幕翻訳、i18n JSON、Markdown 翻訳、テキスト分割、JSON 抽出/編集/置換、照合更新、ブックマーク変換などを備えた AI ツール集。多言語処理を効率化。",
     "homeTitle": "Tools By AI",
-    "homeDescription": "多言語翻訳、テキスト処理、JSON 編集など、開発者やクリエイターが効率的に多言語翻訳やテキスト処理タスクをこなすための AI ツールセットです。"
+    "homeDescription": "多言語翻訳、テキスト処理、JSON 編集など、開発者やクリエイターが効率的に多言語翻訳やテキスト処理タスクをこなすための AI ツールセットです。",
+    "ogTitle": "Tools By AI Toolset - AI-Powered Tools for Developers and Creators",
+    "ogDescription": "An AI toolset featuring multilingual translation, text processing, JSON editing, and more to help developers and creators efficiently handle multilingual translation and text processing tasks.",
+    "ogUrl": "https://tools.newzone.top/ja",
+    "ogSiteName": "Tools By AI",
+    "ogLogo": "https://tools.newzone.top/logo.png",
+    "authorName": "RockBen",
+    "authorUrl": "https://github.com/rockbenben"
   },
   "languages": {
     "auto": "自動検出",

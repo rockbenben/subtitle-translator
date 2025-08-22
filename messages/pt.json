@@ -84,8 +84,7 @@
   },
   "json": {
     "title": "Tradução Multilíngue de JSON - Assistente de Desenvolvedor para Internacionalização & Localização (i18n) | JSONTranslate",
-    "description": "JSONTranslate é uma ferramenta leve e eficiente de tradução multilíngue de JSON, projetada para desenvolvedores, criadores de conteúdo e gerentes de projeto. Aproveite o DeepSeek, ChatGPT e APIs de tradução do Google, DeepL e Azure para converter rapidamente documentos JSON em múltiplos idiomas, oferecendo total suporte para seus projetos de internacionalização e localização.",
-    "keywords": "JSONTranslate, ferramenta de tradução de JSON, internacionalização, localização, i18n, ferramenta para desenvolvedores, alternativa ao Crowdin, tradução gratuita, tradução multilíngue, API de tradução, ChatGPT, DeepSeek, Google Translate, DeepL, Azure Translate, auto traduzir JSON, tradução de linguagem de programação",
+    "description": "JSONTranslate traduz arquivos JSON para vários idiomas. Compatível com DeepSeek, ChatGPT, Google, DeepL e Azure para acelerar fluxos i18n em sites e apps.",
     "clientTitle": "Ferramenta de Tradução Multilíngue de JSON",
     "clientDescription": "JSONTranslate oferece uma solução eficiente e leve para traduzir dados JSON para desenvolvedores e criadores de conteúdo. Suporta DeepSeek, ChatGPT e as principais APIs de tradução para ajudá-lo a alcançar rapidamente a internacionalização e localização do projeto. Seja para desenvolver um site multilíngue, aplicativo ou gerenciar conjuntos de dados multilíngues, o JSONTranslate oferece uma solução simples para traduzir o conteúdo de arquivos JSON em vários idiomas de destino.",
     "dragAndDropText": "Clique ou arraste arquivos JSON/TXT aqui para fazer o upload",
@@ -125,8 +124,7 @@
   },
   "markdown": {
     "title": "Ferramenta de Tradução de Arquivos Markdown | Tradução Multi-API Gratuita (DeepSeek, ChatGPT, LLM, etc.) | MD-translator",
-    "description": "O MD-translator de código aberto traduz documentos Markdown em massa com facilidade, suportando múltiplos idiomas de destino simultaneamente. Ele suporta DeepSeek, ChatGPT, LLM personalizado, bem como Google, DeepL e Azure Translate, entre outras APIs de tradução gratuitas. De código aberto e eficiente, facilita a internacionalização de conteúdos multilíngues.",
-    "keywords": "tradução de Markdown, tradução MD, tradução de arquivos, tradução em lote, tradução multilíngue, tradução gratuita, DeepSeek, ChatGPT, LLM personalizado, Google Translate, tradução DeepL, tradução Azure",
+    "description": "MD-translator traduz Markdown em lote para vários idiomas. Compatível com DeepSeek, ChatGPT, LLM, Google, DeepL e Azure; útil para docs e blogs.",
     "clientTitle": "Tradutor de Markdown",
     "clientDescription": "Suporta tradução única ou em lote de arquivos Markdown. Basta enviar ou colar seu texto, selecionar o idioma de destino e concluir a tradução com um clique.",
     "dragAndDropText": "Clique ou arraste arquivos Markdown aqui para enviar (suporta TXT, formatos Markdown)",
@@ -144,8 +142,7 @@
   },
   "subtitle": {
     "title": "Ferramenta de tradução de legendas | Tradução em lote gratuita de legendas (suporta srt, ass, vtt, lrc) | Subtitle Translator",
-    "description": "O Subtitle Translator, open source e gratuito, suporta tradução individual ou em lote de legendas nos formatos .srt, .ass, .vtt e .lrc, oferecendo soluções de tradução entre mais de 50 idiomas. Com a ajuda de DeepSeek, ChatGPT, modelos de IA personalizados e múltiplas interfaces como Google, DeepL e Azure Translate, extrai e traduz legendas e letras com um clique. Gratuito e open source, auxilia no processamento de conteúdo de vídeo multilíngue.",
-    "keywords": "tradução de legendas, tradução srt, tradução ass, tradução vtt, tradução lrc, legendas multilíngues, tradução de legendas em lote, tradução gratuita, extração de legendas, tradução de letras, DeepSeek, ChatGPT, Google Tradutor, DeepL Tradutor, Azure Translate, DeepLX",
+    "description": "Subtitle Translator traduz .srt/.ass/.vtt/.lrc para 50+ idiomas, em lote. Suporta DeepSeek, ChatGPT, Google e DeepL para tradução com um clique.",
     "clientTitle": "Ferramenta de tradução de legendas",
     "clientDescription": "Suporta tradução individual ou em lote de legendas nos formatos .srt, .ass, .vtt e .lrc. Faça upload ou cole o conteúdo da legenda, selecione o idioma de destino e extraia e complete a tradução com um clique.",
     "dragAndDropText": "Clique ou arraste e solte arquivos de legendas aqui para enviar (suporta formatos ASS, SRT, VTT, LRC)",
@@ -164,9 +161,8 @@
     "bilingualError": "O formato original da legenda pode ser muito complexo. Tente desmarcar legendas bilíngues."
   },
   "text-splitter": {
-    "title": "Divisor de Texto | Ferramenta Gratuita de Segmentação de Textos Longos (suporta limites de caracteres e divisão por frases)",
-    "description": "Uma ferramenta eficiente de divisão de texto que segmenta textos longos por contagem de caracteres ou por frases completas. Ideal para gerenciar limites de tokens para DeepSeek, ChatGPT e outros LLMs de IA, além de edição de documentos e otimização de conteúdo para redes sociais. Suporta segmentação automática e exportação em massa, melhorando a gestão e a eficiência na cópia de textos.",
-    "keywords": "divisor de texto, segmentação de textos longos, processamento de texto, divisão por caracteres, limite de caracteres ChatGPT, processamento de texto IA, divisão por frases, divisor de TXT, segmentação de artigos, exportação em massa de texto, gerenciamento de tokens LLM, otimização de texto",
+    "title": "Separador de Texto: Divida Conteúdo para IA e Redes Sociais | Tools by ai",
+    "description": "Seu conteúdo excede os limites de caracteres? Divida textos longos por frase ou caractere. Perfeito para prompts de IA, blogs e posts de redes sociais.",
     "clientTitle": "Divisor de Texto",
     "clientDescription": "O divisor de texto divide automaticamente textos longos em segmentos, suportando tanto a contagem de caracteres quanto a divisão por frases completas, ideal para ChatGPT, entradas de modelos de IA, edição de documentos e muito mais. Também suporta exportação em massa, melhorando a gestão e a eficiência no processamento de textos. Para textos não codificados em UTF-8 (como o francês), por favor, importe via upload de arquivo; o sistema detectará automaticamente a codificação para evitar caracteres corrompidos.",
     "textSplit": "O texto foi dividido com sucesso",
@@ -181,6 +177,13 @@
     "customSplitSymbol": "Símbolos de divisão personalizados",
     "chineseEndingSymbol": "Finais Chineses",
     "englishEndingSymbol": "Finais em inglês",
+    "supportEscapeChars": "Suporta caracteres de escape: \\n(quebra de linha), \\r(retorno de carro), \\t(tabulação), \\s(espaço), \\\\(barra invertida)",
+    "emptyForSymbolOnly": "Deixe vazio para dividir apenas por símbolos",
+    "splitBySymbol": "Dividir por Símbolo",
+    "splitByChineseParagraph": "Divisão chinesa",
+    "splitByChineseParagraphTooltip": "Usar algoritmo de reconhecimento de parágrafos chineses para processar texto e dividir por quebras de linha",
+    "splitByEnglishParagraph": "Divisão inglesa",
+    "splitByEnglishParagraphTooltip": "Usar algoritmo de reconhecimento de frases inglesas para dividir texto em parágrafos",
     "splitText": "Dividir Texto",
     "segment": "Segmento",
     "mergeText": "Mesclar todos os textos divididos, separados por duas quebras de linha",
@@ -190,15 +193,13 @@
   },
   "img-prompt": {
     "title": "Gerador de Dados IMGPrompt",
-    "description": "Projetado especificamente para o processamento de dados IMGPrompt, esta ferramenta permite gerar dados JSON em lotes personalizando objetos e atributos. Ela simplifica a conversão de formatos de dados para uma geração, edição e cópia rápidas.",
-    "keywords": "IMGPrompt, gerador de dados JSON, editor de JSON online, conversão de formato de dados, processamento em lote, atributos de objeto personalizados, assistência de programação, gerenciamento de dados",
+    "description": "Ferramenta dedicada ao IMGPrompt para gerar JSON em lote com objetos e atributos personalizados. Simplifica conversão, edição e cópia de conjuntos de dados.",
     "clientTitle": "Conversor de Dados IMGPrompt",
     "clientDescription": "Gere rapidamente os dados JSON necessários para o IMGPrompt em lotes. Basta inserir os dados linha por linha, com cada linha contendo um nome de exibição e seu respectivo nome de idioma, separados por uma tabulação ('\\t') ou dois pontos (':'). Por exemplo: 'Illustration: 插图' ou 'sketch: 素描'. Você também pode personalizar os valores para 'object' e 'attribute' nos dados IMGPrompt."
   },
   "flare": {
     "title": "Ferramenta de Análise e Conversão de Favoritos Flare | Importação e Conversão Rápidas de Favoritos",
-    "description": "Utilize a Ferramenta de Análise e Conversão de Favoritos Flare para converter rapidamente dados de favoritos para o formato Flare. Escolha o modo 'App' para analisar listas de aplicativos ou o modo 'Bookmark' para analisar listas de favoritos, e converta de forma integrada entre dados de apps e favoritos para uma gestão eficiente.",
-    "keywords": "Flare, análise de favoritos, conversão de favoritos, importação de favoritos, conversão de dados, modo App, modo Bookmark",
+    "description": "Converta favoritos para o formato Flare. Modo App para listas e Bookmark para favoritos, com conversão bidirecional para organização eficiente.",
     "clientTitle": "Ferramenta de Análise e Conversão de Favoritos Flare",
     "clientDescription": "Esta ferramenta converte dados de favoritos para o formato Flare. Você pode escolher o modo 'App' para analisar listas de aplicativos ou o modo 'Bookmark' para analisar listas de favoritos, com suporte para conversão bidirecional entre dados de apps e favoritos.",
     "dragAndDropText": "Clique ou arraste arquivos aqui para enviar (suporta formatos HTML, JSON)",
@@ -210,8 +211,7 @@
   },
   "json-match-update": {
     "title": "Ferramenta de Correspondência e Atualização de Dados JSON",
-    "description": "Esta ferramenta compara os dados JSON de destino com os dados JSON de origem e atualiza automaticamente os valores de peso correspondentes. Personalize os nomes dos campos para um processo simples e rápido que suporta múltiplos formatos de dados.",
-    "keywords": "ferramenta de JSON, atualização de dados JSON, ferramenta de correspondência de JSON, processamento de dados JSON, atualização automática de JSON, ferramenta de processamento de dados, análise de JSON, editor de JSON",
+    "description": "Compare dois conjuntos JSON e atualize automaticamente os campos correspondentes. Nomes de campos personalizáveis, compatível com múltiplos formatos de dados.",
     "clientTitle": "Correspondência e Atualização de Dados JSON",
     "clientDescription": "Esta ferramenta compara o 'card_id' dos dados de destino com o 'id' dos dados de origem e atualiza o valor correspondente de 'count' para o campo 'weight' nos dados de origem.",
     "targetJsonPlaceholder": "Por favor, insira os dados JSON de destino",
@@ -224,8 +224,7 @@
   },
   "json-node-edit": {
     "title": "Editor em Lote de Nós JSON",
-    "description": "Edite nós JSON com facilidade usando esta ferramenta. Suporta adição em lote de prefixos, sufixos ou substituição de texto para aumentar a eficiência do processamento de dados.",
-    "keywords": "editor de JSON, edição em lote de JSON, ferramenta de JSON, adicionar prefixo/sufixo, substituição de texto, edição de variáveis, modificação em lote de JSON",
+    "description": "Edite nós JSON em lote: adicione prefixos/sufixos ou substitua texto para acelerar o processamento. Suporta busca múltipla e chaves aninhadas.",
     "clientTitle": "Editor em Lote de Nós JSON",
     "clientDescription": "Esta ferramenta permite buscar em lote nós específicos nos dados JSON e editar seus valores. Você pode adicionar um prefixo, um sufixo ou realizar substituição de texto nos nós encontrados. Suporta a busca por múltiplos nós (separados por vírgulas, por exemplo: 'object,attribute') e nomes de chave aninhados (por exemplo: 'zh.title').",
     "jsonPathsTooltip": "Por favor, insira os caminhos JSON para buscar (separe múltiplos caminhos com vírgulas)",
@@ -246,8 +245,7 @@
   },
   "json-node-inserter": {
     "title": "Inserção de Nós JSON - Edição Rápida & Otimização da Estrutura de Dados",
-    "description": "Insira nós personalizados em lote em posições especificadas dentro dos dados JSON. Adicione facilmente nós aos elementos de array, edite o JSON e otimize sua estrutura de dados para aumentar a eficiência do desenvolvimento. Nota: Nomes de chaves numéricas serão automaticamente ordenados à frente com base em seu valor numérico.",
-    "keywords": "inserção de nós JSON, ferramenta de edição de JSON, otimização de estrutura de dados, adição de nós em array, inserção em lote, eficiência de desenvolvimento, processamento de dados",
+    "description": "Insira nós personalizados em lote em posições específicas do JSON. Otimize a estrutura; chaves numéricas são ordenadas automaticamente.",
     "clientTitle": "Ferramenta de Inserção de Nós JSON",
     "clientDescription": "Esta ferramenta suporta a inserção em lote de novos nós personalizados após um nó de referência especificado nos dados JSON. Basta inserir o nome do nó de referência (para determinar a posição de inserção) e o(s) nome(s) do(s) novo(s) nó(s) (vários nomes são permitidos, separados por vírgulas) para otimizar sua estrutura de dados e melhorar a eficiência de execução do código. Nota: Nomes de chaves numéricas serão automaticamente ordenados em ordem ascendente.",
     "targetNode": "Nó de Referência",
@@ -257,8 +255,7 @@
   },
   "json-sort-classify": {
     "title": "Ferramenta de Ordenação e Classificação de JSON",
-    "description": "Esta ferramenta ordena e classifica arrays JSON de forma eficiente com base em chaves primárias e secundárias. Suporta expressões personalizadas de JSONPath para uma gestão de dados precisa e de alto desempenho.",
-    "keywords": "ordenação de JSON, classificação de JSON, processamento de dados JSON, ferramenta de ordenação, ferramenta de classificação, gerenciamento de JSON, JSONPath, gestão de dados",
+    "description": "Ordene e classifique arrays JSON por chaves primárias/secundárias, com JSONPath personalizável para gestão precisa e de alto desempenho.",
     "clientTitle": "Ferramenta de Ordenação e Classificação de JSON",
     "clientDescription": "Esta ferramenta ajuda a reorganizar dados JSON com base em regras específicas, oferecendo duas funcionalidades principais:\n\n1. **Função de Ordenação:**\n   - **Propósito:** Organizar os dados JSON em uma ordem personalizada.\n   - **Como Usar:**\n     - Insira a ordem de ordenação desejada (um valor por linha) na caixa de texto 'Ordem de Ordenação'; valores em branco seguirão a ordem padrão.\n     - Insira o nome do campo a ser usado para ordenação (por exemplo, 'name').\n     - Clique em 'Ordenar JSON' para obter os dados ordenados.\n\n2. **Função de Classificação:**\n   - **Propósito:** Agrupar e ordenar os dados com base em chaves primárias e secundárias.\n   - **Como Usar:**\n     - Insira o nome do campo para agrupamento primário (por exemplo, 'type') em 'Campo de Chave Primária'.\n     - Insira o nome do campo para ordenação secundária (por exemplo, 'attribute') em 'Campo de Chave Secundária'.\n     - Clique em 'Classificar e Ordenar JSON' para concluir o agrupamento e a ordenação.",
     "sortOrder": "Ordem de Ordenação",
@@ -283,8 +280,7 @@
   },
   "json-value-extractor": {
     "title": "Ferramenta de Extração de Valores JSON",
-    "description": "Utilize a Ferramenta de Extração de Valores JSON para extrair e formatar facilmente os valores dos nós dos dados JSON.",
-    "keywords": "extração de valores JSON, processamento de JSON, prefixo, sufixo, extração de nós",
+    "description": "Extraia e formate valores de nós a partir de dados JSON. Direcione por nome de chave ou caminho e aplique prefixos/sufixos opcionais para exportação limpa.",
     "clientTitle": "Ferramenta de Extração de Valores JSON",
     "clientDescription": "Localize pares chave-valor no JSON pelo nome da chave ou caminho do nó, extraia seus valores e adicione prefixos e sufixos especificados. Exemplos de nomes de chave:",
     "noNodeToExtract": "Por favor, adicione pelo menos um nó de extração ou nome de chave",
@@ -297,7 +293,6 @@
   "json-value-swapper": {
     "title": "Trocador de Chave-Valor JSON",
     "description": "Uma ferramenta profissional para trocar os valores das chaves em arrays JSON. Troque rapidamente os valores de chaves especificadas nos itens do array JSON.",
-    "keywords": "ferramenta JSON, troca de chave-valor, processamento de JSON, conversão de dados, ferramenta para frontend, ferramenta para desenvolvedores",
     "clientTitle": "Trocador de Chave-Valor JSON",
     "clientDescription": "Troque os valores das chaves especificadas nos itens do array JSON com um clique. Envie ou cole seus dados JSON, escolha dois nomes de chaves, e a ferramenta trocará automaticamente seus valores em todos os itens do array. Nota: Esta ferramenta suporta apenas chaves de primeiro nível e não suporta chaves aninhadas.",
     "swapperKey": "Chaves a Trocar",
@@ -309,8 +304,7 @@
   },
   "json-value-transformer": {
     "title": "Ferramenta de Mapeamento de Chave-Valor JSON",
-    "description": "Uma ferramenta profissional de mapeamento de chave-valor JSON que suporta consultas JSONPath, templates predefinidos e substituições em lote. Realize transformações complexas na estrutura de dados JSON e migrações de valores com facilidade.",
-    "keywords": "ferramenta JSON, mapeamento de chave-valor, processamento de JSON, JSONPath, transformação de dados, ferramenta para frontend, ferramenta para desenvolvedores, migração de dados",
+    "description": "Mapeie chaves/valores JSON com JSONPath, modelos predefinidos e substituições em lote para transformar estruturas e migrar valores com confiabilidade.",
     "clientTitle": "Ferramenta de Mapeamento de Chave-Valor JSON",
     "clientDescription": "Gerencie de forma eficiente o mapeamento e a transformação de dados JSON. Insira um par de chaves (chave de entrada e de saída) e a ferramenta localizará a chave de entrada nos dados JSON, substituindo seu valor pelo da chave de saída. Suporta a sintaxe JSONPath para um direcionamento preciso dos caminhos dos dados, oferece templates predefinidos (incluindo traduções multilíngues) e permite migrações complexas de valores entre estruturas de dados. Regras de mapeamento personalizadas são suportadas, e estruturas aninhadas são tratadas automaticamente para garantir a integridade e precisão dos dados.",
     "presetMapping": "Mapeamento Predefinido",
@@ -403,10 +397,16 @@
   },
   "Metadata": {
     "title": "Tools By AI - Tradução Multilíngue, Processamento de Texto & Edição de JSON | Essencial para Desenvolvimento Eficiente & Trabalho Administrativo",
-    "description": "Descubra um conjunto de ferramentas impulsionado por IA que oferece tradução de legendas, tradução de JSON i18n, tradução de texto Markdown, divisão de texto, conversão de chinês, correspondência de regex, extração de valores JSON, edição de nós, substituição de chaves, comparação & atualização de dados, análise de favoritos e conversão de dados. Perfeito para desenvolvedores e criadores que lidam com tarefas de tradução multilíngue e processamento de texto.",
-    "keywords": "Tradução Multilíngue, Processamento de Texto, Tradução de Legendas, Edição de JSON, Tradução de Markdown, Divisão de Texto, Conversão de Chinês, Correspondência de Regex, Extração de Valores JSON, Edição de Nós, Substituição de Chaves, Comparação Atualização de Dados, Análise de Favoritos, Conversão de Dados",
+    "description": "Ferramentas de IA: legendas, JSON i18n, Markdown, divisão de texto, extração/edição de JSON, dados e favoritos. Para devs e creators.",
     "homeTitle": "Tools By AI",
-    "homeDescription": "Um conjunto de ferramentas AI que oferece tradução multilíngue, processamento de texto, edição de JSON e muito mais para ajudar desenvolvedores e criadores a lidar de forma eficiente com tarefas de tradução multilíngue e processamento de texto."
+    "homeDescription": "Um conjunto de ferramentas AI que oferece tradução multilíngue, processamento de texto, edição de JSON e muito mais para ajudar desenvolvedores e criadores a lidar de forma eficiente com tarefas de tradução multilíngue e processamento de texto.",
+    "ogTitle": "Tools By AI Toolset - AI-Powered Tools for Developers and Creators",
+    "ogDescription": "An AI toolset featuring multilingual translation, text processing, JSON editing, and more to help developers and creators efficiently handle multilingual translation and text processing tasks.",
+    "ogUrl": "https://tools.newzone.top/pt",
+    "ogSiteName": "Tools By AI",
+    "ogLogo": "https://tools.newzone.top/logo.png",
+    "authorName": "RockBen",
+    "authorUrl": "https://github.com/rockbenben"
   },
   "languages": {
     "auto": "Detecção Auto",

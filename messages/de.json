@@ -84,8 +84,7 @@
   },
   "json": {
     "title": "Mehrsprachige JSON-Übersetzung - i18n Internationalisierung & Lokalisierung Entwicklerassistent | JSONTranslate",
-    "description": "JSONTranslate ist ein leichtgewichtiges und effizientes Tool zur mehrsprachigen JSON-Übersetzung, entwickelt für Entwickler, Content-Ersteller und Projektmanager. Nutzen Sie DeepSeek, ChatGPT sowie Übersetzungs-APIs von Google, DeepL und Azure, um JSON-Dokumente schnell in mehrere Sprachen zu übersetzen und Ihre Internationalisierungs- und Lokalisierungsprojekte optimal zu unterstützen.",
-    "keywords": "JSONTranslate, JSON-Übersetzungstool, Internationalisierung, Lokalisierung, i18n, Entwicklertools, Crowdin-Alternative, kostenlose Übersetzung, mehrsprachige Übersetzung, Übersetzungs-API, ChatGPT, DeepSeek, Google Translate, DeepL, Azure Translate, automatische JSON-Übersetzung, Programmier-Sprachübersetzung",
+    "description": "JSONTranslate übersetzt JSON-Dateien schnell in mehrere Sprachen. Unterstützt DeepSeek, ChatGPT, Google, DeepL und Azure – für i18n‑Workflows und Lokalisierung.",
     "clientTitle": "Mehrsprachiges JSON-Übersetzungstool",
     "clientDescription": "JSONTranslate bietet eine effiziente, leichtgewichtige Lösung zur Übersetzung von JSON-Daten für Entwickler und Content-Ersteller. Es unterstützt DeepSeek, ChatGPT und führende Übersetzungs-APIs, um Ihnen zu helfen, Projekte zur Internationalisierung und Lokalisierung schnell umzusetzen. Egal ob mehrsprachige Website, Anwendung oder die Verwaltung mehrsprachiger Datensätze – JSONTranslate macht die Übersetzung von JSON-Dateiinhalten in mehrere Zielsprache einfach.",
     "dragAndDropText": "Klicken oder ziehen Sie JSON/TXT-Dateien hierher, um sie hochzuladen",
@@ -125,8 +124,7 @@
   },
   "markdown": {
     "title": "Markdown-Datei-Übersetzungstool | Kostenlose Multi-API-Übersetzung (DeepSeek, ChatGPT, LLM, etc.) | MD-translator",
-    "description": "Der Open-Source MD-translator übersetzt Markdown-Dokumente mühelos in großen Mengen und unterstützt mehrere Zielsprache gleichzeitig. Es unterstützt DeepSeek, ChatGPT, benutzerdefinierte LLM sowie Google, DeepL und Azure Translate und weitere kostenlose Übersetzungs-APIs. Open-Source und effizient erleichtert es die Internationalisierung mehrsprachiger Inhalte.",
-    "keywords": "Markdown-Übersetzung, MD-Übersetzung, Dateübersetzung, Massenübersetzung, mehrsprachige Übersetzung, kostenlose Übersetzung, DeepSeek, ChatGPT, benutzerdefinierte LLM, Google Translate, DeepL-Übersetzung, Azure-Übersetzung",
+    "description": "MD‑translator übersetzt Markdown einzeln oder im Batch in viele Sprachen. Unterstützt DeepSeek, ChatGPT, Google, DeepL und Azure – ideal für Doku und Blogs.",
     "clientTitle": "Markdown-Datei-Übersetzungstool",
     "clientDescription": "Unterstützt Einzel- oder Massenübersetzung von Markdown-Dateien. Laden Sie einfach Ihre Datei hoch oder fügen Sie Ihren Text ein, wählen Sie die Zielsprache aus und schließen Sie die Übersetzung mit einem Klick ab.",
     "dragAndDropText": "Klicken oder ziehen Sie Markdown-Dateien hierher, um sie hochzuladen (unterstützt TXT, Markdown-Formate)",
@@ -144,8 +142,7 @@
   },
   "subtitle": {
     "title": "Untertitel-Übersetzungstool | Kostenlose Stapelübersetzung von Untertiteln (unterstützt srt, ass, vtt, lrc) | Subtitle Translator",
-    "description": "Der Open-Source und kostenlose Subtitle Translator unterstützt die Einzel- oder Stapelübersetzung von Untertitelformaten .srt, .ass, .vtt und .lrc und bietet Übersetzungen zwischen über 50 Sprachen. Mit Schnittstellen zu DeepSeek, ChatGPT, benutzerdefinierten KI‑Modellen sowie Google, DeepL und Azure Translate können Untertitel und Liedtexte mit einem Klick extrahiert und übersetzt werden. Kostenlos und Open Source, unterstützt bei der Verarbeitung mehrsprachiger Videoinhalte.",
-    "keywords": "Untertitelübersetzung, srt-Übersetzung, ass-Übersetzung, vtt-Übersetzung, lrc-Übersetzung, mehrsprachige Untertitel, Stapelübersetzung von Untertiteln, kostenlose Übersetzung, Untertitel-Extraktion, Liedtextübersetzung, DeepSeek, ChatGPT, Google Übersetzer, DeepL Übersetzer, Azure Translate, DeepLX",
+    "description": "Übersetzt .srt, .ass, .vtt und .lrc einzeln oder im Batch in über 50 Sprachen – mit DeepSeek, ChatGPT, Google, DeepL und Azure. Extraktion per Klick.",
     "clientTitle": "Untertitel-Übersetzungstool",
     "clientDescription": "Unterstützt Einzel- oder Stapelübersetzung von Untertiteln in den Formaten .srt, .ass, .vtt und .lrc. Untertitel hochladen oder einfügen, Zielsprache auswählen und mit einem Klick extrahieren und übersetzen.",
     "dragAndDropText": "Hier klicken oder Untertiteldateien per Drag & Drop ablegen, um sie hochzuladen (unterstützte Formate: ASS, SRT, VTT, LRC)",
@@ -164,9 +161,8 @@
     "bilingualError": "Das ursprüngliche Untertitelformat ist möglicherweise zu komplex. Bitte versuchen Sie, die zweisprachigen Untertitel abzuwählen."
   },
   "text-splitter": {
-    "title": "Text Splitter | Kostenloses Tool zur Segmentierung langer Texte (unterstützt Zeichengrenzen und Satztrennung)",
-    "description": "Ein effizientes Tool zum Aufteilen langer Texte nach Zeichenanzahl oder vollständigen Sätzen. Ideal zur Verwaltung von Token-Grenzen für DeepSeek, ChatGPT und andere KI-LLMs sowie für Dokumentbearbeitung und die Optimierung von Social-Media-Inhalten. Unterstützt automatische Segmentierung und Massenexport, wodurch die Textverwaltung und Kopiereffizienz verbessert werden.",
-    "keywords": "Text Splitter, Segmentierung langer Texte, Textverarbeitung, Aufteilen nach Zeichen, ChatGPT-Zeichengrenze, KI-Textverarbeitung, Satztrennung, TXT-Text-Splitter, Artikel-Segmentierung, Massenexport von Texten, LLM-Token-Management, Textoptimierung",
+    "title": "Text Teilen- Tool für KI-Prompts, Blogs & Soziale Medien | Tools By AI",
+    "description": "Ihr Text ist zu lang? Teilen Sie ihn nach Zeichen oder Sätzen für KI-Prompts, Blogs und Social-Media-Posts. Massenexport für einen nahtlosen Workflow.",
     "clientTitle": "Text Splitter",
     "clientDescription": "Der Text Splitter teilt lange Texte automatisch in Segmente auf, unterstützt sowohl die Aufteilung nach Zeichenanzahl als auch nach vollständigen Sätzen – ideal für ChatGPT, KI-Modelle, Dokumentbearbeitung und mehr. Er unterstützt auch den Massenexport, was die Textverwaltung und -verarbeitung verbessert. Für Nicht-UTF-8-Texte (z.B. Französisch) bitte per Datei-Upload importieren; das System erkennt automatisch die Kodierung, um Zeichensalat zu vermeiden.",
     "textSplit": "Text wurde erfolgreich aufgeteilt",
@@ -181,6 +177,13 @@
     "customSplitSymbol": "Benutzerdefinierte Split-Symbole",
     "chineseEndingSymbol": "Chinesische Endungen",
     "englishEndingSymbol": "Englische Endungen",
+    "supportEscapeChars": "Unterstützt Escape-Zeichen: \\n(Zeilenumbruch), \\r(Wagenrücklauf), \\t(Tabulator), \\s(Leerzeichen), \\\\(Backslash)",
+    "emptyForSymbolOnly": "Leer lassen für reine Symbolaufteilung",
+    "splitBySymbol": "Nach Symbol aufteilen",
+    "splitByChineseParagraph": "Chinesische Teilung",
+    "splitByChineseParagraphTooltip": "Verwenden Sie den chinesischen Absatzerkennungsalgorithmus zur Textverarbeitung und Aufteilung nach Zeilenumbrüchen",
+    "splitByEnglishParagraph": "Englische Teilung",
+    "splitByEnglishParagraphTooltip": "Verwenden Sie den englischen Satzerkennungsalgorithmus, um Text in Absätze zu unterteilen",
     "splitText": "Text aufteilen",
     "segment": "Segment",
     "mergeText": "Alle aufgeteilten Texte zusammenführen, getrennt durch zwei Zeilenumbrüche",
@@ -190,15 +193,13 @@
   },
   "img-prompt": {
     "title": "IMGPrompt Daten-Generator",
-    "description": "Speziell für die Verarbeitung von IMGPrompt-Daten entwickelt, ermöglicht dieses Tool das Batch-Generieren von JSON-Daten durch die Anpassung von Objekten und Attributen. Es vereinfacht die Datenformatkonvertierung für schnelles Erstellen, Bearbeiten und Kopieren.",
-    "keywords": "IMGPrompt, JSON-Daten-Generator, Online-JSON-Editor, Datenformatkonvertierung, Batch-Datenverarbeitung, benutzerdefinierte Objektattribute, Programmierunterstützung, Datenverwaltung",
+    "description": "Erzeugt aus IMGPrompt‑Daten JSON im Batch. Objekte und Attribute anpassen, Formate konvertieren – für schnelles Erstellen, Bearbeiten und Kopieren.",
     "clientTitle": "IMGPrompt Daten-Konverter",
     "clientDescription": "Erzeugen Sie in Batches schnell die für IMGPrompt erforderlichen JSON-Daten. Geben Sie die Daten zeilenweise ein, wobei jede Zeile einen Anzeigennamen und den entsprechenden Sprachennamen enthält, getrennt durch einen Tabulator ('\\t') oder einen Doppelpunkt (':'). Zum Beispiel: 'Illustration: 插图' oder 'sketch: 素描'. Sie können auch die Werte für 'object' und 'attribute' in den IMGPrompt-Daten anpassen."
   },
   "flare": {
     "title": "Flare Lesezeichen-Parsing & Konvertierungstool | Schneller Lesezeichenimport und -konvertierung",
-    "description": "Verwenden Sie das Flare Lesezeichen-Parsing & Konvertierungstool, um Lesezeichendaten schnell in das Flare-Format zu konvertieren. Wählen Sie den 'App'-Modus zum Parsen von Anwendungslisten oder den 'Bookmark'-Modus zum Parsen von Lesezeichenlisten und konvertieren Sie nahtlos zwischen App- und Lesezeichendaten für eine effiziente Verwaltung.",
-    "keywords": "Flare, Lesezeichen-Parsing, Lesezeichen-Konvertierung, Lesezeichenimport, Datenkonvertierung, App-Modus, Bookmark-Modus",
+    "description": "Konvertiert Lesezeichendaten ins Flare‑Format. Modus 'App' oder 'Bookmark' wählen; bidirektionale Umwandlung sorgt für schnellen Import und klare Struktur.",
     "clientTitle": "Flare Lesezeichen-Parsing & Konvertierungstool",
     "clientDescription": "Dieses Tool konvertiert Lesezeichendaten in das Flare-Format. Sie können den 'App'-Modus zum Parsen von Anwendungslisten oder den 'Bookmark'-Modus zum Parsen von Lesezeichenlisten wählen, mit Unterstützung für eine bidirektionale Konvertierung zwischen App- und Lesezeichendaten.",
     "dragAndDropText": "Klicken oder ziehen Sie Dateien hierher, um sie hochzuladen (unterstützt HTML-, JSON-Formate)",
@@ -210,8 +211,7 @@
   },
   "json-match-update": {
     "title": "JSON-Daten-Abgleich & Aktualisierungswerkzeug",
-    "description": "Dieses Tool vergleicht Zieldaten im JSON-Format mit Quelldaten und aktualisiert automatisch die entsprechenden Gewichtswerte. Passen Sie die Feldnamen an für einen einfachen und schnellen Prozess, der mehrere Datenformate unterstützt.",
-    "keywords": "JSON-Werkzeug, JSON-Datenaktualisierung, JSON-Abgleichs-Tool, JSON-Datenverarbeitung, automatische JSON-Aktualisierung, Datenverarbeitungstool, JSON-Parsing, JSON-Editor",
+    "description": "Vergleicht Ziel‑ mit Quelldaten im JSON‑Format und aktualisiert passende Felder automatisch. Feldnamen sind anpassbar; mehrere Formate werden unterstützt.",
     "clientTitle": "JSON-Daten-Abgleich & Aktualisierung",
     "clientDescription": "Dieses Tool vergleicht die 'card_id' in den Zieldaten mit der 'id' in den Quelldaten und aktualisiert den entsprechenden 'count'-Wert im 'weight'-Feld der Quelldaten.",
     "targetJsonPlaceholder": "Bitte geben Sie die Zieldaten im JSON-Format ein",
@@ -224,8 +224,7 @@
   },
   "json-node-edit": {
     "title": "JSON-Knoten-Batch-Editor",
-    "description": "Bearbeiten Sie JSON-Knoten mühelos mit diesem Tool. Es unterstützt das Batch-Hinzufügen von Präfixen, Suffixen oder den Austausch von Text, um die Datenverarbeitungseffizienz zu steigern.",
-    "keywords": "JSON-Editor, Batch-JSON-Bearbeitung, JSON-Werkzeug, Präfix/Suffix hinzufügen, Textersetzung, Variablenbearbeitung, Massenänderung von JSON",
+    "description": "Bearbeitet JSON‑Knoten im Batch: Präfix/Suffix hinzufügen, Text ersetzen oder Werte austauschen. Unterstützt mehrere Zielknoten und verschachtelte Schlüssel.",
     "clientTitle": "JSON-Knoten-Batch-Editor",
     "clientDescription": "Mit diesem Tool können Sie gezielt nach bestimmten Knoten in JSON-Daten suchen und deren Werte bearbeiten. Sie können den gefundenen Knoten einen Präfix oder Suffix hinzufügen oder Text ersetzen. Es unterstützt die Suche nach mehreren Knoten (durch Kommas getrennt, z.B. 'object,attribute') sowie verschachtelte Schlüsselnamen (z.B. 'zh.title').",
     "jsonPathsTooltip": "Bitte geben Sie die zu suchenden JSON-Pfade ein (mehrere Pfade durch Kommas getrennt)",
@@ -246,8 +245,7 @@
   },
   "json-node-inserter": {
     "title": "JSON-Knoten-Einfügung - Schnelle Bearbeitung & Optimierung der Datenstruktur",
-    "description": "Fügen Sie benutzerdefinierte Knoten in Chargen an bestimmten Positionen innerhalb von JSON-Daten ein. Fügen Sie Knoten problemlos zu Array-Elementen hinzu, bearbeiten Sie JSON und optimieren Sie Ihre Datenstruktur, um die Entwicklungseffizienz zu steigern. Hinweis: Schlüssel, die nur aus Zahlen bestehen, werden automatisch anhand ihres numerischen Werts an den Anfang sortiert.",
-    "keywords": "JSON-Knoten-Einfügung, JSON-Bearbeitungswerkzeug, Optimierung der Datenstruktur, Hinzufügen von Array-Knoten, Batch-Einfügung, Entwicklungseffizienz, Datenverarbeitung",
+    "description": "Fügt Knoten nach einem Referenzknoten in JSON ein, auch in Array‑Elemente. Optimiert die Struktur; Zahlenschlüssel werden automatisch aufsteigend sortiert.",
     "clientTitle": "JSON-Knoten-Einfügungstool",
     "clientDescription": "Dieses Tool unterstützt die Batch-Einfügung benutzerdefinierter neuer Knoten nach einem angegebenen Referenzknoten in JSON-Daten. Geben Sie einfach den Referenzknotennamen ein (zur Bestimmung der Einfügestelle) und die neuen Knotennamen (mehrere Namen möglich, durch Kommas getrennt), um Ihre Datenstruktur zu optimieren und die Ausführungseffizienz zu verbessern. Hinweis: Schlüssel, die nur aus Zahlen bestehen, werden automatisch in aufsteigender Reihenfolge sortiert.",
     "targetNode": "Referenzknoten",
@@ -257,8 +255,7 @@
   },
   "json-sort-classify": {
     "title": "JSON-Sortier- & Klassifikationstool",
-    "description": "Dieses Tool sortiert und klassifiziert JSON-Arrays effizient basierend auf primären und sekundären Schlüsseln. Es unterstützt benutzerdefinierte JSONPath-Ausdrücke für eine präzise und leistungsstarke Datenverwaltung.",
-    "keywords": "JSON-Sortierung, JSON-Klassifikation, JSON-Datenverarbeitung, Sortierwerkzeug, Klassifikationstool, JSON-Verwaltung, JSONPath, Datenmanagement",
+    "description": "Sortiert und klassifiziert JSON‑Arrays nach Haupt‑ und Unter‑Schlüsseln. Unterstützt benutzerdefinierte Reihenfolgen und JSONPath für präzise Neuordnung.",
     "clientTitle": "JSON-Sortier- & Klassifikationstool",
     "clientDescription": "Dieses Tool hilft Ihnen, JSON-Daten basierend auf spezifischen Regeln neu zu organisieren und bietet zwei Kernfunktionen:\n\n1. **Sortierfunktion:**\n   - **Zweck:** Ordnen Sie JSON-Daten in einer benutzerdefinierten Reihenfolge an.\n   - **Anwendung:**\n     - Geben Sie die gewünschte Sortierreihenfolge (jeweils ein Wert pro Zeile) in das Textfeld 'Sortierreihenfolge' ein; leere Werte folgen der Standardreihenfolge.\n     - Geben Sie den Feldnamen an, der für die Sortierung verwendet werden soll (z.B. 'name').\n     - Klicken Sie auf 'JSON sortieren', um die sortierten Daten zu erhalten.\n\n2. **Klassifikationsfunktion:**\n   - **Zweck:** Gruppieren und sortieren Sie Daten basierend auf primären und sekundären Schlüsseln.\n   - **Anwendung:**\n     - Geben Sie den Feldnamen für die primäre Gruppierung (z.B. 'type') in das Feld 'Primäres Schlüsselfeld' ein.\n     - Geben Sie den Feldnamen für die sekundäre Sortierung (z.B. 'attribute') in das Feld 'Sekundäres Schlüsselfeld' ein.\n     - Klicken Sie auf 'JSON klassifizieren und sortieren', um den Gruppierungs- und Sortiervorgang abzuschließen.",
     "sortOrder": "Sortierreihenfolge",
@@ -283,8 +280,7 @@
   },
   "json-value-extractor": {
     "title": "JSON-Werte-Extraktionstool",
-    "description": "Verwenden Sie das JSON-Werte-Extraktionstool, um Knotenwerte aus JSON-Daten einfach zu extrahieren und zu formatieren.",
-    "keywords": "JSON-Werte-Extraktion, JSON-Verarbeitung, Präfix, Suffix, Knotenextraktion",
+    "description": "Extrahiert Knotenwerte aus JSON und formatiert sie. Ziel per Schlüsselname oder Pfad; optional Präfix/Suffix – für Listen und Mappings.",
     "clientTitle": "JSON-Werte-Extraktionstool",
     "clientDescription": "Finden Sie Schlüssel-Wert-Paare in JSON anhand von Schlüsselnamen oder Knotenpfaden, extrahieren Sie deren Werte und fügen Sie bestimmte Präfixe und Suffixe hinzu. Beispiel-Schlüsselnamen:",
     "noNodeToExtract": "Bitte fügen Sie mindestens einen Extraktionsknoten oder Schlüsselnamen hinzu",
@@ -296,8 +292,7 @@
   },
   "json-value-swapper": {
     "title": "JSON-Schlüssel-Wert-Tauscher",
-    "description": "Ein professionelles Werkzeug zum Austauschen von Schlüsselwerten in JSON-Arrays. Tauschen Sie schnell die Werte der angegebenen Schlüssel in JSON-Array-Elementen aus.",
-    "keywords": "JSON-Werkzeug, Schlüssel-Wert-Tausch, JSON-Verarbeitung, Datenkonvertierung, Frontend-Tool, Entwicklerwerkzeug",
+    "description": "Tauscht die Werte zweier Schlüssel in allen Elementen eines JSON‑Arrays. Ideal für Mapping‑Korrekturen; unterstützt nur flache Schlüssel der ersten Ebene.",
     "clientTitle": "JSON-Schlüssel-Wert-Tauscher",
     "clientDescription": "Tauschen Sie mit einem Klick die Werte der angegebenen Schlüssel in JSON-Array-Elementen aus. Laden Sie Ihre JSON-Daten hoch oder fügen Sie sie ein, wählen Sie zwei Schlüsselnamen aus, und das Tool tauscht automatisch deren Werte in allen Array-Elementen. Hinweis: Dieses Tool unterstützt nur Schlüssel der ersten Ebene und keine verschachtelten Schlüssel.",
     "swapperKey": "Zu tauschende Schlüssel",
@@ -309,8 +304,7 @@
   },
   "json-value-transformer": {
     "title": "JSON-Schlüssel-Wert-Zuordnungstool",
-    "description": "Ein professionelles JSON-Schlüssel-Wert-Zuordnungstool, das JSONPath-Abfragen, voreingestellte Vorlagen und Batch-Ersetzungen unterstützt. Führen Sie problemlos komplexe Transformationen von JSON-Datenstrukturen und Wertmigrationen durch.",
-    "keywords": "JSON-Werkzeug, Schlüssel-Wert-Zuordnung, JSON-Verarbeitung, JSONPath, Datentransformation, Frontend-Tool, Entwicklerwerkzeug, Datenmigration",
+    "description": "Ordnet Schlüssel‑Werte in JSON zu: JSONPath, Vorlagen, Batch‑Ersetzungen. Findet Quellschlüssel und ersetzt Werte durch Zielschlüssel.",
     "clientTitle": "JSON-Schlüssel-Wert-Zuordnungstool",
     "clientDescription": "Verarbeiten Sie JSON-Datenzuordnungen und -transformationen effizient. Geben Sie ein Schlüsselpaar (Eingabe- und Ausgabeschlüssel) ein und das Tool findet den Eingabeschlüssel in den JSON-Daten und ersetzt seinen Wert durch den des Ausgabeschlüssels. Es unterstützt die JSONPath-Syntax für präzises Anvisieren von Datenpfaden, bietet voreingestellte Vorlagen (einschließlich mehrsprachiger Übersetzungen) und ermöglicht komplexe Wertmigrationen über Datenstrukturen hinweg. Benutzerdefinierte Zuordnungsregeln werden unterstützt und verschachtelte Strukturen werden automatisch verarbeitet, um Datenintegrität und Genauigkeit zu gewährleisten.",
     "presetMapping": "Voreingestelltes Mapping",
@@ -403,10 +397,16 @@
   },
   "Metadata": {
     "title": "Tools By AI Toolset - Mehrsprachige Übersetzung, Textverarbeitung & JSON-Bearbeitung | Unverzichtbar für effiziente Entwicklung & Büroarbeit",
-    "description": "Entdecken Sie ein All-in-One AI-Toolset mit Funktionen wie Untertitelübersetzung, i18n JSON-Übersetzung, Markdown-Textübersetzung, Textaufteilung, chinesischer Konvertierung, Regex-Abgleich, JSON-Werteextraktion, Knotenbearbeitung, Schlüsselersetzung, Datenabgleich & Aktualisierung, Lesezeichenparsing und Datenkonvertierung. Perfekt für Entwickler und Content-Ersteller, die mehrsprachige Übersetzungs- und Textverarbeitungsaufgaben bewältigen müssen.",
-    "keywords": "Mehrsprachige Übersetzung, Textverarbeitung, Untertitelübersetzung, JSON-Bearbeitung, Markdown-Übersetzung, Textaufteilung, Chinesische Konvertierung, Regex-Abgleich, JSON-Werteextraktion, Knotenbearbeitung, Schlüsselersetzung, Datenabgleich & Aktualisierung, Lesezeichenparsing, Datenkonvertierung",
+    "description": "KI‑Toolset für Übersetzung und Text: Untertitel, Markdown, i18n‑JSON, Textsplit, JSON‑Extraktion, Knoten‑Bearbeitung, Mapping und Lesezeichen‑Parsing.",
     "homeTitle": "Tools By AI Toolset",
-    "homeDescription": "Ein AI-Toolset mit mehrsprachiger Übersetzung, Textverarbeitung, JSON-Bearbeitung und mehr, das Entwicklern und Content-Erstellern hilft, mehrsprachige Übersetzungs- und Textverarbeitungsaufgaben effizient zu bewältigen."
+    "homeDescription": "Ein AI-Toolset mit mehrsprachiger Übersetzung, Textverarbeitung, JSON-Bearbeitung und mehr, das Entwicklern und Content-Erstellern hilft, mehrsprachige Übersetzungs- und Textverarbeitungsaufgaben effizient zu bewältigen.",
+    "ogTitle": "Tools By AI Toolset - AI-Powered Tools for Developers and Creators",
+    "ogDescription": "An AI toolset featuring multilingual translation, text processing, JSON editing, and more to help developers and creators efficiently handle multilingual translation and text processing tasks.",
+    "ogUrl": "https://tools.newzone.top/de",
+    "ogSiteName": "Tools By AI",
+    "ogLogo": "https://tools.newzone.top/logo.png",
+    "authorName": "RockBen",
+    "authorUrl": "https://github.com/rockbenben"
   },
   "languages": {
     "auto": "Automatisch erkennen",

@@ -84,8 +84,7 @@
   },
   "json": {
     "title": "Multilingual JSON Translation - i18n Internationalization & Localization Developer Assistant | JSONTranslate",
-    "description": "JSONTranslate is a lightweight and efficient multilingual JSON translation tool designed for developers, content creators, and project managers. Leverage DeepSeek, ChatGPT, and translation APIs from Google, DeepL, and Azure to quickly convert JSON documents into multiple languages, fully supporting your internationalization and localization projects.",
-    "keywords": "JSONTranslate, JSON translation tool, internationalization, localization, i18n, developer tool, Crowdin alternative, free translation, multilingual translation, translation API, ChatGPT, DeepSeek, Google Translate, DeepL, Azure Translate, auto translate JSON, programming language translation",
+    "description": "Translate JSON into multiple languages with JSONTranslate. Supports DeepSeek, ChatGPT, Google/DeepL/Azure and preserves structure for i18n/localization.",
     "clientTitle": "Multilingual JSON Translation Tool",
     "clientDescription": "JSONTranslate provides an efficient, lightweight solution for translating JSON data for developers and content creators. It supports DeepSeek, ChatGPT, and major translation APIs to help you quickly achieve project internationalization and localization. Whether you're developing a multilingual website, application, or handling multilingual datasets, JSONTranslate offers a simple solution to translate JSON file contents into multiple target languages.",
     "dragAndDropText": "Click or drag JSON/TXT files here to upload",
@@ -125,8 +124,7 @@
   },
   "markdown": {
     "title": "Markdown File Translation Tool | Free Multi-API Translation (DeepSeek, ChatGPT, LLM, etc.) | MD-translator",
-    "description": "The open-source MD-translator effortlessly translates Markdown documents in bulk, supporting multiple target languages at once. It supports DeepSeek, ChatGPT, custom LLM, as well as Google, DeepL, and Azure Translate among other free translation APIs. Open-source and efficient, it facilitates multilingual content internationalization.",
-    "keywords": "Markdown translation, MD translation, file translation, bulk translation, multilingual translation, free translation, DeepSeek, ChatGPT, custom LLM, Google Translate, DeepL translation, Azure translation",
+    "description": "Translate Markdown at scale with MD‑translator. Supports DeepSeek, ChatGPT, custom LLMs and Google/DeepL/Azure. Preserves formatting, code blocks and math.",
     "clientTitle": "Markdown File Translation Tool",
     "clientDescription": "Supports single or batch translation of Markdown files. Simply upload or paste your text, select the target language, and complete the translation with one click.",
     "dragAndDropText": "Click or drag Markdown files here to upload (supports TXT, Markdown formats)",
@@ -144,8 +142,7 @@
   },
   "subtitle": {
     "title": "Subtitle Translation Tool | Free Batch Subtitle Translation (supports srt, ass, vtt, lrc) | Subtitle Translator",
-    "description": "The open-source and free Subtitle Translator supports single or batch translation of subtitle formats .srt, .ass, .vtt, and .lrc, offering translation between over 50 languages. Leveraging multiple interfaces such as DeepSeek, ChatGPT, custom AI models, as well as Google, DeepL, and Azure Translate, it extracts and translates subtitles and lyrics with one click. It’s free and open source, aiding in multilingual video content processing.",
-    "keywords": "subtitle translation, srt translation, ass translation, vtt translation, lrc translation, multilingual subtitles, batch subtitle translation, free translation, subtitle extraction, lyrics translation, DeepSeek, ChatGPT, Google Translate, DeepL Translate, Azure Translate, DeepLX",
+    "description": ".srt/.ass/.vtt/.lrc subtitles to 50+ languages via DeepSeek, ChatGPT, Google/DeepL/Azure. Keeps timing and format, supports bilingual layout and batch export.",
     "clientTitle": "Subtitle Translation Tool",
     "clientDescription": "Supports single or batch translation of .srt, .ass, .vtt, and .lrc subtitle formats. Upload or paste subtitle content, select the target language, and extract and complete translation in one click.",
     "dragAndDropText": "Click or drag and drop subtitle files here to upload (supports ASS, SRT, VTT, LRC formats)",
@@ -164,9 +161,8 @@
     "bilingualError": "The original subtitle format may be too complex. Please try deselecting bilingual subtitles."
   },
   "text-splitter": {
-    "title": "Text Splitter | Free Long Text Segmentation Tool (supports character limits and sentence splitting)",
-    "description": "An efficient text splitting tool that segments long texts by character count or complete sentences. Ideal for managing token limits for DeepSeek, ChatGPT, and other AI LLMs, as well as for document editing and social media content optimization. Supports automatic segmentation and bulk export, improving text management and copying efficiency.",
-    "keywords": "text splitter, long text segmentation, text processing, split by characters, ChatGPT character limit, AI text processing, sentence splitting, TXT text splitter, article segmentation, bulk export text, LLM token management, text optimization",
+    "title": "Text Splitter - Free Break Long Content for AI Prompts, Blogs, Emails & Social Media | Tools by AI",
+    "description": "Long content hitting limits? Split by characters or sentences for AI prompts, docs and social posts. Bulk export for a seamless workflow.",
     "clientTitle": "Text Splitter",
     "clientDescription": "The text splitter automatically divides long texts into segments, supporting both character count and complete sentence splitting, ideal for ChatGPT, AI model inputs, document editing, and more. It also supports bulk export, enhancing text management and processing efficiency. For non-UTF-8 texts (such as French), please import via file upload; the system will automatically detect the encoding to prevent garbled text.",
     "textSplit": "Text has been successfully split",
@@ -181,6 +177,13 @@
     "customSplitSymbol": "Customized Split Symbols",
     "chineseEndingSymbol": "Chinese Endings",
     "englishEndingSymbol": "English Endings",
+    "supportEscapeChars": "Supports escape characters: \\n(newline), \\r(carriage return), \\t(tab), \\s(space), \\\\(backslash)",
+    "emptyForSymbolOnly": "Leave empty to split by symbols only",
+    "splitBySymbol": "Split by Symbol",
+    "splitByChineseParagraph": "Chinese Split",
+    "splitByChineseParagraphTooltip": "Use Chinese paragraph recognition algorithm to process text and split by newlines",
+    "splitByEnglishParagraph": "English Split",
+    "splitByEnglishParagraphTooltip": "Use English sentence recognition algorithm to split text into paragraphs",
     "splitText": "Split Text",
     "segment": "Segment",
     "mergeText": "Merge all split texts, separated by two line breaks",
@@ -190,15 +193,13 @@
   },
   "img-prompt": {
     "title": "IMGPrompt Data Generator",
-    "description": "Designed specifically for IMGPrompt data processing, this tool allows you to generate JSON data in batches by customizing objects and attributes. It simplifies data format conversion for quick generation, editing, and copying operations.",
-    "keywords": "IMGPrompt, JSON data generator, online JSON editor, data format conversion, batch data processing, custom object attributes, programming assistance, data management",
+    "description": "Generate JSON for IMGPrompt from line inputs. Customize objects/attributes, convert formats with de‑dup and validation, then preview, copy, and export.",
     "clientTitle": "IMGPrompt Data Converter",
     "clientDescription": "Quickly generate the JSON data required for IMGPrompt in batches. Simply input data line by line, with each line containing a display name and its corresponding language name, separated by a tab ('\\t') or a colon (':'). For example: 'Illustration: 插图' or 'sketch: 素描'. You can also customize the values for 'object' and 'attribute' in the IMGPrompt data."
   },
   "flare": {
     "title": "Flare Bookmark Parsing & Conversion Tool | Fast Bookmark Import and Conversion",
-    "description": "Use the Flare Bookmark Parsing & Conversion Tool to quickly convert bookmark data into the Flare format. Choose 'App' mode to parse application lists or 'Bookmark' mode to parse bookmark lists, and seamlessly convert between app and bookmarks data for efficient management.",
-    "keywords": "Flare, bookmark parsing, bookmark conversion, bookmark import, data conversion, App mode, Bookmark mode",
+    "description": "Convert bookmarks to/from Flare. Parse App or Bookmark modes, drag‑and‑drop HTML/JSON, with de‑duplication and grouped export for easy management.",
     "clientTitle": "Flare Bookmark Parsing & Conversion Tool",
     "clientDescription": "This tool converts bookmark data into the Flare format. You can choose 'App' mode to parse application lists or 'Bookmark' mode to parse bookmark lists, with support for bidirectional conversion between app and bookmarks data.",
     "dragAndDropText": "Click or drag files here to upload (supports HTML, JSON formats)",
@@ -210,8 +211,7 @@
   },
   "json-match-update": {
     "title": "JSON Data Match & Update Tool",
-    "description": "This tool matches target JSON data with source JSON data and automatically updates the corresponding weight values. Customize field names for a simple, fast process that supports multiple data formats.",
-    "keywords": "JSON tool, JSON data update, JSON matching tool, JSON data processing, JSON auto-update, data processing tool, JSON parsing, JSON editor",
+    "description": "Match target and source JSON by custom keys and update fields in bulk. Supports multiple formats, conflict/missing alerts, and scales to large datasets.",
     "clientTitle": "JSON Data Match & Update",
     "clientDescription": "This tool compares the 'card_id' in the target data with the 'id' in the source data and updates the corresponding 'count' value to the 'weight' field in the source data.",
     "targetJsonPlaceholder": "Please enter target JSON data",
@@ -224,8 +224,7 @@
   },
   "json-node-edit": {
     "title": "JSON Node Batch Editor",
-    "description": "Easily edit JSON nodes with this tool. It supports batch addition of prefixes, suffixes, or text replacement to boost data processing efficiency.",
-    "keywords": "JSON editor, batch JSON editing, JSON tool, add prefix/suffix, text replacement, variable editing, JSON bulk modification",
+    "description": "Easily edit JSON nodes in bulk. Add prefixes/suffixes or replace text across paths to boost data cleanup, naming consistency and refactoring efficiency.",
     "clientTitle": "JSON Node Batch Editor",
     "clientDescription": "This tool allows you to batch search for specific nodes in JSON data and edit their values. You can add a prefix, suffix, or perform text replacement on the found nodes. It supports searching for multiple nodes (separated by commas, e.g., 'object,attribute') and nested key names (e.g., 'zh.title').",
     "jsonPathsTooltip": "Please enter the JSON paths to search (separate multiple paths with commas)",
@@ -246,8 +245,7 @@
   },
   "json-node-inserter": {
     "title": "JSON Node Insertion - Fast Editing & Data Structure Optimization",
-    "description": "Insert custom nodes in batches at specified positions within JSON data. Easily add nodes to array elements, edit JSON, and optimize your data structure to boost development efficiency. Note: Numeric-only key names will be automatically sorted to the front based on their numerical value.",
-    "keywords": "JSON node insertion, JSON editing tool, data structure optimization, array node addition, batch insertion, development efficiency, data processing",
+    "description": "Insert nodes in bulk after a reference key. Add multiple keys or array items, keep structure/order, auto‑sort numeric keys, and speed up refactoring.",
     "clientTitle": "JSON Node Insertion Tool",
     "clientDescription": "This tool supports batch insertion of custom new nodes after a specified reference node within JSON data. Simply input the reference node name (to determine the insertion point) and the new node name(s) (multiple names allowed, separated by commas) to optimize your data structure and improve code execution efficiency. Note: Numeric-only key names will be automatically sorted in ascending order.",
     "targetNode": "Reference Node",
@@ -257,8 +255,7 @@
   },
   "json-sort-classify": {
     "title": "JSON Sorting & Classification Tool",
-    "description": "This tool efficiently sorts and classifies JSON arrays based on primary and secondary keys. It supports custom JSONPath expressions for precise, high-performance data management.",
-    "keywords": "JSON sorting, JSON classification, JSON data processing, sorting tool, classification tool, JSON management, JSONPath, data management",
+    "description": "Sort and classify JSON arrays by primary/secondary keys. Supports custom JSONPath for precise, reproducible output and consistent, fast data management.",
     "clientTitle": "JSON Sorting & Classification Tool",
     "clientDescription": "This tool helps you reorganize JSON data based on specific rules, offering two core functionalities:  1. **Sorting Function:**    - **Purpose:** Arrange JSON data in a custom order.    - **How to Use:**      - Enter the desired sort order (one value per line) in the 'Sort Order' textbox; any values left blank will follow the default order.      - Enter the field name used for sorting (e.g., 'name').      - Click 'Sort JSON' to obtain the sorted data.  2. **Classification Function:**    - **Purpose:** Group and sort data based on primary and secondary keys.    - **How to Use:**      - Enter the field name for primary grouping (e.g., 'type') in 'Primary Key Field'.      - Enter the field name for secondary sorting (e.g., 'attribute') in 'Secondary Key Field'.      - Click 'Classify and Sort JSON' to complete the grouping and sorting process.",
     "sortOrder": "Sort Order",
@@ -283,8 +280,7 @@
   },
   "json-value-extractor": {
     "title": "JSON Value Extraction Tool",
-    "description": "Use the JSON Value Extraction Tool to easily extract and format node values from JSON data.",
-    "keywords": "JSON value extraction, JSON processing, prefix, suffix, node extraction",
+    "description": "Extract node values from JSON by key or path, add prefixes/suffixes, merge items, de‑duplicate and export quickly. Supports JSONPath and placeholder protection.",
     "clientTitle": "JSON Value Extraction Tool",
     "clientDescription": "Locate key-value pairs in JSON by key name or node path, extract their values, and add specified prefixes and suffixes. Example key names:",
     "noNodeToExtract": "Please add at least one extraction node or key name",
@@ -297,7 +293,6 @@
   "json-value-swapper": {
     "title": "JSON Key-Value Swapper",
     "description": "A professional tool for swapping key values in JSON arrays. Quickly swap the values of specified keys in JSON array items.",
-    "keywords": "JSON tool, key-value swap, JSON processing, data conversion, frontend tool, developer tool",
     "clientTitle": "JSON Key-Value Swapper",
     "clientDescription": "Swap the values of specified keys in JSON array items with one click. Upload or paste your JSON data, choose two key names, and the tool will automatically swap their values in all array items. Note: This tool only supports first-level keys and does not support nested keys.",
     "swapperKey": "Keys to Swap",
@@ -309,8 +304,7 @@
   },
   "json-value-transformer": {
     "title": "JSON Key-Value Mapping Tool",
-    "description": "A professional JSON key-value mapping tool that supports JSONPath queries, preset templates, and batch replacements. Easily perform complex JSON data structure transformations and value migrations.",
-    "keywords": "JSON tool, key-value mapping, JSON processing, JSONPath, data transformation, frontend tool, developer tool, data migration",
+    "description": "Map and migrate values across complex JSON. Use JSONPath for precise targeting, presets, conditional mapping, placeholders, and validation.",
     "clientTitle": "JSON Key-Value Mapping Tool",
     "clientDescription": "Efficiently handle JSON data mapping and transformation. Input a pair of keys (input and output keys) and the tool will locate the input key in the JSON data, replacing its value with that of the output key. It supports JSONPath syntax for precise data path targeting, offers preset templates (including multilingual translations), and enables complex value migrations across data structures. Custom mapping rules are supported, and nested structures are handled automatically to ensure data integrity and accuracy.",
     "presetMapping": "Preset Mapping",
@@ -341,8 +335,8 @@
   },
   "tools": {
     "subtitleTranslator": {
-      "title": "Subtitle Translator (SRT, ASS, VTT)",
-      "description": "Batch translate subtitles, supporting inter-translation among 35 languages"
+      "title": "Subtitle Translator (SRT, ASS, VTT, LRC)",
+      "description": "Batch translate subtitles across 50+ languages"
     },
     "jsonTranslate": {
       "title": "i18n JSON Translator",
@@ -395,7 +389,7 @@
   },
   "navigation": {
     "home": "Home",
-    "translate": "Multil Translation",
+    "translate": "Multilingual Translation",
     "textParser": "Text Processor",
     "jsonParser": "JSON Processor",
     "dataParser": "Data Parsing Tools",
@@ -403,10 +397,16 @@
   },
   "Metadata": {
     "title": "Tools By AI Toolset - Multilingual Translation, Text Processing & JSON Editing | Essential for Efficient Development & Office Work",
-    "description": "Discover an all-in-one AI-driven toolset featuring subtitle translation, i18n JSON translation, Markdown text translation, text splitting, Chinese conversion, regex matching, JSON value extraction, node editing, key replacement, data match & update, bookmark parsing, and data conversion. Perfect for developers and creators handling multilingual translation and text processing tasks.",
-    "keywords": "Multilingual Translation, Text Processing, Subtitle Translation, JSON Editing, Markdown Translation, Text Splitting, Chinese Conversion, Regex Matching, JSON Value Extraction, Node Editing, Key Replacement, Data Match Update, Bookmark Parsing, Data Conversion",
+    "description": "AI toolset for multilingual translation, text processing and JSON editing: subtitle, i18n JSON/Markdown translators, text splitter, JSON extract/edit/swap/map",
     "homeTitle": "Tools By AI Toolset",
-    "homeDescription": "An AI toolset featuring multilingual translation, text processing, JSON editing, and more to help developers and creators efficiently handle multilingual translation and text processing tasks."
+    "homeDescription": "An AI toolset featuring multilingual translation, text processing, JSON editing, and more to help developers and creators efficiently handle multilingual translation and text processing tasks.",
+    "ogTitle": "Tools By AI Toolset - AI-Powered Tools for Developers and Creators",
+    "ogDescription": "An AI toolset featuring multilingual translation, text processing, JSON editing, and more to help developers and creators efficiently handle multilingual translation and text processing tasks.",
+    "ogUrl": "https://tools.newzone.top/en",
+    "ogSiteName": "Tools By AI",
+    "ogLogo": "https://tools.newzone.top/logo.png",
+    "authorName": "RockBen",
+    "authorUrl": "https://github.com/rockbenben"
   },
   "languages": {
     "auto": "Auto Detect",

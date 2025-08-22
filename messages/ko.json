@@ -2,7 +2,7 @@
   "common": {
     "userGuide": "사용 방법",
     "privacyNotice": "모든 API 키와 데이터는 개인정보 보호 및 보안을 위해 귀하의 로컬 브라우저에만 저장됩니다. 문제가 발생하거나 제안 사항이 있으시면 커뮤니티나 피드백 페이지를 통해 언제든지 연락해 주십시오.",
-    "bigNotice": "큰 파일을 가져올 경우 브라우저가 응답하지 않을 수 있습니다. 큰 파일은 최적화하는 것이 좋습니다.",
+    "bigNotice": "When importing large files, your browser may become unresponsive. It is recommended to optimize large files.",
     "dragAndDropText": "여기를 클릭하거나 파일을 드래그하여 업로드하십시오 (TXT, MD, JSON 등 텍스트 형식 지원)",
     "pasteUploadContent": "또는 텍스트 내용을 직접 붙여넣기",
     "example": "예제",
@@ -84,8 +84,7 @@
   },
   "json": {
     "title": "다국어 JSON 번역 - i18n 국제화 및 현지화 개발자 도구 | JSONTranslate",
-    "description": "JSONTranslate는 개발자, 콘텐츠 제작자 및 프로젝트 관리자를 위해 설계된 가볍고 효율적인 다국어 JSON 번역 도구입니다. DeepSeek, ChatGPT, 그리고 Google, DeepL, Azure 번역 API를 활용하여 JSON 문서를 빠르게 다국어로 변환하며, 국제화 및 현지화 프로젝트를 완벽하게 지원합니다.",
-    "keywords": "JSONTranslate, JSON 번역 도구, 국제화, 현지화, i18n, 개발자 도구, Crowdin 대체, 무료 번역, 다국어 번역, 번역 API, ChatGPT, DeepSeek, Google Translate, DeepL, Azure Translate, JSON 자동 번역, 프로그래밍 언어 번역",
+    "description": "JSONTranslate는 JSON을 구조를 보존한 채 다국어로 빠르게 번역하는 개발자용 도구입니다. DeepSeek·ChatGPT·Google/DeepL/Azure 지원, i18n·현지화를 간편화합니다.",
     "clientTitle": "다국어 JSON 번역 도구",
     "clientDescription": "JSONTranslate는 개발자와 콘텐츠 제작자를 위한 효율적이고 가벼운 JSON 데이터 번역 솔루션을 제공합니다. DeepSeek, ChatGPT 및 주요 번역 API를 지원하여 프로젝트의 국제화 및 현지화를 신속하게 달성할 수 있도록 돕습니다. 다국어 웹사이트, 애플리케이션 개발 또는 다국어 데이터셋 처리가 필요할 때, JSONTranslate로 JSON 파일 내용을 간편하게 번역할 수 있습니다.",
     "dragAndDropText": "여기를 클릭하거나 JSON/TXT 파일을 드래그하여 업로드하십시오",
@@ -125,8 +124,7 @@
   },
   "markdown": {
     "title": "Markdown 파일 번역 도구 | 무료 다중 API 번역 (DeepSeek, ChatGPT, LLM 등) | MD-translator",
-    "description": "오픈 소스 MD-translator는 Markdown 문서를 일괄 번역하며, 여러 대상 언어를 동시에 지원합니다. DeepSeek, ChatGPT, 사용자 정의 LLM, 그리고 Google, DeepL, Azure Translate 등 다양한 무료 번역 API를 지원합니다. 효율적인 다국어 콘텐츠 국제화를 위해 설계되었습니다.",
-    "keywords": "Markdown 번역, MD 번역, 파일 번역, 일괄 번역, 다국어 번역, 무료 번역, DeepSeek, ChatGPT, 사용자 정의 LLM, Google Translate, DeepL 번역, Azure 번역",
+    "description": "MD‑translator는 Markdown을 일괄 다국어 번역합니다. DeepSeek·ChatGPT·커스텀 LLM·Google/DeepL/Azure 지원. 서식·코드·수식을 보존해 문서 국제화를 효율화합니다.",
     "clientTitle": "Markdown 파일 번역 도구",
     "clientDescription": "Markdown 파일을 단일 또는 일괄로 번역합니다. 텍스트를 업로드하거나 붙여넣고, 대상 언어를 선택한 후 한 번의 클릭으로 번역을 완료합니다.",
     "dragAndDropText": "여기를 클릭하거나 Markdown 파일을 드래그하여 업로드하십시오 (TXT, Markdown 형식 지원)",
@@ -144,8 +142,7 @@
   },
   "subtitle": {
     "title": "자막 번역 도구 | 무료 대량 자막 번역(srt, ass, vtt, lrc 지원) | Subtitle Translator",
-    "description": "오픈 소스 무료 Subtitle Translator는 .srt, .ass, .vtt, .lrc 형식의 자막을 단일 또는 대량으로 번역할 수 있으며, 50개 이상의 언어 간 번역을 제공합니다. DeepSeek, ChatGPT, 맞춤형 AI 모델 및 Google, DeepL, Azure Translate 등 여러 인터페이스를 활용하여 자막과 가사 내용을 원클릭으로 추출하고 번역합니다. 무료 오픈 소스로 다국어 비디오 콘텐츠 처리에 기여합니다.",
-    "keywords": "자막 번역, srt 번역, ass 번역, vtt 번역, lrc 번역, 다국어 자막, 대량 자막 번역, 무료 번역, 자막 추출, 가사 번역, DeepSeek, ChatGPT, Google 번역, DeepL 번역, Azure Translate, DeepLX",
+    "description": ".srt/.ass/.vtt/.lrc를 50+ 언어로 번역. DeepSeek·ChatGPT·Google/DeepL/Azure 지원. 타임라인과 형식을 유지하고, 이중 표시·일괄 내보내기를 지원합니다.",
     "clientTitle": "자막 번역 도구",
     "clientDescription": ".srt, .ass, .vtt, .lrc 형식의 자막을 단일 또는 대량으로 번역 지원. 자막 내용을 업로드하거나 붙여넣고 대상 언어를 선택한 후 원클릭으로 번역을 완료합니다.",
     "dragAndDropText": "여기를 클릭하거나 자막 파일을 드래그 앤 드롭하여 업로드하세요(ASS, SRT, VTT, LRC 형식 지원)",
@@ -164,9 +161,8 @@
     "bilingualError": "원본 자막 형식이 너무 복잡할 수 있습니다. 이중 언어 자막 선택을 해제해 주십시오."
   },
   "text-splitter": {
-    "title": "텍스트 분할 도구 | 무료 장문 분할 (문자 수 및 문장 분할 지원)",
-    "description": "긴 텍스트를 문자 수 또는 완전한 문장 단위로 분할하는 효율적인 도구입니다. DeepSeek, ChatGPT 등의 AI LLM 토큰 제한 관리뿐 아니라 문서 편집 및 소셜 미디어 콘텐츠 최적화에도 적합합니다. 자동 분할 및 일괄 내보내기를 지원하여 텍스트 관리와 복사 효율을 높입니다.",
-    "keywords": "텍스트 분할, 장문 분할, 텍스트 처리, 문자 단위 분할, ChatGPT 문자 제한, AI 텍스트 처리, 문장 분할, TXT 텍스트 분할, 기사 분할, 일괄 내보내기, LLM 토큰 관리, 텍스트 최적화",
+    "title": "텍스트 분할기 - AI 프롬프트, 블로그, 이메일, 소셜 미디어용 긴 글 무료 분할 | Tools By AI",
+    "description": "긴 글이 글자 수 제한에 걸리나요? 문자·문장 분할로 ChatGPT/LLM 토큰 제한, 문서 작성, SNS 게시를 최적화합니다. 자동 분할과 일괄 내보내기 지원.",
     "clientTitle": "텍스트 분할 도구",
     "clientDescription": "이 도구는 긴 텍스트를 자동으로 여러 구간으로 분할합니다. 문자 수 기준 분할과 완전한 문장 단위 분할을 지원하여 ChatGPT, AI 모델 입력 및 문서 편집에 이상적입니다. 또한 분할된 텍스트를 일괄 내보내어 텍스트 관리 및 처리 효율을 향상시킵니다. 비 UTF-8 텍스트(예: 프랑스어)의 경우 파일 업로드 시 시스템이 자동으로 인코딩을 감지하여 문자 깨짐을 방지합니다.",
     "textSplit": "텍스트 분할이 완료되었습니다",
@@ -181,6 +177,13 @@
     "customSplitSymbol": "사용자 지정 분할 기호",
     "chineseEndingSymbol": "중국어 어미",
     "englishEndingSymbol": "영어 어미",
+    "supportEscapeChars": "이스케이프 문자 지원: \\n(줄 바꿈), \\r(캐리지 리턴), \\t(탭), \\s(공백), \\\\(백슬래시)",
+    "emptyForSymbolOnly": "기호로만 분할하려면 비워두십시오",
+    "splitBySymbol": "기호로 분할",
+    "splitByChineseParagraph": "중국어 분할",
+    "splitByChineseParagraphTooltip": "중국어 문단 인식 알고리즘을 사용하여 텍스트를 처리하고 줄 바꿈으로 분할",
+    "splitByEnglishParagraph": "영어 분할",
+    "splitByEnglishParagraphTooltip": "영어 문장 인식 알고리즘을 사용하여 텍스트를 단락으로 분할",
     "splitText": "텍스트 분할",
     "segment": "분할",
     "mergeText": "모든 분할 텍스트 병합 (두 줄 바꿈으로 구분)",
@@ -190,15 +193,13 @@
   },
   "img-prompt": {
     "title": "IMGPrompt 데이터 생성기",
-    "description": "IMGPrompt 데이터 처리를 위해 설계된 이 도구는 사용자가 객체와 속성을 사용자 정의하여 JSON 데이터를 일괄 생성할 수 있도록 합니다. 데이터 형식 전환 과정을 단순화하여 빠른 생성, 편집 및 복사를 지원합니다.",
-    "keywords": "IMGPrompt, JSON 데이터 생성기, 온라인 JSON 편집기, 데이터 형식 전환, 일괄 데이터 처리, 사용자 정의 객체 속성, 프로그래밍 보조 도구, 데이터 관리",
+    "description": "행 단위 입력에서 IMGPrompt 표준 JSON을 대량 생성. object/attribute 커스터마이즈, 중복 검사·검증, 미리보기·복사·내보내기 지원.",
     "clientTitle": "IMGPrompt 데이터 변환기",
     "clientDescription": "IMGPrompt에서 필요한 JSON 데이터를 일괄적으로 빠르게 생성할 수 있습니다. 각 줄에 표시 이름과 해당 언어 이름을 입력하며, 탭('\\t') 또는 콜론(':')으로 구분합니다. 예: 'Illustration: 삽화' 또는 'sketch: 스케치'. 또한, IMGPrompt 데이터 내의 'object'와 'attribute' 값을 사용자 정의할 수 있습니다."
   },
   "flare": {
     "title": "Flare 북마크 파싱 및 변환 도구 | 빠른 북마크 가져오기 및 변환",
-    "description": "Flare 북마크 파싱 및 변환 도구를 사용하여 북마크 데이터를 빠르게 Flare 형식으로 변환합니다. 'App' 모드로 애플리케이션 목록을 파싱하거나 'Bookmark' 모드로 북마크 목록을 파싱하며, 앱과 북마크 데이터 간의 양방향 변환을 원활하게 지원합니다.",
-    "keywords": "Flare, 북마크 파싱, 북마크 변환, 북마크 가져오기, 데이터 변환, App 모드, Bookmark 모드",
+    "description": "브라우저 북마크를 빠르게 Flare 형식으로. App/Bookmark 양방향 변환, 계층·태그 보존 정리·이관. 드래그앤드롭·일괄 처리로 작업 시간 절감.",
     "clientTitle": "Flare 북마크 파싱 및 변환 도구",
     "clientDescription": "이 도구는 북마크 데이터를 Flare 형식으로 변환합니다. 'App' 모드를 선택하여 애플리케이션 목록을 파싱하거나, 'Bookmark' 모드를 선택하여 북마크 목록을 파싱하며, 앱과 북마크 데이터 간의 양방향 변환을 지원합니다.",
     "dragAndDropText": "여기를 클릭하거나 파일을 드래그하여 업로드하십시오 (HTML, JSON 형식 지원)",
@@ -210,8 +211,7 @@
   },
   "json-match-update": {
     "title": "JSON 데이터 매칭 및 업데이트 도구",
-    "description": "이 도구는 대상 JSON 데이터를 원본 JSON 데이터와 매칭하여 해당 weight 값을 자동으로 업데이트합니다. 사용자 정의 필드 이름을 지원하여 간단하고 빠른 처리를 가능하게 하며, 다양한 데이터 형식을 지원합니다.",
-    "keywords": "JSON 도구, JSON 데이터 업데이트, JSON 매칭 도구, JSON 데이터 처리, JSON 자동 업데이트, 데이터 처리 도구, JSON 파싱, JSON 편집기",
+    "description": "대상과 원본 JSON을 키로 매칭해 지정 필드를 일괄 갱신. 다양한 포맷 지원, 누락·충돌 감지로 안전 반영. 차분 확인과 미리보기 지원.",
     "clientTitle": "JSON 데이터 매칭 및 업데이트",
     "clientDescription": "이 도구는 대상 데이터의 'card_id'와 원본 데이터의 'id'를 비교하여 해당 'count' 값을 원본 데이터의 'weight' 필드에 업데이트합니다.",
     "targetJsonPlaceholder": "대상 JSON 데이터를 입력해 주십시오",
@@ -224,8 +224,7 @@
   },
   "json-node-edit": {
     "title": "JSON 노드 일괄 편집기",
-    "description": "이 도구를 사용하면 JSON 노드를 손쉽게 일괄 편집할 수 있습니다. 접두사, 접미사 추가 또는 텍스트 교체 기능을 통해 데이터 처리 효율을 높입니다.",
-    "keywords": "JSON 편집기, 일괄 JSON 편집, JSON 도구, 접두사/접미사 추가, 텍스트 교체, 변수 편집, JSON 대량 수정",
+    "description": "경로로 노드를 지정하고 값에 접두/접미 추가·문자 치환을 일괄 적용. 다중 노드와 중첩 키를 지원해 정형화와 명명 통일을 돕습니다.",
     "clientTitle": "JSON 노드 일괄 편집기",
     "clientDescription": "이 도구는 JSON 데이터에서 특정 노드를 일괄 검색하여 해당 값을 편집할 수 있게 해줍니다. 찾은 노드의 값에 접두사나 접미사를 추가하거나 텍스트 교체 작업을 수행할 수 있습니다. 여러 노드를 동시에 검색(쉼표로 구분, 예: 'object,attribute') 및 중첩 키 이름(예: 'zh.title')을 지원합니다.",
     "jsonPathsTooltip": "검색할 JSON 경로를 입력해 주십시오 (여러 경로는 쉼표로 구분)",
@@ -246,8 +245,7 @@
   },
   "json-node-inserter": {
     "title": "JSON 노드 삽입 - 빠른 편집 및 데이터 구조 최적화",
-    "description": "지정된 위치에 사용자 정의 새 노드를 일괄 삽입합니다. 배열 요소에 노드를 추가하고 JSON을 편집하여 데이터 구조를 최적화, 개발 효율성을 향상시킵니다. 참고: 숫자만 포함된 키 이름은 자동으로 숫자 값에 따라 앞쪽으로 정렬됩니다.",
-    "keywords": "JSON 노드 삽입, JSON 편집 도구, 데이터 구조 최적화, 배열 노드 추가, 일괄 삽입, 개발 효율성, 데이터 처리",
+    "description": "참조 노드 바로 뒤에 새 키를 일괄 삽입. 여러 노드·배열 지원, 구조·순서 유지. 숫자 키 자동 정렬, 중복 감지로 안전 확장. 차분 확인 지원.",
     "clientTitle": "JSON 노드 삽입 도구",
     "clientDescription": "이 도구는 JSON 데이터 내 지정된 참조 노드 뒤에 사용자 정의 새 노드를 일괄 삽입할 수 있습니다. 참조 노드 이름(삽입 위치 결정)과 새 노드 이름(여러 개 가능, 쉼표로 구분)을 입력하여 데이터 구조를 최적화하고 코드 실행 효율성을 향상시킵니다. 참고: 숫자만 포함된 키 이름은 오름차순으로 자동 정렬됩니다.",
     "targetNode": "참조 노드",
@@ -257,10 +255,9 @@
   },
   "json-sort-classify": {
     "title": "JSON 정렬 및 분류 도구",
-    "description": "이 도구는 기본 및 보조 키를 기반으로 JSON 배열을 효율적으로 정렬 및 분류합니다. 사용자 정의 JSONPath 표현식을 지원하여 정밀하고 고성능의 데이터 관리를 보장합니다.",
-    "keywords": "JSON 정렬, JSON 분류, JSON 데이터 처리, 정렬 도구, 분류 도구, JSON 관리, JSONPath, 데이터 관리",
+    "description": "주/보조 키와 JSONPath로 배열을 정렬·분류. 재현성 있는 안정 출력으로 비교·표시에 유용하며, 대용량 데이터도 빠르게 처리합니다.",
     "clientTitle": "JSON 정렬 및 분류 도구",
-    "clientDescription": "이 도구는 특정 규칙에 따라 JSON 데이터를 재구성하는 데 도움을 줍니다. 두 가지 핵심 기능을 제공합니다:\n\n1. **정렬 기능**:\n   - **용도**: JSON 데이터를 사용자 정의 순서대로 정렬합니다.\n   - **사용 방법**:\n     - '정렬 순서' 텍스트 상자에 원하는 순서를 한 줄에 하나씩 입력합니다. 비워진 값은 기본 순서대로 정렬됩니다.\n     - 정렬에 사용할 필드 이름(예: 'name')을 입력합니다.\n     - 'JSON 정렬' 버튼을 클릭하여 정렬된 데이터를 얻습니다.\n\n2. **분류 기능**:\n   - **용도**: 기본 키와 보조 키를 기준으로 데이터를 그룹화하고 정렬합니다.\n   - **사용 방법**:\n     - 첫 번째 그룹화를 위한 기본 키 필드(예: 'type')를 입력합니다.\n     - 그룹 내 정렬을 위한 보조 키 필드(예: 'attribute')를 입력합니다.\n     - 'JSON 분류 및 정렬' 버튼을 클릭하여 그룹화 및 정렬을 완료합니다.",
+    "clientDescription": "이 도구는 특정 규칙에 따라 JSON 데이터를 재구성하는 데 도움을 주며, 사용자 지정 순서에 따른 **정렬 기능**과 주 키·부 키를 기준으로 데이터를 그룹화하는 **분류 기능**을 제공합니다. 정렬 기능은 원하는 순서를 한 줄씩 입력하고 정렬에 사용할 필드명을 지정한 뒤 “JSON 정렬” 버튼을 클릭하면 지정한 순서대로 데이터를 정렬하며, 분류 기능은 주 키 필드명과 부 키 필드명을 입력한 뒤 “JSON 분류 및 정렬” 버튼을 클릭하면 데이터가 그룹화되고 정렬됩니다.",
     "sortOrder": "정렬 순서",
     "sortOrderTooltip": "원하는 정렬 순서를 한 줄에 하나씩 입력하십시오. 비워진 값은 기본 순서대로 정렬됩니다.",
     "sortType": "정렬 유형",
@@ -283,8 +280,7 @@
   },
   "json-value-extractor": {
     "title": "JSON 값 추출 도구",
-    "description": "이 도구를 사용하면 JSON 데이터에서 노드 값을 손쉽게 추출하고 원하는 형식으로 가공할 수 있습니다.",
-    "keywords": "JSON 값 추출, JSON 처리, 접두사, 접미사, 노드 추출",
+    "description": "키나 경로로 값을 추출하고 접두·접미를 붙여 정형화. 중복 제거, 결합·내보내기 지원. JSONPath·플레이스홀더 보호 지원, 그룹화 출력 지원.",
     "clientTitle": "JSON 값 추출 도구",
     "clientDescription": "키 이름이나 노드 경로를 통해 JSON 내의 키-값 쌍을 찾아 해당 값을 추출하고, 지정된 접두사와 접미사를 추가합니다. 예시: ",
     "noNodeToExtract": "최소 하나의 추출할 노드 또는 키 이름을 추가해 주십시오",
@@ -296,8 +292,7 @@
   },
   "json-value-swapper": {
     "title": "JSON 키-값 교환 도구",
-    "description": "이 전문 도구를 사용하면 JSON 배열 내에서 지정된 두 키의 값을 빠르게 교환할 수 있습니다.",
-    "keywords": "JSON 도구, 키-값 교환, JSON 처리, 데이터 변환, 프론트엔드 도구, 개발자 도구",
+    "description": "배열 요소의 지정 두 키 값을 일괄 교환. 누락 항목 경고·결과 검증으로 구조를 유지한 안전 변경. 차분 확인 가능, 정렬 유지, 미리보기 지원.",
     "clientTitle": "JSON 키-값 교환 도구",
     "clientDescription": "JSON 배열 항목 내에서 지정된 두 키의 값을 한 번의 클릭으로 교환합니다. JSON 데이터를 업로드하거나 붙여넣고, 두 키 이름을 선택하면 도구가 모든 배열 항목에서 자동으로 값을 교환합니다. 참고: 이 도구는 최상위 키만 지원하며 중첩 키는 지원하지 않습니다.",
     "swapperKey": "교환할 키",
@@ -309,8 +304,7 @@
   },
   "json-value-transformer": {
     "title": "JSON 키-값 매핑 도구",
-    "description": "JSONPath 쿼리, 사전 설정 템플릿 및 일괄 교체를 지원하는 전문 JSON 키-값 매핑 도구입니다. 복잡한 JSON 데이터 구조 변환과 값 이관을 손쉽게 수행할 수 있습니다.",
-    "keywords": "JSON 도구, 키-값 매핑, JSON 처리, JSONPath, 데이터 변환, 프론트엔드 도구, 개발자 도구, 데이터 이관",
+    "description": "JSONPath로 위치를 특정하고 입력/출력 키 규칙으로 값을 이동. 조건부 변환·플레이스홀더 보호·검증·템플릿 지원으로 정합성 보장.",
     "clientTitle": "JSON 키-값 매핑 도구",
     "clientDescription": "JSON 데이터 매핑 및 변환을 효율적으로 처리합니다. 입력 키와 출력 키를 지정하면, 도구가 JSON 데이터에서 입력 키를 찾아 해당 값을 출력 키의 값으로 교체합니다. 정밀한 데이터 경로 타겟팅을 위해 JSONPath 문법을 지원하며, 사전 설정 템플릿(다국어 번역 포함)과 복잡한 값 이관 작업을 수행합니다. 사용자 정의 매핑 규칙을 지원하며, 중첩 구조도 자동으로 처리하여 데이터의 무결성과 정확성을 보장합니다.",
     "presetMapping": "사전 설정 매핑",
@@ -403,10 +397,16 @@
   },
   "Metadata": {
     "title": "Tools By AI - 다국어 번역, 텍스트 처리 및 JSON 편집 | 효율적인 개발 및 사무 작업을 위한 필수 도구",
-    "description": "자막 번역, i18n JSON 번역, Markdown 번역, 텍스트 분할, 중국어 변환, 정규식 매칭, JSON 값 추출, 노드 편집, 키 교체, 데이터 매칭 및 업데이트, 북마크 파싱, 데이터 변환 등 다양한 AI 도구가 포함된 올인원 도구 모음을 만나보십시오. 개발자와 크리에이터가 다국어 번역 및 텍스트 처리 작업을 효율적으로 수행할 수 있도록 돕습니다.",
-    "keywords": "다국어 번역, 텍스트 처리, 자막 번역, JSON 편집, Markdown 번역, 텍스트 분할, 중국어 변환, 정규식 매칭, JSON 값 추출, 노드 편집, 키 교체, 데이터 매칭 업데이트, 북마크 파싱, 데이터 변환",
+    "description": "자막 번역, i18n JSON, Markdown 번역, 텍스트 분할, JSON 추출/편집/치환, 매칭·업데이트, 북마크 변환 등 AI 도구 모음. 다국어 처리 작업을 효율화합니다.",
     "homeTitle": "Tools By AI",
-    "homeDescription": "다국어 번역, 텍스트 처리, JSON 편집 등 다양한 기능을 갖춘 AI 도구 모음으로, 개발자와 크리에이터가 효율적으로 작업할 수 있도록 돕습니다."
+    "homeDescription": "다국어 번역, 텍스트 처리, JSON 편집 등 다양한 기능을 갖춘 AI 도구 모음으로, 개발자와 크리에이터가 효율적으로 작업할 수 있도록 돕습니다.",
+    "ogTitle": "Tools By AI Toolset - AI-Powered Tools for Developers and Creators",
+    "ogDescription": "An AI toolset featuring multilingual translation, text processing, JSON editing, and more to help developers and creators efficiently handle multilingual translation and text processing tasks.",
+    "ogUrl": "https://tools.newzone.top/ko",
+    "ogSiteName": "Tools By AI",
+    "ogLogo": "https://tools.newzone.top/logo.png",
+    "authorName": "RockBen",
+    "authorUrl": "https://github.com/rockbenben"
   },
   "languages": {
     "auto": "자동 감지",

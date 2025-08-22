@@ -30,7 +30,7 @@
     "directExport": "自动导出文件",
     "useCache": "使用翻译缓存",
     "useCacheTooltip": "选中后将使用之前的翻译记录，加快翻译速度",
-    "contextAwareTranslation": "上下文感知翻译",
+    "contextAwareTranslation": "上下文关联翻译",
     "contextAwareTranslationTooltip": "开启后，AI将结合上下文进行翻译，提高字幕对话的连贯性和准确性（仅限AI模型）",
     "multiLanguageMode": "多语言翻译",
     "singleLanguageMode": "单语言翻译",
@@ -84,8 +84,7 @@
   },
   "json": {
     "title": "多语言 JSON 翻译工具 - i18n 国际化 & 本地化开发助手 | JSONTranslate",
-    "description": "JSONTranslate 是一款轻量高效的多语言 JSON 翻译工具，专为开发者、内容创作者及项目经理设计。借助 DeepSeek、ChatGPT 及 Google、DeepL、Azure 翻译 API，实现快速转换 JSON 文档为多种语言，全面助力国际化与本地化项目。",
-    "keywords": "JSONTranslate, JSON翻译工具, 国际化, 本地化, i18n, 开发者工具,平替Crowdin,免费翻译,多语言翻译, 翻译API, ChatGPT, DeepSeek, Google翻译, DeepL翻译, Azure翻译, 自动翻译 JSON, 编程语言翻译",
+    "description": "想把 JSON 翻译成多语言并用于 i18n？JSONTranslate 支持 DeepSeek、ChatGPT、DeepL/Google/Azure，键映射与 JSONPath 精准匹配，结构不丢键，批量导出与合并策略加速本地化。",
     "clientTitle": "多语言 JSON 翻译工具",
     "clientDescription": "JSONTranslate 为开发者和内容创作者提供高效、轻量的 JSON 翻译解决方案。支持 DeepSeek、ChatGPT 及各大翻译 API，助力快速实现项目的国际化和本地化。无论你是在开发多语言网站、应用程序还是处理多语言数据集，JSONTranslate 都能提供简便的解决方案，轻松将 JSON 文件中的内容翻译为多种目标语言。",
     "dragAndDropText": "点击或拖拽文件到此处上传（支持 TXT、JSON 格式）",
@@ -125,8 +124,7 @@
   },
   "markdown": {
     "title": "Markdown 文件翻译工具 | 免费多接口翻译（DeepSeek、ChatGPT、LLM 等）| MD-translator",
-    "description": "开源免费的 md-translator 轻松实现 Markdown 文档的批量翻译，可一次翻译为多种语言。支持 DeepSeek、ChatGPT、自定义 LLM 以及 Google、DeepL、Azure Translate 等多种免费翻译接口。开源、高效，助力多语言内容国际化。",
-    "keywords": "Markdown翻译, md翻译, 文件翻译, 批量翻译, 多语言翻译, 免费翻译, DeepSeek, ChatGPT, 自定义LLM, Google翻译, DeepL翻译, Azure翻译",
+    "description": "Markdown 要批量多语翻译？MD‑translator 接入 DeepSeek、ChatGPT、LLM/DeepL/Azure，保留格式/代码/公式，frontmatter 可选翻译与占位符保护，支持合并与批量导出。",
     "clientTitle": "Markdown 文件翻译工具",
     "clientDescription": "支持 Markdown 格式文件的单个或批量翻译。只需上传或粘贴文本，选择目标语言，即可一键完成高效翻译。",
     "dragAndDropText": "点击或拖拽 Markdown 文件到此处上传（支持 TXT、Markdown 格式）",
@@ -144,8 +142,7 @@
   },
   "subtitle": {
     "title": "字幕翻译工具 | 免费批量翻译字幕（支持 srt、ass、vtt、lrc）| Subtitle Translator",
-    "description": "开源免费的 Subtitle Translator 支持 .srt、.ass、.vtt和.lrc格式字幕的单个或批量翻译，提供50+种语言互译方案。借助 DeepSeek、ChatGPT、自定义 AI 模型以及 Google、DeepL、Azure Translate 多接口，一键提取并翻译字幕和歌词内容，免费开源，助力多语言视频内容处理。",
-    "keywords": "字幕翻译, srt翻译, ass翻译, vtt翻译, lrc翻译, 多语言字幕, 批量字幕翻译, 免费翻译, 字幕提取, 歌词翻译, DeepSeek, ChatGPT, Google翻译, DeepL翻译, Azure翻译, DeepLX",
+    "description": ".srt/.ass/.vtt/.lrc 一键多语翻译，接入 DeepSeek、ChatGPT、Google/DeepL/Azure；保留时间轴与格式，支持双语布局与批量导出，译文位置可切换，剪辑发布更高效。",
     "clientTitle": "字幕翻译工具",
     "clientDescription": "支持 .srt、.ass、.vtt和.lrc格式字幕的单个或批量翻译。上传或粘贴字幕内容，选择目标语言，一键提取并快速完成翻译。",
     "dragAndDropText": "点击或拖拽字幕文件到此处上传（支持 ASS、SRT、VTT、LRC 格式）",
@@ -164,9 +161,8 @@
     "bilingualError": "原字幕格式可能较为复杂，请尝试取消勾选双语字幕"
   },
   "text-splitter": {
-    "title": "文本分割器 | 免费长文本分段工具（支持字符限制与整句分割）",
-    "description": "高效文本分割工具，可按字符数或整句拆分长文本，适用于 DeepSeek、ChatGPT 及各类 AI LLM 的 token 限制、文档编辑、社交媒体内容优化等场景。支持自动分段与批量导出，提高文本管理与复制效率。",
-    "keywords": "文本分割, 长文本分段, 文本处理, 按字符数分割, ChatGPT字符限制, AI文本处理, 文本按句子拆分, TXT文本分割, 文章拆分工具, 批量导出文本, LLM token 处理, 文本优化",
+    "title": "文本分割神器 - 免费长文本分段，AI提问+微博朋友圈长文一键拆分 | Tools by AI",
+    "description": "长文发微博超限制？AI提问太长被截断？文本分割神器完美解决！智能按字符或整句分段，适配社交媒体发布和ChatGPT提问，支持批量导出，让长文处理更高效！",
     "clientTitle": "文本分割器",
     "clientDescription": "文本分割器可将长文本自动拆分为若干段，支持按字符数或整句分割，适用于 ChatGPT、AI 模型输入、文档编辑等需求。支持批量导出，提高文本管理与处理效率。对于法语等非 UTF-8 编码的文本，请通过上传方式导入，系统将自动判定编码，以避免乱码问题。",
     "textSplit": "文本已成功分割",
@@ -181,6 +177,13 @@
     "customSplitSymbol": "自定义分割符号",
     "chineseEndingSymbol": "中文结尾符",
     "englishEndingSymbol": "英文结尾符",
+    "supportEscapeChars": "支持转义字符：\\n(换行), \\r(回车), \\t(制表符), \\s(空格), \\\\(反斜杠)",
+    "emptyForSymbolOnly": "留空表示仅按符号分割",
+    "splitBySymbol": "按符号分割",
+    "splitByChineseParagraph": "中文分段",
+    "splitByChineseParagraphTooltip": "使用中文段落识别算法处理文本并按换行符分割",
+    "splitByEnglishParagraph": "英文分段",
+    "splitByEnglishParagraphTooltip": "使用英文句子识别算法将文本分割为段落",
     "splitText": "分割文本",
     "segment": "段",
     "mergeText": "合并所有分割的文本，并用两个换行符分隔",
@@ -190,15 +193,13 @@
   },
   "img-prompt": {
     "title": "IMGPrompt 数据生成器",
-    "description": "专为 IMGPrompt 数据处理设计，支持用户通过自定义对象与属性批量生成 JSON 数据。简化数据格式转换过程，实现快速生成、编辑与复制操作。",
-    "keywords": "IMGPrompt, JSON 数据生成器, 在线 JSON 编辑器, 数据格式转换, 批量数据处理, 自定义对象属性, 编程辅助工具, 数据管理",
+    "description": "为 IMGPrompt 快速生成标准 JSON：按行输入批量转换，支持对象/属性自定义、制表符/冒号分隔与去重校验；提供预览、复制与导出，适配训练集与标签管理，内置格式化与容错。",
     "clientTitle": "IMGPrompt 数据转换器",
     "clientDescription": "可快速批量生成 IMGPrompt 所需的 JSON 数据。只需按行输入数据，每行包含一个显示名称及其对应的语言名称，二者之间请用制表符「\t」或英文冒号「:」分隔。例如：Illustration: 插图 或 sketch: 素描。你还可以自定义 IMGPrompt 数据中 object 和 attribute 的值。"
   },
   "flare": {
     "title": "Flare 书签解析与转换工具 | 快速导入与转换书签数据",
-    "description": "利用 Flare 书签解析与转换工具，快速将书签数据转换为 Flare 格式。支持 App 模式解析应用列表、Bookmark 模式解析书签列表，并实现 app 与 bookmarks 数据的双向转换，助力高效数据管理。",
-    "keywords": "Flare, 书签解析, 书签转换, 书签导入, 数据转换, App 模式, Bookmark 模式",
+    "description": "将浏览器书签快速转换为 Flare 格式，支持 App/Bookmark 双向互转，保留层级与标签；拖拽导入与一键批处理，轻松整理与迁移书签数据。",
     "clientTitle": "Flare 书签解析与转换工具",
     "clientDescription": "本工具可将书签数据转换为 Flare 格式。可以选择“App”模式解析应用列表，或选择“Bookmark”模式解析书签列表，同时支持 app 与 bookmarks 数据的互转。",
     "dragAndDropText": "点击或拖拽文件到此处上传（支持 HTML、JSON 格式）",
@@ -210,8 +211,7 @@
   },
   "json-match-update": {
     "title": "JSON 数据匹配与更新工具",
-    "description": "本工具可以将目标 JSON 数据与原始 JSON 数据进行匹配，并自动更新相应的权重值。用户可以自定义字段名，操作简单，处理速度快，支持多种数据格式。",
-    "keywords": "JSON工具, JSON数据更新, JSON匹配工具, JSON数据处理, JSON自动更新, 数据处理工具, JSON解析, JSON编辑器",
+    "description": "用目标 JSON 字段批量回填源数据：按自定义键精准匹配（如 card_id→id），将 count 写入 weight；支持多格式、缺失/冲突提示与结果追溯，流程简洁稳定，适合大规模更新。",
     "clientTitle": "JSON 数据匹配与更新",
     "clientDescription": "此工具通过对比目标数据中的「card_id」与原始数据中的「id」，将对应的「count」值更新到原始数据中的「weight」字段。",
     "targetJsonPlaceholder": "请输入目标 JSON 数据",
@@ -224,8 +224,7 @@
   },
   "json-node-edit": {
     "title": "JSON 节点批量编辑",
-    "description": "使用本工具轻松编辑 JSON 节点，支持批量添加前缀、后缀或替换操作，提升数据处理效率。",
-    "keywords": "JSON编辑, 批量编辑JSON, JSON工具, 前缀后缀添加, 文本替换, 变量编辑, JSON批量修改",
+    "description": "按路径批量编辑 JSON 节点：添加前/后缀、文本替换或整值覆盖，支持多节点与嵌套键名；提供预览与撤销，保障安全改动，提升数据清洗与命名一致性，支持导出变更日志。",
     "clientTitle": "JSON 节点批量编辑",
     "clientDescription": "本工具可以批量查找 JSON 数据中的特定节点，并对其值进行编辑操作。你可以为找到的节点值添加前缀、后缀，或进行文本替换。支持同时查找多个节点（使用逗号分隔，如：「object,attribute」），并支持嵌套键名（如：「zh.title」）。",
     "jsonPathsTooltip": "请输入要搜索的 JSON 路径（多个路径使用逗号分隔）",
@@ -246,8 +245,7 @@
   },
   "json-node-inserter": {
     "title": "JSON 节点插入工具 - 快速编辑与数据结构优化",
-    "description": "在 JSON 数据中指定位置后批量插入自定义节点。轻松实现数组节点添加、JSON 编辑与数据结构优化，显著提高开发效率。特别提醒：纯数字键名会按数值排序自动置前。",
-    "keywords": "JSON节点插入, JSON编辑工具, 数据结构优化, 数组节点添加, 批量插入, 开发效率, 数据处理",
+    "description": "在参考节点后批量插入新键，支持多键与数组项，自动保持层级与顺序一致；数字键自动排序，冲突去重提示，便于大规模结构调整与协作审查，快速融入现有流程。",
     "clientTitle": "JSON 节点插入工具",
     "clientDescription": "支持在 JSON 数据的指定节点后批量插入自定义新节点。只需输入参考节点名称（确定插入位置）和新节点名称（支持多个，用逗号分隔），即可轻松优化数据结构并提升代码执行效率。注意：纯数字键名将按数值排序自动置前。",
     "targetNode": "参考节点",
@@ -257,8 +255,7 @@
   },
   "json-sort-classify": {
     "title": "JSON 排序与分类工具",
-    "description": "本工具可以根据主键和副键对 JSON 数组进行高效的排序和分类。支持自定义 JSONPath 路径，确保处理结果的高效与精准，提升你的 JSON 数据管理效率。",
-    "keywords": "JSON 排序, JSON 分类, JSON 数据处理, 排序工具, 分类工具, JSON 管理, JSONPath, 数据管理",
+    "description": "对 JSON 数组排序与分组：自定义主/副键或 JSONPath，按自定义顺序或数值升降序输出稳定可复现结果；支持分组汇总与导出，适配报表、导航与配置构建。",
     "clientTitle": "JSON 排序与分类工具",
     "clientDescription": "本工具旨在帮助你根据特定规则重新组织 JSON 数据，提供两大核心功能：1. 排序功能：  - 用途：按照自定义顺序排列 JSON 数据。  - 使用方法：  - 在“排序顺序”文本框中输入期望的顺序（每行一个值），未填的值将按默认顺序排列。  - 在“排序字段名”中填写用于排序的字段名称（如 `name`）。  - 点击“排序 JSON”按钮，即可获得按指定顺序排列的数据。2. 分类功能：  - 用途：根据主键和副键对数据进行分组和排序。  - 使用方法：  - 在“主键字段名”中填写用于第一层分组的字段名称（如 `type`）。  - 在“副键字段名”中填写用于组内排序的字段名称（如 `attribute`）。  - 点击“分类并排序 JSON”按钮，即可完成数据的分组和排序。",
     "sortOrder": "排序顺序",
@@ -283,8 +280,7 @@
   },
   "json-value-extractor": {
     "title": "JSON 值提取工具",
-    "description": "使用 JSON 值提取工具，轻松从 JSON 数据中提取并格式化节点值。",
-    "keywords": "JSON 值提取, JSON 处理, 前缀, 后缀, 节点提取",
+    "description": "按键名或路径批量提取值并格式化，支持前后缀、去重合并与便捷导出；支持 JSONPath 与占位符保护，适合生成训练数据、关键词表与待翻译清单，提供批量预览与校验。",
     "clientTitle": "JSON 值提取工具",
     "clientDescription": "根据键名或节点路径在 JSON 中找到相应的键值对，提取它们的值，并添加指定的前后缀。键名样例",
     "noNodeToExtract": "请至少添加一个提取节点或键名",
@@ -296,8 +292,7 @@
   },
   "json-value-swapper": {
     "title": "JSON 键值互换工具",
-    "description": "专业的 JSON 数组键值交换工具，快速互换 JSON 数组中指定键的值",
-    "keywords": "JSON工具,键值交换,JSON处理,数据转换,前端工具,开发者工具",
+    "description": "一键互换 JSON 数组两键的值，支持缺失项提示与结果校验，低风险批量变更；支持预演与回滚，范围过滤与差异报告，便于字段重构、重命名过渡与数据修正。",
     "clientTitle": "JSON 键值互换工具",
     "clientDescription": "一键交换 JSON 数组中指定键的值。上传或粘贴 JSON 数据，选择两个键名，工具将自动交换所有数组项中这两个键的值。请注意，本工具只支持第一层的子键，不支持嵌套子键内的键名互换。",
     "swapperKey": "交换键名",
@@ -309,8 +304,7 @@
   },
   "json-value-transformer": {
     "title": "JSON 键值映射工具",
-    "description": "专业级 JSON 键值映射工具，支持 JSONPath 路径查询、预设模板和批量替换，轻松实现复杂 JSON 数据结构转换和值迁移。",
-    "keywords": "JSON工具,键值映射,JSON处理,JSONPath,数据转换,前端工具,开发者工具,数据迁移",
+    "description": "在复杂 JSON 间做键值映射与迁移：JSONPath 精准定位，按输入/输出键规则批量替换，支持条件映射、占位符保护与结果校验；规则可导出复用，保持结构与数据完整性。",
     "clientTitle": "JSON 键值映射工具",
     "clientDescription": "高效处理 JSON 数据映射与转换。可以输入一对键（输入键和输出键），该工具会查找 JSON 数据中的输入键位置，然后将对应位置的值替换为输出键位置的值。支持 JSONPath 语法精确定位数据路径，提供多语言翻译等预设模板，实现复杂数据结构间的值迁移。可自定义映射规则，处理嵌套结构，自动识别 JSON 路径，确保数据完整性和准确性。",
     "presetMapping": "预设映射",
@@ -403,10 +397,16 @@
   },
   "Metadata": {
     "title": "ToolsByAI 工具集 - 多语言翻译、文本处理与 JSON 编辑 | 高效开发与办公必备",
-    "description": "探索由 AI 驱动的一站式工具集，包括字幕翻译、i18n JSON 翻译、Markdown 文本翻译、文本分割、简繁转换、正则匹配、JSON 值提取、节点编辑、键值替换、数据匹配更新、书签与数据解析等，助力开发者与创作者高效解决多语言翻译和文本处理需求。",
-    "keywords": "多语言翻译, 文本处理, 字幕翻译, JSON 编辑, Markdown 翻译, 文本分割, 简繁转换, 正则匹配, JSON 值提取, 节点编辑, 键值替换, 数据匹配更新, 书签解析, 数据转换",
+    "description": "AI 工具集：字幕翻译、i18n JSON/Markdown 翻译、文本分割、JSON 编辑与数据解析等；支持 DeepSeek、ChatGPT、Google/DeepL/Azure，支持批量处理与多语言工作流，开源高效。",
     "homeTitle": "ToolsByAI 工具集",
-    "homeDescription": "多语言翻译、文本处理、JSON 编辑等 AI 工具集，助力开发者与创作者高效解决多语言翻译和文本处理需求"
+    "homeDescription": "多语言翻译、文本处理、JSON 编辑等 AI 工具集，助力开发者与创作者高效解决多语言翻译和文本处理需求",
+    "ogTitle": "Tools By AI Toolset - AI-Powered Tools for Developers and Creators",
+    "ogDescription": "An AI toolset featuring multilingual translation, text processing, JSON editing, and more to help developers and creators efficiently handle multilingual translation and text processing tasks.",
+    "ogUrl": "https://tools.newzone.top/zh",
+    "ogSiteName": "Tools By AI",
+    "ogLogo": "https://tools.newzone.top/logo.png",
+    "authorName": "RockBen",
+    "authorUrl": "https://github.com/rockbenben"
   },
   "languages": {
     "auto": "自动检测",
