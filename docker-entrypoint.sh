@@ -12,7 +12,7 @@ npx wait-on http://localhost:3000
 sleep 2
 
 # Route language list
-langs="en zh zh-hant pt it de ru es fr ja ko hi ar bn"
+langs="en zh zh-hant pt es hi ar fr de ja ko ru vi tr bn id it"
 
 for lang in $langs; do
   echo "Warming up /$lang"
