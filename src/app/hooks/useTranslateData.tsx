@@ -457,7 +457,7 @@ const useTranslateData = () => {
 
   // 新增：带上下文的翻译函数
   const translateWithContext = async (contentLines: string[], translationConfig: any, cacheSuffix: string, updateProgress: (current: number, total: number) => void) => {
-    const contextWindow = Math.min(20, contentLines.length); // 上下文窗口大小，不超过总行数
+    const contextWindow = Math.min(translationConfig.limit || 20, contentLines.length); // 上下文窗口大小，使用配置中的limit值，不超过总行数
     const translatedLines = new Array(contentLines.length);
 
     // 分批处理，每批包含一定的上下文
@@ -531,16 +531,42 @@ const useTranslateData = () => {
     return translatedLines;
   };
 
+  // 辅助函数：清理翻译内容中的标记
+  const cleanTranslatedContent = (content: string): string => {
+    return (
+      content
+        // 移除所有TRANSLATE标记（带编号和不带编号），支持变形格式
+        .replace(/\[TRANSLATE_\d+\]/gi, "")
+        .replace(/\[\/TRANSLTranslate_\d+\]/gi, "") // 处理常见错误格式 [/TRANSLTranslate_X]
+        .replace(/\[\/TRANSLATE_\d+\]/gi, "")
+        .replace(/\[TRANSLATE\]/gi, "")
+        .replace(/\[\/TRANSLATE\]/gi, "")
+        // 移除CONTEXT标记
+        .replace(/\[CONTEXT\]/gi, "")
+        .replace(/\[\/CONTEXT\]/gi, "")
+        .trim()
+    );
+  };
+
   // 辅助函数：从AI响应中提取带编号的翻译行
   const extractTranslatedLinesWithNumbers = (response: string, expectedCount: number): string[] => {
     const results = new Array(expectedCount);
 
-    // 尝试匹配带编号的翻译标记
+    // 尝试匹配带编号的翻译标记，使用更宽松的正则表达式
     for (let i = 0; i < expectedCount; i++) {
-      const regex = new RegExp(`\\[TRANSLATE_${i}\\]([\\s\\S]*?)\\[/TRANSLATE_${i}\\]`, "i");
-      const match = response.match(regex);
+      // 先尝试正确格式
+      let regex = new RegExp(`\\[TRANSLATE_${i}\\]([\\s\\S]*?)\\[/TRANSLATE_${i}\\]`, "i");
+      let match = response.match(regex);
+
+      // 如果正确格式没匹配到，尝试常见错误格式
+      if (!match) {
+        regex = new RegExp(`\\[TRANSLATE_${i}\\]([\\s\\S]*?)\\[/TRANSLTranslate_${i}\\]`, "i");
+        match = response.match(regex);
+      }
+
       if (match) {
-        results[i] = match[1].trim();
+        // 清理提取的内容，移除可能残留的标记
+        results[i] = cleanTranslatedContent(match[1].trim());
       }
     }
 
@@ -562,7 +588,7 @@ const useTranslateData = () => {
     let match;
 
     while ((match = translateRegex.exec(response)) !== null) {
-      matches.push(match[1].trim());
+      matches.push(cleanTranslatedContent(match[1].trim()));
     }
 
     // 如果匹配的数量正确，返回匹配结果
@@ -570,11 +596,12 @@ const useTranslateData = () => {
       return matches;
     }
 
-    // 否则，尝试按行分割并取前几行
+    // 否则，尝试按行分割并取前几行，同时清理每行内容
     const lines = response
       .split("\n")
       .filter((line) => line.trim())
-      .slice(0, expectedCount);
+      .slice(0, expectedCount)
+      .map((line) => cleanTranslatedContent(line));
     return lines.length === expectedCount ? lines : new Array(expectedCount).fill("");
   };
 
