@@ -363,8 +363,11 @@ const useTranslateData = () => {
         },
         {
           retries: 3,
-          onFailedAttempt: (error) => {
-            console.log(`${text.substring(0, 30)} ... Translation failed：${error.message}`);
+          onFailedAttempt: (error: any) => {
+            const msg = error?.message ?? String(error);
+            const attempt = error?.attemptNumber ?? "?";
+            const left = error?.retriesLeft ?? "?";
+            console.log(`${text.substring(0, 30)} ... Translation failed: ${msg} (attempt ${attempt}, left ${left})`);
           },
         }
       );
