@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { normalizeNewlines } from "@/app/utils";
 import type { UploadFile, UploadProps } from "antd";
 import jschardet from "jschardet";
 
@@ -19,19 +20,22 @@ const useFileUpload = () => {
       const buffer = e.target?.result as ArrayBuffer;
       const uint8Array = new Uint8Array(buffer);
 
-      // 将 Uint8Array 转换为字符串
-      const binaryString = Array.from(uint8Array)
+      // 大文件性能优化：仅抽样前 512KB 用于编码检测，避免将整文件转为字符串
+      const SAMPLE_SIZE = 512 * 1024;
+      const sample = uint8Array.subarray(0, Math.min(SAMPLE_SIZE, uint8Array.length));
+      const sampleString = Array.from(sample)
         .map((byte) => String.fromCharCode(byte))
         .join("");
 
-      // 检测编码
-      const detected = jschardet.detect(binaryString);
+      // 检测编码（基于样本），后续仍对完整内容进行解码
+      const detected = jschardet.detect(sampleString);
       console.log("Detected encoding", detected);
 
       // 解码文件内容
       const decoder = new TextDecoder(detected.encoding || "utf-8");
-      const text = decoder.decode(uint8Array).replace(/\r\n/g, "\n");
-      callback(text);
+      const text = decoder.decode(uint8Array);
+      const normalized = normalizeNewlines(text);
+      callback(normalized);
       setIsFileProcessing(false);
     };
 
