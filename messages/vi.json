@@ -400,9 +400,9 @@
     "description": "Bộ công cụ AI cho dịch thuật đa ngôn ngữ, xử lý văn bản và chỉnh sửa JSON: phụ đề, trình dịch JSON/Markdown i18n, trình phân tách văn bản, trích xuất/chỉnh sửa/hoán đổi/bản đồ JSON",
     "homeTitle": "Công cụ của AI Toolset",
     "homeDescription": "Bộ công cụ AI có tính năng dịch đa ngôn ngữ, xử lý văn bản, chỉnh sửa JSON và nhiều tính năng khác giúp các nhà phát triển và người sáng tạo xử lý hiệu quả các tác vụ dịch đa ngôn ngữ và xử lý văn bản.",
-    "ogTitle": "Tools By AI Toolset - Công cụ hỗ trợ AI dành cho nhà phát triển và người sáng tạo",
+    "ogTitle": "Bộ công cụ Tools By AI - Công cụ hỗ trợ bởi AI dành cho nhà phát triển và người sáng tạo",
     "ogDescription": "Bộ công cụ AI có tính năng dịch đa ngôn ngữ, xử lý văn bản, chỉnh sửa JSON và nhiều tính năng khác giúp các nhà phát triển và người sáng tạo xử lý hiệu quả các tác vụ dịch đa ngôn ngữ và xử lý văn bản.",
-    "ogUrl": "https://tools.newzone.top/en",
+    "ogUrl": "https://tools.newzone.top/vi",
     "ogSiteName": "Công cụ của AI",
     "ogLogo": "https://tools.newzone.top/logo.png",
     "authorName": "RockBen",
@@ -465,7 +465,8 @@
     "telugu": "Tiếng Telugu",
     "marathi": "Tiếng Marathi",
     "urdu": "Tiếng Urdu",
-    "croatian": "người Croatia"
+    "croatian": "người Croatia",
+    "uyghur": "Tiếng Uyghur"
   },
   "CopyToClipboard": {
     "empty": "Nội dung trống rỗng, không có gì để sao chép",

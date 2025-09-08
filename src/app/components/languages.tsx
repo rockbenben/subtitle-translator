@@ -61,6 +61,7 @@ export const languages: LanguageOption[] = [
   { value: "he", labelKey: "languages.hebrew", nativeLabel: "עברית", name: "Hebrew", unsupportedMethods: DEEPL_METHODS },
   { value: "am", labelKey: "languages.amharic", nativeLabel: "አማርኛ", name: "Amharic", unsupportedMethods: DEEPL_METHODS },
   { value: "fa", labelKey: "languages.persian", nativeLabel: "فارسی", name: "Persian", unsupportedMethods: DEEPL_METHODS },
+  { value: "ug", labelKey: "languages.uyghur", nativeLabel: "ئۇيغۇرچە", name: "Uyghur", unsupportedMethods: DEEPL_METHODS },
   { value: "ha", labelKey: "languages.hausa", nativeLabel: "هَرْشٜىٰن هَوْسَا", name: "Hausa", unsupportedMethods: DEEPL_METHODS },
   { value: "sw", labelKey: "languages.swahili", nativeLabel: "Kiswahili", name: "Swahili", unsupportedMethods: DEEPL_METHODS },
   { value: "uz", labelKey: "languages.uzbek", nativeLabel: "Oʻzbekcha", name: "Uzbek", unsupportedMethods: DEEPL_METHODS },

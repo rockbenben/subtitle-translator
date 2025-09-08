@@ -335,8 +335,8 @@
   },
   "tools": {
     "subtitleTranslator": {
-      "title": "सबटाइटल अनुवादक (SRT, ASS, VTT)",
-      "description": "बल्क में सबटाइटल अनुवाद करें, 35 भाषाओं के बीच अंतर्स्थ अनुवाद का समर्थन करते हुए"
+      "title": "सबटाइटल अनुवादक (SRT, ASS, VTT, LRC)",
+      "description": "बल्क में सबटाइटल अनुवाद करें, 50+ भाषाओं के बीच अंतर्स्थ अनुवाद का समर्थन करते हुए"
     },
     "jsonTranslate": {
       "title": "i18n JSON अनुवादक",
@@ -400,8 +400,8 @@
     "description": "Tools by AI में JSON, Markdown, सबटाइटल व टेक्स्ट के लिए बैच प्रोसेसिंग टूल मिलते हैं। कस्टम नियम, फ़ॉर्मैट‑सुरक्षा, प्रिव्यू/एक्सपोर्ट व बहुभाषा समर्थन।",
     "homeTitle": "Tools By AI",
     "homeDescription": "एक AI टूलसेट जिसमें बहुभाषी अनुवाद, टेक्स्ट प्रोसेसिंग, JSON संपादन आदि शामिल हैं, जो डेवलपर्स और निर्माताओं को बहुभाषी अनुवाद और टेक्स्ट प्रोसेसिंग कार्यों को कुशलता से संभालने में मदद करता है।",
-    "ogTitle": "Tools By AI Toolset - AI-Powered Tools for Developers and Creators",
-    "ogDescription": "An AI toolset featuring multilingual translation, text processing, JSON editing, and more to help developers and creators efficiently handle multilingual translation and text processing tasks.",
+    "ogTitle": "Tools By AI टूलसेट - डेवलपर्स और क्रिएटर्स के लिए AI-संचालित टूल",
+    "ogDescription": "एक AI टूलसेट जिसमें बहुभाषी अनुवाद, टेक्स्ट प्रोसेसिंग, JSON संपादन और बहुत कुछ है, जो डेवलपर्स और क्रिएटर्स को बहुभाषी अनुवाद और टेक्स्ट प्रोसेसिंग कार्यों को कुशलतापूर्वक संभालने में मदद करता है।",
     "ogUrl": "https://tools.newzone.top/hi",
     "ogSiteName": "Tools By AI",
     "ogLogo": "https://tools.newzone.top/logo.png",
@@ -465,7 +465,8 @@
     "telugu": "तेलुगु",
     "marathi": "मराठी",
     "urdu": "उर्दू",
-    "croatian": "क्रोएशियाई"
+    "croatian": "क्रोएशियाई",
+    "uyghur": "उइगुर"
   },
   "CopyToClipboard": {
     "empty": "सामग्री खाली है, कॉपी करने के लिए कुछ भी नहीं",

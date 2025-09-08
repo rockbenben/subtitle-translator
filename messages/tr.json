@@ -400,9 +400,9 @@
     "description": "Çok dilli çeviri, metin işleme ve JSON düzenleme için AI araç seti: altyazı, i18n JSON/Markdown çeviricileri, metin ayırıcı, JSON ayıklama/düzenleme/değiştirme/haritalama",
     "homeTitle": "AI Toolset Tarafından Araçlar",
     "homeDescription": "Geliştiricilerin ve içerik oluşturucuların çok dilli çeviri ve metin işleme görevlerini etkili bir şekilde halletmelerine yardımcı olmak için çok dilli çeviri, metin işleme, JSON düzenleme ve daha fazlasını içeren bir yapay zeka araç seti.",
-    "ogTitle": "AI Toolset Tarafından Geliştirilen Araçlar - Geliştiriciler ve İçerik Üreticileri için Yapay Zeka Destekli Araçlar",
+    "ogTitle": "Tools By AI Araç Seti - Geliştiriciler ve İçerik Oluşturucular için Yapay Zeka Destekli Araçlar",
     "ogDescription": "Geliştiricilerin ve içerik oluşturucuların çok dilli çeviri ve metin işleme görevlerini etkili bir şekilde halletmelerine yardımcı olmak için çok dilli çeviri, metin işleme, JSON düzenleme ve daha fazlasını içeren bir yapay zeka araç seti.",
-    "ogUrl": "https://tools.newzone.top/en",
+    "ogUrl": "https://tools.newzone.top/tr",
     "ogSiteName": "Yapay Zeka Tarafından Geliştirilen Araçlar",
     "ogLogo": "https://tools.newzone.top/logo.png",
     "authorName": "RockBen",
@@ -465,7 +465,8 @@
     "telugu": "Telugu",
     "marathi": "Marathi",
     "urdu": "Urdu",
-    "croatian": "Hırvat"
+    "croatian": "Hırvat",
+    "uyghur": "Uygurca"
   },
   "CopyToClipboard": {
     "empty": "İçerik boş, kopyalanacak bir şey yok",

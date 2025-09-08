@@ -335,8 +335,8 @@
   },
   "tools": {
     "subtitleTranslator": {
-      "title": "Untertitel-Übersetzer (SRT, ASS, VTT)",
-      "description": "Übersetzen Sie Untertitel in Batches, unterstützt die Übersetzung zwischen 35 Sprachen"
+      "title": "Untertitel-Übersetzer (SRT, ASS, VTT, LRC)",
+      "description": "Übersetzen Sie Untertitel in Batches, unterstützt die Übersetzung zwischen 50+ Sprachen"
     },
     "jsonTranslate": {
       "title": "i18n JSON-Übersetzer",
@@ -400,8 +400,8 @@
     "description": "KI‑Toolset für Übersetzung und Text: Untertitel, Markdown, i18n‑JSON, Textsplit, JSON‑Extraktion, Knoten‑Bearbeitung, Mapping und Lesezeichen‑Parsing.",
     "homeTitle": "Tools By AI Toolset",
     "homeDescription": "Ein AI-Toolset mit mehrsprachiger Übersetzung, Textverarbeitung, JSON-Bearbeitung und mehr, das Entwicklern und Content-Erstellern hilft, mehrsprachige Übersetzungs- und Textverarbeitungsaufgaben effizient zu bewältigen.",
-    "ogTitle": "Tools By AI Toolset - AI-Powered Tools for Developers and Creators",
-    "ogDescription": "An AI toolset featuring multilingual translation, text processing, JSON editing, and more to help developers and creators efficiently handle multilingual translation and text processing tasks.",
+    "ogTitle": "Tools By AI Toolset - KI-gestützte Werkzeuge für Entwickler und Kreative",
+    "ogDescription": "Ein KI-Toolset mit mehrsprachiger Übersetzung, Textverarbeitung, JSON-Bearbeitung und mehr, das Entwicklern und Kreativen hilft, mehrsprachige Übersetzungs- und Textverarbeitungsaufgaben effizient zu bewältigen.",
     "ogUrl": "https://tools.newzone.top/de",
     "ogSiteName": "Tools By AI",
     "ogLogo": "https://tools.newzone.top/logo.png",
@@ -465,7 +465,8 @@
     "telugu": "Telugu",
     "marathi": "Marathi",
     "urdu": "Urdu",
-    "croatian": "Kroatisch"
+    "croatian": "Kroatisch",
+    "uyghur": "Uigurisch"
   },
   "CopyToClipboard": {
     "empty": "Inhalt ist leer, nichts zum Kopieren",

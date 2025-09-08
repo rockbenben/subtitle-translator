@@ -400,9 +400,9 @@
     "description": "Tingkatkan produktiviti anda dengan set alat AI kami. Terjemah sari kata, fail JSON dan Markdown, proses teks dan edit data JSON dengan mudah.",
     "homeTitle": "Alat Oleh AI Toolset",
     "homeDescription": "Temui koleksi alat AI yang direka untuk pembangun dan pencipta. Selesaikan tugas terjemahan berbilang bahasa dan pemprosesan teks dengan cekap.",
-    "ogTitle": "Tools By AI Toolset - Alat Dikuasakan AI untuk Pembangun dan Pencipta",
+    "ogTitle": "Tools By AI Toolset - Alat Bertenaga AI untuk Pengembang dan Kreator",
     "ogDescription": "Terokai set alat AI kami yang menampilkan terjemahan berbilang bahasa, pemprosesan teks dan pengeditan JSON untuk memperkemas aliran kerja pembangunan anda.",
-    "ogUrl": "https://tools.newzone.top/en",
+    "ogUrl": "https://tools.newzone.top/id",
     "ogSiteName": "Alat Oleh AI",
     "ogLogo": "https://tools.newzone.top/logo.png",
     "authorName": "RockBen",
@@ -465,7 +465,8 @@
     "telugu": "Telugu",
     "marathi": "Marathi",
     "urdu": "bahasa Urdu",
-    "croatian": "bahasa Croatia"
+    "croatian": "bahasa Croatia",
+    "uyghur": "Uighur"
   },
   "CopyToClipboard": {
     "empty": "Kandungan kosong, tiada untuk disalin",

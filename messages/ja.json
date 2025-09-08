@@ -335,8 +335,8 @@
   },
   "tools": {
     "subtitleTranslator": {
-      "title": "字幕翻訳ツール (SRT, ASS, VTT)",
-      "description": "字幕を一括翻訳し、35 言語間の相互翻訳に対応"
+      "title": "字幕翻訳ツール (SRT, ASS, VTT, LRC)",
+      "description": "字幕を一括翻訳し、50+ 言語間の相互翻訳に対応"
     },
     "jsonTranslate": {
       "title": "i18n JSON 翻訳ツール",
@@ -400,8 +400,8 @@
     "description": "字幕翻訳、i18n JSON、Markdown 翻訳、テキスト分割、JSON 抽出/編集/置換、照合更新、ブックマーク変換などを備えた AI ツール集。多言語処理を効率化。",
     "homeTitle": "Tools By AI",
     "homeDescription": "多言語翻訳、テキスト処理、JSON 編集など、開発者やクリエイターが効率的に多言語翻訳やテキスト処理タスクをこなすための AI ツールセットです。",
-    "ogTitle": "Tools By AI Toolset - AI-Powered Tools for Developers and Creators",
-    "ogDescription": "An AI toolset featuring multilingual translation, text processing, JSON editing, and more to help developers and creators efficiently handle multilingual translation and text processing tasks.",
+    "ogTitle": "Tools By AI ツールセット - 開発者とクリエイター向けの AI 搭載ツール",
+    "ogDescription": "多言語翻訳、テキスト処理、JSON 編集などの機能を備えた AI ツールセットで、開発者とクリエイターが多言語翻訳とテキスト処理のタスクを効率的に処理できるように支援します。",
     "ogUrl": "https://tools.newzone.top/ja",
     "ogSiteName": "Tools By AI",
     "ogLogo": "https://tools.newzone.top/logo.png",
@@ -465,7 +465,8 @@
     "telugu": "テルグ語",
     "marathi": "マラーティー語",
     "urdu": "ウルドゥー語",
-    "croatian": "クロアチア語"
+    "croatian": "クロアチア語",
+    "uyghur": "ウイグル語"
   },
   "CopyToClipboard": {
     "empty": "内容が空です。コピーするものがありません。",

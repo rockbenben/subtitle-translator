@@ -52,7 +52,7 @@
     "model": "模型",
     "sameLanguageTarget": "源语言与目标语言相同，目标语言已自动调整为",
     "sameLanguageSource": "源语言与目标语言相同，源语言已自动调整为",
-    "enterApiKey": "请提供 API Key，或切换至免费 API",
+    "enterApiKey": "请提供 API 密钥，或切换至免费 API",
     "enterLlmUrl": "请在「API 设置」中填写 LLM API 地址",
     "deepLXUnavailable": "当前 DeepLX 节点不可用，已自动切换至 GTX API (Free)。",
     "deeplUnavailable": "当前 DeepL 节点不可用，请检查 API Key 等配置是否正确。",
@@ -400,8 +400,8 @@
     "description": "AI 工具集：字幕翻译、i18n JSON/Markdown 翻译、文本分割、JSON 编辑与数据解析等；支持 DeepSeek、ChatGPT、Google/DeepL/Azure，支持批量处理与多语言工作流，开源高效。",
     "homeTitle": "ToolsByAI 工具集",
     "homeDescription": "多语言翻译、文本处理、JSON 编辑等 AI 工具集，助力开发者与创作者高效解决多语言翻译和文本处理需求",
-    "ogTitle": "Tools By AI Toolset - AI-Powered Tools for Developers and Creators",
-    "ogDescription": "An AI toolset featuring multilingual translation, text processing, JSON editing, and more to help developers and creators efficiently handle multilingual translation and text processing tasks.",
+    "ogTitle": "Tools By AI 工具集 - 为开发者与创作者打造的 AI 驱动工具",
+    "ogDescription": "一个 AI 工具集，具有多语言翻译、文本处理、JSON 编辑等功能，可帮助开发者和创作者高效地处理多语言翻译和文本处理任务。",
     "ogUrl": "https://tools.newzone.top/zh",
     "ogSiteName": "Tools By AI",
     "ogLogo": "https://tools.newzone.top/logo.png",
@@ -465,7 +465,8 @@
     "telugu": "泰卢固语",
     "marathi": "马拉地语",
     "urdu": "乌尔都语",
-    "croatian": "克罗地亚语"
+    "croatian": "克罗地亚语",
+    "uyghur": "维吾尔语"
   },
   "CopyToClipboard": {
     "empty": "内容为空，无需复制",

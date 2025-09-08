@@ -335,8 +335,8 @@
   },
   "tools": {
     "subtitleTranslator": {
-      "title": "مترجم الترجمة الفرعية (SRT, ASS, VTT)",
-      "description": "ترجمة الترجمة الفرعية بالجملة، مع دعم الترجمة المتبادلة بين 35 لغة"
+      "title": "مترجم الترجمة الفرعية (SRT, ASS, VTT, LRC)",
+      "description": "ترجمة الترجمة الفرعية بالجملة، مع دعم الترجمة المتبادلة بين 50+ لغة"
     },
     "jsonTranslate": {
       "title": "مترجم JSON للتدويل",
@@ -400,8 +400,8 @@
     "description": "مجموعة أدوات بالذكاء الاصطناعي: ترجمة ترجمات فرعية وJSON للتدويل وMarkdown، تقسيم نصوص، استخراج/استبدال قيَم JSON، تحرير عُقد، تحديث بيانات وتحويل علامات.",
     "homeTitle": "Tools By AI",
     "homeDescription": "مجموعة أدوات الذكاء الاصطناعي التي تتضمن ترجمة متعددة اللغات، معالجة النصوص، تحرير JSON، والمزيد لمساعدة المطورين ومنشئي المحتوى على التعامل بكفاءة مع مهام الترجمة متعددة اللغات ومعالجة النصوص.",
-    "ogTitle": "Tools By AI Toolset - AI-Powered Tools for Developers and Creators",
-    "ogDescription": "An AI toolset featuring multilingual translation, text processing, JSON editing, and more to help developers and creators efficiently handle multilingual translation and text processing tasks.",
+    "ogTitle": "مجموعة أدوات Tools By AI - أدوات مدعومة بالذكاء الاصطناعي للمطورين والمبدعين",
+    "ogDescription": "مجموعة أدوات تعمل بالذكاء الاصطناعي تتميز بالترجمة متعددة اللغات ومعالجة النصوص وتحرير JSON والمزيد لمساعدة المطورين والمبدعين على التعامل بكفاءة مع مهام الترجمة متعددة اللغات ومعالجة النصوص.",
     "ogUrl": "https://tools.newzone.top/ar",
     "ogSiteName": "Tools By AI",
     "ogLogo": "https://tools.newzone.top/logo.png",
@@ -465,7 +465,8 @@
     "telugu": "التيلوجو",
     "marathi": "الماراثية",
     "urdu": "الأردية",
-    "croatian": "الكرواتية"
+    "croatian": "الكرواتية",
+    "uyghur": "الأويغورية"
   },
   "CopyToClipboard": {
     "empty": "المحتوى فارغ، لا يوجد ما يتم نسخه",

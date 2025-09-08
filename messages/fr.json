@@ -335,8 +335,8 @@
   },
   "tools": {
     "subtitleTranslator": {
-      "title": "Traducteur de Sous-titres (SRT, ASS, VTT)",
-      "description": "Traduisez en masse des sous-titres, avec prise en charge de l'inter-traduction entre 35 langues."
+      "title": "Traducteur de Sous-titres (SRT, ASS, VTT, LRC)",
+      "description": "Traduisez en masse des sous-titres, avec prise en charge de l'inter-traduction entre 50+ langues."
     },
     "jsonTranslate": {
       "title": "Traducteur JSON i18n",
@@ -400,8 +400,8 @@
     "description": "Suite d’outils IA: traduction de sous-titres, JSON i18n, Markdown, découpe de texte, extraction/édition JSON, mise à jour/correspondance de données, signets.",
     "homeTitle": "Tools By AI",
     "homeDescription": "Un ensemble d'outils AI regroupant traduction multilingue, traitement de texte, édition JSON et bien plus pour aider les développeurs et créateurs à gérer efficacement leurs tâches de traduction et de traitement de texte.",
-    "ogTitle": "Tools By AI Toolset - AI-Powered Tools for Developers and Creators",
-    "ogDescription": "An AI toolset featuring multilingual translation, text processing, JSON editing, and more to help developers and creators efficiently handle multilingual translation and text processing tasks.",
+    "ogTitle": "Boîte à outils Tools By AI - Outils alimentés par l'IA pour les développeurs et les créateurs",
+    "ogDescription": "Une boîte à outils d'IA proposant la traduction multilingue, le traitement de texte, l'édition JSON et plus encore pour aider les développeurs et les créateurs à gérer efficacement les tâches de traduction multilingue et de traitement de texte.",
     "ogUrl": "https://tools.newzone.top/fr",
     "ogSiteName": "Tools By AI",
     "ogLogo": "https://tools.newzone.top/logo.png",
@@ -465,7 +465,8 @@
     "telugu": "Télougou",
     "marathi": "Marathe",
     "urdu": "Ourdou",
-    "croatian": "Croate"
+    "croatian": "Croate",
+    "uyghur": "Ouïghour"
   },
   "CopyToClipboard": {
     "empty": "Le contenu est vide, rien à copier",

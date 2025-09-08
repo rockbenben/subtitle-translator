@@ -323,7 +323,7 @@
     "systemPrompt": "সিস্টেম প্রম্পট",
     "systemPromptExtra": "LLM অনুবাদের জন্য সিস্টেম প্রম্পট। ডিফল্টে ফিরে যেতে ফাঁকা রাখুন।",
     "userPrompt": "ব্যবহারকারী প্রম্পট",
-    "userPromptExtra": "LLM অনুবাদের জন্য কাস্টম প্রম্পট। ডিফল্টে ফিরে যেতে ফাঁকা রাখুন। Variables",
+    "userPromptExtra": "LLM অনুবাদের জন্য কাস্টম প্রম্পট। ডিফল্টে ফিরে যেতে ফাঁকা রাখুন। ভেরিয়েবল",
     "for": "জন্য",
     "textToTranslate": "অনুবাদের জন্য টেক্সট",
     "chunkSize": "চাঙ্ক অনুবাদ সাইজ",
@@ -335,8 +335,8 @@
   },
   "tools": {
     "subtitleTranslator": {
-      "title": "সাবটাইটেল ট্রান্সলেটর (SRT, ASS, VTT)",
-      "description": "বাল্ক সাবটাইটেল অনুবাদ, 35 টি ভাষার মধ্যে আন্তঃঅনুবাদ সমর্থিত"
+      "title": "সাবটাইটেল ট্রান্সলেটর (SRT, ASS, VTT, LRC)",
+      "description": "বাল্ক সাবটাইটেল অনুবাদ, 50+ টি ভাষার মধ্যে আন্তঃঅনুবাদ সমর্থিত"
     },
     "jsonTranslate": {
       "title": "i18n JSON অনুবাদকারী",
@@ -400,8 +400,8 @@
     "description": "Tools by AI‑এ JSON, Markdown, সাবটাইটেল ও টেক্সটের জন্য ব্যাচ প্রসেসিং টুলস। কাস্টম নিয়ম, ফরম্যাট সুরক্ষা, প্রিভিউ/এক্সপোর্ট ও বহু‑ভাষা সমর্থন।",
     "homeTitle": "Tools By AI",
     "homeDescription": "একটি AI টুলসেট যা বহুভাষিক অনুবাদ, টেক্সট প্রসেসিং, JSON এডিটিং, ইত্যাদি সহ ডেভেলপার ও ক্রিয়েটরদের জন্য দক্ষভাবে বহুভাষিক অনুবাদ ও টেক্সট প্রসেসিং কাজ সম্পাদনে সহায়তা করে।",
-    "ogTitle": "Tools By AI Toolset - AI-Powered Tools for Developers and Creators",
-    "ogDescription": "An AI toolset featuring multilingual translation, text processing, JSON editing, and more to help developers and creators efficiently handle multilingual translation and text processing tasks.",
+    "ogTitle": "Tools By AI টুলসেট - ডেভেলপার এবং নির্মাতাদের জন্য AI-চালিত সরঞ্জাম",
+    "ogDescription": "একটি AI টুলসেট যা বহুভাষিক অনুবাদ, পাঠ্য প্রক্রিয়াকরণ, JSON সম্পাদনা এবং আরও অনেক কিছু বৈশিষ্ট্যযুক্ত করে ডেভেলপার এবং নির্মাতাদের বহুভাষিক অনুবাদ এবং পাঠ্য প্রক্রিয়াকরণ कार्यগুলি দক্ষতার সাথে পরিচালনা করতে সহায়তা করে।",
     "ogUrl": "https://tools.newzone.top/bn",
     "ogSiteName": "Tools By AI",
     "ogLogo": "https://tools.newzone.top/logo.png",
@@ -465,7 +465,8 @@
     "telugu": "তেলুগু",
     "marathi": "মারাঠি",
     "urdu": "উর্দু",
-    "croatian": "ক্রোয়েশীয়"
+    "croatian": "ক্রোয়েশিয়ান",
+    "uyghur": "উইঘুর"
   },
   "CopyToClipboard": {
     "empty": "কনটেন্ট ফাঁকা, কপি করার কিছু নেই",

@@ -335,8 +335,8 @@
   },
   "tools": {
     "subtitleTranslator": {
-      "title": "Tradutor de Legendas (SRT, ASS, VTT)",
-      "description": "Traduza legendas em lote, suportando tradução entre 35 idiomas"
+      "title": "Tradutor de Legendas (SRT, ASS, VTT, LRC)",
+      "description": "Traduza legendas em lote, suportando tradução entre 50+ idiomas"
     },
     "jsonTranslate": {
       "title": "Tradutor de JSON i18n",
@@ -400,8 +400,8 @@
     "description": "Ferramentas de IA: legendas, JSON i18n, Markdown, divisão de texto, extração/edição de JSON, dados e favoritos. Para devs e creators.",
     "homeTitle": "Tools By AI",
     "homeDescription": "Um conjunto de ferramentas AI que oferece tradução multilíngue, processamento de texto, edição de JSON e muito mais para ajudar desenvolvedores e criadores a lidar de forma eficiente com tarefas de tradução multilíngue e processamento de texto.",
-    "ogTitle": "Tools By AI Toolset - AI-Powered Tools for Developers and Creators",
-    "ogDescription": "An AI toolset featuring multilingual translation, text processing, JSON editing, and more to help developers and creators efficiently handle multilingual translation and text processing tasks.",
+    "ogTitle": "Conjunto de ferramentas Tools By AI - Ferramentas com tecnologia de IA para desenvolvedores e criadores",
+    "ogDescription": "Um conjunto de ferramentas de IA com tradução multilíngue, processamento de texto, edição de JSON e muito mais para ajudar desenvolvedores e criadores a lidar com eficiência com tarefas de tradução multilíngue e processamento de texto.",
     "ogUrl": "https://tools.newzone.top/pt",
     "ogSiteName": "Tools By AI",
     "ogLogo": "https://tools.newzone.top/logo.png",
@@ -465,7 +465,8 @@
     "telugu": "Telugo",
     "marathi": "Marata",
     "urdu": "Urdu",
-    "croatian": "Croata"
+    "croatian": "Croata",
+    "uyghur": "Uigur"
   },
   "CopyToClipboard": {
     "empty": "O conteúdo está vazio, nada para copiar",

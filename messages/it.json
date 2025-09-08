@@ -335,8 +335,8 @@
   },
   "tools": {
     "subtitleTranslator": {
-      "title": "Translator di Sottotitoli (SRT, ASS, VTT)",
-      "description": "Traduci in blocco i sottotitoli, supportando la traduzione interlinguistica tra 35 lingue"
+      "title": "Translator di Sottotitoli (SRT, ASS, VTT, LRC)",
+      "description": "Traduci in blocco i sottotitoli, supportando la traduzione interlinguistica tra 50+ lingue"
     },
     "jsonTranslate": {
       "title": "Translator JSON i18n",
@@ -400,8 +400,8 @@
     "description": "Suite di strumenti AI: sottotitoli, JSON i18n, Markdown, divisione testi, estrazione/modifica JSON, aggiornamento dati e segnalibri. Per sviluppatori e creator.",
     "homeTitle": "Tools By AI",
     "homeDescription": "Una suite di strumenti AI che include traduzione multilingue, elaborazione testi, editing JSON e altro per aiutare sviluppatori e creatori a gestire efficacemente compiti di traduzione multilingue ed elaborazione testi.",
-    "ogTitle": "Tools By AI Toolset - AI-Powered Tools for Developers and Creators",
-    "ogDescription": "An AI toolset featuring multilingual translation, text processing, JSON editing, and more to help developers and creators efficiently handle multilingual translation and text processing tasks.",
+    "ogTitle": "Toolset di Tools By AI - Strumenti basati sull'intelligenza artificiale per sviluppatori e creatori",
+    "ogDescription": "Un set di strumenti di intelligenza artificiale che offre traduzione multilingue, elaborazione di testi, modifica di JSON e altro ancora per aiutare sviluppatori e creatori a gestire in modo efficiente le attività di traduzione multilingue e di elaborazione del testo.",
     "ogUrl": "https://tools.newzone.top/it",
     "ogSiteName": "Tools By AI",
     "ogLogo": "https://tools.newzone.top/logo.png",
@@ -465,7 +465,8 @@
     "telugu": "Telugu",
     "marathi": "Marathi",
     "urdu": "Urdu",
-    "croatian": "Croato"
+    "croatian": "Croato",
+    "uyghur": "Uiguro"
   },
   "CopyToClipboard": {
     "empty": "Il contenuto è vuoto, niente da copiare",

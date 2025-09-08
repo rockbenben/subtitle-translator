@@ -335,8 +335,8 @@
   },
   "tools": {
     "subtitleTranslator": {
-      "title": "Переводчик субтитров (SRT, ASS, VTT)",
-      "description": "Пакетный перевод субтитров, поддержка перевода между 35 языками"
+      "title": "Переводчик субтитров (SRT, ASS, VTT, LRC)",
+      "description": "Пакетный перевод субтитров, поддержка перевода между 50+ языками"
     },
     "jsonTranslate": {
       "title": "i18n JSON Переводчик",
@@ -400,8 +400,8 @@
     "description": "Набор AI‑инструментов: перевод субтитров, i18n JSON, Markdown‑перевод, разбиение текста, операции с JSON, правка узлов, обновление данных, парсинг закладок.",
     "homeTitle": "Tools By AI",
     "homeDescription": "Набор AI инструментов, включающий многоязычный перевод, обработку текста, редактирование JSON и многое другое, чтобы помочь разработчикам и творцам эффективно справляться с задачами многоязычного перевода и обработки текста.",
-    "ogTitle": "Tools By AI Toolset - AI-Powered Tools for Developers and Creators",
-    "ogDescription": "An AI toolset featuring multilingual translation, text processing, JSON editing, and more to help developers and creators efficiently handle multilingual translation and text processing tasks.",
+    "ogTitle": "Набор инструментов Tools By AI - Инструменты на базе ИИ для разработчиков и авторов",
+    "ogDescription": "Набор инструментов ИИ, включающий многоязычный перевод, обработку текста, редактирование JSON и многое другое, чтобы помочь разработчикам и авторам эффективно справляться с задачами многоязычного перевода и обработки текста.",
     "ogUrl": "https://tools.newzone.top/ru",
     "ogSiteName": "Tools By AI",
     "ogLogo": "https://tools.newzone.top/logo.png",
@@ -465,7 +465,8 @@
     "telugu": "Телугу",
     "marathi": "Марати",
     "urdu": "урду",
-    "croatian": "хорватский"
+    "croatian": "Хорватский",
+    "uyghur": "Уйгурский"
   },
   "CopyToClipboard": {
     "empty": "Содержимое пусто, нечего копировать",

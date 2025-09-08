@@ -2,7 +2,7 @@
   "common": {
     "userGuide": "사용 방법",
     "privacyNotice": "모든 API 키와 데이터는 개인정보 보호 및 보안을 위해 귀하의 로컬 브라우저에만 저장됩니다. 문제가 발생하거나 제안 사항이 있으시면 커뮤니티나 피드백 페이지를 통해 언제든지 연락해 주십시오.",
-    "bigNotice": "When importing large files, your browser may become unresponsive. It is recommended to optimize large files.",
+    "bigNotice": "파일을 불러올 때 용량이 너무 크면 브라우저가 쉽게 멈출 수 있으므로, 대용량 파일 최적화를 선택하는 것이 좋습니다.",
     "dragAndDropText": "여기를 클릭하거나 파일을 드래그하여 업로드하십시오 (TXT, MD, JSON 등 텍스트 형식 지원)",
     "pasteUploadContent": "또는 텍스트 내용을 직접 붙여넣기",
     "example": "예제",
@@ -335,8 +335,8 @@
   },
   "tools": {
     "subtitleTranslator": {
-      "title": "자막 번역 도구 (SRT, ASS, VTT)",
-      "description": "35개 언어 간 상호 번역을 지원하는 일괄 자막 번역 도구"
+      "title": "자막 번역 도구 (SRT, ASS, VTT, LRC)",
+      "description": "50+개 언어 간 상호 번역을 지원하는 일괄 자막 번역 도구"
     },
     "jsonTranslate": {
       "title": "i18n JSON 번역기",
@@ -400,8 +400,8 @@
     "description": "자막 번역, i18n JSON, Markdown 번역, 텍스트 분할, JSON 추출/편집/치환, 매칭·업데이트, 북마크 변환 등 AI 도구 모음. 다국어 처리 작업을 효율화합니다.",
     "homeTitle": "Tools By AI",
     "homeDescription": "다국어 번역, 텍스트 처리, JSON 편집 등 다양한 기능을 갖춘 AI 도구 모음으로, 개발자와 크리에이터가 효율적으로 작업할 수 있도록 돕습니다.",
-    "ogTitle": "Tools By AI Toolset - AI-Powered Tools for Developers and Creators",
-    "ogDescription": "An AI toolset featuring multilingual translation, text processing, JSON editing, and more to help developers and creators efficiently handle multilingual translation and text processing tasks.",
+    "ogTitle": "Tools By AI 툴셋 - 개발자와 크리에이터를 위한 AI 기반 도구",
+    "ogDescription": "다국어 번역, 텍스트 처리, JSON 편집 등의 기능을 갖춘 AI 툴셋으로 개발자와 크리에이터가 다국어 번역 및 텍스트 처리 작업을 효율적으로 처리할 수 있도록 지원합니다。",
     "ogUrl": "https://tools.newzone.top/ko",
     "ogSiteName": "Tools By AI",
     "ogLogo": "https://tools.newzone.top/logo.png",
@@ -465,7 +465,8 @@
     "telugu": "텔루구어",
     "marathi": "마라티어",
     "urdu": "우르두어",
-    "croatian": "크로아티아어"
+    "croatian": "크로아티아어",
+    "uyghur": "위구르어"
   },
   "CopyToClipboard": {
     "empty": "내용이 비어 있어 복사할 것이 없습니다",

@@ -335,8 +335,8 @@
   },
   "tools": {
     "subtitleTranslator": {
-      "title": "Traductor de Subtítulos (SRT, ASS, VTT)",
-      "description": "Traduce en bloque subtítulos, soportando la intertraducción entre 35 idiomas."
+      "title": "Traductor de Subtítulos (SRT, ASS, VTT, LRC)",
+      "description": "Traduce en bloque subtítulos, soportando la intertraducción entre 50+ idiomas."
     },
     "jsonTranslate": {
       "title": "Traductor JSON i18n",
@@ -400,8 +400,8 @@
     "description": "Suite de IA para traducción y texto: subtítulos, Markdown, JSON i18n, división de texto, Regex, extracción y edición de JSON, mapeo y marcadores.",
     "homeTitle": "Tools By AI",
     "homeDescription": "Un conjunto de herramientas AI que incluye traducción multilingüe, procesamiento de texto, edición de JSON y más, para ayudar a desarrolladores y creadores a gestionar de forma eficiente tareas de traducción multilingüe y procesamiento de textos.",
-    "ogTitle": "Tools By AI Toolset - AI-Powered Tools for Developers and Creators",
-    "ogDescription": "An AI toolset featuring multilingual translation, text processing, JSON editing, and more to help developers and creators efficiently handle multilingual translation and text processing tasks.",
+    "ogTitle": "Tools By AI Toolset - Herramientas impulsadas por IA para desarrolladores y creadores",
+    "ogDescription": "Un conjunto de herramientas de IA que cuenta con traducción multilingüe, procesamiento de texto, edición de JSON y más para ayudar a los desarrolladores y creadores a manejar de manera eficiente las tareas de traducción multilingüe y procesamiento de texto.",
     "ogUrl": "https://tools.newzone.top/es",
     "ogSiteName": "Tools By AI",
     "ogLogo": "https://tools.newzone.top/logo.png",
@@ -465,7 +465,8 @@
     "telugu": "Telugú",
     "marathi": "Maratí",
     "urdu": "Urdu",
-    "croatian": "Croata"
+    "croatian": "Croata",
+    "uyghur": "Uigur"
   },
   "CopyToClipboard": {
     "empty": "El contenido está vacío, no hay nada que copiar",
