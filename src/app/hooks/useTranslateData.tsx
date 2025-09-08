@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { message } from "antd";
 import { loadFromLocalStorage, saveToLocalStorage } from "@/app/utils/localStorageUtils";
 import useFileUpload from "@/app/hooks/useFileUpload";
@@ -19,6 +19,7 @@ const useTranslateData = () => {
   const tLanguages = useTranslations("languages");
   const t = useTranslations("common");
   const { translate } = useTranslation();
+
   const [translationMethod, setTranslationMethod] = useState<string>(DEFAULT_API);
   // ["google", "gtxFreeAPI", "webgoogletranslate", "deepseek"] 没有 chuckSize 则逐行翻译
   const [translationConfigs, setTranslationConfigs] = useState(defaultConfigs);
@@ -183,16 +184,20 @@ const useTranslateData = () => {
           reject(new Error(t("importSettingreadFileError")));
         };
 
-        // 添加到DOM并触发点击
+        // 添加到 DOM 并触发点击
         document.body.appendChild(fileInput);
         fileInput.click();
 
-        // 清理DOM元素
-        setTimeout(() => {
+        // 清理 DOM 元素
+        const cleanup = () => {
           if (document.body.contains(fileInput)) {
             document.body.removeChild(fileInput);
           }
-        }, 1000);
+        };
+
+        // 立即清理或超时清理
+        setTimeout(cleanup, 100);
+        fileInput.addEventListener("change", cleanup, { once: true });
       } catch (error) {
         console.error(t("importSettingError"), error);
         message.error(t("importSettingError"));
@@ -235,10 +240,18 @@ const useTranslateData = () => {
   };
 
   const resetTranslationConfig = (key: string) => {
-    setTranslationConfigs((prevConfigs) => ({
-      ...prevConfigs,
-      [key]: defaultConfigs[key],
-    }));
+    setTranslationConfigs((prevConfigs) => {
+      const oldConfig = prevConfigs[key] || {};
+      const defaultConfig = defaultConfigs[key];
+      // 保留 apiKey，其它字段重置为默认
+      return {
+        ...prevConfigs,
+        [key]: {
+          ...defaultConfig,
+          ...(oldConfig.apiKey !== undefined ? { apiKey: oldConfig.apiKey } : {}),
+        },
+      };
+    });
   };
 
   const handleLanguageChange = (type: "source" | "target", value: string) => {
@@ -351,7 +364,92 @@ const useTranslateData = () => {
     setExtractedText("");
   };
 
+  // 根据翻译方法获取优化的重试配置
+  const getRetryConfig = useCallback((translationMethod: string) => {
+    const baseConfig = {
+      retries: 3,
+      factor: 2,
+      minTimeout: 1000,
+      maxTimeout: 30000,
+      randomize: true,
+    };
+
+    // 为不同的翻译服务定制重试策略
+    switch (translationMethod) {
+      case "gtxFreeAPI":
+        return {
+          ...baseConfig,
+          retries: 5, // 免费服务更容易失败，多重试几次
+          minTimeout: 2000,
+          maxTimeout: 60000,
+          shouldRetry: ({ error }) => {
+            // 网络错误和服务器错误重试，客户端错误不重试
+            const status = error?.status || error?.response?.status;
+            return !status || status >= 500 || status === 429;
+          },
+        };
+
+      case "deeplx":
+        return {
+          ...baseConfig,
+          retries: 4,
+          minTimeout: 1500,
+          shouldRetry: ({ error }) => {
+            const message = error?.message?.toLowerCase() || "";
+            const status = error?.status || error?.response?.status;
+            // DeepLX 服务不稳定，但不要对认证错误重试
+            return !message.includes("unauthorized") && (!status || status >= 500 || status === 429);
+          },
+        };
+
+      case "deepl":
+      case "google":
+      case "azure":
+        return {
+          ...baseConfig,
+          retries: 2, // 官方 API 更稳定，少重试
+          minTimeout: 500,
+          maxTimeout: 10000,
+          shouldRetry: ({ error }) => {
+            const status = error?.status || error?.response?.status;
+            // 只对网络错误和服务器错误重试
+            return !status || status >= 500 || status === 429;
+          },
+        };
+
+      case "openai":
+      case "deepseek":
+      case "gemini":
+      case "azureopenai":
+      case "siliconflow":
+      case "groq":
+      case "llm":
+        return {
+          ...baseConfig,
+          retries: 3,
+          minTimeout: 1000,
+          maxTimeout: 20000,
+          shouldRetry: ({ error }) => {
+            const message = error?.message?.toLowerCase() || "";
+            const status = error?.status || error?.response?.status;
+
+            // LLM 服务的特殊处理
+            if (message.includes("context length") || message.includes("token limit")) {
+              return false; // 不要重试上下文长度错误
+            }
+
+            return !status || status >= 500 || status === 429;
+          },
+        };
+
+      default:
+        return baseConfig;
+    }
+  }, []);
+
   async function retryTranslate(text, cacheSuffix, config) {
+    const retryConfig = getRetryConfig(config.translationMethod);
+
     try {
       return await pRetry(
         async () => {
@@ -362,25 +460,36 @@ const useTranslateData = () => {
           });
         },
         {
-          retries: 3,
-          onFailedAttempt: (error: any) => {
-            const msg = error?.message ?? String(error);
-            const attempt = error?.attemptNumber ?? "?";
-            const left = error?.retriesLeft ?? "?";
-            console.log(`${text.substring(0, 30)} ... Translation failed: ${msg} (attempt ${attempt}, left ${left})`);
+          ...retryConfig,
+          onFailedAttempt: async ({ error, attemptNumber, retriesLeft }) => {
+            const textPreview = text.length > 30 ? `${text.substring(0, 30)}...` : text;
+            console.warn(`Translation attempt ${attemptNumber} failed for "${textPreview}": ${error.message} (${retriesLeft} retries left)`);
+
+            // 对于速率限制错误，使用动态延迟
+            const errorStatus = (error as any)?.status || (error as any)?.response?.status;
+            const errorMessage = error?.message?.toLowerCase();
+
+            if (errorStatus === 429 || errorMessage?.includes("rate limit")) {
+              const delayMs = Math.min(1000 * Math.pow(2, attemptNumber), 30000);
+              console.log(`Rate limit detected, waiting ${delayMs}ms before retry...`);
+              await delay(delayMs);
+            }
           },
         }
       );
     } catch (error) {
-      console.log(`${text.substring(0, 30)} ... All translation attempts failed. Using original text.`);
+      const textPreview = text.length > 30 ? `${text.substring(0, 30)}...` : text;
+      console.warn(`All translation attempts failed for: "${textPreview}". Using original text.`);
       return text; // 返回原文作为兜底
     }
   }
 
   const translateContent = async (contentLines: string[], translationMethod: string, currentTargetLang: string, fileIndex: number = 0, totalFiles: number = 1, isSubtitleMode: boolean = false) => {
     const config = getCurrentConfig();
-    // 限制并发数，确保至少为 1
+
+    // 直接使用配置中的 limit 作为并发数，添加基础延迟
     const concurrency = Math.max(Number(config?.limit) || 10, 1);
+    const baseDelay = config?.delayTime || 200; // 使用配置中的 delayTime
     const limit = pLimit(concurrency);
 
     try {
@@ -410,25 +519,42 @@ const useTranslateData = () => {
         userPrompt,
       });
 
-      // 对于字幕翻译且使用AI模型时，启用上下文感知翻译
+      // 对于字幕翻译且使用 AI 模型时，启用上下文感知翻译
       if (isSubtitleMode && LLM_MODELS.includes(translationMethod) && contentLines.length > 1) {
         return await translateWithContext(contentLines, translationConfig, cacheSuffix, updateProgress);
       }
 
       if (config?.chunkSize === undefined) {
-        // 按行并发翻译，每一行翻译出错时通过 p-retry 进行重试
+        // 按行并发翻译，使用 p-limit 控制并发数
         const translatedLines = new Array(contentLines.length);
+        let completedCount = 0;
+
+        // 使用 Promise.all 与 p-limit 进行并发控制
         const promises = contentLines.map((line, index) =>
           limit(async () => {
+            // p-limit 会自动控制并发，p-retry 会处理重试
             translatedLines[index] = await retryTranslate(line, cacheSuffix, translationConfig);
-            updateProgress(index, contentLines.length);
+
+            completedCount++;
+            // 去抖动进度更新，每 10 个或完成时更新
+            if (completedCount % 10 === 0 || completedCount === contentLines.length) {
+              updateProgress(completedCount, contentLines.length);
+            }
+
+            // 添加基础延迟以避免过快请求
+            if (baseDelay > 0 && completedCount < contentLines.length) {
+              await delay(baseDelay);
+            }
           })
         );
 
         await Promise.all(promises);
+        // 确保进度达到100%
+        updateProgress(contentLines.length, contentLines.length);
         return translatedLines;
       }
 
+      // 对于支持chunkSize的API，使用分块翻译
       const delimiter = translationMethod === "deeplx" ? "<>" : "\n";
       // 将空行替换为 delimiter，保证分块时不丢失空行
       const nonEmptyLines = contentLines.map((line) => (line.trim() ? line : delimiter));
@@ -441,14 +567,16 @@ const useTranslateData = () => {
         const translatedContent = await retryTranslate(chunks[i], cacheSuffix, translationConfig);
         // 如果是 deeplx 翻译方法，需要将特殊换行符号替换回来
         translatedChunks.push(translationMethod === "deeplx" ? translatedContent?.replace(/<>/g, "\n") : translatedContent);
-        updateProgress(i, chunks.length);
+        updateProgress(i + 1, chunks.length);
+
+        // 在分块之间添加延迟
         if (i < chunks.length - 1) {
           await delay(config?.delayTime || 200);
         }
       }
 
       const result = translatedChunks.join("\n").split("\n");
-      return result.map((line, index) => (contentLines[index].trim() ? line : contentLines[index]));
+      return result.map((line, index) => (contentLines[index]?.trim() ? line : contentLines[index] || line));
     } catch (error) {
       console.error("Error translating content:", error);
       throw error;
@@ -457,7 +585,7 @@ const useTranslateData = () => {
 
   // 新增：带上下文的翻译函数
   const translateWithContext = async (contentLines: string[], translationConfig: any, cacheSuffix: string, updateProgress: (current: number, total: number) => void) => {
-    const contextWindow = Math.min(translationConfig.limit || 20, contentLines.length); // 上下文窗口大小，使用配置中的limit值，不超过总行数
+    const contextWindow = Math.min(translationConfig.limit || 20, contentLines.length); // 上下文窗口大小，使用配置中的 limit 值，不超过总行数
     const translatedLines = new Array(contentLines.length);
 
     // 分批处理，每批包含一定的上下文
@@ -486,7 +614,15 @@ const useTranslateData = () => {
           ...translationConfig,
           userPrompt: userPrompt.replace(
             "${content}",
-            `Context: This is part of a subtitle file. Only translate the lines marked with [TRANSLATE_X][/TRANSLATE_X] tags (where X is the line number). Use the [CONTEXT][/CONTEXT] lines for understanding but do not translate them. Maintain the natural flow of dialogue and keep the same numbering in your response.\n\n${contextWithMarkers}`
+            `Context: This is part of a subtitle file. Only translate the lines marked with [TRANSLATE_X][/TRANSLATE_X] tags (where X is the line number). Use the [CONTEXT][/CONTEXT] lines for understanding but do not translate them. Maintain the natural flow of dialogue and keep the same numbering in your response.
+
+CRITICAL REQUIREMENTS:
+1. You MUST translate ALL ${batchEnd - i} lines marked with [TRANSLATE_X] tags
+2. Do NOT skip any numbers from 0 to ${batchEnd - i - 1}
+3. Keep the exact format: [TRANSLATE_0]translation[/TRANSLATE_0]
+4. If a line contains only sounds/exclamations, still translate them appropriately
+
+${contextWithMarkers}`
           ),
         });
 
@@ -517,6 +653,11 @@ const useTranslateData = () => {
             translatedLines[j] = contentLines[j]; // 保持原文
           }
           updateProgress(j + 1, contentLines.length);
+
+          // 添加延迟避免API限制
+          if (j < batchEnd - 1) {
+            await delay(translationConfig.delayTime || 200);
+          }
         }
       }
     }
@@ -535,20 +676,20 @@ const useTranslateData = () => {
   const cleanTranslatedContent = (content: string): string => {
     return (
       content
-        // 移除所有TRANSLATE标记（带编号和不带编号），支持变形格式
+        // 移除所有 TRANSLATE 标记（带编号和不带编号），支持变形格式
         .replace(/\[TRANSLATE_\d+\]/gi, "")
         .replace(/\[\/TRANSLTranslate_\d+\]/gi, "") // 处理常见错误格式 [/TRANSLTranslate_X]
         .replace(/\[\/TRANSLATE_\d+\]/gi, "")
         .replace(/\[TRANSLATE\]/gi, "")
         .replace(/\[\/TRANSLATE\]/gi, "")
-        // 移除CONTEXT标记
+        // 移除 CONTEXT 标记
         .replace(/\[CONTEXT\]/gi, "")
         .replace(/\[\/CONTEXT\]/gi, "")
         .trim()
     );
   };
 
-  // 辅助函数：从AI响应中提取带编号的翻译行
+  // 辅助函数：从 AI 响应中提取带编号的翻译行
   const extractTranslatedLinesWithNumbers = (response: string, expectedCount: number): string[] => {
     const results = new Array(expectedCount);
 
@@ -580,7 +721,7 @@ const useTranslateData = () => {
     return extractTranslatedLines(response, expectedCount);
   };
 
-  // 辅助函数：从AI响应中提取翻译的行
+  // 辅助函数：从 AI 响应中提取翻译的行
   const extractTranslatedLines = (response: string, expectedCount: number): string[] => {
     // 尝试匹配翻译标记之间的内容
     const translateRegex = /\[TRANSLATE\]([\s\S]*?)\[\/TRANSLATE\]/g;
