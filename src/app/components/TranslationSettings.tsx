@@ -13,11 +13,29 @@ const TranslationSettings = () => {
   const t = useTranslations("TranslationSettings");
   const [messageApi, contextHolder] = message.useMessage();
   const { translationMethod, setTranslationMethod, getCurrentConfig, handleConfigChange, resetTranslationConfig, sysPrompt, setSysPrompt, userPrompt, setUserPrompt } = useTranslateData();
-  const resetTranslationCache = () => {
-    Object.keys(localStorage)
-      .filter((key) => key.startsWith(CACHE_PREFIX))
-      .forEach((key) => localStorage.removeItem(key));
-    messageApi.success("Translation cache has been reset");
+  const resetTranslationCache = async () => {
+    try {
+      // 异步分批删除缓存，避免UI阻塞
+      const allKeys = Object.keys(localStorage);
+      const cacheKeys = allKeys.filter((key) => key.startsWith(CACHE_PREFIX));
+
+      // 分批处理，每批删除100个
+      const batchSize = 100;
+      for (let i = 0; i < cacheKeys.length; i += batchSize) {
+        const batch = cacheKeys.slice(i, i + batchSize);
+        batch.forEach((key) => localStorage.removeItem(key));
+
+        // 让出控制权给UI线程
+        if (i + batchSize < cacheKeys.length) {
+          await new Promise((resolve) => setTimeout(resolve, 0));
+        }
+      }
+
+      messageApi.success(`Translation cache has been reset (${cacheKeys.length} entries cleared)`);
+    } catch (error) {
+      console.error("Failed to clear cache:", error);
+      messageApi.error("Failed to clear translation cache");
+    }
   };
   const handleTabChange = (key: string) => {
     setTranslationMethod(key);
