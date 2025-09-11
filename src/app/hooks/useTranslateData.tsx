@@ -13,7 +13,7 @@ import { useTranslations } from "next-intl";
 const DEFAULT_SYS_PROMPT = "You are a professional translator. Respond only with the content, either translated or rewritten. Do not add explanations, comments, or any extra text.";
 const DEFAULT_USER_PROMPT = "Please respect the original meaning, maintain the original format, and rewrite the following content in ${targetLanguage}.\n\n${content}";
 
-const DEFAULT_API = "gtxFreeAPI";
+const DEFAULT_API = "server";
 
 const useTranslateData = () => {
   const tLanguages = useTranslations("languages");
@@ -98,6 +98,15 @@ const useTranslateData = () => {
       console.error(t("exportSettingError"), error);
       message.error(t("exportSettingError"));
     }
+  };
+
+  // Helper: get auth token & server URL for server mode
+  const getAuthToken = () => (typeof window !== "undefined" ? localStorage.getItem("authToken") : null);
+  const getServerUrl = () => {
+    const cfg = getCurrentConfig();
+    // server config stored in translationConfigs.server.url
+    if (translationMethod === "server" && (cfg as any)?.url) return (cfg as any).url as string;
+    return "http://localhost:4000";
   };
 
   const { readFile } = useFileUpload();
@@ -280,6 +289,15 @@ const useTranslateData = () => {
 
   const validateTranslate = async () => {
     const config = getCurrentConfig();
+    if (translationMethod === "server") {
+      // Require login
+      const token = getAuthToken();
+      if (!token) {
+        message.error("Please sign in to the server first");
+        return false;
+      }
+      return true;
+    }
     if (config && "apiKey" in config && !config.apiKey && translationMethod !== "llm") {
       message.error(t("enterApiKey"));
       return false;
@@ -342,6 +360,118 @@ const useTranslateData = () => {
     }
 
     return true;
+  };
+
+  // New: server-side translation job submitter
+  const handleServerTranslate = async (
+    fileIds?: string[],
+    opts?: { bilingualSubtitle?: boolean; bilingualPosition?: "above" | "below"; exportFormat?: "srt" | "vtt" | "ass" }
+  ) => {
+    try {
+      const token = getAuthToken();
+      const baseUrl = getServerUrl();
+      if (!token) {
+        message.error("Please sign in to the server first");
+        return;
+      }
+      if (!fileIds || fileIds.length === 0) {
+        message.error(t("noFileUploaded"));
+        return;
+      }
+
+      setTranslateInProgress(true);
+      setProgressPercent(1);
+
+      const uploadedFileIds: string[] = fileIds;
+
+      // create jobs per file
+      const targetLanguagesToUse = multiLanguageMode ? target_langs : [targetLanguage];
+      // ensure target languages
+      if (!targetLanguagesToUse || targetLanguagesToUse.length === 0) {
+        message.error(t("noTargetLanguage"));
+        return;
+      }
+
+      for (let i = 0; i < uploadedFileIds.length; i++) {
+        const fileId = uploadedFileIds[i];
+        const cfg = getCurrentConfig();
+        const cwRaw = Number((cfg as any)?.limit);
+        const cw = Number.isFinite(cwRaw) && cwRaw > 0 ? Math.min(200, Math.round(cwRaw)) : undefined;
+        const tempRaw = Number((cfg as any)?.temperature);
+        const temp = Number.isFinite(tempRaw) ? tempRaw : undefined;
+        const opt: any = { useContext: true };
+        if (cw !== undefined) opt.contextWindow = cw;
+        if ((cfg as any)?.model) opt.model = (cfg as any).model;
+        if (temp !== undefined) opt.temperature = temp;
+        if (sysPrompt) opt.sysPrompt = sysPrompt;
+        if (userPrompt) opt.userPrompt = userPrompt;
+        const resp = await fetch(`${baseUrl}/api/translate/jobs`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({
+            fileId,
+            sourceLang: sourceLanguage,
+            targetLangs: targetLanguagesToUse,
+            method: "single",
+            options: opt,
+          }),
+        });
+        if (!resp.ok) {
+          const err = await resp.json().catch(() => ({}));
+          throw new Error(err?.error || `Job create failed ${resp.status}`);
+        }
+        const { jobId } = await resp.json();
+
+        // poll status
+        let progress = 10;
+        while (true) {
+          await delay(800);
+          const s = await fetch(`${baseUrl}/api/translate/jobs/${jobId}`, { headers: { Authorization: `Bearer ${token}` } });
+          const status = await s.json();
+          if (status.status === "completed") break;
+          if (status.status === "failed") throw new Error(status.error || "Job failed");
+          progress = Math.min(progress + 5, 95);
+          setProgressPercent(progress);
+        }
+
+        // download results per target language
+        const bi = opts?.bilingualSubtitle ?? false;
+        const exportFormat = opts?.exportFormat || (bi ? "ass" : "srt");
+        const pos = opts?.bilingualPosition || "below";
+        for (const lang of targetLanguagesToUse) {
+          const dl = await fetch(
+            `${baseUrl}/api/files/${fileId}/export?format=${exportFormat}&lang=${encodeURIComponent(lang)}&bilingual=${bi ? 1 : 0}&position=${bi ? pos : "below"}`,
+            { headers: { Authorization: `Bearer ${token}` } });
+          if (!dl.ok) {
+            throw new Error(`Export failed ${dl.status}`);
+          }
+          const cd = dl.headers.get("Content-Disposition") || dl.headers.get("content-disposition") || "";
+          let suggested = "";
+          const mStar = cd.match(/filename\*=(?:UTF-8''|)([^;]+)$/i);
+          if (mStar) {
+            try { suggested = decodeURIComponent(mStar[1]); } catch {}
+          }
+          if (!suggested) {
+            const m = cd.match(/filename="([^"]+)"/i);
+            if (m) suggested = m[1];
+          }
+          const text = await dl.text();
+          // Update UI with first language only
+          if (i === 0 && lang === targetLanguagesToUse[0]) setTranslatedText(text);
+          const fallback = `subtitle_${fileId}_${lang}.${exportFormat}`;
+          const finalName = suggested && suggested.trim() ? suggested : fallback;
+          await downloadFile(text, finalName);
+        }
+      }
+
+      setProgressPercent(100);
+      message.success(t("translationComplete"));
+    } catch (e) {
+      console.error(e);
+      message.error((e as Error).message);
+    } finally {
+      setTranslateInProgress(false);
+    }
   };
 
   const handleTranslate = async (performTranslation: Function, sourceText: string, isSubtitleMode: boolean = false) => {
@@ -783,6 +913,7 @@ ${contextWithMarkers}`
     handleLanguageChange,
     delay,
     validateTranslate,
+    handleServerTranslate,
   };
 };
 

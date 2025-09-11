@@ -4,6 +4,7 @@ import SparkMD5 from "spark-md5";
 import { languages } from "./languages";
 
 export const TRANSLATION_SERVICES = [
+  { value: "server", label: "Server" },
   { value: "gtxFreeAPI", label: "GTX API (Free)" },
   {
     value: "google",
@@ -44,6 +45,12 @@ export const categorizedOptions = [
 ];
 
 export const defaultConfigs = {
+  server: {
+    url: "http://localhost:4000",
+    limit: 20, // used as context window size on server
+    model: "gpt-4o-mini", // overrideable in UI
+    temperature: 0.2,
+  },
   gtxFreeAPI: {
     limit: 100,
   },

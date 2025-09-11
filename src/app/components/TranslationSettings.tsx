@@ -1,9 +1,11 @@
 "use client";
 
-import { Tabs, Form, Input, Card, Typography, Button, Space, Tooltip, message } from "antd";
+import React from "react";
+import { Tabs, Form, Input, Card, Typography, Button, Space, Tooltip, message, Select } from "antd";
 import { TRANSLATION_SERVICES, LLM_MODELS, CACHE_PREFIX } from "@/app/components/translateAPI";
 import useTranslateData from "@/app/hooks/useTranslateData";
 import { useTranslations } from "next-intl";
+import { useAuth } from "@/app/components/AuthContext";
 
 const { Text, Link } = Typography;
 const { TextArea } = Input;
@@ -13,6 +15,27 @@ const TranslationSettings = () => {
   const t = useTranslations("TranslationSettings");
   const [messageApi, contextHolder] = message.useMessage();
   const { translationMethod, setTranslationMethod, getCurrentConfig, handleConfigChange, resetTranslationConfig, sysPrompt, setSysPrompt, userPrompt, setUserPrompt } = useTranslateData();
+  const { baseUrl, token } = useAuth();
+  const [serverModels, setServerModels] = React.useState<{ id: string; label: string }[]>([]);
+  const [modelsLoading, setModelsLoading] = React.useState(false);
+
+  const fetchServerModels = React.useCallback(async () => {
+    if (translationMethod !== "server" || !token) return;
+    setModelsLoading(true);
+    try {
+      const resp = await fetch(`${baseUrl}/api/models`, { headers: { Authorization: `Bearer ${token}` } });
+      const data = await resp.json();
+      setServerModels(data?.models || []);
+    } catch (e) {
+      console.warn("Failed to load models", e);
+    } finally {
+      setModelsLoading(false);
+    }
+  }, [translationMethod, baseUrl, token]);
+
+  React.useEffect(() => {
+    fetchServerModels();
+  }, [fetchServerModels]);
   const resetTranslationCache = async () => {
     try {
       // 异步分批删除缓存，避免UI阻塞
@@ -105,7 +128,23 @@ const TranslationSettings = () => {
 
             {config?.model !== undefined && (
               <Form.Item label={`LLM ${tCommon("model")}`} extra={t("modelExtra")}>
-                <Input value={config.model} onChange={(e) => handleConfigChange(service, "model", e.target.value)} />
+                {service === "server" ? (
+                  <Space>
+                    <Select
+                      showSearch
+                      loading={modelsLoading}
+                      placeholder="Select server model"
+                      style={{ minWidth: 260 }}
+                      value={config.model}
+                      onChange={(v) => handleConfigChange(service, "model", v)}
+                      options={serverModels.map((m) => ({ value: m.id, label: m.label }))}
+                      optionFilterProp="label"
+                    />
+                    <Button onClick={fetchServerModels}>{tCommon("refresh") || "Refresh"}</Button>
+                  </Space>
+                ) : (
+                  <Input value={config.model} onChange={(e) => handleConfigChange(service, "model", e.target.value)} />
+                )}
               </Form.Item>
             )}
 

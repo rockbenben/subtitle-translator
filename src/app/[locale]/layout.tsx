@@ -8,6 +8,7 @@ import { setRequestLocale, getTranslations, getMessages } from "next-intl/server
 import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
 import ThemesProvider from "@/app/ThemesProvider";
+import { AuthProvider } from "@/app/components/AuthContext";
 
 export async function generateMetadata({ params: { locale } }) {
   const t = await getTranslations({ locale, namespace: "Metadata" });
@@ -36,10 +37,12 @@ export default async function LocaleLayout({ children, params }: { children: Rea
       <GoogleTagManager gtmId="GTM-WBM6XHGB" />
       <body>
         <NextIntlClientProvider messages={messages}>
-          <ThemesProvider>
-            <Navigation />
-            <div className="max-w-7xl mt-2 mx-auto p-4">{children}</div>
-          </ThemesProvider>
+          <AuthProvider>
+            <ThemesProvider>
+              <Navigation />
+              <div className="max-w-7xl mt-2 mx-auto p-4">{children}</div>
+            </ThemesProvider>
+          </AuthProvider>
         </NextIntlClientProvider>
       </body>
     </html>

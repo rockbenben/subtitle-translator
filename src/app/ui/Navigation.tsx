@@ -7,6 +7,8 @@ import { GithubOutlined, QqOutlined, DiscordOutlined, TranslationOutlined, SunOu
 import { useTheme } from "next-themes";
 import { useLocale } from "next-intl";
 import { AppMenu } from "@/app/components/projects";
+import { useAuth } from "@/app/components/AuthContext";
+import LoginModal from "@/app/components/LoginModal";
 
 const { Header } = Layout;
 
@@ -44,6 +46,8 @@ export function Navigation() {
   const { theme, setTheme } = useTheme();
   const { token } = antTheme.useToken();
   const locale = useLocale();
+  const { user, logout } = useAuth();
+  const [loginOpen, setLoginOpen] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
   const [langQuery, setLangQuery] = useState("");
 
@@ -204,12 +208,20 @@ export function Navigation() {
               </Button>
             </Dropdown>
 
-            <Space size={token.marginXS}>
-              {isChineseLocale && (
-                <a href={SOCIAL_LINKS.qq} target="_blank" rel="noopener noreferrer">
-                  <QqOutlined style={getSocialIconStyle()} />
-                </a>
-              )}
+          <Space size={token.marginXS}>
+            {!user ? (
+              <Button type="text" onClick={() => setLoginOpen(true)}>Sign In</Button>
+            ) : (
+              <Space>
+                <span style={{ color: token.colorTextSecondary }}>{user.email}</span>
+                <Button type="text" onClick={logout}>Sign Out</Button>
+              </Space>
+            )}
+            {isChineseLocale && (
+              <a href={SOCIAL_LINKS.qq} target="_blank" rel="noopener noreferrer">
+                <QqOutlined style={getSocialIconStyle()} />
+              </a>
+            )}
               <a href={SOCIAL_LINKS.discord} target="_blank" rel="noopener noreferrer">
                 <DiscordOutlined style={getSocialIconStyle()} />
               </a>
@@ -230,6 +242,7 @@ export function Navigation() {
           </Space>
         </div>
       </Header>
+      <LoginModal open={loginOpen} onClose={() => setLoginOpen(false)} />
     </ConfigProvider>
   );
 }

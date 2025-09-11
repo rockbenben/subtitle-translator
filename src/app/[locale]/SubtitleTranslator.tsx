@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Flex, Card, Button, Typography, Input, Upload, Form, Space, message, Select, Modal, Checkbox, Progress, Tooltip, Radio, Switch, Spin } from "antd";
 import { CopyOutlined, DownloadOutlined, InboxOutlined, UploadOutlined } from "@ant-design/icons";
 import { splitTextIntoLines, getTextStats, downloadFile } from "@/app/utils";
@@ -11,6 +11,7 @@ import { useCopyToClipboard } from "@/app/hooks/useCopyToClipboard";
 import useFileUpload from "@/app/hooks/useFileUpload";
 import useTranslateData from "@/app/hooks/useTranslateData";
 import { useTranslations } from "next-intl";
+import { useAuth } from "@/app/components/AuthContext";
 
 const { TextArea } = Input;
 const { Dragger } = Upload;
@@ -44,6 +45,7 @@ const SubtitleTranslator = () => {
     setTranslationMethod,
     translateContent,
     handleTranslate,
+    handleServerTranslate,
     getCurrentConfig,
     handleConfigChange,
     sourceLanguage,
@@ -74,11 +76,144 @@ const SubtitleTranslator = () => {
   const [bilingualSubtitle, setBilingualSubtitle] = useState(false);
   const [bilingualPosition, setBilingualPosition] = useState("below"); // 'above' or 'below'
   const [contextAwareTranslation, setContextAwareTranslation] = useState(true); // 上下文感知翻译开关
+  const { token, baseUrl } = useAuth();
+  const [serverFiles, setServerFiles] = useState<any[]>([]);
+  const [selectedServerFileIds, setSelectedServerFileIds] = useState<string[]>([]);
+  const [serverModels, setServerModels] = useState<{ id: string; label: string }[]>([]);
+  const [modelsLoading, setModelsLoading] = useState(false);
 
   useEffect(() => {
     setExtractedText("");
     setTranslatedText("");
   }, [sourceText, setExtractedText, setTranslatedText]);
+
+  // Fetch server files for current user when in server mode
+  const fetchServerFiles = useCallback(async () => {
+    if (translationMethod !== "server" || !token) return;
+    try {
+      const resp = await fetch(`${baseUrl}/api/files`, { headers: { Authorization: `Bearer ${token}` } });
+      if (!resp.ok) throw new Error(`Failed to load files (${resp.status})`);
+      const items = await resp.json();
+      setServerFiles(items || []);
+    } catch (e) {
+      console.error(e);
+      messageApi.error((e as Error).message);
+    }
+  }, [translationMethod, token, baseUrl, messageApi]);
+
+  useEffect(() => {
+    fetchServerFiles();
+  }, [fetchServerFiles]);
+
+  const fetchServerModels = useCallback(async () => {
+    if (translationMethod !== "server" || !token) return;
+    setModelsLoading(true);
+    try {
+      const resp = await fetch(`${baseUrl}/api/models`, { headers: { Authorization: `Bearer ${token}` } });
+      if (!resp.ok) throw new Error(`Failed to load models (${resp.status})`);
+      const data = await resp.json();
+      setServerModels(data?.models || []);
+    } catch (e) {
+      console.error(e);
+      messageApi.error((e as Error).message);
+    } finally {
+      setModelsLoading(false);
+    }
+  }, [translationMethod, token, baseUrl, messageApi]);
+
+  useEffect(() => {
+    fetchServerModels();
+  }, [fetchServerModels]);
+
+  const langToCol = (lang: string) => {
+    const l = (lang || '').toLowerCase();
+    if (l.startsWith('ja')) return 'japanese';
+    if (l.startsWith('zh')) return 'chinese';
+    return 'english';
+  };
+
+  const confirmOverwriteIfNeeded = async (): Promise<boolean> => {
+    if (translationMethod !== 'server') return true;
+    if (!token) return false;
+    const langs = multiLanguageMode ? target_langs : [targetLanguage];
+    if (!selectedServerFileIds.length || !langs.length) return true;
+
+    const warnings: Array<{ file: string; langs: string[] }> = [];
+    for (const id of selectedServerFileIds) {
+      try {
+        const resp = await fetch(`${baseUrl}/api/files/${id}`, { headers: { Authorization: `Bearer ${token}` } });
+        if (!resp.ok) continue;
+        const data = await resp.json();
+        const hitLangs: string[] = [];
+        for (const lg of langs) {
+          const col = langToCol(lg);
+          if (Array.isArray(data?.segments) && data.segments.some((s: any) => (s?.[col] || '').trim())) {
+            hitLangs.push(lg);
+          }
+        }
+        if (hitLangs.length) warnings.push({ file: data?.originalName || data?.title || id, langs: hitLangs });
+      } catch {}
+    }
+
+    if (!warnings.length) return true;
+
+    const list = warnings
+      .map((w) => `• ${w.file}: ${w.langs.join(', ')}`)
+      .join('\n');
+
+    return await new Promise((resolve) => {
+      Modal.confirm({
+        title: 'Overwrite existing translations?',
+        content: (
+          <div style={{ whiteSpace: 'pre-wrap' }}>
+            The following files already contain translations for the selected language(s):
+            {'\n'}
+            {list}
+            {'\n'}
+            This will overwrite existing content. Continue?
+          </div>
+        ),
+        okText: 'Overwrite',
+        cancelText: 'Cancel',
+        onOk: () => resolve(true),
+        onCancel: () => resolve(false),
+      });
+    });
+  };
+
+  const uploadToServer = async () => {
+    if (translationMethod !== "server") return;
+    if (!token) {
+      messageApi.error("Please sign in to the server first");
+      return;
+    }
+    if (!multipleFiles || multipleFiles.length === 0) {
+      messageApi.error(tSubtitle("noFileUploaded"));
+      return;
+    }
+    try {
+      let count = 0;
+      for (const f of multipleFiles) {
+        const fd = new FormData();
+        fd.append("file", f);
+        const resp = await fetch(`${baseUrl}/api/files`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+          body: fd,
+        });
+        if (!resp.ok) {
+          const err = await resp.json().catch(() => ({}));
+          throw new Error(err?.error || `Upload failed ${resp.status}`);
+        }
+        count++;
+      }
+      messageApi.success(`${count} file(s) uploaded to server`);
+      await fetchServerFiles();
+    } catch (e) {
+      console.error(e);
+      messageApi.error((e as Error).message);
+    }
+  };
 
   const performTranslation = async (sourceText: string, fileNameSet?: string, fileIndex?: number, totalFiles?: number, isSubtitleMode: boolean = true) => {
     const lines = splitTextIntoLines(sourceText);
@@ -386,32 +521,49 @@ const SubtitleTranslator = () => {
           />
         </Form.Item>
         <Space wrap>
-          <Form.Item label={t("targetLanguage")}>
-            {!multiLanguageMode ? (
+        <Form.Item label={t("targetLanguage")}>
+          {!multiLanguageMode ? (
+            <Select
+              value={targetLanguage}
+              onChange={(e) => handleLanguageChange("target", e)}
+              options={targetOptions}
+              showSearch
+              placeholder={t("selectTargetLanguage")}
+              optionFilterProp="children"
+              filterOption={(input, option) => filterLanguageOption({ input, option })}
+              style={{ minWidth: 120 }}
+            />
+          ) : (
+            <Select
+              mode="multiple"
+              allowClear
+              value={target_langs}
+              onChange={(e) => setTarget_langs(e)}
+              options={targetOptions}
+              placeholder={t("selectMultiTargetLanguages")}
+              optionFilterProp="children"
+              filterOption={(input, option) => filterLanguageOption({ input, option })}
+              style={{ minWidth: 300 }}
+            />
+          )}
+        </Form.Item>
+        {translationMethod === "server" && (
+          <Form.Item label="Model">
+            <Space wrap>
               <Select
-                value={targetLanguage}
-                onChange={(e) => handleLanguageChange("target", e)}
-                options={targetOptions}
                 showSearch
-                placeholder={t("selectTargetLanguage")}
-                optionFilterProp="children"
-                filterOption={(input, option) => filterLanguageOption({ input, option })}
-                style={{ minWidth: 120 }}
+                loading={modelsLoading}
+                placeholder="Select server model"
+                style={{ minWidth: 260 }}
+                value={(getCurrentConfig() as any)?.model}
+                onChange={(v) => handleConfigChange("server", "model", v)}
+                options={serverModels.map((m) => ({ value: m.id, label: m.label }))}
+                optionFilterProp="label"
               />
-            ) : (
-              <Select
-                mode="multiple"
-                allowClear
-                value={target_langs}
-                onChange={(e) => setTarget_langs(e)}
-                options={targetOptions}
-                placeholder={t("selectMultiTargetLanguages")}
-                optionFilterProp="children"
-                filterOption={(input, option) => filterLanguageOption({ input, option })}
-                style={{ minWidth: 300 }}
-              />
-            )}
+              <Button onClick={fetchServerModels}>Refresh</Button>
+            </Space>
           </Form.Item>
+        )}
         </Space>
         <Form.Item label={tSubtitle("subtitleFormat")}>
           <Space wrap>
@@ -457,7 +609,19 @@ const SubtitleTranslator = () => {
         <Button
           type="primary"
           block
-          onClick={() => (uploadMode === "single" ? handleTranslate(performTranslation, sourceText, contextAwareTranslation) : handleMultipleTranslate())}
+          onClick={async () =>
+            translationMethod === "server"
+              ? (selectedServerFileIds && selectedServerFileIds.length > 0
+                  ? (await confirmOverwriteIfNeeded()) &&
+                    handleServerTranslate(selectedServerFileIds, {
+                      bilingualSubtitle,
+                      bilingualPosition,
+                    })
+                  : messageApi.error("Please select a server file"))
+              : uploadMode === "single"
+              ? handleTranslate(performTranslation, sourceText, contextAwareTranslation)
+              : handleMultipleTranslate()
+          }
           disabled={translateInProgress}>
           {multiLanguageMode ? `${t("translate")} | ${t("totalLanguages")}${target_langs.length || 0}` : t("translate")}
         </Button>
@@ -489,8 +653,33 @@ const SubtitleTranslator = () => {
             {t("resetUpload")}
           </Button>
         </Tooltip>
+        {translationMethod === "server" && (
+          <Tooltip title={"Upload selected files to server DB"}>
+            <Button onClick={uploadToServer}>Upload to Server</Button>
+          </Tooltip>
+        )}
         {uploadMode === "single" && sourceText && <Button onClick={handleExtractText}>{t("extractText")}</Button>}
       </Flex>
+      {translationMethod === "server" && (
+        <Card className="mt-3" title={"Server Files"} extra={<Button onClick={fetchServerFiles}>Refresh</Button>}>
+          <Space wrap>
+            <Select
+              mode="multiple"
+              maxTagCount="responsive"
+              style={{ minWidth: 420 }}
+              placeholder={"Select one or more files saved on server"}
+              value={selectedServerFileIds}
+              onChange={(v) => setSelectedServerFileIds(v)}
+              options={serverFiles.map((f) => ({
+                value: f.id,
+                label: `${f.originalName || f.title} · ${new Date(f.createdAt).toLocaleString()} · ${f._count?.segments || 0} segs`,
+              }))}
+              showSearch
+              optionFilterProp="label"
+            />
+          </Space>
+        </Card>
+      )}
       {uploadMode === "single" && (
         <>
           {translatedText && !(multiLanguageMode && target_langs.length > 1) && (
