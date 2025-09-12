@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { Flex, Card, Button, Typography, Input, Upload, Form, Space, message, Select, Modal, Checkbox, Progress, Tooltip, Radio, Switch, Spin } from "antd";
+import { Flex, Card, Button, Typography, Input, Upload, Form, Space, message, Select, Modal, Checkbox, Progress, Tooltip, Radio, Switch, Spin, Table } from "antd";
 import { CopyOutlined, DownloadOutlined, InboxOutlined, UploadOutlined } from "@ant-design/icons";
 import { splitTextIntoLines, getTextStats, downloadFile } from "@/app/utils";
 import { VTT_SRT_TIME, LRC_TIME_REGEX, detectSubtitleFormat, getOutputFileExtension, filterSubLines, convertTimeToAss, assHeader } from "./subtitleUtils";
@@ -67,6 +67,11 @@ const SubtitleTranslator = () => {
     handleLanguageChange,
     delay,
     validateTranslate,
+    serverJobMethod,
+    setServerJobMethod,
+    serverUseContext,
+    setServerUseContext,
+    isClient,
   } = useTranslateData();
   const [messageApi, contextHolder] = message.useMessage();
 
@@ -81,6 +86,12 @@ const SubtitleTranslator = () => {
   const [selectedServerFileIds, setSelectedServerFileIds] = useState<string[]>([]);
   const [serverModels, setServerModels] = useState<{ id: string; label: string }[]>([]);
   const [modelsLoading, setModelsLoading] = useState(false);
+  const [jobs, setJobs] = useState<any[]>([]);
+  const [autoJobs, setAutoJobs] = useState<boolean>(true);
+  const [viewerFileId, setViewerFileId] = useState<string | null>(null);
+  const [viewerLang, setViewerLang] = useState<"original" | "english" | "japanese" | "chinese">("original");
+  const [viewerSegs, setViewerSegs] = useState<any[]>([]);
+  const [viewerLoading, setViewerLoading] = useState(false);
 
   useEffect(() => {
     setExtractedText("");
@@ -102,8 +113,32 @@ const SubtitleTranslator = () => {
   }, [translationMethod, token, baseUrl, messageApi]);
 
   useEffect(() => {
-    fetchServerFiles();
-  }, [fetchServerFiles]);
+    if (isClient) fetchServerFiles();
+  }, [fetchServerFiles, isClient]);
+
+  const fetchJobs = useCallback(async () => {
+    if (translationMethod !== "server" || !token) return;
+    try {
+      const resp = await fetch(`${baseUrl}/api/translate/jobs?status=active&limit=100`, { headers: { Authorization: `Bearer ${token}` } });
+      if (!resp.ok) throw new Error(`Failed to load jobs (${resp.status})`);
+      const data = await resp.json();
+      setJobs(data || []);
+    } catch (e) {
+      console.error(e);
+    }
+  }, [translationMethod, token, baseUrl]);
+
+  useEffect(() => {
+    if (isClient) fetchJobs();
+  }, [fetchJobs, isClient]);
+
+  useEffect(() => {
+    if (!autoJobs || !isClient) return;
+    const id = setInterval(() => {
+      fetchJobs();
+    }, 60000);
+    return () => clearInterval(id);
+  }, [autoJobs, fetchJobs, isClient]);
 
   const fetchServerModels = useCallback(async () => {
     if (translationMethod !== "server" || !token) return;
@@ -122,8 +157,42 @@ const SubtitleTranslator = () => {
   }, [translationMethod, token, baseUrl, messageApi]);
 
   useEffect(() => {
-    fetchServerModels();
-  }, [fetchServerModels]);
+    if (isClient) fetchServerModels();
+  }, [fetchServerModels, isClient]);
+
+  // --- DB Viewer helpers ---
+  const msToSrt = (m: number) => {
+    if (typeof m !== "number" || isNaN(m)) return "";
+    let ms = Math.max(0, Math.floor(m));
+    const h = Math.floor(ms / 3600000);
+    ms %= 3600000;
+    const min = Math.floor(ms / 60000);
+    ms %= 60000;
+    const s = Math.floor(ms / 1000);
+    const milli = ms % 1000;
+    const pad = (n: number, l = 2) => String(n).padStart(l, "0");
+    return `${pad(h)}:${pad(min)}:${pad(s)},${pad(milli, 3)}`;
+  };
+
+  const fetchViewerSegs = useCallback(async () => {
+    if (!isClient || translationMethod !== "server" || !token || !viewerFileId) return;
+    setViewerLoading(true);
+    try {
+      const resp = await fetch(`${baseUrl}/api/files/${viewerFileId}`, { headers: { Authorization: `Bearer ${token}` } });
+      if (!resp.ok) throw new Error(`Failed to load segments (${resp.status})`);
+      const data = await resp.json();
+      setViewerSegs(data?.segments || []);
+    } catch (e) {
+      console.error(e);
+      messageApi.error((e as Error).message);
+    } finally {
+      setViewerLoading(false);
+    }
+  }, [isClient, translationMethod, token, viewerFileId, baseUrl, messageApi]);
+
+  useEffect(() => {
+    fetchViewerSegs();
+  }, [fetchViewerSegs]);
 
   const langToCol = (lang: string) => {
     const l = (lang || '').toLowerCase();
@@ -547,7 +616,7 @@ const SubtitleTranslator = () => {
             />
           )}
         </Form.Item>
-        {translationMethod === "server" && (
+        {isClient && translationMethod === "server" && (
           <Form.Item label="Model">
             <Space wrap>
               <Select
@@ -562,6 +631,26 @@ const SubtitleTranslator = () => {
               />
               <Button onClick={fetchServerModels}>Refresh</Button>
             </Space>
+          </Form.Item>
+        )}
+        {isClient && translationMethod === "server" && (
+          <Form.Item label="Processing">
+            <Radio.Group
+              value={serverJobMethod}
+              onChange={(e) => setServerJobMethod(e.target.value)}
+              optionType="button"
+              buttonStyle="solid"
+              size="small">
+              <Radio.Button value="single">Single</Radio.Button>
+              <Radio.Button value="batch">Batch</Radio.Button>
+            </Radio.Group>
+          </Form.Item>
+        )}
+        {isClient && translationMethod === "server" && (
+          <Form.Item label="Context">
+            <Tooltip title="Use neighboring lines as context for higher quality">
+              <Checkbox checked={serverUseContext} onChange={(e) => setServerUseContext(e.target.checked)}>Context-aware</Checkbox>
+            </Tooltip>
           </Form.Item>
         )}
         </Space>
@@ -660,7 +749,7 @@ const SubtitleTranslator = () => {
         )}
         {uploadMode === "single" && sourceText && <Button onClick={handleExtractText}>{t("extractText")}</Button>}
       </Flex>
-      {translationMethod === "server" && (
+      {isClient && translationMethod === "server" && (
         <Card className="mt-3" title={"Server Files"} extra={<Button onClick={fetchServerFiles}>Refresh</Button>}>
           <Space wrap>
             <Select
@@ -678,6 +767,114 @@ const SubtitleTranslator = () => {
               optionFilterProp="label"
             />
           </Space>
+        </Card>
+      )}
+      {isClient && translationMethod === "server" && (
+        <Card
+          className="mt-3"
+          title={"Batch Jobs"}
+          extra={
+            <Space>
+              <Button onClick={fetchJobs}>Refresh</Button>
+              <Checkbox checked={autoJobs} onChange={(e) => setAutoJobs(e.target.checked)}>
+                Auto 1min
+              </Checkbox>
+            </Space>
+          }>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'minmax(160px,1fr) 1fr 110px 90px 110px',
+              gap: 8,
+              alignItems: 'center',
+            }}>
+            <strong>File</strong>
+            <strong>Job ID</strong>
+            <strong>Status</strong>
+            <strong>Progress</strong>
+            <span></span>
+            {jobs.map((j) => {
+              const fileName = (j && j.file && (j.file.originalName || j.file.title)) || '—';
+              return (
+                <React.Fragment key={j.id}>
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }} title={fileName}>
+                    {fileName}
+                  </span>
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }} title={j.id}>
+                    {j.id}
+                  </span>
+                  <span>{j.status}</span>
+                  <span>{j.progress}%</span>
+                  <Button
+                    size="small"
+                    onClick={async () => {
+                      try {
+                        await fetch(`${baseUrl}/api/translate/jobs/${j.id}/poll`, {
+                          method: 'POST',
+                          headers: { Authorization: `Bearer ${token}` },
+                        });
+                        await fetchJobs();
+                      } catch (err) {
+                        console.error(err);
+                      }
+                    }}>
+                    Poll Now
+                  </Button>
+                </React.Fragment>
+              );
+            })}
+          </div>
+        </Card>
+      )}
+
+      {isClient && translationMethod === "server" && (
+        <Card
+          className="mt-3"
+          title={"DB Viewer"}
+          extra={
+            <Space>
+              <Button onClick={fetchViewerSegs}>Refresh</Button>
+            </Space>
+          }>
+          <Space wrap style={{ marginBottom: 8 }}>
+            <Select
+              style={{ minWidth: 360 }}
+              placeholder={"Select a file to view"}
+              value={viewerFileId || undefined}
+              onChange={(v) => setViewerFileId(v)}
+              options={serverFiles.map((f) => ({ value: f.id, label: `${f.originalName || f.title} · ${(f._count?.segments || 0)} segs` }))}
+              showSearch
+              optionFilterProp="label"
+            />
+            <Select
+              value={viewerLang}
+              onChange={(v) => setViewerLang(v)}
+              options={[
+                { value: "original", label: "Original" },
+                { value: "japanese", label: "Japanese" },
+                { value: "english", label: "English" },
+                { value: "chinese", label: "Chinese" },
+              ]}
+              style={{ minWidth: 160 }}
+            />
+          </Space>
+          <Table
+            size="small"
+            loading={viewerLoading}
+            rowKey={(r) => r.id}
+            dataSource={viewerSegs}
+            pagination={{ pageSize: 20, showSizeChanger: true }}
+            columns={[
+              { title: "#", dataIndex: "index", width: 70 },
+              { title: "Start", dataIndex: "startMs", width: 120, render: (v: number) => msToSrt(v) },
+              { title: "End", dataIndex: "endMs", width: 120, render: (v: number) => msToSrt(v) },
+              {
+                title: viewerLang.charAt(0).toUpperCase() + viewerLang.slice(1),
+                dataIndex: viewerLang,
+                render: (_: any, row: any) => row?.[viewerLang] || (viewerLang === "original" ? row?.original : ""),
+              },
+            ]}
+          />
         </Card>
       )}
       {uploadMode === "single" && (

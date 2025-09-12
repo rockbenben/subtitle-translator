@@ -14,13 +14,13 @@ const TranslationSettings = () => {
   const tCommon = useTranslations("common");
   const t = useTranslations("TranslationSettings");
   const [messageApi, contextHolder] = message.useMessage();
-  const { translationMethod, setTranslationMethod, getCurrentConfig, handleConfigChange, resetTranslationConfig, sysPrompt, setSysPrompt, userPrompt, setUserPrompt } = useTranslateData();
+  const { translationMethod, setTranslationMethod, getCurrentConfig, handleConfigChange, resetTranslationConfig, sysPrompt, setSysPrompt, userPrompt, setUserPrompt, isClient } = useTranslateData();
   const { baseUrl, token } = useAuth();
   const [serverModels, setServerModels] = React.useState<{ id: string; label: string }[]>([]);
   const [modelsLoading, setModelsLoading] = React.useState(false);
 
   const fetchServerModels = React.useCallback(async () => {
-    if (translationMethod !== "server" || !token) return;
+    if (!isClient || translationMethod !== "server" || !token) return;
     setModelsLoading(true);
     try {
       const resp = await fetch(`${baseUrl}/api/models`, { headers: { Authorization: `Bearer ${token}` } });
@@ -128,7 +128,7 @@ const TranslationSettings = () => {
 
             {config?.model !== undefined && (
               <Form.Item label={`LLM ${tCommon("model")}`} extra={t("modelExtra")}>
-                {service === "server" ? (
+                {service === "server" && isClient ? (
                   <Space>
                     <Select
                       showSearch

@@ -38,6 +38,9 @@ const useTranslateData = () => {
   const [translateInProgress, setTranslateInProgress] = useState(false);
   const [progressPercent, setProgressPercent] = useState(0);
   const [multiLanguageMode, setMultiLanguageMode] = useState<boolean>(false);
+  // Server-specific controls
+  const [serverJobMethod, setServerJobMethod] = useState<'single' | 'batch'>('single');
+  const [serverUseContext, setServerUseContext] = useState<boolean>(true);
 
   // Load from localStorage
   useEffect(() => {
@@ -54,6 +57,11 @@ const useTranslateData = () => {
       setTargetLanguage(loadFromLocalStorage("targetLanguage") || "zh");
       setTarget_langs(loadFromLocalStorage("target_langs") || ["zh"]);
       setMultiLanguageMode(loadFromLocalStorage("multiLanguageMode") ?? false);
+      // server controls
+      const savedMethod = (loadFromLocalStorage("serverJobMethod") as any) || 'single';
+      setServerJobMethod(savedMethod === 'batch' ? 'batch' : 'single');
+      const savedCtx = loadFromLocalStorage("serverUseContext");
+      setServerUseContext(savedCtx === undefined ? true : !!savedCtx);
 
       setIsClient(true);
     };
@@ -71,8 +79,11 @@ const useTranslateData = () => {
       saveToLocalStorage("targetLanguage", targetLanguage);
       saveToLocalStorage("target_langs", target_langs);
       saveToLocalStorage("multiLanguageMode", multiLanguageMode);
+      // server controls
+      saveToLocalStorage("serverJobMethod", serverJobMethod);
+      saveToLocalStorage("serverUseContext", serverUseContext);
     }
-  }, [translationConfigs, sysPrompt, userPrompt, translationMethod, sourceLanguage, targetLanguage, target_langs, multiLanguageMode, isClient]);
+  }, [translationConfigs, sysPrompt, userPrompt, translationMethod, sourceLanguage, targetLanguage, target_langs, multiLanguageMode, serverJobMethod, serverUseContext, isClient]);
 
   const exportSettings = async () => {
     try {
@@ -399,7 +410,7 @@ const useTranslateData = () => {
         const cw = Number.isFinite(cwRaw) && cwRaw > 0 ? Math.min(200, Math.round(cwRaw)) : undefined;
         const tempRaw = Number((cfg as any)?.temperature);
         const temp = Number.isFinite(tempRaw) ? tempRaw : undefined;
-        const opt: any = { useContext: true };
+        const opt: any = { useContext: serverUseContext };
         if (cw !== undefined) opt.contextWindow = cw;
         if ((cfg as any)?.model) opt.model = (cfg as any).model;
         if (temp !== undefined) opt.temperature = temp;
@@ -412,7 +423,7 @@ const useTranslateData = () => {
             fileId,
             sourceLang: sourceLanguage,
             targetLangs: targetLanguagesToUse,
-            method: "single",
+            method: serverJobMethod,
             options: opt,
           }),
         });
@@ -422,50 +433,60 @@ const useTranslateData = () => {
         }
         const { jobId } = await resp.json();
 
-        // poll status
-        let progress = 10;
-        while (true) {
-          await delay(800);
-          const s = await fetch(`${baseUrl}/api/translate/jobs/${jobId}`, { headers: { Authorization: `Bearer ${token}` } });
-          const status = await s.json();
-          if (status.status === "completed") break;
-          if (status.status === "failed") throw new Error(status.error || "Job failed");
-          progress = Math.min(progress + 5, 95);
-          setProgressPercent(progress);
+        // Single は完了まで待機、Batch は投入したら即終了
+        if (serverJobMethod === 'single') {
+          let progress = 10;
+          while (true) {
+            await delay(800);
+            const s = await fetch(`${baseUrl}/api/translate/jobs/${jobId}`, { headers: { Authorization: `Bearer ${token}` } });
+            const status = await s.json();
+            if (status.status === "completed") break;
+            if (status.status === "failed") throw new Error(status.error || "Job failed");
+            progress = Math.min(progress + 5, 95);
+            setProgressPercent(progress);
+          }
         }
 
-        // download results per target language
-        const bi = opts?.bilingualSubtitle ?? false;
-        const exportFormat = opts?.exportFormat || (bi ? "ass" : "srt");
-        const pos = opts?.bilingualPosition || "below";
-        for (const lang of targetLanguagesToUse) {
-          const dl = await fetch(
-            `${baseUrl}/api/files/${fileId}/export?format=${exportFormat}&lang=${encodeURIComponent(lang)}&bilingual=${bi ? 1 : 0}&position=${bi ? pos : "below"}`,
-            { headers: { Authorization: `Bearer ${token}` } });
-          if (!dl.ok) {
-            throw new Error(`Export failed ${dl.status}`);
+        // download/export は Single 完了時のみ実行
+        if (serverJobMethod === 'single') {
+          const bi = opts?.bilingualSubtitle ?? false;
+          const exportFormat = opts?.exportFormat || (bi ? "ass" : "srt");
+          const pos = opts?.bilingualPosition || "below";
+          for (const lang of targetLanguagesToUse) {
+            const dl = await fetch(
+              `${baseUrl}/api/files/${fileId}/export?format=${exportFormat}&lang=${encodeURIComponent(lang)}&bilingual=${bi ? 1 : 0}&position=${bi ? pos : "below"}`,
+              { headers: { Authorization: `Bearer ${token}` } });
+            if (!dl.ok) {
+              throw new Error(`Export failed ${dl.status}`);
+            }
+            const cd = dl.headers.get("Content-Disposition") || dl.headers.get("content-disposition") || "";
+            let suggested = "";
+            const mStar = cd.match(/filename\*=(?:UTF-8''|)([^;]+)$/i);
+            if (mStar) {
+              try { suggested = decodeURIComponent(mStar[1]); } catch {}
+            }
+            if (!suggested) {
+              const m = cd.match(/filename="([^"]+)"/i);
+              if (m) suggested = m[1];
+            }
+            const text = await dl.text();
+            // Update UI with first language only
+            if (i === 0 && lang === targetLanguagesToUse[0]) setTranslatedText(text);
+            const fallback = `subtitle_${fileId}_${lang}.${exportFormat}`;
+            const finalName = suggested && suggested.trim() ? suggested : fallback;
+            await downloadFile(text, finalName);
           }
-          const cd = dl.headers.get("Content-Disposition") || dl.headers.get("content-disposition") || "";
-          let suggested = "";
-          const mStar = cd.match(/filename\*=(?:UTF-8''|)([^;]+)$/i);
-          if (mStar) {
-            try { suggested = decodeURIComponent(mStar[1]); } catch {}
-          }
-          if (!suggested) {
-            const m = cd.match(/filename="([^"]+)"/i);
-            if (m) suggested = m[1];
-          }
-          const text = await dl.text();
-          // Update UI with first language only
-          if (i === 0 && lang === targetLanguagesToUse[0]) setTranslatedText(text);
-          const fallback = `subtitle_${fileId}_${lang}.${exportFormat}`;
-          const finalName = suggested && suggested.trim() ? suggested : fallback;
-          await downloadFile(text, finalName);
         }
       }
 
-      setProgressPercent(100);
-      message.success(t("translationComplete"));
+      if (serverJobMethod === 'single') {
+        setProgressPercent(100);
+        message.success(t("translationComplete"));
+      } else {
+        // Batch は投入完了で通知して終了（結果はジョブ一覧から確認）
+        setProgressPercent(100);
+        message.success("Batch submitted. You can track it in Job list.");
+      }
     } catch (e) {
       console.error(e);
       message.error((e as Error).message);
@@ -914,6 +935,10 @@ ${contextWithMarkers}`
     delay,
     validateTranslate,
     handleServerTranslate,
+    serverJobMethod,
+    setServerJobMethod,
+    serverUseContext,
+    setServerUseContext,
   };
 };
 

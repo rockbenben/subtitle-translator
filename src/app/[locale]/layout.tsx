@@ -9,6 +9,8 @@ import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
 import ThemesProvider from "@/app/ThemesProvider";
 import { AuthProvider } from "@/app/components/AuthContext";
+import dynamic from "next/dynamic";
+const ClientOnly = dynamic(() => import("@/app/components/ClientOnly"), { ssr: false });
 
 export async function generateMetadata({ params: { locale } }) {
   const t = await getTranslations({ locale, namespace: "Metadata" });
@@ -39,8 +41,10 @@ export default async function LocaleLayout({ children, params }: { children: Rea
         <NextIntlClientProvider messages={messages}>
           <AuthProvider>
             <ThemesProvider>
-              <Navigation />
-              <div className="max-w-7xl mt-2 mx-auto p-4">{children}</div>
+              <ClientOnly>
+                <Navigation />
+                <div className="max-w-7xl mt-2 mx-auto p-4">{children}</div>
+              </ClientOnly>
             </ThemesProvider>
           </AuthProvider>
         </NextIntlClientProvider>

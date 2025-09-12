@@ -1,4 +1,5 @@
-import ClientPage from "./client";
+import dynamic from "next/dynamic";
+const ClientPage = dynamic(() => import("./client"), { ssr: false });
 import { getTranslations } from "next-intl/server";
 
 export async function generateMetadata({ params }) {
