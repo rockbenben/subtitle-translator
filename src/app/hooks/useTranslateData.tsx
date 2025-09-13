@@ -42,7 +42,7 @@ const useTranslateData = () => {
   const [serverJobMethod, setServerJobMethod] = useState<'single' | 'batch'>('single');
   const [serverUseContext, setServerUseContext] = useState<boolean>(true);
 
-  // Load from localStorage
+  // Load from localStorage (force default API to 'server' regardless of saved value)
   useEffect(() => {
     const loadState = () => {
       const savedConfigs = loadFromLocalStorage("translationConfigs");
@@ -52,7 +52,8 @@ const useTranslateData = () => {
 
       setSysPrompt(loadFromLocalStorage("sysPrompt") || DEFAULT_SYS_PROMPT);
       setUserPrompt(loadFromLocalStorage("userPrompt") || DEFAULT_USER_PROMPT);
-      setTranslationMethod(loadFromLocalStorage("translationMethod") || DEFAULT_API);
+      // Always start with server mode on first load, ignoring any saved method
+      setTranslationMethod(DEFAULT_API);
       setSourceLanguage(loadFromLocalStorage("sourceLanguage") || "auto");
       setTargetLanguage(loadFromLocalStorage("targetLanguage") || "zh");
       setTarget_langs(loadFromLocalStorage("target_langs") || ["zh"]);
@@ -440,7 +441,10 @@ const useTranslateData = () => {
             await delay(800);
             const s = await fetch(`${baseUrl}/api/translate/jobs/${jobId}`, { headers: { Authorization: `Bearer ${token}` } });
             const status = await s.json();
-            if (status.status === "completed") break;
+            if (status.status === "completed" || status.status === "partial") {
+              // treat partial as terminal: allow export with whatever is available
+              break;
+            }
             if (status.status === "failed") throw new Error(status.error || "Job failed");
             progress = Math.min(progress + 5, 95);
             setProgressPercent(progress);

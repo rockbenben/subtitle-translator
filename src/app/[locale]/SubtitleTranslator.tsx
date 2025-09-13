@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { Flex, Card, Button, Typography, Input, Upload, Form, Space, message, Select, Modal, Checkbox, Progress, Tooltip, Radio, Switch, Spin, Table } from "antd";
+import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { Flex, Card, Button, Typography, Input, Upload, Form, Space, message, Select, Modal, Checkbox, Progress, Tooltip, Radio, Switch, Spin, Table, Tag } from "antd";
 import { CopyOutlined, DownloadOutlined, InboxOutlined, UploadOutlined } from "@ant-design/icons";
 import { splitTextIntoLines, getTextStats, downloadFile } from "@/app/utils";
 import { VTT_SRT_TIME, LRC_TIME_REGEX, detectSubtitleFormat, getOutputFileExtension, filterSubLines, convertTimeToAss, assHeader } from "./subtitleUtils";
@@ -92,6 +92,8 @@ const SubtitleTranslator = () => {
   const [viewerLang, setViewerLang] = useState<"original" | "english" | "japanese" | "chinese">("original");
   const [viewerSegs, setViewerSegs] = useState<any[]>([]);
   const [viewerLoading, setViewerLoading] = useState(false);
+  // Track files auto-uploaded to server to avoid duplicates
+  const autoUploadedKeysRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     setExtractedText("");
@@ -119,7 +121,8 @@ const SubtitleTranslator = () => {
   const fetchJobs = useCallback(async () => {
     if (translationMethod !== "server" || !token) return;
     try {
-      const resp = await fetch(`${baseUrl}/api/translate/jobs?status=active&limit=100`, { headers: { Authorization: `Bearer ${token}` } });
+      // Fetch all recent jobs to avoid missing 'partial' or 'completed' statuses
+      const resp = await fetch(`${baseUrl}/api/translate/jobs?limit=100`, { headers: { Authorization: `Bearer ${token}` } });
       if (!resp.ok) throw new Error(`Failed to load jobs (${resp.status})`);
       const data = await resp.json();
       setJobs(data || []);
@@ -136,7 +139,7 @@ const SubtitleTranslator = () => {
     if (!autoJobs || !isClient) return;
     const id = setInterval(() => {
       fetchJobs();
-    }, 60000);
+    }, 10000); // refresh every 10s for more responsive updates
     return () => clearInterval(id);
   }, [autoJobs, fetchJobs, isClient]);
 
@@ -159,6 +162,53 @@ const SubtitleTranslator = () => {
   useEffect(() => {
     if (isClient) fetchServerModels();
   }, [fetchServerModels, isClient]);
+
+  // Auto-upload newly added files to server when in server mode and authenticated
+  useEffect(() => {
+    const doAutoUpload = async () => {
+      if (translationMethod !== "server") return;
+      if (!token) {
+        if (Array.isArray(multipleFiles) && multipleFiles.length > 0) {
+          messageApi.error("Please sign in to the server first");
+        }
+        return;
+      }
+      if (!Array.isArray(multipleFiles) || multipleFiles.length === 0) return;
+      const newOnes = multipleFiles.filter((f) => {
+        const k = `${f.name}:${f.size}:${(f as any).lastModified || 0}`;
+        return !autoUploadedKeysRef.current.has(k);
+      });
+      if (newOnes.length === 0) return;
+      for (const f of newOnes) {
+        const key = `${f.name}:${f.size}:${(f as any).lastModified || 0}`;
+        try {
+          const fd = new FormData();
+          fd.append("file", f);
+          const resp = await fetch(`${baseUrl}/api/files`, {
+            method: "POST",
+            headers: { Authorization: `Bearer ${token}` },
+            body: fd,
+          });
+          if (!resp.ok) {
+            const err = await resp.json().catch(() => ({}));
+            throw new Error(err?.error || `Upload failed ${resp.status}`);
+          }
+          const data = await resp.json();
+          autoUploadedKeysRef.current.add(key);
+          const fileId = data?.fileId;
+          if (fileId) {
+            setSelectedServerFileIds((prev) => Array.from(new Set([...(prev || []), String(fileId)])));
+          }
+        } catch (e) {
+          console.error(e);
+          messageApi.error((e as Error).message);
+        }
+      }
+      // Refresh server files list after uploads
+      try { await fetchServerFiles(); } catch {}
+    };
+    if (isClient) doAutoUpload();
+  }, [multipleFiles, translationMethod, token, baseUrl, messageApi, fetchServerFiles, isClient, setSelectedServerFileIds]);
 
   // --- DB Viewer helpers ---
   const msToSrt = (m: number) => {
@@ -694,7 +744,7 @@ const SubtitleTranslator = () => {
           </Space>
         </Form.Item>
       </Form>
-      <Flex gap="small">
+      <Flex gap="small" wrap="wrap">
         <Button
           type="primary"
           block
@@ -777,8 +827,26 @@ const SubtitleTranslator = () => {
             <Space>
               <Button onClick={fetchJobs}>Refresh</Button>
               <Checkbox checked={autoJobs} onChange={(e) => setAutoJobs(e.target.checked)}>
-                Auto 1min
+                Auto 10s
               </Checkbox>
+              <Button
+                danger
+                onClick={async () => {
+                  try {
+                    const resp = await fetch(`${baseUrl}/api/translate/jobs?status=failed`, {
+                      method: 'DELETE',
+                      headers: { Authorization: `Bearer ${token}` },
+                    });
+                    if (!resp.ok) throw new Error(`Clear failed jobs error (${resp.status})`);
+                    await fetchJobs();
+                    messageApi.success('Failed jobs cleared');
+                  } catch (e) {
+                    console.error(e);
+                    messageApi.error((e as Error).message);
+                  }
+                }}>
+                Clear Failed
+              </Button>
             </Space>
           }>
           <div
@@ -803,23 +871,48 @@ const SubtitleTranslator = () => {
                   <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }} title={j.id}>
                     {j.id}
                   </span>
-                  <span>{j.status}</span>
+                  <span>
+                    <Tag color={j.status === 'completed' ? 'green' : j.status === 'failed' ? 'red' : j.status === 'partial' ? 'orange' : j.status === 'processing' ? 'blue' : 'default'}>
+                      {j.status}
+                    </Tag>
+                  </span>
                   <span>{j.progress}%</span>
-                  <Button
-                    size="small"
-                    onClick={async () => {
-                      try {
-                        await fetch(`${baseUrl}/api/translate/jobs/${j.id}/poll`, {
-                          method: 'POST',
-                          headers: { Authorization: `Bearer ${token}` },
-                        });
-                        await fetchJobs();
-                      } catch (err) {
-                        console.error(err);
-                      }
-                    }}>
-                    Poll Now
-                  </Button>
+                  <Space>
+                    <Button
+                      size="small"
+                      onClick={async () => {
+                        try {
+                          await fetch(`${baseUrl}/api/translate/jobs/${j.id}/poll`, {
+                            method: 'POST',
+                            headers: { Authorization: `Bearer ${token}` },
+                          });
+                          await fetchJobs();
+                        } catch (err) {
+                          console.error(err);
+                        }
+                      }}>
+                      Poll Now
+                    </Button>
+                    <Button
+                      danger
+                      size="small"
+                      onClick={async () => {
+                        try {
+                          const r = await fetch(`${baseUrl}/api/translate/jobs/${j.id}`, {
+                            method: 'DELETE',
+                            headers: { Authorization: `Bearer ${token}` },
+                          });
+                          if (!r.ok) throw new Error(`Delete failed (${r.status})`);
+                          await fetchJobs();
+                          messageApi.success('Job deleted');
+                        } catch (err) {
+                          console.error(err);
+                          messageApi.error((err as Error).message);
+                        }
+                      }}>
+                      Delete
+                    </Button>
+                  </Space>
                 </React.Fragment>
               );
             })}
