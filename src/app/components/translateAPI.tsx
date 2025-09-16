@@ -15,6 +15,7 @@ export const TRANSLATION_SERVICES = [
   { value: "deeplx", label: "DeepLX (Free)", docs: "https://deeplx.owo.network/endpoints/free.html" },
   { value: "deepseek", label: "DeepSeek", docs: "https://api-docs.deepseek.com/zh-cn/" },
   { value: "openai", label: "OpenAI", docs: "https://platform.openai.com/docs/api-reference/chat" },
+  { value: "gemini", label: "Gemini", docs: "https://ai.google.dev/gemini-api/docs/text-generation" },
   {
     value: "azureopenai",
     label: "Azure OpenAI",
@@ -33,7 +34,7 @@ export const findMethodLabel = (method) => {
 
 type TranslationMethod = (typeof TRANSLATION_SERVICES)[number]["value"];
 
-export const LLM_MODELS = ["deepseek", "openai", "azureopenai", "siliconflow", "groq", "llm"];
+export const LLM_MODELS = ["deepseek", "openai", "gemini", "azureopenai", "siliconflow", "groq", "llm"];
 
 export const categorizedOptions = [
   ...TRANSLATION_SERVICES.filter((s) => !LLM_MODELS.includes(s.value)),
@@ -63,13 +64,19 @@ export const defaultConfigs = {
   deepseek: {
     apiKey: "",
     model: "deepseek-chat",
-    temperature: 0.3,
+    temperature: 0.7,
     limit: 30,
   },
   openai: {
     apiKey: "",
     model: "gpt-5-mini",
-    temperature: 0.3,
+    temperature: 0.7,
+    limit: 30,
+  },
+  gemini: {
+    apiKey: "",
+    model: "gemini-2.5-flash",
+    temperature: 0.7,
     limit: 30,
   },
   azureopenai: {
@@ -77,26 +84,26 @@ export const defaultConfigs = {
     apiKey: "",
     model: "gpt-5-mini",
     apiVersion: "2025-08-07",
-    temperature: 0.3,
+    temperature: 0.7,
     limit: 30,
   },
   siliconflow: {
     apiKey: "",
     model: "deepseek-ai/DeepSeek-V3",
-    temperature: 0.3,
+    temperature: 0.7,
     limit: 30,
   },
   groq: {
     apiKey: "",
     model: "openai/gpt-oss-20b",
-    temperature: 0.3,
+    temperature: 0.7,
     limit: 30,
   },
   llm: {
     url: "http://127.0.0.1:11434/v1/chat/completions",
     apiKey: "",
     model: "llama3.2",
-    temperature: 0.3,
+    temperature: 0.7,
     limit: 20,
   },
   azure: {
@@ -398,6 +405,54 @@ const translationServices = {
 
     const data = await response.json();
     return data.choices[0].message.content.trim();
+  },
+
+  gemini: async (params: TranslateTextParams) => {
+    const { text, targetLanguage, sourceLanguage, apiKey, model, temperature, sysPrompt, userPrompt } = params;
+    const prompt = getAIModelPrompt(text, userPrompt, targetLanguage, sourceLanguage);
+
+    const requestBody = {
+      contents: [
+        {
+          parts: [
+            {
+              text: prompt,
+            },
+          ],
+        },
+      ],
+      systemInstruction: {
+        parts: [
+          {
+            text: sysPrompt,
+          },
+        ],
+      },
+      generationConfig: {
+        temperature: Number(temperature),
+      },
+    };
+
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(requestBody),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      const errorMessage = data.error?.message || `HTTP error! status: ${response.status}`;
+      throw new Error(errorMessage);
+    }
+
+    if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
+      throw new Error("Invalid response format from Gemini API");
+    }
+
+    return data.candidates[0].content.parts[0].text.trim();
   },
 
   azureopenai: async (params: TranslateTextParams) => {
