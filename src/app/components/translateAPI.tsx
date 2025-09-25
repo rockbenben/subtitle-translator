@@ -57,7 +57,7 @@ export const defaultConfigs = {
   deepl: {
     url: "",
     apiKey: "",
-    chunkSize: 128000,
+    chunkSize: 5000,
     delayTime: 200,
     limit: 20,
   },
@@ -131,7 +131,7 @@ export const isConfigStructureValid = (config, defaultConfig) => {
 };
 
 const isLocalDevelopment = process.env.NODE_ENV === "development";
-const deeplEndpoint = isLocalDevelopment ? "/api/deepl" : "https://next-api.newzone.top:9003/api/deepl";
+const deeplEndpoint = isLocalDevelopment ? "/api/deepl" : "https://api-edgeone.newzone.top/api/deepl";
 const deeplxEndpoint = "https://deeplx.aishort.top/translate";
 
 interface TranslateTextParams {

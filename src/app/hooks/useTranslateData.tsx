@@ -21,7 +21,7 @@ const useTranslateData = () => {
   const { translate } = useTranslation();
 
   const [translationMethod, setTranslationMethod] = useState<string>(DEFAULT_API);
-  // ["google", "gtxFreeAPI", "webgoogletranslate", "deepseek"] 没有 chuckSize 则逐行翻译
+  // ["google", "gtxFreeAPI", "webgoogletranslate", "deepseek"] 没有 chunkSize 则逐行翻译
   const [translationConfigs, setTranslationConfigs] = useState(defaultConfigs);
   const [sysPrompt, setSysPrompt] = useState<string>(DEFAULT_SYS_PROMPT);
   const [userPrompt, setUserPrompt] = useState<string>(DEFAULT_USER_PROMPT);
