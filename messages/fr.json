@@ -78,9 +78,11 @@
     "exportSettingSuccess": "Configuration exportée avec succès ! Veuillez vérifier votre fichier téléchargé.",
     "exportSettingError": "L'exportation a échoué, veuillez réessayer plus tard.",
     "importSettingSuccess": "Configuration importée avec succès !",
-    "importSettingError": "L'importation a échoué, veuillez réessayer plus tard.",
+    "importSettingError": "Échec de l'importation, veuillez réessayer plus tard.",
     "importSettingparseError": "Le format du fichier de configuration est incorrect ou corrompu.",
-    "importSettingreadFileError": "Échec de la lecture du fichier, veuillez réessayer."
+    "importSettingreadFileError": "Échec de la lecture du fichier, veuillez réessayer.",
+    "removeCharsAfterTranslation": "Supprimer les caractères après la traduction",
+    "removeCharsAfterTranslationTooltip": "Entrez plusieurs caractères (séparés par des espaces) à supprimer après la traduction"
   },
   "json": {
     "title": "Traduction JSON Multilingue - Assistant pour Développeurs en i18n Internationalisation & Localisation | JSONTranslate",

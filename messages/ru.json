@@ -80,7 +80,9 @@
     "importSettingSuccess": "Конфигурация успешно импортирована!",
     "importSettingError": "Ошибка импорта, попробуйте позже.",
     "importSettingparseError": "Неверный или поврежденный формат файла конфигурации.",
-    "importSettingreadFileError": "Не удалось прочитать файл, попробуйте еще раз."
+    "importSettingreadFileError": "Не удалось прочитать файл, попробуйте еще раз.",
+    "removeCharsAfterTranslation": "Удалить символы после перевода",
+    "removeCharsAfterTranslationTooltip": "Введите несколько символов (через пробел) для удаления после перевода"
   },
   "json": {
     "title": "Многоязычный перевод JSON - Помощник для интернационализации и локализации (i18n) для разработчиков | JSONTranslate",

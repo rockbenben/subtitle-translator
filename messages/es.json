@@ -80,7 +80,9 @@
     "importSettingSuccess": "¡Configuración importada con éxito!",
     "importSettingError": "Error al importar, por favor inténtelo de nuevo más tarde.",
     "importSettingparseError": "El formato del archivo de configuración es incorrecto o está dañado.",
-    "importSettingreadFileError": "Error al leer el archivo, por favor inténtelo de nuevo."
+    "importSettingreadFileError": "Error al leer el archivo, por favor inténtelo de nuevo.",
+    "removeCharsAfterTranslation": "Eliminar caracteres después de la traducción",
+    "removeCharsAfterTranslationTooltip": "Ingrese varios caracteres (separados por espacios) para eliminar después de la traducción"
   },
   "json": {
     "title": "Traducción Multilingüe de JSON - Asistente para Internacionalización y Localización i18n | JSONTranslate",

@@ -80,7 +80,9 @@
     "importSettingSuccess": "Configuration imported successfully!",
     "importSettingError": "Import failed, please try again later.",
     "importSettingparseError": "The configuration file format is incorrect or corrupted.",
-    "importSettingreadFileError": "Failed to read the file, please try again."
+    "importSettingreadFileError": "Failed to read the file, please try again.",
+    "removeCharsAfterTranslation": "Remove Characters After Translation",
+    "removeCharsAfterTranslationTooltip": "Enter multiple characters (space-separated) to remove after translation"
   },
   "json": {
     "title": "Multilingual JSON Translation - i18n Internationalization & Localization Developer Assistant | JSONTranslate",

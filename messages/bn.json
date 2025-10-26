@@ -80,7 +80,9 @@
     "importSettingSuccess": "কনফিগারেশন সফলভাবে ইম্পোর্ট করা হয়েছে!",
     "importSettingError": "ইম্পোর্ট ব্যর্থ হয়েছে, অনুগ্রহ করে পরে আবার চেষ্টা করুন।",
     "importSettingparseError": "কনফিগারেশন ফাইলের ফর্ম্যাট ভুল বা নষ্ট হয়ে গেছে।",
-    "importSettingreadFileError": "ফাইলটি পড়তে ব্যর্থ হয়েছে, অনুগ্রহ করে আবার চেষ্টা করুন।"
+    "importSettingreadFileError": "ফাইলটি পড়তে ব্যর্থ হয়েছে, অনুগ্রহ করে আবার চেষ্টা করুন।",
+    "removeCharsAfterTranslation": "অনুবাদের পরে অক্ষর সরান",
+    "removeCharsAfterTranslationTooltip": "অনুবাদের পরে সরাতে একাধিক অক্ষর (স্পেস দ্বারা বিভক্ত) লিখুন"
   },
   "json": {
     "title": "বহুভাষিক JSON অনুবাদ - i18n আন্তর্জাতিককরণ ও লোকালাইজেশন ডেভেলপার সহায়ক | JSONTranslate",

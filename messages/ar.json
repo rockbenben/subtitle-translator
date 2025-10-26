@@ -80,7 +80,9 @@
     "importSettingSuccess": "تم استيراد التكوين بنجاح!",
     "importSettingError": "فشل الاستيراد، يرجى المحاولة مرة أخرى لاحقًا.",
     "importSettingparseError": "تنسيق ملف التكوين غير صحيح أو تالف.",
-    "importSettingreadFileError": "فشل في قراءة الملف، يرجى المحاولة مرة أخرى."
+    "importSettingreadFileError": "فشل في قراءة الملف، يرجى المحاولة مرة أخرى.",
+    "removeCharsAfterTranslation": "إزالة الأحرف بعد الترجمة",
+    "removeCharsAfterTranslationTooltip": "أدخل عدة أحرف (مفصولة بمسافات) لإزالتها بعد الترجمة"
   },
   "json": {
     "title": "ترجمة JSON متعددة اللغات - مساعد المطور للتدويل والتعريب | JSONTranslate",

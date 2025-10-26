@@ -129,3 +129,32 @@ export const compressNewlines = (text: string, maxConsecutive: number = 2): stri
   const re = new RegExp(`\\n{${maxConsecutive + 1},}`, "g");
   return text.replace(re, "\n".repeat(maxConsecutive));
 };
+
+//将空格分隔的字符串解析为数组（不处理转义字符）
+export const splitBySpaces = (input: string): string[] => {
+  if (!input || !input.trim()) return [];
+  return input
+    .trim()
+    .split(/\s+/)
+    .filter((item) => item.length > 0);
+};
+
+/**
+ * 解析用户输入的转义字符，将字符串中的转义序列转换为实际字符
+ * 支持的转义字符: \n(换行), \r(回车), \t(制表符), \s(空格), \\(反斜杠)
+ */
+const parseEscapeChars = (str: string): string => {
+  return str
+    .replace(/\\n/g, "\n") // 换行
+    .replace(/\\r/g, "\r") // 回车
+    .replace(/\\t/g, "\t") // 制表符
+    .replace(/\\s/g, " ") // 空格
+    .replace(/\\\\/g, "\\"); // 反斜杠（必须放在最后）
+};
+
+// 将空格分隔的字符串解析为数组，并处理转义字符
+export const parseSpaceSeparatedItems = (input: string): string[] => {
+  const items = splitBySpaces(input);
+  // 处理每个项的转义字符
+  return items.map((item) => parseEscapeChars(item));
+};

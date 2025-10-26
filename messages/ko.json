@@ -78,9 +78,11 @@
     "exportSettingSuccess": "구성을 성공적으로 내보냈습니다! 다운로드한 파일을 확인하세요.",
     "exportSettingError": "내보내기에 실패했습니다. 나중에 다시 시도하세요.",
     "importSettingSuccess": "구성을 성공적으로 가져왔습니다!",
-    "importSettingError": "가져오기에 실패했습니다. 나중에 다시 시도하세요.",
+    "importSettingError": "가져오기 실패, 나중에 다시 시도하세요.",
     "importSettingparseError": "구성 파일 형식이 잘못되었거나 손상되었습니다.",
-    "importSettingreadFileError": "파일을 읽지 못했습니다. 다시 시도하세요."
+    "importSettingreadFileError": "파일 읽기 실패, 다시 시도하세요.",
+    "removeCharsAfterTranslation": "번역 후 문자 제거",
+    "removeCharsAfterTranslationTooltip": "번역 후 제거할 여러 문자(공백으로 구분)를 입력하세요"
   },
   "json": {
     "title": "다국어 JSON 번역 - i18n 국제화 및 현지화 개발자 도구 | JSONTranslate",

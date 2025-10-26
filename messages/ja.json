@@ -77,10 +77,12 @@
     "importSettingTooltip": "ローカルファイルから設定をインポート",
     "exportSettingSuccess": "設定が正常にエクスポートされました。ダウンロードしたファイルを確認してください。",
     "exportSettingError": "エクスポートに失敗しました。後でもう一度お試しください。",
-    "importSettingSuccess": "設定が正常にインポートされました！",
+    "importSettingSuccess": "設定のインポートに成功しました！",
     "importSettingError": "インポートに失敗しました。後でもう一度お試しください。",
     "importSettingparseError": "設定ファイルの形式が正しくないか、破損しています。",
-    "importSettingreadFileError": "ファイルの読み込みに失敗しました。もう一度お試しください。"
+    "importSettingreadFileError": "ファイルの読み取りに失敗しました。もう一度お試しください。",
+    "removeCharsAfterTranslation": "翻訳後に文字を削除",
+    "removeCharsAfterTranslationTooltip": "翻訳後に削除する複数の文字（スペース区切り）を入力してください"
   },
   "json": {
     "title": "多言語 JSON 翻訳 - i18n 国際化＆ローカライズ開発者アシスタント | JSONTranslate",

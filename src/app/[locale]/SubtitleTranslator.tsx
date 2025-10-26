@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Flex, Card, Button, Typography, Input, Upload, Form, Space, message, Select, Modal, Checkbox, Progress, Tooltip, Radio, Switch, Spin } from "antd";
 import { CopyOutlined, DownloadOutlined, InboxOutlined, UploadOutlined } from "@ant-design/icons";
-import { splitTextIntoLines, getTextStats, downloadFile } from "@/app/utils";
+import { splitTextIntoLines, getTextStats, downloadFile, splitBySpaces } from "@/app/utils";
 import { VTT_SRT_TIME, LRC_TIME_REGEX, detectSubtitleFormat, getOutputFileExtension, filterSubLines, convertTimeToAss, assHeader } from "./subtitleUtils";
 import { categorizedOptions, findMethodLabel, LLM_MODELS } from "@/app/components/translateAPI";
 import { useLanguageOptions, filterLanguageOption } from "@/app/components/languages";
@@ -52,6 +52,8 @@ const SubtitleTranslator = () => {
     setTarget_langs,
     useCache,
     setUseCache,
+    removeChars,
+    setRemoveChars,
     multiLanguageMode,
     setMultiLanguageMode,
     translatedText,
@@ -125,7 +127,8 @@ const SubtitleTranslator = () => {
     for (const currentTargetLang of targetLanguagesToUse) {
       try {
         // Translate content using the specific target language
-        const finalTranslatedLines = await translateContent(contentLines, translationMethod, currentTargetLang, fileIndex, totalFiles, isSubtitleMode && contextAwareTranslation);
+        const translatedLines = await translateContent(contentLines, translationMethod, currentTargetLang, fileIndex, totalFiles, isSubtitleMode && contextAwareTranslation);
+
         // Copy array to avoid modifying the original lines
         const translatedTextArray = [...lines];
 
@@ -134,11 +137,11 @@ const SubtitleTranslator = () => {
             const originalLine = lines[index];
             const prefix = originalLine.substring(0, originalLine.split(",", assContentStartIndex).join(",").length + 1);
             if (bilingualSubtitle) {
-              const translatedLine = finalTranslatedLines[i];
+              const translatedLine = translatedLines[i];
               translatedTextArray[index] =
                 bilingualPosition === "below" ? `${originalLine}\\N${translatedLine}` : `${prefix}${translatedLine}\\N${originalLine.split(",").slice(assContentStartIndex).join(",").trim()}`;
             } else {
-              translatedTextArray[index] = `${prefix}${finalTranslatedLines[i]}`;
+              translatedTextArray[index] = `${prefix}${translatedLines[i]}`;
             }
           } else if (fileType === "lrc") {
             const originalLine = lines[index];
@@ -147,7 +150,7 @@ const SubtitleTranslator = () => {
             const timePrefix = timeMatches.join("");
 
             if (bilingualSubtitle) {
-              const translatedLine = finalTranslatedLines[i];
+              const translatedLine = translatedLines[i];
               const originalContent = originalLine.replace(new RegExp(LRC_TIME_REGEX.source, "g"), "").trim();
 
               if (bilingualPosition === "below") {
@@ -159,11 +162,11 @@ const SubtitleTranslator = () => {
               }
             } else {
               // 仅显示翻译
-              translatedTextArray[index] = `${timePrefix} ${finalTranslatedLines[i]}`;
+              translatedTextArray[index] = `${timePrefix} ${translatedLines[i]}`;
             }
           } else {
             // 非 .ass 文件处理
-            translatedTextArray[index] = bilingualSubtitle ? `${lines[index]}\n${finalTranslatedLines[i]}` : finalTranslatedLines[i];
+            translatedTextArray[index] = bilingualSubtitle ? `${lines[index]}\n${translatedLines[i]}` : translatedLines[i];
           }
         });
 
@@ -195,7 +198,7 @@ const SubtitleTranslator = () => {
 
             // 根据 bilingualPosition 决定原文和译文的顺序
             const originalText = lines[index];
-            const translatedText = finalTranslatedLines[i];
+            const translatedText = translatedLines[i];
 
             // 根据位置设置字幕行
             const isOriginalFirst = bilingualPosition === "above";
@@ -221,6 +224,14 @@ const SubtitleTranslator = () => {
           finalSubtitle = `${assHeader}\n${assBody}`;
         } else {
           finalSubtitle = [...translatedTextArray.slice(0, contentIndices[0]), ...styleBlockLines, ...translatedTextArray.slice(contentIndices[0])].join("\n");
+        }
+
+        // Remove specified characters from the final subtitle text (after all formatting is done)
+        if (removeChars.trim()) {
+          const charsToRemove = splitBySpaces(removeChars);
+          charsToRemove.forEach((char) => {
+            finalSubtitle = finalSubtitle.replaceAll(char, "");
+          });
         }
 
         // Create language-specific file name for download
@@ -451,6 +462,11 @@ const SubtitleTranslator = () => {
               <Switch checked={multiLanguageMode} onChange={(checked) => setMultiLanguageMode(checked)} checkedChildren={t("multiLanguageMode")} unCheckedChildren={t("singleLanguageMode")} />
             </Tooltip>
           </Space>
+        </Form.Item>
+        <Form.Item label={t("removeCharsAfterTranslation")}>
+          <Tooltip title={t("removeCharsAfterTranslationTooltip")}>
+            <Input placeholder={`${t("example")}: ♪ <i> </i>`} value={removeChars} onChange={(e) => setRemoveChars(e.target.value)} style={{ minWidth: 200 }} allowClear />
+          </Tooltip>
         </Form.Item>
       </Form>
       <Flex gap="small">

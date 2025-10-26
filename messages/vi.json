@@ -80,7 +80,9 @@
     "importSettingSuccess": "Cấu hình đã được nhập thành công!",
     "importSettingError": "Không nhập được, vui lòng thử lại sau.",
     "importSettingparseError": "Định dạng tệp cấu hình không đúng hoặc bị hỏng.",
-    "importSettingreadFileError": "Không đọc được tệp, vui lòng thử lại."
+    "importSettingreadFileError": "Không đọc được tệp, vui lòng thử lại.",
+    "removeCharsAfterTranslation": "Xóa ký tự sau khi dịch",
+    "removeCharsAfterTranslationTooltip": "Nhập nhiều ký tự (cách nhau bằng dấu cách) để xóa sau khi dịch"
   },
   "json": {
     "title": "Dịch JSON đa ngôn ngữ - Trợ lý nhà phát triển quốc tế hóa và bản địa hóa i18n | JSONTranslate",

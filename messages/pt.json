@@ -80,7 +80,9 @@
     "importSettingSuccess": "Configuração importada com sucesso!",
     "importSettingError": "A importação falhou, tente novamente mais tarde.",
     "importSettingparseError": "O formato do arquivo de configuração está incorreto ou corrompido.",
-    "importSettingreadFileError": "Falha ao ler o arquivo, por favor, tente novamente."
+    "importSettingreadFileError": "Falha ao ler o arquivo, por favor, tente novamente.",
+    "removeCharsAfterTranslation": "Remover caracteres após tradução",
+    "removeCharsAfterTranslationTooltip": "Digite vários caracteres (separados por espaços) para remover após a tradução"
   },
   "json": {
     "title": "Tradução Multilíngue de JSON - Assistente de Desenvolvedor para Internacionalização & Localização (i18n) | JSONTranslate",

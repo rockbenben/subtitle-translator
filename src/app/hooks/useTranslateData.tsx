@@ -30,6 +30,7 @@ const useTranslateData = () => {
   const [targetLanguage, setTargetLanguage] = useState<string>("zh");
   const [target_langs, setTarget_langs] = useState<string[]>(["zh"]);
   const [useCache, setUseCache] = useState<boolean>(true);
+  const [removeChars, setRemoveChars] = useState<string>(""); // 翻译后移除指定字符
 
   const [translatedText, setTranslatedText] = useState<string>("");
   const [extractedText, setExtractedText] = useState<string>("");
@@ -54,6 +55,7 @@ const useTranslateData = () => {
       setTargetLanguage(loadFromLocalStorage("targetLanguage") || "zh");
       setTarget_langs(loadFromLocalStorage("target_langs") || ["zh"]);
       setMultiLanguageMode(loadFromLocalStorage("multiLanguageMode") ?? false);
+      setRemoveChars(loadFromLocalStorage("removeChars") || "");
 
       setIsClient(true);
     };
@@ -71,8 +73,9 @@ const useTranslateData = () => {
       saveToLocalStorage("targetLanguage", targetLanguage);
       saveToLocalStorage("target_langs", target_langs);
       saveToLocalStorage("multiLanguageMode", multiLanguageMode);
+      saveToLocalStorage("removeChars", removeChars);
     }
-  }, [translationConfigs, sysPrompt, userPrompt, translationMethod, sourceLanguage, targetLanguage, target_langs, multiLanguageMode, isClient]);
+  }, [translationConfigs, sysPrompt, userPrompt, translationMethod, sourceLanguage, targetLanguage, target_langs, multiLanguageMode, removeChars, isClient]);
 
   const exportSettings = async () => {
     try {
@@ -761,6 +764,8 @@ ${contextWithMarkers}`
     setUserPrompt,
     useCache,
     setUseCache,
+    removeChars,
+    setRemoveChars,
     retryTranslate,
     translateContent,
     handleTranslate,

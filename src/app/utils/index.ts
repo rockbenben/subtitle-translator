@@ -10,6 +10,8 @@ import {
   normalizeNewlines,
   dedupeLines,
   compressNewlines,
+  splitBySpaces,
+  parseSpaceSeparatedItems,
 } from "./textUtils";
 import { copyToClipboard } from "./copyToClipboard";
 import { downloadFile } from "./fileUtils";
@@ -29,6 +31,8 @@ export {
   normalizeNewlines,
   dedupeLines,
   compressNewlines,
+  splitBySpaces,
+  parseSpaceSeparatedItems,
   copyToClipboard,
   downloadFile,
   DataContext,

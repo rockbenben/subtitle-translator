@@ -77,10 +77,12 @@
     "importSettingTooltip": "從本地文件導入設置",
     "exportSettingSuccess": "設置導出成功！請檢查您的下載文件。",
     "exportSettingError": "導出失敗，請稍後重試。",
-    "importSettingSuccess": "設置導入成功！",
-    "importSettingError": "導入失敗，請稍後重試。",
-    "importSettingparseError": "設置文件格式錯誤或已損壞。",
-    "importSettingreadFileError": "文件讀取失敗，請重試。"
+    "importSettingSuccess": "配置匯入成功！",
+    "importSettingError": "匯入失敗，請稍後重試。",
+    "importSettingparseError": "配置檔案格式不正確或已損壞。",
+    "importSettingreadFileError": "讀取檔案失敗，請重試。",
+    "removeCharsAfterTranslation": "翻譯後移除指定字元",
+    "removeCharsAfterTranslationTooltip": "輸入多個字元（用空格分隔），翻譯完成後將移除這些字元"
   },
   "json": {
     "title": "多語言 JSON 翻譯工具 - i18n 國際化 & 本地化開發助手 | JSONTranslate",

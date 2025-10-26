@@ -78,9 +78,11 @@
     "exportSettingSuccess": "कॉन्फ़िगरेशन सफलतापूर्वक निर्यात किया गया! कृपया अपनी डाउनलोड की गई फ़ाइल देखें।",
     "exportSettingError": "निर्यात विफल रहा, कृपया बाद में पुनः प्रयास करें।",
     "importSettingSuccess": "कॉन्फ़िगरेशन सफलतापूर्वक आयात किया गया!",
-    "importSettingError": "आयात विफल रहा, कृपया बाद में पुनः प्रयास करें।",
-    "importSettingparseError": "कॉन्फ़िगरेशन फ़ाइल का प्रारूप गलत या दूषित है।",
-    "importSettingreadFileError": "फ़ाइल पढ़ने में विफल, कृपया पुनः प्रयास करें।"
+    "importSettingError": "आयात विफल, कृपया बाद में पुनः प्रयास करें।",
+    "importSettingparseError": "कॉन्फ़िगरेशन फ़ाइल प्रारूप गलत या दूषित है।",
+    "importSettingreadFileError": "फ़ाइल पढ़ने में विफल, कृपया पुनः प्रयास करें।",
+    "removeCharsAfterTranslation": "अनुवाद के बाद वर्ण हटाएं",
+    "removeCharsAfterTranslationTooltip": "अनुवाद के बाद हटाने के लिए कई वर्ण (स्पेस से अलग) दर्ज करें"
   },
   "json": {
     "title": "बहुभाषी JSON अनुवाद - i18n अंतर्राष्ट्रीयकरण और स्थानीयकरण डेवलपर सहायक | JSONTranslate",

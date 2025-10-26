@@ -5,7 +5,7 @@
     "bigNotice": "当导入文件过大时，浏览器容易发生卡顿，建议选中大文件优化。",
     "dragAndDropText": "点击或拖拽文件到此处上传（支持 TXT、MD、JSON 等文本格式）",
     "pasteUploadContent": "或直接在此处粘贴文本内容",
-    "example": "示例",
+    "example": "例如",
     "basicTab": "翻译工作区",
     "advancedTab": "API 设置",
     "sourceLanguage": "源语言",
@@ -80,7 +80,9 @@
     "importSettingSuccess": "设置导入成功！",
     "importSettingError": "导入失败，请稍后重试。",
     "importSettingparseError": "设置文件格式错误或已损坏。",
-    "importSettingreadFileError": "文件读取失败，请重试。"
+    "importSettingreadFileError": "文件读取失败，请重试。",
+    "removeCharsAfterTranslation": "翻译后移除指定字符",
+    "removeCharsAfterTranslationTooltip": "输入多个字符(用空格分隔)，翻译完成后将移除这些字符"
   },
   "json": {
     "title": "多语言 JSON 翻译工具 - i18n 国际化 & 本地化开发助手 | JSONTranslate",

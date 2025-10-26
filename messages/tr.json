@@ -78,9 +78,11 @@
     "exportSettingSuccess": "Yapılandırma başarıyla dışa aktarıldı! Lütfen indirdiğiniz dosyayı kontrol edin.",
     "exportSettingError": "Dışa aktarma başarısız oldu, lütfen daha sonra tekrar deneyin.",
     "importSettingSuccess": "Yapılandırma başarıyla içe aktarıldı!",
-    "importSettingError": "İçe aktarma başarısız oldu, lütfen daha sonra tekrar deneyin.",
-    "importSettingparseError": "Yapılandırma dosyasının biçimi yanlış veya bozuk.",
-    "importSettingreadFileError": "Dosya okunamadı, lütfen tekrar deneyin."
+    "importSettingError": "İçe aktarma başarısız, lütfen daha sonra tekrar deneyin.",
+    "importSettingparseError": "Yapılandırma dosyası formatı yanlış veya bozuk.",
+    "importSettingreadFileError": "Dosya okunamadı, lütfen tekrar deneyin.",
+    "removeCharsAfterTranslation": "Çeviriden sonra karakterleri kaldır",
+    "removeCharsAfterTranslationTooltip": "Çeviriden sonra kaldırılacak birden fazla karakter (boşlukla ayrılmış) girin"
   },
   "json": {
     "title": "Çok Dilli JSON Çevirisi - i18n Uluslararasılaştırma ve Yerelleştirme Geliştirici Asistanı | JSONTranslate",

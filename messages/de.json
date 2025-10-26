@@ -79,8 +79,10 @@
     "exportSettingError": "Export fehlgeschlagen, bitte versuchen Sie es später erneut.",
     "importSettingSuccess": "Konfiguration erfolgreich importiert!",
     "importSettingError": "Import fehlgeschlagen, bitte versuchen Sie es später erneut.",
-    "importSettingparseError": "Das Format der Konfigurationsdatei ist falsch oder beschädigt.",
-    "importSettingreadFileError": "Fehler beim Lesen der Datei, bitte versuchen Sie es erneut."
+    "importSettingparseError": "Das Konfigurationsdateiformat ist falsch oder beschädigt.",
+    "importSettingreadFileError": "Fehler beim Lesen der Datei, bitte versuchen Sie es erneut.",
+    "removeCharsAfterTranslation": "Zeichen nach Übersetzung entfernen",
+    "removeCharsAfterTranslationTooltip": "Geben Sie mehrere Zeichen (durch Leerzeichen getrennt) ein, die nach der Übersetzung entfernt werden sollen"
   },
   "json": {
     "title": "Mehrsprachige JSON-Übersetzung - i18n Internationalisierung & Lokalisierung Entwicklerassistent | JSONTranslate",

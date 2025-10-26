@@ -80,7 +80,9 @@
     "importSettingSuccess": "Konfigurasi berjaya diimport!",
     "importSettingError": "Import gagal, sila cuba lagi kemudian.",
     "importSettingparseError": "Format fail konfigurasi tidak betul atau rosak.",
-    "importSettingreadFileError": "Gagal membaca fail, sila cuba lagi."
+    "importSettingreadFileError": "Gagal membaca fail, sila cuba lagi.",
+    "removeCharsAfterTranslation": "Buang Aksara Selepas Terjemahan",
+    "removeCharsAfterTranslationTooltip": "Masukkan beberapa aksara (dipisahkan ruang) untuk dibuang selepas terjemahan"
   },
   "json": {
     "title": "Terjemahan JSON Berbilang Bahasa - Pembantu Pembangun Pengantarabangsaan & Penyetempatan i18n | JSONTranslate",
