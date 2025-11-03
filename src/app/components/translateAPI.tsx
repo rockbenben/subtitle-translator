@@ -70,7 +70,7 @@ export const defaultConfigs = {
   openai: {
     apiKey: "",
     model: "gpt-5-mini",
-    temperature: 0.7,
+    temperature: 1,
     limit: 30,
   },
   gemini: {
@@ -399,7 +399,7 @@ const translationServices = {
           { role: "user", content: prompt },
         ],
         model: model,
-        temperature: Number(temperature),
+        temperature: 1,
       }),
     });
 
