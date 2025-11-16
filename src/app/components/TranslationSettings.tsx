@@ -1,7 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { Tabs, Form, Input, Card, Typography, Button, Space, Tooltip, message } from "antd";
-import { TRANSLATION_SERVICES, LLM_MODELS, CACHE_PREFIX } from "@/app/components/translateAPI";
+import { TRANSLATION_SERVICES, LLM_MODELS, CACHE_PREFIX, testTranslation } from "@/app/components/translateAPI";
 import useTranslateData from "@/app/hooks/useTranslateData";
 import { useTranslations } from "next-intl";
 
@@ -12,7 +13,9 @@ const TranslationSettings = () => {
   const tCommon = useTranslations("common");
   const t = useTranslations("TranslationSettings");
   const [messageApi, contextHolder] = message.useMessage();
-  const { translationMethod, setTranslationMethod, getCurrentConfig, handleConfigChange, resetTranslationConfig, sysPrompt, setSysPrompt, userPrompt, setUserPrompt } = useTranslateData();
+  const { translationMethod, setTranslationMethod, translationConfigs, getCurrentConfig, handleConfigChange, resetTranslationConfig, sysPrompt, setSysPrompt, userPrompt, setUserPrompt } =
+    useTranslateData();
+  const [testingService, setTestingService] = useState<string | null>(null);
   const resetTranslationCache = async () => {
     try {
       // 异步分批删除缓存，避免UI阻塞
@@ -40,6 +43,43 @@ const TranslationSettings = () => {
   const handleTabChange = (key: string) => {
     setTranslationMethod(key);
   };
+  const handleTestConfig = async (service: string, serviceLabel?: string) => {
+    const config = translationConfigs?.[service];
+    if (!config) {
+      messageApi.error(t("testConfigFail"));
+      return;
+    }
+
+    if (config.apiKey !== undefined && service !== "llm" && !`${config.apiKey}`.trim()) {
+      messageApi.error(tCommon("enterApiKey"));
+      return;
+    }
+
+    if (config.url !== undefined) {
+      const urlValue = `${config.url ?? ""}`.trim();
+      if (!urlValue && (service === "llm" || service === "azureopenai")) {
+        messageApi.error(tCommon("enterLlmUrl"));
+        return;
+      }
+    }
+
+    try {
+      setTestingService(service);
+      const isLLMService = LLM_MODELS.includes(service);
+      const isSuccess = await testTranslation(service, config, isLLMService ? sysPrompt : undefined, isLLMService ? userPrompt : undefined);
+      if (isSuccess) {
+        messageApi.success(`${serviceLabel || service} - ${t("testConfigSuccess")}`);
+      } else {
+        messageApi.error(t("testConfigFail"));
+      }
+    } catch (error) {
+      console.error("Test config failed", error);
+      messageApi.error(t("testConfigFail"));
+    } finally {
+      setTestingService(null);
+    }
+  };
+
   const renderSettings = (service: string) => {
     const currentService = TRANSLATION_SERVICES.find((s) => s.value === service);
     const config = getCurrentConfig();
@@ -62,6 +102,11 @@ const TranslationSettings = () => {
             <Space wrap>
               <Tooltip title={t("resetCacheTooltip")}>
                 <Button onClick={resetTranslationCache}>{t("resetCache")}</Button>
+              </Tooltip>
+              <Tooltip title={t("testConfigTooltip")}>
+                <Button type="primary" loading={testingService === service} onClick={() => handleTestConfig(service, currentService?.label)}>
+                  {t("testConfig")}
+                </Button>
               </Tooltip>
               <Button onClick={() => resetTranslationConfig(service)}>{t("resetConfig")}</Button>
             </Space>
