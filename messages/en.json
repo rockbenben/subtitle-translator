@@ -334,8 +334,8 @@
     "textToTranslate": "text to translate",
     "chunkSize": "Chunk Translation Size",
     "chunkSizeExtra": "For multi-line texts such as subtitles and Markdown, translations will be merged automatically.",
-    "limit": "Translation Speed",
-    "limitExtra": "Excessive rate may cause the API to return empty responses; please reduce the rate accordingly.",
+    "limit": "Translation Speed / Context Window",
+    "limitExtra": "Controls how many lines are translated per batch; in context-aware subtitle mode it also defines the context window size. Setting it too high may slow responses or trigger empty API responses or context-limit errors.",
     "delayTime": "Delay Time",
     "CurrentTransConfig": "Current Translation Configuration"
   },

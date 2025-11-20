@@ -334,8 +334,8 @@
     "textToTranslate": "teks untuk diterjemahkan",
     "chunkSize": "Saiz Terjemahan Potongan",
     "chunkSizeExtra": "Untuk teks berbilang baris seperti sari kata dan Markdown, terjemahan akan digabungkan secara automatik.",
-    "limit": "Kelajuan Terjemahan",
-    "limitExtra": "Kadar yang berlebihan boleh menyebabkan API mengembalikan respons kosong; sila kurangkan kadar sewajarnya.",
+    "limit": "Kecepatan terjemahan / jendela konteks",
+    "limitExtra": "Mengatur berapa banyak baris yang diterjemahkan per batch; dalam mode subtitle berbasis konteks nilai ini juga menjadi ukuran jendela konteks. Jika nilainya terlalu tinggi, respons bisa melambat atau API mengembalikan respons kosong / error batas konteks, jadi naikkan dengan hati-hati.",
     "delayTime": "Masa Kelewatan",
     "CurrentTransConfig": "Konfigurasi Terjemahan Semasa"
   },

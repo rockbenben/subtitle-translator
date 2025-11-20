@@ -334,8 +334,8 @@
     "textToTranslate": "texte à traduire",
     "chunkSize": "Taille de Traduction par Segment",
     "chunkSizeExtra": "Pour les textes multi-lignes tels que les sous-titres et le Markdown, les segments traduits seront automatiquement fusionnés.",
-    "limit": "Vitesse de Traduction",
-    "limitExtra": "Un taux trop élevé peut entraîner des réponses vides de l'API ; veuillez réduire le taux en conséquence.",
+    "limit": "Vitesse de traduction / fenêtre de contexte",
+    "limitExtra": "Définit le nombre de lignes traduites par lot ; en mode sous-titres avec contexte, cette valeur sert aussi de taille de fenêtre de contexte. Un réglage trop élevé peut ralentir la réponse ou provoquer des réponses vides de l’API ou des erreurs de limite de contexte, ajustez-le avec prudence.",
     "delayTime": "Temps de Délai",
     "CurrentTransConfig": "Configuration de Traduction Actuelle"
   },

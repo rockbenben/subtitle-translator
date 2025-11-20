@@ -334,8 +334,8 @@
     "textToTranslate": "çevrilecek metin",
     "chunkSize": "Parça Çeviri Boyutu",
     "chunkSizeExtra": "Altyazı ve Markdown gibi çok satırlı metinlerde çeviriler otomatik olarak birleştirilecektir.",
-    "limit": "Çeviri Hızı",
-    "limitExtra": "Aşırı oran, API'nin boş yanıtlar döndürmesine neden olabilir; lütfen oranı buna göre azaltın.",
+    "limit": "Çeviri hızı / bağlam penceresi",
+    "limitExtra": "Her partide kaç satırın çevrileceğini kontrol eder; bağlamlı altyazı modunda aynı değer bağlam penceresinin boyutu olarak da kullanılır. Değeri çok yükseltmek yanıtları yavaşlatabilir veya API'nin boş yanıtlar ya da bağlam sınırı hataları döndürmesine yol açabilir, dikkatle ayarlayın.",
     "delayTime": "Gecikme Süresi",
     "CurrentTransConfig": "Mevcut Çeviri Yapılandırması"
   },

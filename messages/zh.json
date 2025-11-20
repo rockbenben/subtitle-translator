@@ -334,8 +334,8 @@
     "textToTranslate": "待翻译文本",
     "chunkSize": "分块翻译大小",
     "chunkSizeExtra": "针对字幕、Markdown 等多行文本，将自动合并翻译。",
-    "limit": "翻译速率",
-    "limitExtra": "速率过高可能导致 API 返回空值，请适当降低速率。",
+    "limit": "翻译速率 / 上下文窗口",
+    "limitExtra": "控制单批翻译的并发行数；上下文模式下则充当上下文窗口大小。数值过高可能触发 API 空响应或上下文超限，请谨慎调高。",
     "delayTime": "延迟时间",
     "CurrentTransConfig": "当前翻译配置"
   },

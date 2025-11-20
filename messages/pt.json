@@ -334,8 +334,8 @@
     "textToTranslate": "texto a ser traduzido",
     "chunkSize": "Tamanho do Lote de Tradução",
     "chunkSizeExtra": "Para textos com múltiplas linhas, como legendas e Markdown, as traduções serão mescladas automaticamente.",
-    "limit": "Velocidade de Tradução",
-    "limitExtra": "Uma taxa excessiva pode fazer com que a API retorne respostas vazias; por favor, reduza a taxa conforme necessário.",
+    "limit": "Velocidade de tradução / janela de contexto",
+    "limitExtra": "Controla quantas linhas são traduzidas por lote; no modo de legendas com contexto também funciona como o tamanho da janela de contexto. Valores muito altos podem deixar a resposta lenta ou fazer a API retornar respostas vazias ou erros de limite de contexto, ajuste com cuidado.",
     "delayTime": "Tempo de Atraso",
     "CurrentTransConfig": "Configuração Atual de Tradução"
   },

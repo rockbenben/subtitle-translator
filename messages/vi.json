@@ -334,8 +334,8 @@
     "textToTranslate": "văn bản để dịch",
     "chunkSize": "Kích thước bản dịch khối",
     "chunkSizeExtra": "Đối với các văn bản nhiều dòng như phụ đề và Markdown, bản dịch sẽ được tự động hợp nhất.",
-    "limit": "Tốc độ dịch thuật",
-    "limitExtra": "Tốc độ quá cao có thể khiến API trả về phản hồi trống; vui lòng giảm tốc độ cho phù hợp.",
+    "limit": "Tốc độ dịch / cửa sổ ngữ cảnh",
+    "limitExtra": "Điều khiển số dòng được dịch trong mỗi lô; ở chế độ phụ đề có ngữ cảnh, nó cũng chính là kích thước cửa sổ ngữ cảnh. Đặt quá cao có thể làm chậm phản hồi hoặc khiến API trả về phản hồi trống/lỗi vượt giới hạn ngữ cảnh, hãy điều chỉnh cẩn thận.",
     "delayTime": "Thời gian trễ",
     "CurrentTransConfig": "Cấu hình dịch hiện tại"
   },

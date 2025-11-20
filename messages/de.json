@@ -334,8 +334,8 @@
     "textToTranslate": "Text zur Übersetzung",
     "chunkSize": "Chunk-Übersetzungsgröße",
     "chunkSizeExtra": "Bei mehrzeiligen Texten wie Untertiteln und Markdown werden die Übersetzungen automatisch zusammengeführt.",
-    "limit": "Übersetzungsgeschwindigkeit",
-    "limitExtra": "Eine zu hohe Rate kann dazu führen, dass die API leere Antworten zurückgibt; bitte reduzieren Sie die Rate entsprechend.",
+    "limit": "Übersetzungsgeschwindigkeit / Kontextfenster",
+    "limitExtra": "Steuert, wie viele Zeilen pro Batch übersetzt werden; im kontextbewussten Untertitelmodus definiert es auch die Größe des Kontextfensters. Zu hohe Werte können Antworten verlangsamen oder zu leeren API-Antworten bzw. Kontextlimit-Fehlern führen.",
     "delayTime": "Verzögerungszeit",
     "CurrentTransConfig": "Aktuelle Übersetzungskonfiguration"
   },

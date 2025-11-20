@@ -334,8 +334,8 @@
     "textToTranslate": "testo da tradurre",
     "chunkSize": "Dimensione del Blocco di Traduzione",
     "chunkSizeExtra": "Per testi multilinea come sottotitoli e Markdown, le traduzioni saranno unite automaticamente.",
-    "limit": "Velocità di Traduzione",
-    "limitExtra": "Un tasso eccessivo potrebbe far sì che l'API restituisca risposte vuote; riduci il tasso di conseguenza.",
+    "limit": "Velocità di traduzione / finestra di contesto",
+    "limitExtra": "Controlla quante righe vengono tradotte per lotto; nella modalità sottotitoli con contesto funge anche da dimensione della finestra di contesto. Un valore troppo alto può rallentare le risposte o causare risposte vuote dell'API o errori di limite di contesto, regolalo con cautela.",
     "delayTime": "Tempo di Ritardo",
     "CurrentTransConfig": "Configurazione Attuale della Traduzione"
   },
