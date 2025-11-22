@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Tabs, Form, Input, Card, Typography, Button, Space, Tooltip, message } from "antd";
+import { Tabs, Form, Input, InputNumber, Card, Typography, Button, Space, Tooltip, message } from "antd";
 import { TRANSLATION_SERVICES, LLM_MODELS, CACHE_PREFIX, testTranslation } from "@/app/components/translateAPI";
 import useTranslateData from "@/app/hooks/useTranslateData";
 import { useTranslations } from "next-intl";
@@ -161,7 +161,14 @@ const TranslationSettings = () => {
             )}
             {config?.temperature !== undefined && (
               <Form.Item label="Temperature" extra={t("temperatureExtra")}>
-                <Input type="number" value={config.temperature} onChange={(e) => handleConfigChange(service, "temperature", e.target.value)} />
+                <InputNumber
+                  min={0}
+                  max={1.99}
+                  step={0.1}
+                  value={config.temperature}
+                  onChange={(value) => handleConfigChange(service, "temperature", value ?? 0)}
+                  style={{ width: "100%" }}
+                />
               </Form.Item>
             )}
             {isLLMModel && (
