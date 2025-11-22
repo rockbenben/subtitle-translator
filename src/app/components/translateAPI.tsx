@@ -16,6 +16,7 @@ export const TRANSLATION_SERVICES = [
   { value: "deepseek", label: "DeepSeek", docs: "https://api-docs.deepseek.com/zh-cn/" },
   { value: "openai", label: "OpenAI", docs: "https://platform.openai.com/docs/api-reference/chat" },
   { value: "gemini", label: "Gemini", docs: "https://ai.google.dev/gemini-api/docs/text-generation" },
+  { value: "perplexity", label: "Perplexity", docs: "https://docs.perplexity.ai/api-reference/chat-completions-post" },
   {
     value: "azureopenai",
     label: "Azure OpenAI",
@@ -34,7 +35,7 @@ export const findMethodLabel = (method) => {
 
 type TranslationMethod = (typeof TRANSLATION_SERVICES)[number]["value"];
 
-export const LLM_MODELS = ["deepseek", "openai", "gemini", "azureopenai", "siliconflow", "groq", "llm"];
+export const LLM_MODELS = ["deepseek", "openai", "gemini", "perplexity","azureopenai", "siliconflow", "groq", "llm"];
 
 export const categorizedOptions = [
   ...TRANSLATION_SERVICES.filter((s) => !LLM_MODELS.includes(s.value)),
@@ -65,19 +66,25 @@ export const defaultConfigs = {
     apiKey: "",
     model: "deepseek-chat",
     temperature: 0.7,
-    limit: 30,
+    limit: 50,
   },
   openai: {
     apiKey: "",
     model: "gpt-5-mini",
     temperature: 1,
-    limit: 30,
+    limit: 50,
   },
   gemini: {
     apiKey: "",
     model: "gemini-2.5-flash",
     temperature: 0.7,
-    limit: 30,
+    limit: 50,
+  },
+  perplexity: {
+    apiKey: "",
+    model: "sonar",
+    temperature: 0.7,
+    limit: 50,
   },
   azureopenai: {
     url: "",
@@ -85,26 +92,26 @@ export const defaultConfigs = {
     model: "gpt-5-mini",
     apiVersion: "2025-08-07",
     temperature: 0.7,
-    limit: 30,
+    limit: 50,
   },
   siliconflow: {
     apiKey: "",
     model: "deepseek-ai/DeepSeek-V3",
     temperature: 0.7,
-    limit: 30,
+    limit: 50,
   },
   groq: {
     apiKey: "",
     model: "openai/gpt-oss-20b",
     temperature: 0.7,
-    limit: 30,
+    limit: 50,
   },
   llm: {
     url: "http://127.0.0.1:11434/v1/chat/completions",
     apiKey: "",
     model: "llama3.2",
     temperature: 0.7,
-    limit: 20,
+    limit: 50,
   },
   azure: {
     apiKey: "",
@@ -455,6 +462,31 @@ const translationServices = {
     return data.candidates[0].content.parts[0].text.trim();
   },
 
+  perplexity: async (params: TranslateTextParams) => {
+    const { text, targetLanguage, sourceLanguage, apiKey, model, temperature, sysPrompt, userPrompt } = params;
+    const prompt = getAIModelPrompt(text, userPrompt, targetLanguage, sourceLanguage);
+
+    const response = await fetch("https://api.perplexity.ai/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        messages: [
+          { role: "system", content: sysPrompt },
+          { role: "user", content: prompt },
+        ],
+        model: model,
+        temperature: Number(temperature),
+        stream: false,
+      }),
+    });
+
+    const data = await response.json();
+    return data.choices[0].message.content.trim();
+  },
+  
   azureopenai: async (params: TranslateTextParams) => {
     const { text, targetLanguage, sourceLanguage, apiKey, url, model, apiVersion, temperature, sysPrompt, userPrompt } = params;
     const prompt = getAIModelPrompt(text, userPrompt, targetLanguage, sourceLanguage);
