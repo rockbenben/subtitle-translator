@@ -420,32 +420,26 @@ const useTranslateData = () => {
           },
         };
 
-      case "openai":
-      case "deepseek":
-      case "gemini":
-      case "azureopenai":
-      case "siliconflow":
-      case "groq":
-      case "llm":
-        return {
-          ...baseConfig,
-          retries: 3,
-          minTimeout: 1000,
-          maxTimeout: 20000,
-          shouldRetry: ({ error }) => {
-            const message = error?.message?.toLowerCase() || "";
-            const status = error?.status || error?.response?.status;
-
-            // LLM 服务的特殊处理
-            if (message.includes("context length") || message.includes("token limit")) {
-              return false; // 不要重试上下文长度错误
-            }
-
-            return !status || status >= 500 || status === 429;
-          },
-        };
-
       default:
+        if (LLM_MODELS.includes(translationMethod)) {
+          return {
+            ...baseConfig,
+            retries: 3,
+            minTimeout: 1000,
+            maxTimeout: 20000,
+            shouldRetry: ({ error }) => {
+              const message = error?.message?.toLowerCase() || "";
+              const status = error?.status || error?.response?.status;
+
+              // LLM 服务的特殊处理
+              if (message.includes("context length") || message.includes("token limit")) {
+                return false; // 不要重试上下文长度错误
+              }
+
+              return !status || status >= 500 || status === 429;
+            },
+          };
+        }
         return baseConfig;
     }
   }, []);
