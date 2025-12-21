@@ -1,147 +1,89 @@
 <h1 align="center">
-⚡️Subtitle Translator
+⚡️ Subtitle Translator
 </h1>
 <p align="center">
     English | <a href="./README-zh.md">中文</a>
 </p>
 <p align="center">
-    <em>Translate subtitles effortlessly—fast, accurate, and multilingual!</em>
+    <em>Blazing-fast batch subtitle translation for 50+ languages — powered by AI</em>
 </p>
 
-**Subtitle Translator** is a **free and open-source** batch subtitle translation tool that supports `.srt`, `.ass`, and `.vtt` formats. With **real-time translation speeds**, it leverages multiple **translation APIs and AI models** to quickly translate subtitle files into **50 languages**, including the ability to **translate a single subtitle file into multiple languages at once** for global accessibility.
+<p align="center">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
+  <a href="https://tools.newzone.top/en/subtitle-translator"><img src="https://img.shields.io/badge/Live%20Demo-subtitle--translator-blue" alt="Live Demo"></a>
+</p>
 
-Compared to traditional subtitle translation tools, Subtitle Translator excels with its **batch processing, high-speed translation, translation caching, and automatic format adaptation**, significantly improving workflow efficiency. It is ideal for use in film and TV, education, and content creation.
+**Subtitle Translator** is a batch subtitle translation tool supporting `.srt`, `.ass`, `.vtt`, and `.lrc` formats. With **real-time translation speeds**, it leverages multiple **translation APIs and AI models** to quickly translate subtitle files into **50+ languages**, including the ability to **translate a single file into multiple languages at once** for global accessibility.
 
 👉 **Try it online**: <https://tools.newzone.top/en/subtitle-translator>
 
 ## Key Features
 
-!["Batch Translation"](https://img.newzone.top/subtile-translator.gif?imageMogr2/format/webp "Batch Translation")
+![Batch Translation Demo](https://img.newzone.top/subtile-translator.gif?imageMogr2/format/webp)
 
-- **Real-time translation**: Uses **chunked compression** and **parallel processing** to achieve **1-second translation per episode** (GTX interface is slightly slower).
-- **Batch processing**: Handles **hundreds of subtitle files at once**, significantly boosting efficiency.
-- **Translation caching**: Automatically **stores translation results locally**, avoiding redundant API calls and saving both time and costs.
-- **Format compatibility**: **Automatically detects and adapts** to `.srt`, `.ass`, and `.vtt` subtitle formats, preserving the original file name.
-- **Subtitle extraction**: Allows **easy text extraction** for use in AI summarization, content repurposing, and more.
-- **Multiple translation options**: Supports **3 free translation APIs, 3 commercial-grade APIs, and 5 AI LLM (large language model) interfaces**, catering to different needs.
-- **Multi-language support & internationalization**: Translates subtitles into **50 major languages**, including English, Chinese, Japanese, Korean, French, German, and Spanish. It also supports **multi-language translations from a single file**, generating **bilingual or multilingual subtitles**.
-
-Subtitle Translator offers a range of customizable parameters to meet diverse user needs. Below is a detailed explanation of its features.
+- **Real-time Translation**: Uses **chunked compression** and **parallel processing** to achieve **1-second translation per episode**.
+- **Batch Processing**: Handles **hundreds of subtitle files at once**, significantly boosting efficiency.
+- **High-Performance Caching (IndexedDB)**: Stores translation results in **IndexedDB** with **unlimited capacity**—no more browser storage limits.
+- **Context-Aware Translation** (AI models only): Translates with surrounding context for more coherent dialogue.
+- **Format Compatibility**: **Automatically detects** `.srt`, `.ass`, `.vtt`, and `.lrc` formats, preserving original file names.
+- **Bilingual Output**: Insert translations below original text with adjustable positioning.
+- **Subtitle Extraction**: Export clean text for AI summarization, content repurposing, and more.
+- **Multi-language Support**: Translate into **50+ languages** simultaneously from a single file.
 
 ## Translation APIs
 
-Subtitle Translator supports **5 translation APIs** and **5 AI LLM models**, allowing users to choose the best option for their needs.
+Subtitle Translator supports **5 translation APIs** and **9 AI LLM models**:
 
-### API Comparison
+### Traditional APIs
 
-| API                  | Translation Quality | Stability | Best Use Case                            | Free Tier                                        |
-| -------------------- | ------------------- | --------- | ---------------------------------------- | ------------------------------------------------ |
-| **DeepL (X)**        | ★★★★★               | ★★★★☆     | Best for long texts, fluent translations | 500,000 characters/month                         |
-| **Google Translate** | ★★★★☆               | ★★★★★     | Best for UI text and common phrases      | 500,000 characters/month                         |
-| **Azure Translate**  | ★★★★☆               | ★★★★★     | Best for multi-language support          | **2 million characters/month** (first 12 months) |
-| **GTX API (Free)**   | ★★★☆☆               | ★★★☆☆     | General translation tasks                | Free                                             |
-| **GTX Web (Free)**   | ★★★☆☆               | ★★☆☆☆     | Small-scale translations                 | Free                                             |
+| API                  | Quality | Stability | Free Tier                        |
+| -------------------- | ------- | --------- | -------------------------------- |
+| **DeepL (X)**        | ★★★★★   | ★★★★☆     | 500K chars/month                 |
+| **Google Translate** | ★★★★☆   | ★★★★★     | 500K chars/month                 |
+| **Azure Translate**  | ★★★★☆   | ★★★★★     | 2M chars/month (first 12 months) |
+| **GTX API (Free)**   | ★★★☆☆   | ★★★☆☆     | Free (rate-limited)              |
+| **GTX Web (Free)**   | ★★★☆☆   | ★★☆☆☆     | Free                             |
 
-- **DeepL**: Ideal for long-form content, offering **more fluent** translations, but requires local or server proxy usage.
-- **Google Translate**: **Stable and widely used**, best for **short sentences and UI text**.
-- **Azure Translate**: **Supports the most languages**, making it the best option for **multi-language translations**.
-- **GTX API/Web**: Free translation options, suitable for **light usage** but with **limited stability**.
+### LLM Models
 
-🔹 **API Key Registration**: [Google Translate](https://cloud.google.com/translate/docs/setup?hl=zh-cn), [Azure Translate](https://learn.microsoft.com/zh-cn/azure/ai-services/translator/reference/v3-0-translate), [DeepL Translate](https://www.deepl.com/your-account/keys)
+Supports **DeepSeek**, **OpenAI**, **Gemini**, **Azure OpenAI**, **Siliconflow**, **Groq**, **OpenRouter**, **Perplexity**, and **Custom LLM**.
 
-🔹 **Supported Languages**: [DeepL](https://developers.deepl.com/docs/v/zh/api-reference/languages), [Google Translate](https://cloud.google.com/translate/docs/languages?hl=zh-cn), [Azure](https://learn.microsoft.com/zh-cn/azure/ai-services/translator/language-support)
+- **Best for**: Literary works, technical documents, and multilingual dialogue.
+- **Customization**: Configure **system prompts** and **user prompts** for personalized translation styles.
+- **Temperature Control**: Adjust AI creativity (0–1 scale).
 
-### LLM Translation (AI Models)
+## Context-Aware Translation
 
-Subtitle Translator also supports **5 AI LLM models**, including **OpenAI, DeepSeek, Siliconflow, and Groq**.
+_Context-Aware Translation_ (AI models only) sends subtitles to the LLM in batches with preceding and succeeding context, ensuring more coherent character dialogue and natural tone.
 
-- **Best for**: **Literary works, technical documents, and multilingual dialogue**.
-- **Customization**: Supports **system prompts and user prompts**, allowing personalized translation styles.
-- **Temperature control**: Adjusts **AI translation creativity**, where **higher values produce more diverse translations** but may reduce consistency.
+Two key parameters control this process:
+
+- **Concurrent Lines**: Maximum lines translated simultaneously (default: 20). Too high may trigger rate limits.
+- **Context Lines**: Lines included per batch for context (default: 50). Higher values improve coherence but may exceed token limits.
+
+⚠️ **Tip**: Models under 70B parameters may produce misaligned output. Mainstream online large models are recommended.
 
 ## Subtitle Format Support
 
-Subtitle Translator supports **`.srt`, `.ass`, and `.vtt` formats** with **automatic format detection and adaptation**:
-
-- **Bilingual subtitles**: Translated text **can be inserted below the original** and its position can be adjusted.
-- **Timeline compatibility**: Supports **over 100-hour timestamps**, along with **1-3 digit millisecond formats** to ensure seamless synchronization.
-- **Automatic encoding detection**: Prevents **character encoding issues** by detecting and adjusting encoding settings automatically.
+- **Bilingual Subtitles**: Translated text inserted below original; position adjustable (top/bottom).
+- **Timeline Compatibility**: Supports 100+ hour timestamps and 1–3 digit millisecond formats.
+- **Automatic Encoding Detection**: Prevents character encoding issues automatically.
 
 ## Translation Modes
 
-Subtitle Translator offers **batch translation** and **single-file translation**, adapting to different workflows:
+- **Batch Mode (Default)**: Process hundreds of files simultaneously; results auto-download.
+- **Single-File Mode**: Quick translation with instant preview; each upload replaces the previous.
 
-✅ **Batch Translation (Default Mode)**
+## Documentation & Deployment
 
-- **Processes hundreds of files simultaneously**, maximizing efficiency.
-- **Translated files are automatically saved** in the browser’s default download folder.
+For detailed configuration, API setup, and self-hosting instructions, see the **[Official Documentation](https://docs.newzone.top/en/guide/translation/subtitle-translator/)**.
 
-✅ **Single-File Mode** (For quick tasks)
+**Quick Deployment**: [Deploy Guide](https://docs.newzone.top/en/guide/translation/subtitle-translator/deploy.html)
 
-- **Allows direct text input and translation**.
-- **Results are displayed instantly**, with the option to **copy or export**.
-- Uploading a new file **will replace the previous file**.
+## Contributing
 
-## Translation Caching
+Contributions are welcome! Feel free to open issues and pull requests.
 
-Subtitle Translator **employs local caching** to optimize efficiency:
+## License
 
-- **Caching rules**: Translation results are stored using a unique key format:  
-  `original_text_target_language_source_language_API_model_settings`
-- **Efficiency boost**: **Avoids redundant translations, reducing API calls and speeding up workflows**.
-
-## Multi-Language Translation
-
-Subtitle Translator allows **translating the same subtitle file into multiple languages at once**, ideal for internationalization.
-
-For example:
-
-- Translate an **English subtitle** into **Chinese, Japanese, German, and French** simultaneously for global accessibility.
-- Supports **50 major languages**, with more to be added based on user feedback.
-
-## Usage Notes
-
-When using Subtitle Translator, keep in mind:
-
-- **DeepL API does not support web-based usage**. Instead, Subtitle Translator **provides a dedicated server-side proxy** for DeepL translations, ensuring security and efficiency. Users can also **deploy the proxy locally**.
-- **Subtitle Translator does not store API keys**—all data remains **locally cached in your browser** for privacy.
-- **GTX Web API runs locally** to prevent server overload. Avoid using GTX Web in **global proxy mode** to prevent translation errors.
-
-## Future Updates
-
-🚀 **Upcoming Features**:  
-✅ **Standalone desktop version**  
-✅ **AI-powered translation refinement**
-
-Subtitle Translator will continue to evolve based on user feedback. If you find this tool helpful, feel free to contribute or suggest improvements! 🚀
-
-## Deployment
-
-Subtitle Translator can be deployed on Cloudflare, Vercel, EdgeOne, or any server.
-
-[![Use EdgeOne Pages to deploy](https://cdnstatic.tencentcs.com/edgeone/pages/deploy.svg)](https://edgeone.ai/pages/new?repository-url=https%3A%2F%2Fgithub.com%2Frockbenben%2Fsubtitle-translator&output-directory=out&install-command=yarn+install&build-command=yarn+build%3Alang+en)
-
-System Requirements:
-
-- [Node.js 18.18](https://nodejs.org/) or later.
-- macOS, Windows (including WSL), and Linux are supported.
-
-```shell
-# Installation
-yarn
-
-# Local Development
-yarn dev
-
-# build and start
-yarn build && npx serve@latest out
-
-# Deploy for a single language
-yarn build:lang en
-yarn build:lang zh
-yarn build:lang zh-hant
-```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `src/app/[locale]/page.tsx`. The page auto-updates as you edit the file.
+MIT © 2025 [rockbenben](https://github.com/rockbenben). See [LICENSE](./LICENSE).
