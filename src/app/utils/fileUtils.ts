@@ -6,7 +6,7 @@ import { saveAs } from "file-saver";
  * @param {string} mimeType - 文件 MIME 类型，默认为"text/plain;charset=utf-8"
  * @returns {void}
  */
-export const downloadFile = (content, fileName, mimeType = "text/plain;charset=utf-8") => {
+export const downloadFile = (content: string | Blob | ArrayBuffer, fileName: string, mimeType = "text/plain;charset=utf-8") => {
   return new Promise((resolve, reject) => {
     try {
       // 创建 Blob（如果内容不是 Blob）

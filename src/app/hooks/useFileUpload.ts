@@ -46,7 +46,15 @@ const useFileUpload = () => {
     reader.readAsArrayBuffer(file);
   };
 
-  const handleUploadChange: UploadProps["onChange"] = ({ fileList }) => {
+  const resetUpload = () => {
+    //setFile(null);
+    setFileList([]);
+    setMultipleFiles([]);
+    setSourceText("");
+    setUploadMode("single");
+  };
+
+  const handleUploadChange: UploadProps["onChange"] = ({ fileList }: { fileList: UploadFile[] }) => {
     const updatedFileList: UploadFile[] = fileList.map((f) => ({
       uid: f.uid,
       name: f.name,
@@ -114,14 +122,6 @@ const useFileUpload = () => {
 
       return updatedMultipleFiles;
     });
-  };
-
-  const resetUpload = () => {
-    //setFile(null);
-    setFileList([]);
-    setMultipleFiles([]);
-    setSourceText("");
-    setUploadMode("single");
   };
 
   return {

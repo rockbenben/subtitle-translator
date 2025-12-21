@@ -1,15 +1,32 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
-import { Flex, Card, Button, Typography, Input, Upload, Form, Space, message, Select, Modal, Checkbox, Progress, Tooltip, Radio, Switch, Spin } from "antd";
-import { CopyOutlined, DownloadOutlined, InboxOutlined, UploadOutlined } from "@ant-design/icons";
-import { splitTextIntoLines, getTextStats, downloadFile, splitBySpaces } from "@/app/utils";
+import React, { useState, useEffect } from "react";
+import { Flex, Card, Button, Typography, Input, Upload, Form, Space, App, Modal, Checkbox, Progress, Tooltip, Radio, Spin, Row, Col, Divider } from "antd";
+import {
+  CopyOutlined,
+  DownloadOutlined,
+  InboxOutlined,
+  UploadOutlined,
+  SettingOutlined,
+  DownOutlined,
+  UpOutlined,
+  FileTextOutlined,
+  ClearOutlined,
+  FormatPainterOutlined,
+  GlobalOutlined,
+} from "@ant-design/icons";
+import { splitTextIntoLines, downloadFile, splitBySpaces, getErrorMessage } from "@/app/utils";
 import { VTT_SRT_TIME, LRC_TIME_REGEX, detectSubtitleFormat, getOutputFileExtension, filterSubLines, convertTimeToAss, assHeader } from "./subtitleUtils";
-import { categorizedOptions, findMethodLabel, LLM_MODELS } from "@/app/components/translateAPI";
-import { useLanguageOptions, filterLanguageOption } from "@/app/components/languages";
+import { LLM_MODELS } from "@/app/lib/translation";
+import { useLanguageOptions } from "@/app/components/languages";
+import LanguageSelector from "@/app/components/LanguageSelector";
+import TranslationAPISelector from "@/app/components/TranslationAPISelector";
+import { useTranslationContext } from "@/app/components/TranslationContext";
+import ResultCard from "@/app/components/ResultCard";
 import { useCopyToClipboard } from "@/app/hooks/useCopyToClipboard";
 import useFileUpload from "@/app/hooks/useFileUpload";
-import useTranslateData from "@/app/hooks/useTranslateData";
+import { useLocalStorage } from "@/app/hooks/useLocalStorage";
+import { useTextStats } from "@/app/hooks/useTextStats";
 import { useTranslations } from "next-intl";
 
 const { TextArea } = Input;
@@ -20,8 +37,9 @@ const SubtitleTranslator = () => {
   const tSubtitle = useTranslations("subtitle");
   const t = useTranslations("common");
 
-  const { sourceOptions, targetOptions } = useLanguageOptions();
+  const { sourceOptions } = useLanguageOptions();
   const { copyToClipboard } = useCopyToClipboard();
+  // ... useFileUpload destructuring ...
   const {
     isFileProcessing,
     fileList,
@@ -37,6 +55,7 @@ const SubtitleTranslator = () => {
     handleUploadChange,
     resetUpload,
   } = useFileUpload();
+  // ... useTranslationContext destructuring ...
   const {
     exportSettings,
     importSettings,
@@ -67,26 +86,27 @@ const SubtitleTranslator = () => {
     handleLanguageChange,
     delay,
     validateTranslate,
-  } = useTranslateData();
-  const [messageApi, contextHolder] = message.useMessage();
+  } = useTranslationContext();
+  const { message } = App.useApp();
 
-  const sourceStats = useMemo(() => getTextStats(sourceText), [sourceText]);
-  const resultStats = useMemo(() => getTextStats(translatedText), [translatedText]);
+  const sourceStats = useTextStats(sourceText);
+  const resultStats = useTextStats(translatedText);
 
-  const [bilingualSubtitle, setBilingualSubtitle] = useState(false);
-  const [bilingualPosition, setBilingualPosition] = useState("below"); // 'above' or 'below'
-  const [contextAwareTranslation, setContextAwareTranslation] = useState(true); // 上下文感知翻译开关
+  const [bilingualSubtitle, setBilingualSubtitle] = useLocalStorage("subtitleBilingualSubtitle", false);
+  const [bilingualPosition, setBilingualPosition] = useLocalStorage("subtitleBilingualPosition", "below"); // 'above' or 'below'
+  const [contextAwareTranslation, setContextAwareTranslation] = useLocalStorage("subtitleContextAwareTranslation", true); // 上下文感知翻译开关
+  const [showAdvancedPanel, setShowAdvancedPanel] = useState(true);
 
   useEffect(() => {
     setExtractedText("");
     setTranslatedText("");
   }, [sourceText, setExtractedText, setTranslatedText]);
 
-  const performTranslation = async (sourceText: string, fileNameSet?: string, fileIndex?: number, totalFiles?: number, isSubtitleMode: boolean = true) => {
+  const performTranslation = async (sourceText: string, fileNameSet?: string, fileIndex?: number, totalFiles?: number, documentType?: "subtitle" | "markdown" | "generic") => {
     const lines = splitTextIntoLines(sourceText);
     const fileType = detectSubtitleFormat(lines);
     if (fileType === "error") {
-      messageApi.error(tSubtitle("unsupportedSub"));
+      message.error(tSubtitle("unsupportedSub"));
       return;
     }
     let assContentStartIndex = 9;
@@ -119,7 +139,7 @@ const SubtitleTranslator = () => {
 
     // If no target languages selected in multi-language mode, show error
     if (multiLanguageMode && targetLanguagesToUse.length === 0) {
-      messageApi.error(t("noTargetLanguage"));
+      message.error(t("noTargetLanguage"));
       return;
     }
 
@@ -127,7 +147,7 @@ const SubtitleTranslator = () => {
     for (const currentTargetLang of targetLanguagesToUse) {
       try {
         // Translate content using the specific target language
-        const translatedLines = await translateContent(contentLines, translationMethod, currentTargetLang, fileIndex, totalFiles, isSubtitleMode && contextAwareTranslation);
+        const translatedLines = await translateContent(contentLines, translationMethod, currentTargetLang, fileIndex, totalFiles, contextAwareTranslation ? "subtitle" : undefined);
 
         // Copy array to avoid modifying the original lines
         const translatedTextArray = [...lines];
@@ -174,7 +194,7 @@ const SubtitleTranslator = () => {
 
         // 处理双语模式下的 SRT 和 VTT 字幕，则将内容转换为 .ass 格式
         if (bilingualSubtitle && (fileType === "srt" || fileType === "vtt")) {
-          let subtitles = {};
+          const subtitles: Record<string, { first: string; second: string }> = {};
           // 处理时间线和双语字幕的对齐
           contentIndices.forEach((index, i) => {
             // 提取 WebVTT/SRT 时间线，向上寻找有效的时间轴
@@ -254,15 +274,14 @@ const SubtitleTranslator = () => {
         if (multiLanguageMode && currentTargetLang !== targetLanguagesToUse[targetLanguagesToUse.length - 1]) {
           await delay(500);
         }
-      } catch (error) {
+      } catch (error: unknown) {
         console.log(error);
-        messageApi.open({
-          type: "error",
-          content: bilingualSubtitle
-            ? `${error.message} ${tSubtitle("bilingualError")}`
-            : `${error.message} ${sourceOptions.find((option) => option.value === currentTargetLang)?.label || currentTargetLang}  ${t("translationError")}`,
-          duration: 5,
-        });
+
+        const errorMessage = getErrorMessage(error);
+        const langLabel = sourceOptions.find((o) => o.value === currentTargetLang)?.label || currentTargetLang;
+        const content = bilingualSubtitle ? `${errorMessage} ${tSubtitle("bilingualError")}` : `${errorMessage} ${langLabel} ${t("translationError")}`;
+
+        message.error(content, 5);
       }
     }
   };
@@ -274,7 +293,7 @@ const SubtitleTranslator = () => {
     }
 
     if (multipleFiles.length === 0) {
-      messageApi.error(tSubtitle("noFileUploaded"));
+      message.error(tSubtitle("noFileUploaded"));
       return;
     }
 
@@ -294,7 +313,7 @@ const SubtitleTranslator = () => {
 
     //setMultipleFiles([]);
     setTranslateInProgress(false);
-    messageApi.success(tSubtitle("translationComplete"), 10);
+    message.success(t("translationComplete"), 10);
   };
 
   const handleExportFile = () => {
@@ -313,246 +332,300 @@ const SubtitleTranslator = () => {
 
   const handleExtractText = () => {
     if (!sourceText.trim()) {
-      messageApi.error(tSubtitle("noSourceText"));
+      message.error(tSubtitle("noSourceText"));
       return;
     }
     const lines = splitTextIntoLines(sourceText);
     const fileType = detectSubtitleFormat(lines);
     if (fileType === "error") {
-      messageApi.error(tSubtitle("unsupportedSub"));
+      message.error(tSubtitle("unsupportedSub"));
     }
     const { contentLines } = filterSubLines(lines, fileType);
     const extractedText = contentLines.join("\n").trim();
 
     if (!extractedText) {
-      messageApi.error(tSubtitle("noExtractedText"));
+      message.error(tSubtitle("noExtractedText"));
       return;
     }
 
     setExtractedText(extractedText);
-    copyToClipboard(extractedText, messageApi, tSubtitle("textExtracted"));
+    copyToClipboard(extractedText, tSubtitle("textExtracted"));
   };
 
   const config = getCurrentConfig();
 
   return (
     <Spin spinning={isFileProcessing} size="large">
-      {contextHolder}
-      <Dragger
-        customRequest={({ file }) => handleFileUpload(file as File)}
-        accept=".srt,.ass,.vtt,.lrc"
-        multiple={!singleFileMode}
-        showUploadList
-        beforeUpload={singleFileMode ? resetUpload : undefined}
-        onRemove={handleUploadRemove}
-        onChange={handleUploadChange}
-        fileList={fileList}>
-        <p className="ant-upload-drag-icon">
-          <InboxOutlined />
-        </p>
-        <p className="ant-upload-text">{tSubtitle("dragAndDropText")}</p>
-      </Dragger>
-      {uploadMode === "single" && (
-        <TextArea
-          placeholder={tSubtitle("pasteUploadContent")}
-          value={sourceStats.displayText}
-          onChange={!sourceStats.isTooLong ? (e) => setSourceText(e.target.value) : undefined}
-          rows={8}
-          className="mt-1 mb-2"
-          allowClear
-          readOnly={sourceStats.isTooLong}
-        />
-      )}
-      {sourceText && (
-        <Paragraph type="secondary" className="-mt-1 mb-2">
-          {t("inputStatsTitle")}: {sourceStats.charCount} {t("charLabel")}, {sourceStats.lineCount} {t("lineLabel")}
-        </Paragraph>
-      )}
-      <Form layout="inline" labelWrap className="gap-1 mb-2">
-        <Form.Item label={t("translationAPI")}>
-          <Space.Compact>
-            <Select showSearch value={translationMethod} onChange={(e) => setTranslationMethod(e)} options={categorizedOptions} style={{ minWidth: 150 }} />
-            {config?.apiKey !== undefined && translationMethod !== "llm" && (
-              <Tooltip title={`${t("enter")} ${findMethodLabel(translationMethod)} API Key`}>
-                <Input.Password
-                  autoComplete="off"
-                  placeholder={`API Key ${findMethodLabel(translationMethod)} `}
-                  value={config.apiKey}
-                  onChange={(e) => handleConfigChange(translationMethod, "apiKey", e.target.value)}
+      <Row gutter={[24, 24]}>
+        {/* Left Column: Upload and Main Actions */}
+        <Col xs={24} lg={14} xl={15}>
+          <Card
+            title={
+              <Space>
+                <InboxOutlined /> {t("sourceArea")}
+              </Space>
+            }
+            extra={
+              <Tooltip title={t("resetUploadTooltip")}>
+                <Button
+                  type="text"
+                  danger
+                  disabled={translateInProgress}
+                  onClick={() => {
+                    resetUpload();
+                    setTranslatedText("");
+                    message.success(t("resetUploadSuccess"));
+                  }}
+                  icon={<ClearOutlined />}
+                  aria-label={t("resetUpload")}>
+                  {t("resetUpload")}
+                </Button>
+              </Tooltip>
+            }
+            className="h-full shadow-sm">
+            <Dragger
+              customRequest={({ file }) => handleFileUpload(file as File)}
+              accept=".srt,.ass,.vtt,.lrc"
+              multiple={!singleFileMode}
+              showUploadList
+              beforeUpload={singleFileMode ? resetUpload : undefined}
+              onRemove={handleUploadRemove}
+              onChange={handleUploadChange}
+              fileList={fileList}>
+              <p className="ant-upload-drag-icon">
+                <InboxOutlined />
+              </p>
+              <p className="ant-upload-text">{t("dragAndDropText")}</p>
+              <p className="ant-upload-hint">{t("supportedFormats")} .srt, .ass, .vtt, .lrc</p>
+            </Dragger>
+
+            {uploadMode === "single" && (
+              <>
+                <TextArea
+                  placeholder={t("pasteUploadContent")}
+                  value={sourceStats.isEditable ? sourceText : sourceStats.displayText}
+                  onChange={sourceStats.isEditable ? (e) => setSourceText(e.target.value) : undefined}
+                  rows={8}
+                  className="mt-1"
+                  allowClear
+                  readOnly={!sourceStats.isEditable}
+                  aria-label={t("sourceArea")}
                 />
-              </Tooltip>
+                {sourceText && (
+                  <Flex justify="end">
+                    <Paragraph type="secondary">
+                      {t("inputStatsTitle")}: {sourceStats.charCount} {t("charLabel")}, {sourceStats.lineCount} {t("lineLabel")}
+                    </Paragraph>
+                  </Flex>
+                )}
+              </>
             )}
-          </Space.Compact>
-        </Form.Item>
-        <Form.Item label={t("sourceLanguage")}>
-          <Select
-            value={sourceLanguage}
-            onChange={(e) => handleLanguageChange("source", e)}
-            options={sourceOptions}
-            showSearch
-            placeholder={t("selectSourceLanguage")}
-            optionFilterProp="children"
-            filterOption={(input, option) => filterLanguageOption({ input, option })}
-            style={{ minWidth: 120 }}
-          />
-        </Form.Item>
-        <Space wrap>
-          <Form.Item label={t("targetLanguage")}>
-            {!multiLanguageMode ? (
-              <Select
-                value={targetLanguage}
-                onChange={(e) => handleLanguageChange("target", e)}
-                options={targetOptions}
-                showSearch
-                placeholder={t("selectTargetLanguage")}
-                optionFilterProp="children"
-                filterOption={(input, option) => filterLanguageOption({ input, option })}
-                style={{ minWidth: 120 }}
-              />
-            ) : (
-              <Select
-                mode="multiple"
-                allowClear
-                value={target_langs}
-                onChange={(e) => setTarget_langs(e)}
-                options={targetOptions}
-                placeholder={t("selectMultiTargetLanguages")}
-                optionFilterProp="children"
-                filterOption={(input, option) => filterLanguageOption({ input, option })}
-                style={{ minWidth: 300 }}
-              />
-            )}
-          </Form.Item>
-        </Space>
-        <Form.Item label={tSubtitle("subtitleFormat")}>
-          <Space wrap>
-            <Tooltip title={tSubtitle("bilingualTooltip")}>
-              <Checkbox checked={bilingualSubtitle} onChange={(e) => setBilingualSubtitle(e.target.checked)}>
-                {tSubtitle("bilingual")}
-              </Checkbox>
-            </Tooltip>
-            {bilingualSubtitle && (
-              <Radio.Group value={bilingualPosition} onChange={(e) => setBilingualPosition(e.target.value)} optionType="button" buttonStyle="solid" size="small">
-                <Radio.Button value="above">{tSubtitle("translationAbove")}</Radio.Button>
-                <Radio.Button value="below">{tSubtitle("translationBelow")}</Radio.Button>
-              </Radio.Group>
-            )}
-          </Space>
-        </Form.Item>
-        <Form.Item label={t("advancedSettings")}>
-          <Space wrap>
-            <Tooltip title={t("singleFileModeTooltip")}>
-              <Checkbox checked={singleFileMode} onChange={(e) => setSingleFileMode(e.target.checked)}>
-                {t("singleFileMode")}
-              </Checkbox>
-            </Tooltip>
-            <Tooltip title={t("useCacheTooltip")}>
-              <Checkbox checked={useCache} onChange={(e) => setUseCache(e.target.checked)}>
-                {t("useCache")}
-              </Checkbox>
-            </Tooltip>
-            {LLM_MODELS.includes(translationMethod) && (
-              <Tooltip title={t("contextAwareTranslationTooltip")}>
-                <Checkbox checked={contextAwareTranslation} onChange={(e) => setContextAwareTranslation(e.target.checked)}>
-                  {t("contextAwareTranslation")}
-                </Checkbox>
-              </Tooltip>
-            )}
-            <Tooltip title={t("multiLanguageModeTooltip")}>
-              <Switch checked={multiLanguageMode} onChange={(checked) => setMultiLanguageMode(checked)} checkedChildren={t("multiLanguageMode")} unCheckedChildren={t("singleLanguageMode")} />
-            </Tooltip>
-          </Space>
-        </Form.Item>
-        <Form.Item label={t("removeCharsAfterTranslation")}>
-          <Tooltip title={t("removeCharsAfterTranslationTooltip")}>
-            <Input placeholder={`${t("example")}: ♪ <i> </i>`} value={removeChars} onChange={(e) => setRemoveChars(e.target.value)} style={{ minWidth: 200 }} allowClear />
-          </Tooltip>
-        </Form.Item>
-      </Form>
-      <Flex gap="small">
-        <Button
-          type="primary"
-          block
-          onClick={() => (uploadMode === "single" ? handleTranslate(performTranslation, sourceText, contextAwareTranslation) : handleMultipleTranslate())}
-          disabled={translateInProgress}>
-          {multiLanguageMode ? `${t("translate")} | ${t("totalLanguages")}${target_langs.length || 0}` : t("translate")}
-        </Button>
-        <Tooltip title={t("exportSettingTooltip")}>
-          <Button
-            icon={<DownloadOutlined />}
-            onClick={async () => {
-              await exportSettings();
-            }}>
-            {t("exportSetting")}
-          </Button>
-        </Tooltip>
-        <Tooltip title={t("importSettingTooltip")}>
-          <Button
-            icon={<UploadOutlined />}
-            onClick={async () => {
-              await importSettings();
-            }}>
-            {t("importSetting")}
-          </Button>
-        </Tooltip>
-        <Tooltip title={t("resetUploadTooltip")}>
-          <Button
-            onClick={() => {
-              resetUpload();
-              setTranslatedText("");
-              messageApi.success(t("resetUploadSuccess"));
-            }}>
-            {t("resetUpload")}
-          </Button>
-        </Tooltip>
-        {uploadMode === "single" && sourceText && <Button onClick={handleExtractText}>{t("extractText")}</Button>}
-      </Flex>
-      {uploadMode === "single" && (
-        <>
-          {translatedText && !(multiLanguageMode && target_langs.length > 1) && (
+
+            <Divider />
+
+            <Flex gap="small" wrap className="mt-auto pt-4">
+              <Button
+                type="primary"
+                size="large"
+                icon={<GlobalOutlined spin={translateInProgress} />}
+                className="flex-1 shadow-md"
+                onClick={() => (uploadMode === "single" ? handleTranslate(performTranslation, sourceText, contextAwareTranslation ? "subtitle" : undefined) : handleMultipleTranslate())}
+                disabled={translateInProgress}
+                loading={translateInProgress}>
+                {multiLanguageMode ? `${t("translate")} (${target_langs.length})` : t("translate")}
+              </Button>
+
+              {uploadMode === "single" && sourceText && (
+                <Button size="large" onClick={handleExtractText} icon={<FormatPainterOutlined />}>
+                  {t("extractText")}
+                </Button>
+              )}
+            </Flex>
+          </Card>
+        </Col>
+
+        {/* Right Column: Settings and Configuration */}
+        <Col xs={24} lg={10} xl={9}>
+          <Flex vertical gap="middle">
+            {/* Translation Configuration */}
             <Card
-              title={t("translationResult")}
-              className="mt-3"
+              title={
+                <Space>
+                  <SettingOutlined /> {t("configuration")}
+                </Space>
+              }
+              className="shadow-sm"
               extra={
-                <Space wrap>
-                  <Button icon={<CopyOutlined />} onClick={() => copyToClipboard(translatedText, messageApi)}>
-                    {t("copy")}
-                  </Button>
-                  <Button
-                    icon={<DownloadOutlined />}
-                    onClick={() => {
-                      const fileName = handleExportFile();
-                      messageApi.success(`${t("exportedFile")}: ${fileName}`);
-                    }}>
-                    {t("exportFile")}
-                  </Button>
+                <Space>
+                  <Tooltip title={t("importSettingTooltip")}>
+                    <Button
+                      type="text"
+                      icon={<UploadOutlined />}
+                      size="small"
+                      disabled={translateInProgress}
+                      onClick={async () => {
+                        await importSettings();
+                      }}
+                    />
+                  </Tooltip>
+                  <Tooltip title={t("exportSettingTooltip")}>
+                    <Button
+                      type="text"
+                      icon={<DownloadOutlined />}
+                      size="small"
+                      disabled={translateInProgress}
+                      onClick={async () => {
+                        await exportSettings();
+                      }}
+                    />
+                  </Tooltip>
                 </Space>
               }>
-              <TextArea value={resultStats.displayText} rows={10} readOnly />
-              <Paragraph type="secondary" className="-mb-2">
-                {t("outputStatsTitle")}: {resultStats.charCount} {t("charLabel")}, {resultStats.lineCount} {t("lineLabel")}
-              </Paragraph>
+              <Form layout="vertical" className="w-full">
+                {/* Language Selection */}
+                <LanguageSelector
+                  sourceLanguage={sourceLanguage}
+                  targetLanguage={targetLanguage}
+                  target_langs={target_langs}
+                  multiLanguageMode={multiLanguageMode}
+                  handleLanguageChange={handleLanguageChange}
+                  setTarget_langs={setTarget_langs}
+                  setMultiLanguageMode={setMultiLanguageMode}
+                />
+
+                {/* API Settings */}
+                <TranslationAPISelector translationMethod={translationMethod} setTranslationMethod={setTranslationMethod} config={config} handleConfigChange={handleConfigChange} />
+
+                {/* Subtitle Options */}
+                <Form.Item label={tSubtitle("subtitleFormat")} style={{ marginTop: -12, marginBottom: 6 }}>
+                  <div className="flex flex-col gap-2">
+                    <Checkbox checked={bilingualSubtitle} onChange={(e) => setBilingualSubtitle(e.target.checked)}>
+                      {tSubtitle("bilingual")}
+                    </Checkbox>
+
+                    {bilingualSubtitle && (
+                      <Radio.Group value={bilingualPosition} onChange={(e) => setBilingualPosition(e.target.value)} optionType="button" buttonStyle="solid" size="small" className="w-full flex">
+                        <Radio.Button value="above" className="flex-1 text-center">
+                          {tSubtitle("translationAbove")}
+                        </Radio.Button>
+                        <Radio.Button value="below" className="flex-1 text-center">
+                          {tSubtitle("translationBelow")}
+                        </Radio.Button>
+                      </Radio.Group>
+                    )}
+                  </div>
+                </Form.Item>
+              </Form>
             </Card>
-          )}
-          {extractedText && (
+
+            {/* Advanced Settings */}
             <Card
-              title={t("extractedText")}
-              className="mt-3"
-              extra={
-                <Button icon={<CopyOutlined />} onClick={() => copyToClipboard(extractedText, messageApi)}>
-                  {t("copy")}
-                </Button>
-              }>
-              <TextArea value={extractedText} rows={10} readOnly />
+              title={
+                <div className="cursor-pointer flex items-center justify-between w-full" onClick={() => setShowAdvancedPanel(!showAdvancedPanel)}>
+                  <Space>
+                    <SettingOutlined /> {t("advancedSettings")}
+                  </Space>
+                  {showAdvancedPanel ? <UpOutlined style={{ fontSize: "12px" }} /> : <DownOutlined style={{ fontSize: "12px" }} />}
+                </div>
+              }
+              className="shadow-sm"
+              styles={{
+                body: {
+                  display: showAdvancedPanel ? "block" : "none",
+                },
+              }}>
+              <Form layout="vertical">
+                <Row gutter={[16, 16]}>
+                  <Col span={12}>
+                    <Tooltip title={t("singleFileModeTooltip")}>
+                      <Checkbox checked={singleFileMode} onChange={(e) => setSingleFileMode(e.target.checked)}>
+                        {t("singleFileMode")}
+                      </Checkbox>
+                    </Tooltip>
+                  </Col>
+                  <Col span={12}>
+                    <Tooltip title={t("useCacheTooltip")}>
+                      <Checkbox checked={useCache} onChange={(e) => setUseCache(e.target.checked)}>
+                        {t("useCache")}
+                      </Checkbox>
+                    </Tooltip>
+                  </Col>
+                  {LLM_MODELS.includes(translationMethod) && (
+                    <Col span={24}>
+                      <Tooltip title={t("contextAwareTranslationTooltip")}>
+                        <Checkbox checked={contextAwareTranslation} onChange={(e) => setContextAwareTranslation(e.target.checked)}>
+                          {t("contextAwareTranslation")}
+                        </Checkbox>
+                      </Tooltip>
+                    </Col>
+                  )}
+                  <Col span={24}>
+                    <Form.Item label={t("removeCharsAfterTranslation")}>
+                      <Input
+                        placeholder={`${t("example")}: ♪ <i> </i>`}
+                        value={removeChars}
+                        onChange={(e) => setRemoveChars(e.target.value)}
+                        allowClear
+                        aria-label={t("removeCharsAfterTranslation")}
+                      />
+                    </Form.Item>
+                  </Col>
+                </Row>
+              </Form>
             </Card>
-          )}
-        </>
+          </Flex>
+        </Col>
+      </Row>
+
+      {/* Results Section */}
+      {uploadMode === "single" && (translatedText || extractedText) && (
+        <div className="mt-6">
+          <Row gutter={[24, 24]}>
+            {translatedText && !(multiLanguageMode && target_langs.length > 1) && (
+              <Col xs={24} lg={extractedText ? 12 : 24}>
+                <ResultCard
+                  content={resultStats.displayText}
+                  charCount={resultStats.charCount}
+                  lineCount={resultStats.lineCount}
+                  onCopy={() => copyToClipboard(translatedText)}
+                  onExport={() => {
+                    const fileName = handleExportFile();
+                    message.success(`${t("exportedFile")}: ${fileName}`);
+                  }}
+                />
+              </Col>
+            )}
+
+            {extractedText && (
+              <Col xs={24} lg={translatedText ? 12 : 24}>
+                <Card
+                  title={
+                    <Space>
+                      <FileTextOutlined /> {t("extractedText")}
+                    </Space>
+                  }
+                  className="shadow-sm h-full"
+                  extra={
+                    <Button type="text" icon={<CopyOutlined />} onClick={() => copyToClipboard(extractedText)}>
+                      {t("copy")}
+                    </Button>
+                  }>
+                  <TextArea value={extractedText} rows={10} readOnly aria-label={t("extractedText")} />
+                </Card>
+              </Col>
+            )}
+          </Row>
+        </div>
       )}
+
+      {/* Helper Actions */}
+
       {translateInProgress && (
-        <Modal title={t("translating")} open={translateInProgress} footer={null} closable={false}>
-          <div className="text-center">
+        <Modal title={t("translating")} open={translateInProgress} footer={null} closable={false} centered width={300}>
+          <div className="text-center py-4">
             <Progress type="circle" percent={Math.round(progressPercent * 100) / 100} />
-            {multiLanguageMode && target_langs.length > 0 && <p className="mt-4">{`${t("multiTranslating")} ${target_langs.length}`}</p>}
+            {multiLanguageMode && target_langs.length > 0 && <p className="mt-4 font-medium">{`${t("multiTranslating")} ${target_langs.length}`}</p>}
+            <p className="mt-2 text-gray-500">{t("pleaseWait")}</p>
           </div>
         </Modal>
       )}

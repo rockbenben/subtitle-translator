@@ -169,7 +169,7 @@ const TIME_REGEX = /^(?:(\d+):)?(\d{2}):(\d{2})[,.](\d{1,3})$/;
 export const convertTimeToAss = (time: string): string => {
   const match = time.match(TIME_REGEX);
   if (!match) return time;
-  const [_, hours, minutes, seconds, ms] = match;
+  const [, hours, minutes, seconds, ms] = match;
   // 处理毫秒：确保转换为两位厘秒。如果输入是毫秒（3 位数），取前两位；如果只有一位数如 9，用 0 填充，显示为 09。
   const msValue = ms.length >= 2 ? ms.substring(0, 2) : ms.padStart(2, "0");
   return `${parseInt(hours || "0", 10)}:${minutes}:${seconds}.${msValue}`;

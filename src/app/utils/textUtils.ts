@@ -25,28 +25,8 @@ export const cleanLines = (text: string, shouldTrim: boolean = false): string[] 
     .map((line) => (shouldTrim ? line.trim() : line));
 
 // 截断字符串到指定长度，默认长度为 100K
-const MAX_LENGTH = 100000;
-export const truncate = (str: string, num: number = MAX_LENGTH): string => (str.length <= num ? str : `${str.slice(0, num)}...`);
-
-const compactFormatter = new Intl.NumberFormat("en-US", {
-  notation: "compact",
-  compactDisplay: "short",
-});
-
-const MAX_CHAR_LENGTH = 1000000;
-export const getTextStats = (str: string, num: number = MAX_CHAR_LENGTH) => {
-  const totalChars = str.length;
-  const totalLines = splitTextIntoLines(str).length;
-  const isTooLong = totalChars > num;
-  const displayText = isTooLong ? truncate(str) : str;
-
-  return {
-    charCount: compactFormatter.format(totalChars),
-    lineCount: compactFormatter.format(totalLines),
-    isTooLong,
-    displayText,
-  };
-};
+const MAX_DISPLAY_LENGTH = 100000;
+export const truncate = (str: string, num: number = MAX_DISPLAY_LENGTH): string => (str.length <= num ? str : `${str.slice(0, num)}...`);
 
 // 中文段落分割处理
 const splitCNParagraph = (text: string) => {
@@ -123,10 +103,19 @@ export const dedupeLines = (lines: string[], options: DedupeOptions = {}): strin
   return out;
 };
 
+// Cache for compressNewlines regexes to avoid recompilation
+const compressNewlinesRegexCache = new Map<number, RegExp>();
+
 // 压缩连续换行符，默认将 3 个及以上换行压缩为 2 个
 export const compressNewlines = (text: string, maxConsecutive: number = 2): string => {
   if (maxConsecutive < 1) return text.replace(/\n+/g, "\n");
-  const re = new RegExp(`\\n{${maxConsecutive + 1},}`, "g");
+
+  let re = compressNewlinesRegexCache.get(maxConsecutive);
+  if (!re) {
+    re = new RegExp(`\\n{${maxConsecutive + 1},}`, "g");
+    compressNewlinesRegexCache.set(maxConsecutive, re);
+  }
+
   return text.replace(re, "\n".repeat(maxConsecutive));
 };
 

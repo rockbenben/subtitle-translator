@@ -1,4 +1,5 @@
 export const loadFromLocalStorage = (key: string) => {
+  if (typeof window === "undefined") return null;
   const storedValue = localStorage.getItem(key);
   if (storedValue === null) return null;
 
@@ -9,7 +10,8 @@ export const loadFromLocalStorage = (key: string) => {
   }
 };
 
-export const saveToLocalStorage = (key: string, value: any) => {
+export const saveToLocalStorage = (key: string, value: unknown) => {
+  if (typeof window === "undefined") return;
   try {
     localStorage.setItem(key, JSON.stringify(value));
   } catch (error) {

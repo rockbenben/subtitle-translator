@@ -1,21 +1,30 @@
-import React from "react";
+import React, { memo } from "react";
 import { Button, Form, Input, Space, Tooltip } from "antd";
 import { MinusCircleOutlined, PlusOutlined } from "@ant-design/icons";
 import { useTranslations } from "next-intl";
 
-const KeyMappingInput = ({ keyMappings = [], setKeyMappings }) => {
+import type { KeyMapping } from "@/app/types";
+
+interface KeyMappingInputProps {
+  keyMappings: KeyMapping[];
+  setKeyMappings: React.Dispatch<React.SetStateAction<KeyMapping[]>>;
+}
+
+const KeyMappingInput: React.FC<KeyMappingInputProps> = ({ keyMappings = [], setKeyMappings }) => {
   const t = useTranslations("json");
 
-  const deleteMapping = (id) => {
+  const deleteMapping = (id: number) => {
     if (keyMappings.length > 1) {
       const newMappings = keyMappings.filter((mapping) => mapping.id !== id);
       setKeyMappings(newMappings);
     }
   };
+
   const addMapping = () => {
-    setKeyMappings([...keyMappings, { inputKey: "", outputKey: "", id: Date.now() }]);
+    setKeyMappings([...keyMappings, { inputKey: "", outputKey: "", id: Date.now() + Math.random() }]);
   };
-  const handleInputChange = (index, field, value) => {
+
+  const handleInputChange = (index: number, field: "inputKey" | "outputKey", value: string) => {
     const newMappings = [...keyMappings];
     newMappings[index][field] = value;
     setKeyMappings(newMappings);
@@ -45,4 +54,4 @@ const KeyMappingInput = ({ keyMappings = [], setKeyMappings }) => {
   );
 };
 
-export default KeyMappingInput;
+export default memo(KeyMappingInput);

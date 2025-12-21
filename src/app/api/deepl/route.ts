@@ -1,20 +1,31 @@
-// 文件：/app/api/deepl/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import * as deepl from "deepl-node";
 
-const TARGET_LANG_MAPPING = {
+// 1. 定义请求体的接口，避免使用 any
+interface TranslationRequest {
+  text: string;
+  source_lang?: string;
+  target_lang: string;
+  authKey: string;
+}
+
+const TARGET_LANG_MAPPING: Record<string, string> = {
   en: "en-US", // 默认英语使用美式英语
   pt: "pt-BR", // 默认葡萄牙语使用巴西葡萄牙语
 };
 
+// 默认重试 5 次，连接超时 60s
+const options = { maxRetries: 5, minTimeout: 60000 };
+
 export async function POST(req: NextRequest) {
   try {
-    // 解析请求体
-    const requestBody = await req.json();
-    let { text, target_lang, source_lang, authKey } = requestBody;
+    // 2. 安全地解析 JSON 并断言为我们定义的接口
+    // 先转为 unknown 再转为接口是更安全的做法，或者直接断言
+    const body = (await req.json()) as TranslationRequest;
+    const { text, source_lang, target_lang: rawTargetLang, authKey } = body;
 
     // 验证请求参数
-    if (!text || !target_lang) {
+    if (!text || !rawTargetLang) {
       return NextResponse.json({ error: "Missing required parameters: text and target_lang are required" }, { status: 400 });
     }
 
@@ -24,19 +35,17 @@ export async function POST(req: NextRequest) {
     }
 
     // 目标语言：处理弃用的语言代码
-    if (TARGET_LANG_MAPPING[target_lang]) {
-      console.log(`Converting deprecated language code '${target_lang}' to '${TARGET_LANG_MAPPING[target_lang]}'`);
-      target_lang = TARGET_LANG_MAPPING[target_lang];
-    }
+    const target_lang = TARGET_LANG_MAPPING[rawTargetLang] || rawTargetLang;
 
     // 初始化 DeepL 翻译器
-    const translator = new deepl.Translator(authKey);
+    const translator = new deepl.Translator(authKey, options);
 
     // 调用 DeepL API 进行翻译
+    // 注意：这里可能需要根据 deepl-node 的类型定义进行简单的类型断言，或者保持 string
     const result = await translator.translateText(
       text,
-      source_lang || null, // 如果未提供源语言，则为自动检测
-      target_lang
+      (source_lang as deepl.SourceLanguageCode) || null, // 如果未提供源语言，则为自动检测
+      target_lang as deepl.TargetLanguageCode
     );
 
     // 返回翻译结果
@@ -53,15 +62,12 @@ export async function POST(req: NextRequest) {
             },
           ],
     });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("DeepL translation error:", error);
 
-    // 如果是语言代码问题，提供更明确的错误信息
+    // 3. 使用 instanceof 检查 DeepL 特定的错误
     if (error instanceof deepl.DeepLError && (error.message.includes("is deprecated") || error.message.includes("not supported"))) {
-      // 提取错误消息
       const errorMsg = error.message;
-
-      // 返回详细的错误信息和建议
       return NextResponse.json(
         {
           error: `DeepL API error: ${errorMsg}`,
@@ -76,7 +82,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: `DeepL API error: ${error.message}` }, { status: 500 });
     }
 
-    // 处理其他错误
-    return NextResponse.json({ error: error.message || "An unknown error occurred" }, { status: 500 });
+    let errorMessage = "An unknown error occurred";
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    } else if (typeof error === "string") {
+      errorMessage = error;
+    }
+
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

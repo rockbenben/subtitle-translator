@@ -1,7 +1,7 @@
 // 标点符号结尾的正则表达式
 export const punctuationEndRegex = /(?:[。？！…”"」\]】)）※]|\.{3,}|-{3,}|—{3,}|={3,}|＝{3,})$/;
-// 特殊开头字符的正则，未包含括号 （(
-export const specialLineStartRegex = /^(?:[【「\[“"◆※]|-{3,}|—{3,}|={3,}|＝{3,}|第.*[章节卷])$/;
+// 以特殊字符开头的任意行，未包含括号 （(
+export const specialLineStartRegex = /^(?:[【「\[“"◆※].*|-{3,}|—{3,}|={3,}|＝{3,}|第.*[章节卷])$/;
 
 // 纯数字行的正则表达式
 export const pureNumberRegex = /^\d+$/;

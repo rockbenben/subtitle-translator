@@ -21,14 +21,22 @@ import {
   ProfileOutlined,
   OrderedListOutlined,
   ToolOutlined,
+  MessageOutlined,
 } from "@ant-design/icons";
 import Link from "next/link";
-import { useTranslations } from "next-intl";
-import { useLocale } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
+
+interface Project {
+  titleKey: string;
+  descriptionKey: string;
+  key: string;
+  icon: React.ReactNode;
+  onlyzh?: boolean;
+}
 
 // 排除当前项目 "subtitle-translator",
 const projectCategories = {
-  translate: ["json-translate", "md-translator", "aishort-translate"],
+  translate: ["json-translate", "md-translator"],
   textParser: ["text-splitter", "chinese-conversion", "novel-processor", "regex-matcher", "text-processor"],
   jsonParser: ["json-value-extractor", "json-node-edit", "json-value-transformer", "json-value-swapper", "json-node-inserter", "json-sort-classify", "json-match-update"],
   dataParser: ["data-parser/flare", "data-parser/img-prompt"],
@@ -67,17 +75,17 @@ export const projects = [
     onlyzh: true,
   },
   {
+    titleKey: "长文本/小说整理器",
+    descriptionKey: "一键修复下载小说的格式问题，智能换行排版",
+    key: "novel-processor",
+    icon: <FontSizeOutlined />,
+    onlyzh: true,
+  },
+  {
     titleKey: "正则文本助手",
     descriptionKey: "集成正则匹配、排序、过滤等功能，进行文本批量处理",
     key: "regex-matcher",
     icon: <CodeOutlined />,
-    onlyzh: true,
-  },
-  {
-    titleKey: "小说文本处理",
-    descriptionKey: "批量处理不规范格式的小说长文本",
-    key: "novel-processor",
-    icon: <FontSizeOutlined />,
     onlyzh: true,
   },
   {
@@ -141,26 +149,19 @@ export const projects = [
     key: "data-parser/img-prompt",
     icon: <UnorderedListOutlined />,
   },
-  {
-    titleKey: "AIShort 多语言翻译",
-    descriptionKey: "一键翻译 ChatGPT Shortcut 13 种语言",
-    key: "aishort-translate",
-    icon: <GlobalOutlined />,
-    onlyzh: true,
-  },
 ];
 
-const projectsMap = projects.reduce((acc, project) => {
+const projectsMap = projects.reduce((acc: Record<string, Project>, project) => {
   acc[project.key] = project;
   return acc;
 }, {});
 
-export const AppMenu = () => {
+export const useAppMenu = () => {
   const t = useTranslations();
   const locale = useLocale();
   const isChineseLocale = locale === "zh" || locale === "zh-hant";
 
-  const createMenuItem = (projectKey) => {
+  const createMenuItem = (projectKey: string) => {
     const project = projectsMap[projectKey];
     if (!project || (project.onlyzh && locale !== "zh")) {
       return null;
@@ -172,7 +173,7 @@ export const AppMenu = () => {
     };
   };
 
-  const generateCategoryItems = (categoryKeys) => {
+  const generateCategoryItems = (categoryKeys: string[]) => {
     return categoryKeys.map(createMenuItem).filter(Boolean);
   };
 
@@ -185,6 +186,15 @@ export const AppMenu = () => {
       ),
       key: "aishort",
       icon: <ExperimentOutlined />,
+    },
+    {
+      label: (
+        <a href={`http://chat.newzone.top/?lang=${isChineseLocale ? "zh" : "en"}`} target="_blank" rel="noopener noreferrer">
+          ChatBox
+        </a>
+      ),
+      key: "ChatBox",
+      icon: <MessageOutlined />,
     },
     {
       label: (

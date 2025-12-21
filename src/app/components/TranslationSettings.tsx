@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { Tabs, Form, Input, InputNumber, Card, Typography, Button, Space, Tooltip, message } from "antd";
-import { TRANSLATION_SERVICES, LLM_MODELS, CACHE_PREFIX, testTranslation } from "@/app/components/translateAPI";
-import useTranslateData from "@/app/hooks/useTranslateData";
+import { useState, memo } from "react";
+import { Tabs, Form, Input, InputNumber, Card, Typography, Button, Space, Tooltip, App, Switch } from "antd";
+import { TRANSLATION_SERVICES, LLM_MODELS, DEFAULT_SYS_PROMPT, DEFAULT_USER_PROMPT, testTranslation, clearTranslationCache } from "@/app/lib/translation";
+import { useTranslationContext } from "@/app/components/TranslationContext";
 import { useTranslations } from "next-intl";
 
 const { Text, Link } = Typography;
@@ -12,53 +12,49 @@ const { TextArea } = Input;
 const TranslationSettings = () => {
   const tCommon = useTranslations("common");
   const t = useTranslations("TranslationSettings");
-  const [messageApi, contextHolder] = message.useMessage();
+  const { message } = App.useApp();
   const { translationMethod, setTranslationMethod, translationConfigs, getCurrentConfig, handleConfigChange, resetTranslationConfig, sysPrompt, setSysPrompt, userPrompt, setUserPrompt } =
-    useTranslateData();
+    useTranslationContext();
   const [testingService, setTestingService] = useState<string | null>(null);
+
   const resetTranslationCache = async () => {
     try {
-      // 异步分批删除缓存，避免UI阻塞
-      const allKeys = Object.keys(localStorage);
-      const cacheKeys = allKeys.filter((key) => key.startsWith(CACHE_PREFIX));
-
-      // 分批处理，每批删除100个
-      const batchSize = 100;
-      for (let i = 0; i < cacheKeys.length; i += batchSize) {
-        const batch = cacheKeys.slice(i, i + batchSize);
-        batch.forEach((key) => localStorage.removeItem(key));
-
-        // 让出控制权给UI线程
-        if (i + batchSize < cacheKeys.length) {
-          await new Promise((resolve) => setTimeout(resolve, 0));
-        }
-      }
-
-      messageApi.success(`Translation cache has been reset (${cacheKeys.length} entries cleared)`);
+      const count = await clearTranslationCache();
+      message.success(`Translation cache has been reset (${count} entries cleared)`);
     } catch (error) {
       console.error("Failed to clear cache:", error);
-      messageApi.error("Failed to clear translation cache");
+      message.error("Failed to clear translation cache");
     }
   };
+
   const handleTabChange = (key: string) => {
     setTranslationMethod(key);
   };
+
+  const handleResetToDefault = (service: string) => {
+    resetTranslationConfig(service);
+    if (LLM_MODELS.includes(service)) {
+      setSysPrompt(DEFAULT_SYS_PROMPT);
+      setUserPrompt(DEFAULT_USER_PROMPT);
+    }
+  };
+
   const handleTestConfig = async (service: string, serviceLabel?: string) => {
     const config = translationConfigs?.[service];
     if (!config) {
-      messageApi.error(t("testConfigFail"));
+      message.error(t("testConfigFail"));
       return;
     }
 
     if (config.apiKey !== undefined && service !== "llm" && !`${config.apiKey}`.trim()) {
-      messageApi.error(tCommon("enterApiKey"));
+      message.error(tCommon("enterApiKey"));
       return;
     }
 
     if (config.url !== undefined) {
       const urlValue = `${config.url ?? ""}`.trim();
       if (!urlValue && (service === "llm" || service === "azureopenai")) {
-        messageApi.error(tCommon("enterLlmUrl"));
+        message.error(tCommon("enterLlmUrl"));
         return;
       }
     }
@@ -68,13 +64,13 @@ const TranslationSettings = () => {
       const isLLMService = LLM_MODELS.includes(service);
       const isSuccess = await testTranslation(service, config, isLLMService ? sysPrompt : undefined, isLLMService ? userPrompt : undefined);
       if (isSuccess) {
-        messageApi.success(`${serviceLabel || service} - ${t("testConfigSuccess")}`);
+        message.success(`${serviceLabel || service} - ${t("testConfigSuccess")}`);
       } else {
-        messageApi.error(t("testConfigFail"));
+        message.error(t("testConfigFail"));
       }
     } catch (error) {
       console.error("Test config failed", error);
-      messageApi.error(t("testConfigFail"));
+      message.error(t("testConfigFail"));
     } finally {
       setTestingService(null);
     }
@@ -108,7 +104,7 @@ const TranslationSettings = () => {
                   {t("testConfig")}
                 </Button>
               </Tooltip>
-              <Button onClick={() => resetTranslationConfig(service)}>{t("resetConfig")}</Button>
+              <Button onClick={() => handleResetToDefault(service)}>{t("resetConfig")}</Button>
             </Space>
           }>
           <Form layout="vertical">
@@ -127,36 +123,60 @@ const TranslationSettings = () => {
                   }
                   value={config?.url}
                   onChange={(e) => handleConfigChange(service, "url", e.target.value)}
+                  aria-label={`API ${t("url")}`}
                 />
               </Form.Item>
             )}
 
             {config?.apiKey !== undefined && (
-              <Form.Item label={`${currentService?.label} API Key`} required={service !== "llm"}>
+              <Form.Item
+                label={
+                  <Space>
+                    {`${currentService?.label} API Key`}
+                    {currentService?.apiKeyUrl && (
+                      <Link href={currentService.apiKeyUrl} target="_blank">
+                        {tCommon("getApiKey") || "Get API Key"}
+                      </Link>
+                    )}
+                  </Space>
+                }
+                required={service !== "llm"}>
                 <Input.Password
                   autoComplete="off"
                   placeholder={`${tCommon("enter")} ${currentService?.label} API Key`}
-                  value={config.apiKey}
+                  value={config.apiKey as string | undefined}
                   onChange={(e) => handleConfigChange(service, "apiKey", e.target.value)}
+                  aria-label={`${currentService?.label} API Key`}
                 />
+              </Form.Item>
+            )}
+
+            {service === "deepseek" && (
+              <Form.Item label={t("useRelay")} extra={t("useRelayTooltip")}>
+                <Switch checked={config?.useRelay as boolean | undefined} onChange={(checked) => handleConfigChange(service, "useRelay", checked)} aria-label={t("useRelay")} />
               </Form.Item>
             )}
 
             {config?.region !== undefined && (
               <Form.Item label="Azure Region" required>
-                <Input placeholder={`${tCommon("enter")} Azure API Region`} value={config?.region} onChange={(e) => handleConfigChange(service, "region", e.target.value)} />
+                <Input
+                  placeholder={`${tCommon("enter")} Azure API Region`}
+                  value={config?.region as string | undefined}
+                  onChange={(e) => handleConfigChange(service, "region", e.target.value)}
+                  aria-label="Azure Region"
+                />
               </Form.Item>
             )}
 
             {config?.model !== undefined && (
               <Form.Item label={`LLM ${tCommon("model")}`} extra={t("modelExtra")}>
-                <Input value={config.model} onChange={(e) => handleConfigChange(service, "model", e.target.value)} />
+                <Input value={config.model as string | undefined} onChange={(e) => handleConfigChange(service, "model", e.target.value)} aria-label={`LLM ${tCommon("model")}`} />
               </Form.Item>
             )}
 
             {config?.apiVersion !== undefined && (
               <Form.Item label={`LLM API Version`} extra={`${tCommon("example")}: 2024-07-18`}>
-                <Input value={config.apiVersion} onChange={(e) => handleConfigChange(service, "apiVersion", e.target.value)} />
+                <Input value={config.apiVersion as string | undefined} onChange={(e) => handleConfigChange(service, "apiVersion", e.target.value)} aria-label="LLM API Version" />
               </Form.Item>
             )}
             {config?.temperature !== undefined && (
@@ -165,42 +185,56 @@ const TranslationSettings = () => {
                   min={0}
                   max={1.99}
                   step={0.1}
-                  value={config.temperature}
+                  value={config.temperature as number | undefined}
                   onChange={(value) => handleConfigChange(service, "temperature", value ?? 0)}
                   style={{ width: "100%" }}
+                  aria-label="Temperature"
                 />
               </Form.Item>
             )}
             {isLLMModel && (
               <>
                 <Form.Item label={t("systemPrompt")} extra={t("systemPromptExtra")}>
-                  <TextArea value={sysPrompt} onChange={(e) => setSysPrompt(e.target.value)} autoSize={{ minRows: 2, maxRows: 6 }} />
+                  <TextArea value={sysPrompt} onChange={(e) => setSysPrompt(e.target.value)} autoSize={{ minRows: 2, maxRows: 6 }} aria-label={t("systemPrompt")} />
                 </Form.Item>
                 <Form.Item
                   label={t("userPrompt")}
                   extra={`${t("userPromptExtra")}: \${sourceLanguage} ${t("for")} ${tCommon("sourceLanguage")}, \${targetLanguage} ${t("for")} ${tCommon("targetLanguage")}, \${content} ${t(
                     "for"
                   )} ${t("textToTranslate")}`}>
-                  <TextArea value={userPrompt} onChange={(e) => setUserPrompt(e.target.value)} autoSize={{ minRows: 2, maxRows: 6 }} />
+                  <TextArea value={userPrompt} onChange={(e) => setUserPrompt(e.target.value)} autoSize={{ minRows: 2, maxRows: 6 }} aria-label={t("userPrompt")} />
                 </Form.Item>
               </>
             )}
 
             {config?.chunkSize !== undefined && (
               <Form.Item label={t("chunkSize")} extra={t("chunkSizeExtra")}>
-                <Input type="number" value={config.chunkSize} onChange={(e) => handleConfigChange(service, "chunkSize", e.target.value)} />
+                <Input type="number" value={config.chunkSize as number | undefined} onChange={(e) => handleConfigChange(service, "chunkSize", e.target.value)} aria-label={t("chunkSize")} />
               </Form.Item>
             )}
 
             {config?.delayTime !== undefined && (
               <Form.Item label={`${t("delayTime")} (ms)`}>
-                <Input type="number" value={config.delayTime} onChange={(e) => handleConfigChange(service, "delayTime", e.target.value)} />
+                <Input type="number" value={config.delayTime as number | undefined} onChange={(e) => handleConfigChange(service, "delayTime", e.target.value)} aria-label={t("delayTime")} />
               </Form.Item>
             )}
 
-            <Form.Item label={t("limit")} extra={t("limitExtra")}>
-              <Input type="number" value={config?.limit} onChange={(e) => handleConfigChange(service, "limit", e.target.value)} />
-            </Form.Item>
+            {config?.batchSize !== undefined && (
+              <Form.Item label={t("batchSize")} extra={t("batchSizeExtra")}>
+                <Input type="number" value={config?.batchSize as number | undefined} onChange={(e) => handleConfigChange(service, "batchSize", e.target.value)} aria-label={t("batchSize")} />
+              </Form.Item>
+            )}
+
+            {isLLMModel && config?.contextWindow !== undefined && (
+              <Form.Item label={t("contextWindow")} extra={t("contextWindowExtra")}>
+                <Input
+                  type="number"
+                  value={config?.contextWindow as number | undefined}
+                  onChange={(e) => handleConfigChange(service, "contextWindow", e.target.value)}
+                  aria-label={t("contextWindow")}
+                />
+              </Form.Item>
+            )}
 
             <div className="mt-4 pt-4 border-t">
               <Text type="secondary">
@@ -214,13 +248,13 @@ const TranslationSettings = () => {
   };
 
   return (
-    <div className="flex">
-      {contextHolder}
+    <div className="flex flex-col md:flex-row">
       <Tabs
         activeKey={translationMethod}
         onChange={handleTabChange}
-        tabPosition="left"
+        tabPlacement="start"
         className="w-full"
+        destroyOnHidden
         items={TRANSLATION_SERVICES.map((service) => ({
           key: service.value,
           label: service.label,
@@ -231,4 +265,4 @@ const TranslationSettings = () => {
   );
 };
 
-export default TranslationSettings;
+export default memo(TranslationSettings);

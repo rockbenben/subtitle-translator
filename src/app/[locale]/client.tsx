@@ -1,11 +1,20 @@
 "use client";
 
-import React, { useState, useMemo, useCallback } from "react";
-import { Tabs, TabsProps, Typography } from "antd";
+import React, { useState } from "react";
+import dynamic from "next/dynamic";
+import { Tabs, TabsProps, Typography, Spin } from "antd";
 import { VideoCameraOutlined, QuestionCircleOutlined } from "@ant-design/icons";
-import TranslationSettings from "@/app/components/TranslationSettings";
 import SubtitleTranslator from "./SubtitleTranslator";
 import { useTranslations, useLocale } from "next-intl";
+import { TranslationProvider } from "@/app/components/TranslationContext";
+
+const TranslationSettings = dynamic(() => import("@/app/components/TranslationSettings"), {
+  loading: () => (
+    <div className="flex justify-center items-center py-20">
+      <Spin size="large" />
+    </div>
+  ),
+});
 
 const { Title, Paragraph, Link } = Typography;
 
@@ -15,36 +24,29 @@ const ClientPage = () => {
   const locale = useLocale();
   const isChineseLocale = locale === "zh" || locale === "zh-hant";
 
-  const userGuideUrl = useMemo(
-    () => (isChineseLocale ? "https://docs.newzone.top/guide/translation/subtitle-translator/index.html" : "https://docs.newzone.top/en/guide/translation/subtitle-translator/index.html"),
-    [isChineseLocale]
-  );
+  const userGuideUrl = isChineseLocale ? "https://docs.newzone.top/guide/translation/subtitle-translator/index.html" : "https://docs.newzone.top/en/guide/translation/subtitle-translator/index.html";
   // 使用时间戳来强制重新渲染
   const [activeKey, setActiveKey] = useState("basic");
-  const [refreshKey, setRefreshKey] = useState(Date.now());
 
-  const handleTabChange = useCallback((key) => {
+  const handleTabChange = (key: string) => {
     setActiveKey(key);
-    setRefreshKey(Date.now());
-  }, []);
+  };
 
-  const basicTab = <SubtitleTranslator key={`basic-${refreshKey}`} />;
-  const advancedTab = <TranslationSettings key={`advanced-${refreshKey}`} />;
   const items: TabsProps["items"] = [
     {
       key: "basic",
       label: t("basicTab"),
-      children: basicTab,
+      children: <SubtitleTranslator />,
     },
     {
       key: "advanced",
       label: t("advancedTab"),
-      children: advancedTab,
+      children: <TranslationSettings />,
     },
   ];
 
   return (
-    <>
+    <TranslationProvider>
       <Title level={3}>
         <VideoCameraOutlined /> {tSubtitle("clientTitle")}
       </Title>
@@ -54,8 +56,8 @@ const ClientPage = () => {
         </Link>{" "}
         {tSubtitle("clientDescription")} {t("privacyNotice")}
       </Paragraph>
-      <Tabs activeKey={activeKey} onChange={handleTabChange} items={items} type="card" className="w-full" destroyOnHidden={true} animated={{ inkBar: true, tabPane: true }} />
-    </>
+      <Tabs activeKey={activeKey} onChange={handleTabChange} items={items} type="card" className="w-full" animated={{ inkBar: true, tabPane: true }} />
+    </TranslationProvider>
   );
 };
 

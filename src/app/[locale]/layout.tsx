@@ -1,19 +1,28 @@
 import React from "react";
 import "@/app/globals.css";
-import { Navigation } from "@/app/ui/Navigation";
-import { GoogleTagManager } from "@next/third-parties/google";
-import { NextIntlClientProvider, hasLocale } from "next-intl";
+import { Navigation } from "@/app/ui/navigation";
 import { getLangDir } from "rtl-detect";
 import { setRequestLocale, getTranslations, getMessages } from "next-intl/server";
+import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
+import { AntdRegistry } from "@ant-design/nextjs-registry";
 import ThemesProvider from "@/app/ThemesProvider";
 
-export async function generateMetadata({ params: { locale } }) {
+type Props = {
+  children: React.ReactNode;
+  params: Promise<{ locale: string }>;
+};
+
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "Metadata" });
+  const title = t("title");
+  const description = t("description");
+
   return {
-    title: t("title"),
-    description: t("description"),
+    title,
+    description,
   };
 }
 
@@ -21,7 +30,7 @@ export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
 }
 
-export default async function LocaleLayout({ children, params }: { children: React.ReactNode; params: Promise<{ locale: string }> }) {
+export default async function LocaleLayout({ children, params }: Props) {
   // Ensure that the incoming `locale` is valid
   const { locale } = await params;
   if (!hasLocale(routing.locales, locale)) {
@@ -31,16 +40,18 @@ export default async function LocaleLayout({ children, params }: { children: Rea
   setRequestLocale(locale);
   const direction = getLangDir(locale);
   const messages = await getMessages();
+
   return (
-    <html lang={locale} dir={direction}>
-      <GoogleTagManager gtmId="GTM-WBM6XHGB" />
+    <html lang={locale} dir={direction} suppressHydrationWarning>
       <body>
-        <NextIntlClientProvider messages={messages}>
-          <ThemesProvider>
-            <Navigation />
-            <div className="max-w-7xl mt-2 mx-auto p-4">{children}</div>
-          </ThemesProvider>
-        </NextIntlClientProvider>
+        <AntdRegistry>
+          <NextIntlClientProvider messages={messages}>
+            <ThemesProvider>
+              <Navigation />
+              <div className="max-w-7xl mt-2 mx-auto p-4">{children}</div>
+            </ThemesProvider>
+          </NextIntlClientProvider>
+        </AntdRegistry>
       </body>
     </html>
   );
