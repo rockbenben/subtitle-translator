@@ -1,6 +1,6 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@layer theme, base, antd, components, utilities;
+@import "tailwindcss";
+@import "antd/dist/antd.css";
 
 /* :root {
   --foreground-rgb: 0, 0, 0;
