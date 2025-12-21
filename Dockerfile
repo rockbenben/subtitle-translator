@@ -1,5 +1,5 @@
 # 基础镜像
-FROM node:20-alpine
+FROM node:24-alpine
 
 # 设置工作目录
 WORKDIR /app
