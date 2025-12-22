@@ -160,7 +160,7 @@ export const filterSubLines = (lines: string[], fileType: string) => {
     }
   });
 
-  return { contentLines, contentIndices, styleBlockLines };
+  return { contentLines, contentIndices, styleBlockLines, assContentStartIndex };
 };
 
 // 将 WebVTT 或 SRT 的时间格式 "00:01:32.783" 或 "00:01:32,783" 转换为 ASS 的时间格式 "0:01:32.78"

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Flex, Card, Button, Typography, Input, Upload, Form, Space, App, Modal, Checkbox, Progress, Tooltip, Radio, Spin, Row, Col, Divider } from "antd";
+import { Flex, Card, Button, Typography, Input, Upload, Form, Space, App, Checkbox, Tooltip, Segmented, Spin, Row, Col, Divider } from "antd";
 import {
   CopyOutlined,
   DownloadOutlined,
@@ -15,19 +15,21 @@ import {
   FormatPainterOutlined,
   GlobalOutlined,
 } from "@ant-design/icons";
+import { useTranslations } from "next-intl";
+import { useCopyToClipboard } from "@/app/hooks/useCopyToClipboard";
+import useFileUpload from "@/app/hooks/useFileUpload";
+import { useLocalStorage } from "@/app/hooks/useLocalStorage";
+import { useTextStats } from "@/app/hooks/useTextStats";
+
 import { splitTextIntoLines, downloadFile, splitBySpaces, getErrorMessage } from "@/app/utils";
 import { VTT_SRT_TIME, LRC_TIME_REGEX, detectSubtitleFormat, getOutputFileExtension, filterSubLines, convertTimeToAss, assHeader } from "./subtitleUtils";
 import { LLM_MODELS } from "@/app/lib/translation";
 import { useLanguageOptions } from "@/app/components/languages";
 import LanguageSelector from "@/app/components/LanguageSelector";
 import TranslationAPISelector from "@/app/components/TranslationAPISelector";
+import TranslationProgressModal from "@/app/components/TranslationProgressModal";
 import { useTranslationContext } from "@/app/components/TranslationContext";
 import ResultCard from "@/app/components/ResultCard";
-import { useCopyToClipboard } from "@/app/hooks/useCopyToClipboard";
-import useFileUpload from "@/app/hooks/useFileUpload";
-import { useLocalStorage } from "@/app/hooks/useLocalStorage";
-import { useTextStats } from "@/app/hooks/useTextStats";
-import { useTranslations } from "next-intl";
 
 const { TextArea } = Input;
 const { Dragger } = Upload;
@@ -92,8 +94,13 @@ const SubtitleTranslator = () => {
   const sourceStats = useTextStats(sourceText);
   const resultStats = useTextStats(translatedText);
 
-  const [bilingualSubtitle, setBilingualSubtitle] = useLocalStorage("subtitleBilingualSubtitle", false);
+  // Export mode: 'translatedOnly' | 'bilingual' | 'both'
+  const [subtitleExportMode, setSubtitleExportMode] = useLocalStorage<"translatedOnly" | "bilingual" | "both">("subtitleExportMode", "translatedOnly");
   const [bilingualPosition, setBilingualPosition] = useLocalStorage("subtitleBilingualPosition", "below"); // 'above' or 'below'
+
+  // Derived states for backward compatibility
+  const needsBilingual = subtitleExportMode === "bilingual" || subtitleExportMode === "both";
+  const showBilingualPosition = needsBilingual;
   const [contextAwareTranslation, setContextAwareTranslation] = useLocalStorage("subtitleContextAwareTranslation", true); // 上下文感知翻译开关
   const [showAdvancedPanel, setShowAdvancedPanel] = useState(true);
 
@@ -109,30 +116,15 @@ const SubtitleTranslator = () => {
       message.error(tSubtitle("unsupportedSub"));
       return;
     }
-    let assContentStartIndex = 9;
 
-    if (fileType === "ass") {
-      const eventIndex = lines.findIndex((line) => line.trim() === "[Events]");
-      if (eventIndex !== -1) {
-        for (let i = eventIndex; i < lines.length; i++) {
-          if (lines[i].startsWith("Format:")) {
-            const formatLine = lines[i];
-            assContentStartIndex = formatLine.split(",").length - 1;
-            break;
-          }
-        }
-      }
+    // Get content lines and assContentStartIndex from filterSubLines (eliminates duplicate calculation)
+    const { contentLines, contentIndices, styleBlockLines, assContentStartIndex } = filterSubLines(lines, fileType);
 
-      if (assContentStartIndex === 9) {
-        const dialogueLines = lines.filter((line) => line.startsWith("Dialogue:")).slice(0, 100);
-        if (dialogueLines.length > 0) {
-          const commaCounts = dialogueLines.map((line) => line.split(",").length - 1);
-          assContentStartIndex = Math.min(...commaCounts);
-        }
-      }
+    // Early return if no content to translate
+    if (contentLines.length === 0) {
+      message.warning(tSubtitle("noExtractedText"));
+      return;
     }
-
-    const { contentLines, contentIndices, styleBlockLines } = filterSubLines(lines, fileType);
 
     // Determine target languages to translate to
     const targetLanguagesToUse = multiLanguageMode ? target_langs : [targetLanguage];
@@ -143,132 +135,167 @@ const SubtitleTranslator = () => {
       return;
     }
 
+    // Helper function to generate subtitle output based on bilingual mode
+    // Defined outside the loop to avoid repeated function creation
+    const generateSubtitle = (isBilingual: boolean, translatedLines: string[]): string => {
+      // Copy array to avoid modifying the original lines
+      const translatedTextArray = [...lines];
+
+      contentIndices.forEach((index, i) => {
+        if (fileType === "ass") {
+          const originalLine = lines[index];
+          const prefix = originalLine.substring(0, originalLine.split(",", assContentStartIndex).join(",").length + 1);
+          if (isBilingual) {
+            const translatedLine = translatedLines[i];
+            translatedTextArray[index] =
+              bilingualPosition === "below" ? `${originalLine}\\N${translatedLine}` : `${prefix}${translatedLine}\\N${originalLine.split(",").slice(assContentStartIndex).join(",").trim()}`;
+          } else {
+            translatedTextArray[index] = `${prefix}${translatedLines[i]}`;
+          }
+        } else if (fileType === "lrc") {
+          const originalLine = lines[index];
+          // 提取原始行中的所有时间标记
+          const timeMatches = originalLine.match(new RegExp(LRC_TIME_REGEX.source, "g")) || [];
+          const timePrefix = timeMatches.join("");
+
+          if (isBilingual) {
+            const translatedLine = translatedLines[i];
+            const originalContent = originalLine.replace(new RegExp(LRC_TIME_REGEX.source, "g"), "").trim();
+
+            if (bilingualPosition === "below") {
+              // 原文在上，翻译在下
+              translatedTextArray[index] = `${timePrefix} ${originalContent} / ${translatedLine}`;
+            } else {
+              // 翻译在上，原文在下
+              translatedTextArray[index] = `${timePrefix} ${translatedLine} / ${originalContent}`;
+            }
+          } else {
+            // 仅显示翻译
+            translatedTextArray[index] = `${timePrefix} ${translatedLines[i]}`;
+          }
+        } else {
+          // SRT/VTT: direct replacement or bilingual format
+          translatedTextArray[index] = isBilingual ? `${lines[index]}\n${translatedLines[i]}` : translatedLines[i];
+        }
+      });
+
+      let finalSubtitle = "";
+
+      // 处理双语模式下的 SRT 和 VTT 字幕，则将内容转换为 .ass 格式
+      if (isBilingual && (fileType === "srt" || fileType === "vtt")) {
+        const subtitles: Record<string, { first: string; second: string }> = {};
+        // 处理时间线和双语字幕的对齐
+        contentIndices.forEach((index, i) => {
+          // 提取 WebVTT/SRT 时间线，向上寻找有效的时间轴
+          let timeLine = "";
+          let searchIndex = index - 1;
+
+          while (searchIndex >= 0) {
+            if (VTT_SRT_TIME.test(lines[searchIndex])) {
+              timeLine = lines[searchIndex];
+              break;
+            }
+            searchIndex--;
+          }
+
+          if (!timeLine) return;
+
+          const [startTime, endTime] = timeLine.split(" --> ");
+          const assStartTime = convertTimeToAss(startTime.trim());
+          const assEndTime = convertTimeToAss(endTime.trim());
+          const key = `${assStartTime} --> ${assEndTime}`;
+
+          // 根据 bilingualPosition 决定原文和译文的顺序
+          const originalText = lines[index];
+          const translatedText = translatedLines[i];
+
+          // 根据位置设置字幕行
+          const isOriginalFirst = bilingualPosition === "above";
+          const firstText = isOriginalFirst ? originalText : translatedText;
+          const secondText = isOriginalFirst ? translatedText : originalText;
+
+          // 构建或更新字幕对象
+          if (subtitles[key]) {
+            subtitles[key].first += `\\N${firstText}`;
+            subtitles[key].second += `\\N${secondText}`;
+          } else {
+            subtitles[key] = {
+              first: `Dialogue: 0,${assStartTime},${assEndTime},Secondary,NTP,0000,0000,0000,,${firstText}`,
+              second: `Dialogue: 0,${assStartTime},${assEndTime},Default,NTP,0000,0000,0000,,${secondText}`,
+            };
+          }
+        });
+
+        const assBody = Object.values(subtitles)
+          .map(({ first, second }) => `${first}\n${second}`)
+          .join("\n");
+
+        finalSubtitle = `${assHeader}\n${assBody}`;
+      } else {
+        finalSubtitle = [...translatedTextArray.slice(0, contentIndices[0]), ...styleBlockLines, ...translatedTextArray.slice(contentIndices[0])].join("\n");
+      }
+
+      // Remove specified characters from the final subtitle text (after all formatting is done)
+      if (removeChars.trim()) {
+        const charsToRemove = splitBySpaces(removeChars);
+        charsToRemove.forEach((char) => {
+          finalSubtitle = finalSubtitle.replaceAll(char, "");
+        });
+      }
+
+      return finalSubtitle;
+    };
+
     // For each target language, perform translation
     for (const currentTargetLang of targetLanguagesToUse) {
       try {
         // Translate content using the specific target language
         const translatedLines = await translateContent(contentLines, translationMethod, currentTargetLang, fileIndex, totalFiles, contextAwareTranslation ? "subtitle" : undefined);
 
-        // Copy array to avoid modifying the original lines
-        const translatedTextArray = [...lines];
-
-        contentIndices.forEach((index, i) => {
-          if (fileType === "ass") {
-            const originalLine = lines[index];
-            const prefix = originalLine.substring(0, originalLine.split(",", assContentStartIndex).join(",").length + 1);
-            if (bilingualSubtitle) {
-              const translatedLine = translatedLines[i];
-              translatedTextArray[index] =
-                bilingualPosition === "below" ? `${originalLine}\\N${translatedLine}` : `${prefix}${translatedLine}\\N${originalLine.split(",").slice(assContentStartIndex).join(",").trim()}`;
-            } else {
-              translatedTextArray[index] = `${prefix}${translatedLines[i]}`;
-            }
-          } else if (fileType === "lrc") {
-            const originalLine = lines[index];
-            // 提取原始行中的所有时间标记
-            const timeMatches = originalLine.match(new RegExp(LRC_TIME_REGEX.source, "g")) || [];
-            const timePrefix = timeMatches.join("");
-
-            if (bilingualSubtitle) {
-              const translatedLine = translatedLines[i];
-              const originalContent = originalLine.replace(new RegExp(LRC_TIME_REGEX.source, "g"), "").trim();
-
-              if (bilingualPosition === "below") {
-                // 原文在上，翻译在下
-                translatedTextArray[index] = `${timePrefix} ${originalContent} / ${translatedLine}`;
-              } else {
-                // 翻译在上，原文在下
-                translatedTextArray[index] = `${timePrefix} ${translatedLine} / ${originalContent}`;
-              }
-            } else {
-              // 仅显示翻译
-              translatedTextArray[index] = `${timePrefix} ${translatedLines[i]}`;
-            }
-          } else {
-            // 非 .ass 文件处理
-            translatedTextArray[index] = bilingualSubtitle ? `${lines[index]}\n${translatedLines[i]}` : translatedLines[i];
-          }
-        });
-
-        let finalSubtitle = "";
-
-        // 处理双语模式下的 SRT 和 VTT 字幕，则将内容转换为 .ass 格式
-        if (bilingualSubtitle && (fileType === "srt" || fileType === "vtt")) {
-          const subtitles: Record<string, { first: string; second: string }> = {};
-          // 处理时间线和双语字幕的对齐
-          contentIndices.forEach((index, i) => {
-            // 提取 WebVTT/SRT 时间线，向上寻找有效的时间轴
-            let timeLine = "";
-            let searchIndex = index - 1;
-
-            while (searchIndex >= 0) {
-              if (VTT_SRT_TIME.test(lines[searchIndex])) {
-                timeLine = lines[searchIndex];
-                break;
-              }
-              searchIndex--;
-            }
-
-            if (!timeLine) return;
-
-            const [startTime, endTime] = timeLine.split(" --> ");
-            const assStartTime = convertTimeToAss(startTime.trim());
-            const assEndTime = convertTimeToAss(endTime.trim());
-            const key = `${assStartTime} --> ${assEndTime}`;
-
-            // 根据 bilingualPosition 决定原文和译文的顺序
-            const originalText = lines[index];
-            const translatedText = translatedLines[i];
-
-            // 根据位置设置字幕行
-            const isOriginalFirst = bilingualPosition === "above";
-            const firstText = isOriginalFirst ? originalText : translatedText;
-            const secondText = isOriginalFirst ? translatedText : originalText;
-
-            // 构建或更新字幕对象
-            if (subtitles[key]) {
-              subtitles[key].first += `\\N${firstText}`;
-              subtitles[key].second += `\\N${secondText}`;
-            } else {
-              subtitles[key] = {
-                first: `Dialogue: 0,${assStartTime},${assEndTime},Secondary,NTP,0000,0000,0000,,${firstText}`,
-                second: `Dialogue: 0,${assStartTime},${assEndTime},Default,NTP,0000,0000,0000,,${secondText}`,
-              };
-            }
-          });
-
-          const assBody = Object.values(subtitles)
-            .map(({ first, second }) => `${first}\n${second}`)
-            .join("\n");
-
-          finalSubtitle = `${assHeader}\n${assBody}`;
-        } else {
-          finalSubtitle = [...translatedTextArray.slice(0, contentIndices[0]), ...styleBlockLines, ...translatedTextArray.slice(contentIndices[0])].join("\n");
-        }
-
-        // Remove specified characters from the final subtitle text (after all formatting is done)
-        if (removeChars.trim()) {
-          const charsToRemove = splitBySpaces(removeChars);
-          charsToRemove.forEach((char) => {
-            finalSubtitle = finalSubtitle.replaceAll(char, "");
-          });
-        }
-
-        // Create language-specific file name for download
+        // Generate file name base
         const langLabel = currentTargetLang;
-        const fileExtension = `.${getOutputFileExtension(fileType, bilingualSubtitle)}`;
         const fileName = fileNameSet || multipleFiles[0]?.name || "subtitle";
         const lastDotIndex = fileName.lastIndexOf(".");
         const fileNameWithoutExt = lastDotIndex !== -1 ? fileName.slice(0, lastDotIndex) : fileName;
-        const downloadFileName = `${fileNameWithoutExt}_${langLabel}${fileExtension}`;
 
-        // Always download in multi-language mode
-        if (multiLanguageMode || multipleFiles.length > 1) {
-          await downloadFile(finalSubtitle, downloadFileName);
-        }
+        // Handle different export modes
+        if (subtitleExportMode === "both") {
+          // Generate and download both translated-only and bilingual versions
+          const translatedOnlySubtitle = generateSubtitle(false, translatedLines);
+          const bilingualSubtitle = generateSubtitle(true, translatedLines);
 
-        if (!multiLanguageMode || (multiLanguageMode && currentTargetLang === targetLanguagesToUse[0])) {
-          setTranslatedText(finalSubtitle);
+          const translatedOnlyExt = `.${getOutputFileExtension(fileType, false)}`;
+          const bilingualExt = `.${getOutputFileExtension(fileType, true)}`;
+
+          const translatedOnlyFileName = `${fileNameWithoutExt}_${langLabel}${translatedOnlyExt}`;
+          const bilingualFileName = `${fileNameWithoutExt}_${langLabel}_bilingual${bilingualExt}`;
+
+          await downloadFile(translatedOnlySubtitle, translatedOnlyFileName);
+          await downloadFile(bilingualSubtitle, bilingualFileName);
+
+          // Show success message for single file mode
+          if (!multiLanguageMode && multipleFiles.length <= 1) {
+            message.success(`${t("exportedFile")}: ${translatedOnlyFileName}, ${bilingualFileName}`);
+          }
+
+          // Display bilingual version in the result area (more comprehensive)
+          if (!multiLanguageMode || (multiLanguageMode && currentTargetLang === targetLanguagesToUse[0])) {
+            setTranslatedText(bilingualSubtitle);
+          }
+        } else {
+          // Generate single version based on mode
+          const finalSubtitle = generateSubtitle(needsBilingual, translatedLines);
+          const fileExtension = `.${getOutputFileExtension(fileType, needsBilingual)}`;
+          const downloadFileName = `${fileNameWithoutExt}_${langLabel}${fileExtension}`;
+
+          // Always download in multi-language mode
+          if (multiLanguageMode || multipleFiles.length > 1) {
+            await downloadFile(finalSubtitle, downloadFileName);
+          }
+
+          if (!multiLanguageMode || (multiLanguageMode && currentTargetLang === targetLanguagesToUse[0])) {
+            setTranslatedText(finalSubtitle);
+          }
         }
 
         if (multiLanguageMode && currentTargetLang !== targetLanguagesToUse[targetLanguagesToUse.length - 1]) {
@@ -279,10 +306,16 @@ const SubtitleTranslator = () => {
 
         const errorMessage = getErrorMessage(error);
         const langLabel = sourceOptions.find((o) => o.value === currentTargetLang)?.label || currentTargetLang;
-        const content = bilingualSubtitle ? `${errorMessage} ${tSubtitle("bilingualError")}` : `${errorMessage} ${langLabel} ${t("translationError")}`;
+        const content = needsBilingual ? `${errorMessage} ${tSubtitle("bilingualError")}` : `${errorMessage} ${langLabel} ${t("translationError")}`;
 
         message.error(content, 5);
       }
+    }
+
+    // Show success message after all languages completed (for single file multi-language mode)
+    if (multiLanguageMode && targetLanguagesToUse.length > 1 && multipleFiles.length <= 1) {
+      const fileCount = subtitleExportMode === "both" ? targetLanguagesToUse.length * 2 : targetLanguagesToUse.length;
+      message.success(`${t("translationExported")} (${fileCount} ${t("exportedFile")})`);
     }
   };
 
@@ -313,7 +346,7 @@ const SubtitleTranslator = () => {
 
     //setMultipleFiles([]);
     setTranslateInProgress(false);
-    message.success(t("translationComplete"), 10);
+    message.success(t("translationExported"), 10);
   };
 
   const handleExportFile = () => {
@@ -321,8 +354,8 @@ const SubtitleTranslator = () => {
     const lines = splitTextIntoLines(sourceText);
     const fileType = detectSubtitleFormat(lines);
 
-    // 如果 bilingualSubtitle 为 true，则优先使用 .ass
-    const fileExtension = `.${getOutputFileExtension(fileType, bilingualSubtitle)}`;
+    // 如果 needsBilingual 为 true，则优先使用 .ass
+    const fileExtension = `.${getOutputFileExtension(fileType, needsBilingual)}`;
 
     // 如果文件名存在，查找最后一个点的位置，如果存在则替换扩展名，否则直接添加
     const fileName = uploadFileName ? uploadFileName.replace(/\.[^/.]+$/, "") + fileExtension : `subtitle${fileExtension}`;
@@ -499,19 +532,29 @@ const SubtitleTranslator = () => {
                 {/* Subtitle Options */}
                 <Form.Item label={tSubtitle("subtitleFormat")} style={{ marginTop: -12, marginBottom: 6 }}>
                   <div className="flex flex-col gap-2">
-                    <Checkbox checked={bilingualSubtitle} onChange={(e) => setBilingualSubtitle(e.target.checked)}>
-                      {tSubtitle("bilingual")}
-                    </Checkbox>
+                    <Segmented
+                      block
+                      size="small"
+                      value={subtitleExportMode}
+                      onChange={(value) => setSubtitleExportMode(value as "translatedOnly" | "bilingual" | "both")}
+                      options={[
+                        { label: tSubtitle("translatedOnly"), value: "translatedOnly" },
+                        { label: tSubtitle("bilingual"), value: "bilingual" },
+                        { label: tSubtitle("exportBoth"), value: "both" },
+                      ]}
+                    />
 
-                    {bilingualSubtitle && (
-                      <Radio.Group value={bilingualPosition} onChange={(e) => setBilingualPosition(e.target.value)} optionType="button" buttonStyle="solid" size="small" className="w-full flex">
-                        <Radio.Button value="above" className="flex-1 text-center">
-                          {tSubtitle("translationAbove")}
-                        </Radio.Button>
-                        <Radio.Button value="below" className="flex-1 text-center">
-                          {tSubtitle("translationBelow")}
-                        </Radio.Button>
-                      </Radio.Group>
+                    {showBilingualPosition && (
+                      <Segmented
+                        block
+                        size="small"
+                        value={bilingualPosition}
+                        onChange={(value) => setBilingualPosition(value as "above" | "below")}
+                        options={[
+                          { label: tSubtitle("translationAbove"), value: "above" },
+                          { label: tSubtitle("translationBelow"), value: "below" },
+                        ]}
+                      />
                     )}
                   </div>
                 </Form.Item>
@@ -618,17 +661,7 @@ const SubtitleTranslator = () => {
         </div>
       )}
 
-      {/* Helper Actions */}
-
-      {translateInProgress && (
-        <Modal title={t("translating")} open={translateInProgress} footer={null} closable={false} centered width={300}>
-          <div className="text-center py-4">
-            <Progress type="circle" percent={Math.round(progressPercent * 100) / 100} />
-            {multiLanguageMode && target_langs.length > 0 && <p className="mt-4 font-medium">{`${t("multiTranslating")} ${target_langs.length}`}</p>}
-            <p className="mt-2 text-gray-500">{t("pleaseWait")}</p>
-          </div>
-        </Modal>
-      )}
+      <TranslationProgressModal open={translateInProgress} percent={progressPercent} multiLanguageMode={multiLanguageMode} targetLanguageCount={target_langs.length} />
     </Spin>
   );
 };
