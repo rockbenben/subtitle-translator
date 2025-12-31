@@ -1,12 +1,10 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Flex, Card, Button, Typography, Input, Upload, Form, Space, App, Checkbox, Tooltip, Segmented, Spin, Row, Col, Divider } from "antd";
+import { Flex, Card, Button, Typography, Input, InputNumber, Upload, Form, Space, App, Checkbox, Tooltip, Segmented, Spin, Row, Col, Divider } from "antd";
 import {
   CopyOutlined,
-  DownloadOutlined,
   InboxOutlined,
-  UploadOutlined,
   SettingOutlined,
   DownOutlined,
   UpOutlined,
@@ -14,6 +12,8 @@ import {
   ClearOutlined,
   FormatPainterOutlined,
   GlobalOutlined,
+  ImportOutlined,
+  SaveOutlined,
 } from "@ant-design/icons";
 import { useTranslations } from "next-intl";
 import { useCopyToClipboard } from "@/app/hooks/useCopyToClipboard";
@@ -30,6 +30,8 @@ import TranslationAPISelector from "@/app/components/TranslationAPISelector";
 import TranslationProgressModal from "@/app/components/TranslationProgressModal";
 import { useTranslationContext } from "@/app/components/TranslationContext";
 import ResultCard from "@/app/components/ResultCard";
+
+import MultiLanguageSettingsModal from "@/app/components/MultiLanguageSettingsModal";
 
 const { TextArea } = Input;
 const { Dragger } = Upload;
@@ -88,6 +90,10 @@ const SubtitleTranslator = () => {
     handleLanguageChange,
     delay,
     validateTranslate,
+    retryCount,
+    setRetryCount,
+    retryTimeout,
+    setRetryTimeout,
   } = useTranslationContext();
   const { message } = App.useApp();
 
@@ -103,6 +109,7 @@ const SubtitleTranslator = () => {
   const showBilingualPosition = needsBilingual;
   const [contextAwareTranslation, setContextAwareTranslation] = useLocalStorage("subtitleContextAwareTranslation", true); // 上下文感知翻译开关
   const [showAdvancedPanel, setShowAdvancedPanel] = useState(true);
+  const [multiLangModalOpen, setMultiLangModalOpen] = useState(false);
 
   useEffect(() => {
     setExtractedText("");
@@ -490,10 +497,21 @@ const SubtitleTranslator = () => {
               className="shadow-sm"
               extra={
                 <Space>
+                  <Tooltip title={t("exportSettingTooltip")}>
+                    <Button
+                      type="text"
+                      icon={<SaveOutlined />}
+                      size="small"
+                      disabled={translateInProgress}
+                      onClick={async () => {
+                        await exportSettings();
+                      }}
+                    />
+                  </Tooltip>
                   <Tooltip title={t("importSettingTooltip")}>
                     <Button
                       type="text"
-                      icon={<UploadOutlined />}
+                      icon={<ImportOutlined />}
                       size="small"
                       disabled={translateInProgress}
                       onClick={async () => {
@@ -501,16 +519,8 @@ const SubtitleTranslator = () => {
                       }}
                     />
                   </Tooltip>
-                  <Tooltip title={t("exportSettingTooltip")}>
-                    <Button
-                      type="text"
-                      icon={<DownloadOutlined />}
-                      size="small"
-                      disabled={translateInProgress}
-                      onClick={async () => {
-                        await exportSettings();
-                      }}
-                    />
+                  <Tooltip title={t("batchEditMultiLangTooltip")}>
+                    <Button type="text" icon={<GlobalOutlined />} size="small" disabled={translateInProgress} onClick={() => setMultiLangModalOpen(true)} />
                   </Tooltip>
                 </Space>
               }>
@@ -613,6 +623,20 @@ const SubtitleTranslator = () => {
                       />
                     </Form.Item>
                   </Col>
+                  <Col span={12}>
+                    <Tooltip title={t("retryCountTooltip")}>
+                      <Form.Item label={t("retryCount")} style={{ marginBottom: 0 }}>
+                        <InputNumber min={1} max={10} value={retryCount} onChange={(value) => setRetryCount(value ?? 3)} style={{ width: "100%" }} />
+                      </Form.Item>
+                    </Tooltip>
+                  </Col>
+                  <Col span={12}>
+                    <Tooltip title={t("retryTimeoutTooltip")}>
+                      <Form.Item label={t("retryTimeout")} style={{ marginBottom: 0 }}>
+                        <InputNumber min={5} max={120} value={retryTimeout} onChange={(value) => setRetryTimeout(value ?? 30)} addonAfter="s" style={{ width: "100%" }} />
+                      </Form.Item>
+                    </Tooltip>
+                  </Col>
                 </Row>
               </Form>
             </Card>
@@ -662,6 +686,14 @@ const SubtitleTranslator = () => {
       )}
 
       <TranslationProgressModal open={translateInProgress} percent={progressPercent} multiLanguageMode={multiLanguageMode} targetLanguageCount={target_langs.length} />
+
+      <MultiLanguageSettingsModal
+        open={multiLangModalOpen}
+        onClose={() => setMultiLangModalOpen(false)}
+        target_langs={target_langs}
+        setTarget_langs={setTarget_langs}
+        setMultiLanguageMode={setMultiLanguageMode}
+      />
     </Spin>
   );
 };

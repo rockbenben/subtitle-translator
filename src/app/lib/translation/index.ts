@@ -57,45 +57,40 @@ export const testTranslation = async (translationMethod: TranslationMethod, conf
 
 /**
  * Translate text using the specified method
+ * Throws on error to allow retry logic to work properly
  */
-const translateText = async (params: TranslateTextParams): Promise<string | null> => {
-  try {
-    const { text, cacheSuffix, translationMethod, targetLanguage, sourceLanguage, useCache = true } = params;
+const translateText = async (params: TranslateTextParams): Promise<string> => {
+  const { text, cacheSuffix, translationMethod, targetLanguage, sourceLanguage, useCache = true } = params;
 
-    // Skip translation if no translatable content
-    if (!/[a-zA-Z\p{L}]/u.test(text) || sourceLanguage === targetLanguage) {
-      return text;
-    }
-
-    // Check cache
-    const cacheKey = generateCacheKey(text, cacheSuffix);
-    if (useCache) {
-      const cachedTranslation = await getCachedTranslation(cacheKey);
-      if (cachedTranslation) return cachedTranslation;
-    }
-
-    // Get translation service
-    const service = translationServices[translationMethod];
-    if (!service) {
-      throw new Error(`Unsupported translation method: ${translationMethod}`);
-    }
-
-    const translatedText = await service(params);
-
-    if (!translatedText) {
-      console.warn(`No translation result received for method: ${translationMethod}`);
-      return null;
-    }
-
-    // Clean and cache result
-    const cleanedText = cleanTranslatedText(translatedText);
-    await setCachedTranslation(cacheKey, cleanedText);
-
-    return cleanedText;
-  } catch (error) {
-    console.error(`Translation failed:`, error);
-    return null;
+  // Skip translation if no translatable content
+  if (!/[a-zA-Z\p{L}]/u.test(text) || sourceLanguage === targetLanguage) {
+    return text;
   }
+
+  // Check cache
+  const cacheKey = generateCacheKey(text, cacheSuffix);
+  if (useCache) {
+    const cachedTranslation = await getCachedTranslation(cacheKey);
+    if (cachedTranslation) return cachedTranslation;
+  }
+
+  // Get translation service
+  const service = translationServices[translationMethod];
+  if (!service) {
+    throw new Error(`Unsupported translation method: ${translationMethod}`);
+  }
+
+  const translatedText = await service(params);
+
+  if (!translatedText) {
+    throw new Error(`No translation result received for method: ${translationMethod}`);
+  }
+
+  // Clean and cache result
+  const cleanedText = cleanTranslatedText(translatedText);
+  await setCachedTranslation(cacheKey, cleanedText);
+
+  return cleanedText;
 };
 
 /**

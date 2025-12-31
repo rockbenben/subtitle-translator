@@ -25,6 +25,8 @@ export interface TranslateTextParams {
   sysPrompt?: string;
   userPrompt?: string;
   useRelay?: boolean;
+  fullText?: string; // Optional: complete text for ${fullText} variable
+  signal?: AbortSignal; // Optional: for request cancellation
 }
 
 export type TranslationService = (params: TranslateTextParams) => Promise<string>;

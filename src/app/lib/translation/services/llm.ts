@@ -20,7 +20,7 @@ export const deepseek: TranslationService = async (params) => {
   const { text, targetLanguage, sourceLanguage, apiKey, model, temperature, sysPrompt, userPrompt, useRelay } = params;
   const effectiveSysPrompt = normalizePrompt(sysPrompt, DEFAULT_SYS_PROMPT);
   const effectiveUserPrompt = normalizePrompt(userPrompt, DEFAULT_USER_PROMPT);
-  const prompt = getAIModelPrompt(text, effectiveUserPrompt, targetLanguage, sourceLanguage);
+  const prompt = getAIModelPrompt(text, effectiveUserPrompt, targetLanguage, sourceLanguage, params.fullText);
 
   const key = requireApiKey("DeepSeek", apiKey);
 
@@ -43,6 +43,7 @@ export const deepseek: TranslationService = async (params) => {
         temperature: normalizeNumber(temperature, defaultConfigs.deepseek.temperature),
         stream: false,
       }),
+      signal: params.signal,
     });
 
     const data = await response.json();
@@ -67,7 +68,7 @@ export const openai: TranslationService = async (params) => {
   const { text, targetLanguage, sourceLanguage, apiKey, model, sysPrompt, userPrompt } = params;
   const effectiveSysPrompt = normalizePrompt(sysPrompt, DEFAULT_SYS_PROMPT);
   const effectiveUserPrompt = normalizePrompt(userPrompt, DEFAULT_USER_PROMPT);
-  const prompt = getAIModelPrompt(text, effectiveUserPrompt, targetLanguage, sourceLanguage);
+  const prompt = getAIModelPrompt(text, effectiveUserPrompt, targetLanguage, sourceLanguage, params.fullText);
 
   const key = requireApiKey("OpenAI", apiKey);
 
@@ -85,6 +86,7 @@ export const openai: TranslationService = async (params) => {
       model: model || defaultConfigs.openai.model,
       temperature: 1,
     }),
+    signal: params.signal,
   });
 
   const data = await response.json();
@@ -98,7 +100,7 @@ export const gemini: TranslationService = async (params) => {
   const { text, targetLanguage, sourceLanguage, apiKey, model, temperature, sysPrompt, userPrompt } = params;
   const effectiveSysPrompt = normalizePrompt(sysPrompt, DEFAULT_SYS_PROMPT);
   const effectiveUserPrompt = normalizePrompt(userPrompt, DEFAULT_USER_PROMPT);
-  const prompt = getAIModelPrompt(text, effectiveUserPrompt, targetLanguage, sourceLanguage);
+  const prompt = getAIModelPrompt(text, effectiveUserPrompt, targetLanguage, sourceLanguage, params.fullText);
 
   const key = requireApiKey("Gemini", apiKey);
 
@@ -120,6 +122,7 @@ export const gemini: TranslationService = async (params) => {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(requestBody),
+    signal: params.signal,
   });
 
   const data = await response.json();
@@ -140,7 +143,7 @@ export const perplexity: TranslationService = async (params) => {
   const { text, targetLanguage, sourceLanguage, apiKey, model, temperature, sysPrompt, userPrompt } = params;
   const effectiveSysPrompt = normalizePrompt(sysPrompt, DEFAULT_SYS_PROMPT);
   const effectiveUserPrompt = normalizePrompt(userPrompt, DEFAULT_USER_PROMPT);
-  const prompt = getAIModelPrompt(text, effectiveUserPrompt, targetLanguage, sourceLanguage);
+  const prompt = getAIModelPrompt(text, effectiveUserPrompt, targetLanguage, sourceLanguage, params.fullText);
 
   const key = requireApiKey("Perplexity", apiKey);
 
@@ -159,6 +162,7 @@ export const perplexity: TranslationService = async (params) => {
       temperature: normalizeNumber(temperature, defaultConfigs.perplexity.temperature),
       stream: false,
     }),
+    signal: params.signal,
   });
 
   const data = await response.json();
@@ -172,7 +176,7 @@ export const azureopenai: TranslationService = async (params) => {
   const { text, targetLanguage, sourceLanguage, apiKey, url, model, apiVersion, temperature, sysPrompt, userPrompt } = params;
   const effectiveSysPrompt = normalizePrompt(sysPrompt, DEFAULT_SYS_PROMPT);
   const effectiveUserPrompt = normalizePrompt(userPrompt, DEFAULT_USER_PROMPT);
-  const prompt = getAIModelPrompt(text, effectiveUserPrompt, targetLanguage, sourceLanguage);
+  const prompt = getAIModelPrompt(text, effectiveUserPrompt, targetLanguage, sourceLanguage, params.fullText);
   const endpoint = requireUrl("Azure OpenAI", url);
   const deployment = model || defaultConfigs.azureopenai.model;
   const version = apiVersion || defaultConfigs.azureopenai.apiVersion;
@@ -193,6 +197,7 @@ export const azureopenai: TranslationService = async (params) => {
       ],
       temperature: normalizeNumber(temperature, defaultConfigs.azureopenai.temperature),
     }),
+    signal: params.signal,
   });
 
   const data = await response.json();
@@ -206,7 +211,7 @@ export const siliconflow: TranslationService = async (params) => {
   const { text, targetLanguage, sourceLanguage, apiKey, model, temperature, sysPrompt, userPrompt } = params;
   const effectiveSysPrompt = normalizePrompt(sysPrompt, DEFAULT_SYS_PROMPT);
   const effectiveUserPrompt = normalizePrompt(userPrompt, DEFAULT_USER_PROMPT);
-  const prompt = getAIModelPrompt(text, effectiveUserPrompt, targetLanguage, sourceLanguage);
+  const prompt = getAIModelPrompt(text, effectiveUserPrompt, targetLanguage, sourceLanguage, params.fullText);
 
   const key = requireApiKey("SiliconFlow", apiKey);
 
@@ -224,6 +229,7 @@ export const siliconflow: TranslationService = async (params) => {
       model: model || defaultConfigs.siliconflow.model,
       temperature: normalizeNumber(temperature, defaultConfigs.siliconflow.temperature),
     }),
+    signal: params.signal,
   });
 
   const data = await response.json();
@@ -237,7 +243,7 @@ export const groq: TranslationService = async (params) => {
   const { text, targetLanguage, sourceLanguage, apiKey, model, temperature, sysPrompt, userPrompt } = params;
   const effectiveSysPrompt = normalizePrompt(sysPrompt, DEFAULT_SYS_PROMPT);
   const effectiveUserPrompt = normalizePrompt(userPrompt, DEFAULT_USER_PROMPT);
-  const prompt = getAIModelPrompt(text, effectiveUserPrompt, targetLanguage, sourceLanguage);
+  const prompt = getAIModelPrompt(text, effectiveUserPrompt, targetLanguage, sourceLanguage, params.fullText);
 
   const key = requireApiKey("Groq", apiKey);
 
@@ -256,6 +262,7 @@ export const groq: TranslationService = async (params) => {
       temperature: normalizeNumber(temperature, defaultConfigs.groq.temperature),
       stream: false,
     }),
+    signal: params.signal,
   });
 
   const data = await response.json();
@@ -269,7 +276,7 @@ export const openrouter: TranslationService = async (params) => {
   const { text, targetLanguage, sourceLanguage, apiKey, model, temperature, sysPrompt, userPrompt } = params;
   const effectiveSysPrompt = normalizePrompt(sysPrompt, DEFAULT_SYS_PROMPT);
   const effectiveUserPrompt = normalizePrompt(userPrompt, DEFAULT_USER_PROMPT);
-  const prompt = getAIModelPrompt(text, effectiveUserPrompt, targetLanguage, sourceLanguage);
+  const prompt = getAIModelPrompt(text, effectiveUserPrompt, targetLanguage, sourceLanguage, params.fullText);
 
   const key = requireApiKey("OpenRouter", apiKey);
 
@@ -290,6 +297,7 @@ export const openrouter: TranslationService = async (params) => {
       temperature: normalizeNumber(temperature, defaultConfigs.openrouter.temperature),
       stream: false,
     }),
+    signal: params.signal,
   });
 
   const data = await response.json();
@@ -303,7 +311,7 @@ export const llm: TranslationService = async (params) => {
   const { text, targetLanguage, sourceLanguage, apiKey, url, model, temperature, sysPrompt, userPrompt } = params;
   const effectiveSysPrompt = normalizePrompt(sysPrompt, DEFAULT_SYS_PROMPT);
   const effectiveUserPrompt = normalizePrompt(userPrompt, DEFAULT_USER_PROMPT);
-  const prompt = getAIModelPrompt(text, effectiveUserPrompt, targetLanguage, sourceLanguage);
+  const prompt = getAIModelPrompt(text, effectiveUserPrompt, targetLanguage, sourceLanguage, params.fullText);
 
   const apiEndpoint = url || defaultConfigs.llm.url;
   const headers: Record<string, string> = {
@@ -324,6 +332,7 @@ export const llm: TranslationService = async (params) => {
       model: model || defaultConfigs.llm.model,
       temperature: normalizeNumber(temperature, defaultConfigs.llm.temperature),
     }),
+    signal: params.signal,
   });
 
   const data = await response.json();

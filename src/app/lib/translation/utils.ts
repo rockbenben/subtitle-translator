@@ -1,6 +1,6 @@
 // Translation utility functions
 
-import { languages } from "./languages-data";
+import { languages, isMethodSupportedForLanguage } from "./languages-data";
 import type { TranslationMethod } from "./types";
 
 /**
@@ -32,16 +32,16 @@ export const checkLanguageSupport = (translationMethod: TranslationMethod, sourc
     return { supported: false, errorMessage: "Invalid language code provided" };
   }
 
-  const isSourceUnsupported = sourceLang.unsupportedmethods?.includes(translationMethod);
-  const isTargetUnsupported = targetLang.unsupportedmethods?.includes(translationMethod);
+  const isSourceSupported = isMethodSupportedForLanguage(translationMethod, sourceLanguage);
+  const isTargetSupported = isMethodSupportedForLanguage(translationMethod, targetLanguage);
 
-  if (isSourceUnsupported) {
+  if (!isSourceSupported) {
     return {
       supported: false,
       errorMessage: `${translationMethod.toUpperCase()} doesn't support ${sourceLang.name}. Switching to free GTX API now.`,
     };
   }
-  if (isTargetUnsupported) {
+  if (!isTargetSupported) {
     return {
       supported: false,
       errorMessage: `${translationMethod.toUpperCase()} doesn't support ${targetLang.name}. Switching to free GTX API now.`,
@@ -76,13 +76,20 @@ export const splitTextIntoChunks = (text: string, maxLength: number, delimiter: 
 
 /**
  * Build AI model prompt with variable substitution
+ * @param fullText - Optional: complete text for ${fullText} variable (only processed when prompt contains ${fullText})
  */
-export const getAIModelPrompt = (content: string, userPrompt: string, targetLanguage: string, sourceLanguage: string): string => {
+export const getAIModelPrompt = (content: string, userPrompt: string, targetLanguage: string, sourceLanguage: string, fullText?: string): string => {
   let prompt = userPrompt;
   if (sourceLanguage === "auto") {
     prompt = prompt.replace(/from \${sourceLanguage} (to|into)/g, "into");
   }
   prompt = prompt.replace("${sourceLanguage}", getLanguageName(sourceLanguage)).replace("${targetLanguage}", getLanguageName(targetLanguage)).replace("${content}", content);
+
+  // Only replace ${fullText} if it's actually used in the prompt
+  if (prompt.includes("${fullText}")) {
+    prompt = prompt.replace("${fullText}", fullText || content);
+  }
+
   return prompt;
 };
 

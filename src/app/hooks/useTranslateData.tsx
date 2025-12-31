@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { App } from "antd";
 import { useLocalStorage } from "@/app/hooks/useLocalStorage";
 import useFileUpload from "@/app/hooks/useFileUpload";
@@ -18,7 +18,19 @@ import {
   type TranslateTextParams,
   type TranslationConfig,
 } from "@/app/lib/translation";
-import { getRetryConfig, delay, extractTranslatedLinesWithNumbers, buildContextPrompt, exportTranslationSettings, createSettingsFileInput, type TranslationSettings } from "@/app/hooks/translation";
+import {
+  getRetryConfig,
+  delay,
+  extractTranslatedLinesWithNumbers,
+  buildContextPrompt,
+  exportTranslationSettings,
+  createSettingsFileInput,
+  DEFAULT_RETRY_COUNT,
+  DEFAULT_RETRY_TIMEOUT,
+  isAuthError,
+  type TranslationSettings,
+  type UserRetryConfig,
+} from "@/app/hooks/translation";
 import pLimit from "p-limit";
 import pRetry from "p-retry";
 import { useTranslations } from "next-intl";
@@ -35,6 +47,7 @@ type TranslationRuntimeConfig = TranslationConfig & {
   targetLanguage: string;
   sourceLanguage: string;
   useCache?: boolean;
+  fullText?: string; // Complete text for ${fullText} variable
 };
 
 const useTranslateData = () => {
@@ -55,10 +68,15 @@ const useTranslateData = () => {
   const [target_langs, setTarget_langs] = useLocalStorage<string[]>("target_langs", ["zh"]);
   const [removeChars, setRemoveChars] = useLocalStorage<string>("removeChars", "");
   const [multiLanguageMode, setMultiLanguageMode] = useLocalStorage<boolean>("multiLanguageMode", false);
+  const [retryCount, setRetryCount] = useLocalStorage<number>("translationRetryCount", DEFAULT_RETRY_COUNT);
+  const [retryTimeout, setRetryTimeout] = useLocalStorage<number>("translationRetryTimeout", DEFAULT_RETRY_TIMEOUT);
   const [translatedText, setTranslatedText] = useState<string>("");
   const [extractedText, setExtractedText] = useState<string>("");
   const [translateInProgress, setTranslateInProgress] = useState(false);
   const [progressPercent, setProgressPercent] = useState(0);
+
+  // Shared abort controller for all translation operations
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const effectiveSysPrompt = sysPrompt.trim() ? sysPrompt : DEFAULT_SYS_PROMPT;
   const effectiveUserPrompt = userPrompt.trim() ? userPrompt : DEFAULT_USER_PROMPT;
@@ -233,9 +251,36 @@ const useTranslateData = () => {
     return true;
   };
 
-  // Retry translation with config
-  const retryTranslate = async (text: string, cacheSuffix: string, config: TranslationRuntimeConfig) => {
-    const retryConfig = getRetryConfig(config.translationMethod);
+  // Retry translation with config - throws on failure (no fallback to original text)
+  // Uses shared abortControllerRef to allow cancellation across concurrent requests
+  const retryTranslate = async (text: string, cacheSuffix: string, config: TranslationRuntimeConfig, fullText?: string) => {
+    // Check if already aborted (e.g., by auth error in another concurrent request)
+    if (abortControllerRef.current?.signal.aborted) {
+      throw new Error("Translation aborted");
+    }
+
+    const userRetryConfig: UserRetryConfig = { retryCount, retryTimeout };
+    const retryConfig = getRetryConfig(config.translationMethod, userRetryConfig);
+    const timeoutMs = retryTimeout * 1000;
+
+    // Create per-request abort controller with timeout
+    // Links to shared abort controller and auto-cleans up
+    const createTimeoutController = () => {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+      // If shared controller aborts, also abort this request
+      const onAbort = () => controller.abort();
+      abortControllerRef.current?.signal.addEventListener("abort", onAbort, { once: true });
+
+      return {
+        controller,
+        cleanup: () => {
+          clearTimeout(timeoutId);
+          abortControllerRef.current?.signal.removeEventListener("abort", onAbort);
+        },
+      };
+    };
 
     const translateParams: TranslateTextParams = {
       text,
@@ -253,55 +298,68 @@ const useTranslateData = () => {
       ...(config.sysPrompt !== undefined ? { sysPrompt: config.sysPrompt } : {}),
       ...(config.userPrompt !== undefined ? { userPrompt: config.userPrompt } : {}),
       ...(config.translationMethod === "deepseek" && config.useRelay !== undefined ? { useRelay: config.useRelay } : {}),
+      ...(fullText !== undefined ? { fullText } : {}),
     };
 
     try {
       return await pRetry(
         async () => {
-          return translate(translateParams);
+          // Check abort before each attempt
+          if (abortControllerRef.current?.signal.aborted) {
+            throw new Error("Translation aborted");
+          }
+
+          const { controller, cleanup } = createTimeoutController();
+
+          try {
+            const result = await translate({ ...translateParams, signal: controller.signal });
+            cleanup();
+            return result;
+          } catch (error) {
+            cleanup();
+
+            // Check if this is an auth error - abort all concurrent requests
+            if (isAuthError(error)) {
+              abortControllerRef.current?.abort();
+            }
+            throw error;
+          }
         },
         {
           ...retryConfig,
-          onFailedAttempt: async ({ error, attemptNumber, retriesLeft }) => {
+          onFailedAttempt: ({ error, attemptNumber, retriesLeft }) => {
             const textPreview = text.length > 30 ? `${text.substring(0, 30)}...` : text;
             console.warn(`Translation attempt ${attemptNumber} failed for "${textPreview}": ${(error as Error).message} (${retriesLeft} retries left)`);
-
-            const errorStatus = (error as { status?: number })?.status;
-            const errorMessage = (error as Error)?.message?.toLowerCase();
-
-            if (errorStatus === 429 || errorMessage?.includes("rate limit")) {
-              const delayMs = Math.min(1000 * Math.pow(2, attemptNumber), 30000);
-              console.log(`Rate limit detected, waiting ${delayMs}ms before retry...`);
-              await delay(delayMs);
-            }
           },
         }
       );
     } catch (error) {
       const textPreview = text.length > 30 ? `${text.substring(0, 30)}...` : text;
-      console.warn(`All translation attempts failed for: "${textPreview}". Using original text.`, error);
-      return text;
+      console.error(`All ${retryCount} translation attempts failed for: "${textPreview}".`, error);
+      throw error; // No fallback to original text - fail explicitly
     }
   };
 
-  // Context-aware translation
+  // Context-aware translation with auto-adjustment of context window
   const translateWithContext = async (
     contentLines: string[],
     translationConfig: TranslationRuntimeConfig,
     cacheSuffix: string,
     updateProgress: (current: number, total: number) => void,
-    documentType: "subtitle" | "markdown" | "generic" = "subtitle"
+    documentType: "subtitle" | "markdown" | "generic" = "subtitle",
+    fullText?: string
   ) => {
-    const contextWindow = Math.min(translationConfig.contextWindow || 20, contentLines.length);
-    const contextPadding = Math.min(MAX_CONTEXT_PADDING, Math.max(1, Math.floor(contextWindow / 2)));
+    const initialContextWindow = Math.min(translationConfig.contextWindow || 20, contentLines.length);
     const translatedLines = new Array(contentLines.length);
+    const MAX_CONTEXT_RETRIES = 2; // Maximum times to reduce context window
 
-    for (let i = 0; i < contentLines.length; i += contextWindow) {
-      const batchEnd = Math.min(i + contextWindow, contentLines.length);
-      const contextStart = Math.max(0, i - contextPadding);
+    // Inner function to translate a batch with a specific context window size
+    const translateBatch = async (batchStart: number, batchEnd: number, contextWindow: number, retryCount: number = 0): Promise<boolean> => {
+      const contextPadding = Math.min(MAX_CONTEXT_PADDING, Math.max(1, Math.floor(contextWindow / 2)));
+      const contextStart = Math.max(0, batchStart - contextPadding);
       const contextEnd = Math.min(contentLines.length, batchEnd + contextPadding);
       const contextLines = contentLines.slice(contextStart, contextEnd);
-      const targetStartIndex = i - contextStart;
+      const targetStartIndex = batchStart - contextStart;
       const targetEndIndex = batchEnd - contextStart;
 
       const contextWithMarkers = contextLines
@@ -314,41 +372,108 @@ const useTranslateData = () => {
         .join("\n");
 
       try {
-        const result = await retryTranslate(contextWithMarkers, cacheSuffix, {
-          ...translationConfig,
-          userPrompt: buildContextPrompt(contextWithMarkers, effectiveUserPrompt, batchEnd - i, documentType),
-        });
+        const result = await retryTranslate(
+          contextWithMarkers,
+          cacheSuffix,
+          {
+            ...translationConfig,
+            userPrompt: buildContextPrompt(contextWithMarkers, effectiveUserPrompt, batchEnd - batchStart, documentType),
+          },
+          fullText
+        );
 
-        const translatedBatch = extractTranslatedLinesWithNumbers(result || "", batchEnd - i);
+        const translatedBatch = extractTranslatedLinesWithNumbers(result || "", batchEnd - batchStart);
 
+        // Fill in translated lines
         for (let j = 0; j < translatedBatch.length; j++) {
-          if (i + j < contentLines.length && translatedBatch[j]) {
-            translatedLines[i + j] = translatedBatch[j];
+          if (batchStart + j < contentLines.length && translatedBatch[j]) {
+            translatedLines[batchStart + j] = translatedBatch[j];
           }
         }
 
-        updateProgress(batchEnd, contentLines.length);
-        if (batchEnd < contentLines.length) {
-          await delay(translationConfig.delayTime || 500);
+        // Check for incomplete batch
+        for (let k = batchStart; k < batchEnd; k++) {
+          if (!translatedLines[k]) {
+            // Batch incomplete - try smaller context window if retries available
+            if (retryCount < MAX_CONTEXT_RETRIES && contextWindow > 5) {
+              const newContextWindow = Math.max(5, Math.floor(contextWindow / 2));
+              console.warn(`Batch ${batchStart + 1}-${batchEnd} incomplete, reducing context window from ${contextWindow} to ${newContextWindow}`);
+
+              // Re-translate only the incomplete portion with smaller batches
+              for (let subStart = batchStart; subStart < batchEnd; subStart += newContextWindow) {
+                const subEnd = Math.min(subStart + newContextWindow, batchEnd);
+                // Only process if there are missing lines in this sub-batch
+                let hasMissing = false;
+                for (let m = subStart; m < subEnd; m++) {
+                  if (!translatedLines[m]) {
+                    hasMissing = true;
+                    break;
+                  }
+                }
+                if (hasMissing) {
+                  const subSuccess = await translateBatch(subStart, subEnd, newContextWindow, retryCount + 1);
+                  if (!subSuccess) {
+                    return false; // Recursive call failed, need individual fallback
+                  }
+                }
+              }
+              // After all recursive calls, verify all lines are now translated
+              for (let v = batchStart; v < batchEnd; v++) {
+                if (!translatedLines[v]) {
+                  return false; // Still missing, need individual fallback
+                }
+              }
+              return true; // All lines now translated via recursion
+            }
+            return false; // Need individual fallback
+          }
         }
+        return true; // All lines translated
       } catch (error) {
-        console.warn(`Context translation failed for batch ${i}-${batchEnd}, falling back to individual translation`, error);
+        if (isAuthError(error)) {
+          throw error;
+        }
+        console.warn(`Batch ${batchStart + 1}-${batchEnd} translation error:`, error);
+        return false; // Need individual fallback
+      }
+    };
+
+    // Main loop: process batches
+    for (let i = 0; i < contentLines.length; i += initialContextWindow) {
+      const batchEnd = Math.min(i + initialContextWindow, contentLines.length);
+
+      const success = await translateBatch(i, batchEnd, initialContextWindow);
+
+      if (!success) {
+        // Individual line fallback for any remaining untranslated lines
+        console.warn(`Batch ${i + 1}-${batchEnd} requires individual translation fallback`);
         for (let j = i; j < batchEnd; j++) {
+          if (translatedLines[j]) continue; // Skip already translated
+
           try {
-            translatedLines[j] = await retryTranslate(contentLines[j], cacheSuffix, translationConfig);
+            translatedLines[j] = await retryTranslate(contentLines[j], cacheSuffix, translationConfig, fullText);
           } catch (lineError) {
-            console.error(`Failed to translate line ${j}:`, lineError);
-            translatedLines[j] = contentLines[j];
+            throw lineError; // Fail-stop
           }
           updateProgress(j + 1, contentLines.length);
           if (j < batchEnd - 1) await delay(translationConfig.delayTime || 200);
         }
       }
+
+      updateProgress(batchEnd, contentLines.length);
+      if (batchEnd < contentLines.length) {
+        await delay(translationConfig.delayTime || 500);
+      }
     }
 
-    // Fill missing translations with original text
+    // Final validation - this should rarely happen as individual fallback should catch everything
     for (let i = 0; i < translatedLines.length; i++) {
-      if (!translatedLines[i]) translatedLines[i] = contentLines[i];
+      if (!translatedLines[i]) {
+        throw new Error(
+          `翻译失败：第 ${i + 1} 行在多次重试后仍未成功翻译，请检查 API 设置或稍后重试。\n` +
+            `Translation failed: Line ${i + 1} could not be translated after multiple retries. Please check API settings or retry later.`
+        );
+      }
     }
 
     return translatedLines;
@@ -371,6 +496,9 @@ const useTranslateData = () => {
     try {
       if (!contentLines.length) return [];
 
+      // Initialize new abort controller for this translation batch
+      abortControllerRef.current = new AbortController();
+
       const updateProgress = (current: number, total: number) => {
         const progress = ((fileIndex + current / total) / totalFiles) * 100;
         setProgressPercent(progress);
@@ -386,6 +514,9 @@ const useTranslateData = () => {
         userPrompt: effectiveUserPrompt,
       };
 
+      // Only create fullText if the prompt uses ${fullText} variable
+      const fullText = effectiveUserPrompt.includes("${fullText}") ? contentLines.join("\n") : undefined;
+
       const cacheSuffix = await generateCacheSuffix(sourceLanguage, currentTargetLang, translationMethodArg, {
         model: config?.model,
         temperature: config?.temperature,
@@ -395,17 +526,18 @@ const useTranslateData = () => {
 
       // Context-aware translation with LLM
       if (documentType && LLM_MODELS.includes(translationMethodArg) && contentLines.length > 1) {
-        return await translateWithContext(contentLines, translationConfig, cacheSuffix, updateProgress, documentType);
+        return await translateWithContext(contentLines, translationConfig, cacheSuffix, updateProgress, documentType, fullText);
       }
 
       if (config?.chunkSize === undefined) {
         // Line-by-line concurrent translation
+        // Note: abort logic is now handled centrally in retryTranslate via shared abortControllerRef
         const translatedLines = new Array(contentLines.length);
         let completedCount = 0;
 
         const promises = contentLines.map((line, index) =>
           limit(async () => {
-            translatedLines[index] = await retryTranslate(line, cacheSuffix, translationConfig);
+            translatedLines[index] = await retryTranslate(line, cacheSuffix, translationConfig, fullText);
             completedCount++;
             if (completedCount % 10 === 0 || completedCount === contentLines.length) {
               updateProgress(completedCount, contentLines.length);
@@ -430,7 +562,7 @@ const useTranslateData = () => {
       const translatedChunks: string[] = [];
 
       for (let i = 0; i < chunks.length; i++) {
-        const translatedContent = await retryTranslate(chunks[i], cacheSuffix, translationConfig);
+        const translatedContent = await retryTranslate(chunks[i], cacheSuffix, translationConfig, fullText);
         translatedChunks.push(translationMethodArg === "deeplx" ? (translatedContent || "").replace(/<>/g, "\n") : translatedContent || "");
         updateProgress(i + 1, chunks.length);
         if (i < chunks.length - 1) await delay(config?.delayTime || 200);
@@ -497,6 +629,10 @@ const useTranslateData = () => {
     setExtractedText,
     handleLanguageChange,
     delay,
+    retryCount,
+    setRetryCount,
+    retryTimeout,
+    setRetryTimeout,
     validateTranslate,
   };
 };

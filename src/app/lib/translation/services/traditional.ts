@@ -19,7 +19,7 @@ const getAzureRegion = (region: string | undefined): string => {
 export const gtxFreeAPI: TranslationService = async (params) => {
   const { text, targetLanguage, sourceLanguage } = params;
   const apiEndpoint = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sourceLanguage}&tl=${targetLanguage}&dt=t&q=${encodeURIComponent(text)}`;
-  const response = await fetch(apiEndpoint);
+  const response = await fetch(apiEndpoint, { signal: params.signal });
 
   if (!response.ok) {
     throw new Error(`HTTP error! status: ${response.status}`);
@@ -42,6 +42,7 @@ export const google: TranslationService = async (params) => {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(requestBody),
+    signal: params.signal,
   });
   const data = await response.json();
   if (!response.ok) {
@@ -65,6 +66,7 @@ export const deepl: TranslationService = async (params) => {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(requestBody),
+    signal: params.signal,
   });
 
   const data = await response.json();
@@ -89,6 +91,7 @@ export const deeplx: TranslationService = async (params) => {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(requestBody),
+    signal: params.signal,
   });
 
   const data = await response.json();
@@ -115,6 +118,7 @@ export const azure: TranslationService = async (params) => {
       "Content-Type": "application/json",
     },
     body: JSON.stringify([{ Text: text }]),
+    signal: params.signal,
   });
 
   const data = await response.json();
@@ -138,6 +142,7 @@ export const webgoogletranslate: TranslationService = async (params) => {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(requestBody),
+    signal: params.signal,
   });
 
   if (!response.ok) {

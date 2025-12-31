@@ -201,7 +201,7 @@ const TranslationSettings = () => {
                   label={t("userPrompt")}
                   extra={`${t("userPromptExtra")}: \${sourceLanguage} ${t("for")} ${tCommon("sourceLanguage")}, \${targetLanguage} ${t("for")} ${tCommon("targetLanguage")}, \${content} ${t(
                     "for"
-                  )} ${t("textToTranslate")}`}>
+                  )} ${t("textToTranslate")}, \${fullText} ${t("for")} full text`}>
                   <TextArea value={userPrompt} onChange={(e) => setUserPrompt(e.target.value)} autoSize={{ minRows: 2, maxRows: 6 }} aria-label={t("userPrompt")} />
                 </Form.Item>
               </>
