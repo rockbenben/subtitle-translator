@@ -626,14 +626,22 @@ const SubtitleTranslator = () => {
                   <Col span={12}>
                     <Tooltip title={t("retryCountTooltip")}>
                       <Form.Item label={t("retryCount")} style={{ marginBottom: 0 }}>
-                        <InputNumber min={1} max={10} value={retryCount} onChange={(value) => setRetryCount(value ?? 3)} style={{ width: "100%" }} />
+                        <InputNumber min={1} max={10} value={retryCount} onChange={(value) => setRetryCount(value ?? 3)} style={{ width: "100%" }} aria-label={t("retryCount")} />
                       </Form.Item>
                     </Tooltip>
                   </Col>
                   <Col span={12}>
                     <Tooltip title={t("retryTimeoutTooltip")}>
                       <Form.Item label={t("retryTimeout")} style={{ marginBottom: 0 }}>
-                        <InputNumber min={5} max={120} value={retryTimeout} onChange={(value) => setRetryTimeout(value ?? 30)} addonAfter="s" style={{ width: "100%" }} />
+                        <InputNumber
+                          min={5}
+                          max={1200}
+                          value={retryTimeout}
+                          onChange={(value) => setRetryTimeout(value ?? 30)}
+                          addonAfter="s"
+                          style={{ width: "100%" }}
+                          aria-label={t("retryTimeout")}
+                        />
                       </Form.Item>
                     </Tooltip>
                   </Col>
