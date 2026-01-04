@@ -9,7 +9,7 @@ const lang = process.argv[2] || "en";
 const routingPath = path.join(__dirname, "..", "src", "i18n", "routing.ts");
 const pagePath = path.join(__dirname, "..", "src", "app", "page.tsx");
 const notFoundPath = path.join(__dirname, "..", "src", "app", "not-found.tsx");
-const navigationPath = path.join(__dirname, "..", "src", "app", "ui", "Navigation.tsx");
+const navigationPath = path.join(__dirname, "..", "src", "app", "ui", "navigation", "Navigation.tsx");
 
 // 备份原始内容
 const backup = {
@@ -41,8 +41,9 @@ try {
 
   // 修改 Navigation 文件：隐藏语言切换栏
   let navigationContent = backup.navigation;
-  // 根据实际情况调整正则表达式以匹配语言切换栏代码块
-  navigationContent = navigationContent.replace(/<Dropdown\s+menu=\{\{[\s\S]*?<\/Dropdown>/g, "");
+  // 匹配并删除语言切换器的完整 Dropdown 组件块
+  // 从 <Dropdown open={langOpen} 到对应的 </Dropdown> 结束
+  navigationContent = navigationContent.replace(/<Dropdown\s+open=\{langOpen\}[\s\S]*?<\/Dropdown>/, "");
   fs.writeFileSync(navigationPath, navigationContent, "utf8");
 
   console.log(`Temp update done (临时更新完成): using language "${lang}" and hide language switch bar (使用语言 "${lang}" 并隐藏语言切换栏)`);
