@@ -4,8 +4,10 @@ import type { TranslationService } from "../types";
 
 import { getErrorMessage, requireApiKey } from "./shared";
 
-const isLocalDevelopment = process.env.NODE_ENV === "development";
-const deeplEndpoint = isLocalDevelopment ? "/api/deepl" : "https://api-edgeone.newzone.top/api/deepl";
+// Use local API for: dev mode OR Docker (USE_LOCAL_API=true)
+// Use remote API for: static export (production without USE_LOCAL_API)
+const useLocalApi = process.env.NODE_ENV === "development" || process.env.NEXT_PUBLIC_USE_LOCAL_API === "true";
+const deeplEndpoint = useLocalApi ? "/api/deepl" : "https://api-edgeone.newzone.top/api/deepl";
 const deeplxEndpoint = "https://deeplx.aishort.top/translate";
 
 const getAzureRegion = (region: string | undefined): string => {

@@ -1,37 +1,46 @@
-# 基础镜像
-FROM node:24-alpine
+# ============ 构建阶段 ============
+FROM node:24-alpine AS builder
 
-# 设置工作目录
 WORKDIR /app
 
-# 复制项目中的 package.json 和 yarn.lock 到工作目录中
 COPY package.json yarn.lock ./
+RUN yarn install --frozen-lockfile --network-timeout 100000
 
-# 安装依赖，并清理缓存
-RUN yarn install --frozen-lockfile --network-timeout 100000 && \
-    yarn add -D wait-on && \
-    yarn cache clean
-
-# 复制项目源代码到工作目录
 COPY . .
 
-# 设置环境变量
-ENV NODE_ENV=development
+# Docker 构建：使用 standalone 模式，启用本地 API
+ENV DOCKER_BUILD=true
+ENV NEXT_PUBLIC_USE_LOCAL_API=true
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# 暴露端口 3000
+RUN yarn build
+
+# ============ 运行阶段 ============
+FROM node:24-alpine AS runner
+
+WORKDIR /app
+
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+
+# 创建非 root 用户
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+
+# 复制构建产物
+COPY --from=builder /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+USER nextjs
+
 EXPOSE 3000
 
-# 拷贝并设置启动脚本
-COPY docker-entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
 
-# 使用自定义启动脚本
-ENTRYPOINT ["/entrypoint.sh"]
+CMD ["node", "server.js"]
 
-# 最终命令：再次启动开发服务器
-#CMD ["yarn", "dev"]
-
-# 容器构建&运行命令
+# 构建 & 运行命令:
 # docker build -t subtitle-translator .
 # docker run -d -p 3000:3000 --name subtitle-translator subtitle-translator

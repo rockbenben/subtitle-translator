@@ -5,4 +5,4 @@ out
 *.log
 .DS_Store
 coverage
-# .next
+.next
