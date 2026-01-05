@@ -1,7 +1,7 @@
 "use client";
 
 import { ThemeProvider as NextThemesProvider, useTheme } from "next-themes";
-import { ConfigProvider, App, theme } from "antd";
+import { ConfigProvider, App, theme, Layout } from "antd";
 import { ReactNode } from "react";
 
 export default function ThemesProvider({ children }: { children: ReactNode }) {
@@ -21,11 +21,12 @@ function AntdConfigProvider({ children }: { children: ReactNode }) {
   return (
     <ConfigProvider
       theme={{
-        zeroRuntime: true,
         hashed: false,
         algorithm: algorithms,
       }}>
-      <App>{children}</App>
+      <App>
+        <Layout style={{ minHeight: "100vh" }}>{children}</Layout>
+      </App>
     </ConfigProvider>
   );
 }

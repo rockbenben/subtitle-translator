@@ -34,9 +34,8 @@ interface Project {
   onlyzh?: boolean;
 }
 
-// 排除当前项目 "subtitle-translator",
 const projectCategories = {
-  translate: ["json-translate", "md-translator"],
+  translate: ["json-translate", "subtitle-translator", "md-translator"],
   textParser: ["text-splitter", "chinese-conversion", "novel-processor", "regex-matcher", "text-processor"],
   jsonParser: ["json-value-extractor", "json-node-edit", "json-value-transformer", "json-value-swapper", "json-node-inserter", "json-sort-classify", "json-match-update"],
   dataParser: ["data-parser/flare", "data-parser/img-prompt"],
@@ -221,8 +220,8 @@ export const useAppMenu = () => {
 
   const menuItems = [
     {
-      label: <Link href={`/${locale}`}>{t("tools.subtitleTranslator.title")}</Link>,
-      key: "subtitle-translator",
+      label: <Link href={`/${locale}`}>{t("navigation.home")}</Link>,
+      key: "home",
     },
     {
       label: t("navigation.translate"),

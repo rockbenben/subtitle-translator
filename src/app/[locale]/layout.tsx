@@ -48,7 +48,7 @@ export default async function LocaleLayout({ children, params }: Props) {
           <NextIntlClientProvider messages={messages}>
             <ThemesProvider>
               <Navigation />
-              <div className="max-w-7xl mt-2 mx-auto p-4">{children}</div>
+              <main style={{ maxWidth: 1280, width: "100%", marginTop: 8, marginInline: "auto", paddingInline: "clamp(16px, 4vw, 24px)", paddingBlock: 16 }}>{children}</main>
             </ThemesProvider>
           </NextIntlClientProvider>
         </AntdRegistry>
