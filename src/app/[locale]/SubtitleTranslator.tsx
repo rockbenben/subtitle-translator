@@ -1,20 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Flex, Card, Button, Typography, Input, InputNumber, Upload, Form, Space, App, Checkbox, Tooltip, Segmented, Spin, Row, Col, Divider } from "antd";
-import {
-  CopyOutlined,
-  InboxOutlined,
-  SettingOutlined,
-  DownOutlined,
-  UpOutlined,
-  FileTextOutlined,
-  ClearOutlined,
-  FormatPainterOutlined,
-  GlobalOutlined,
-  ImportOutlined,
-  SaveOutlined,
-} from "@ant-design/icons";
+import { Flex, Card, Button, Typography, Input, InputNumber, Upload, Form, Space, App, Tooltip, Segmented, Spin, Row, Col, Divider, Switch, Collapse } from "antd";
+import { CopyOutlined, InboxOutlined, SettingOutlined, FileTextOutlined, ClearOutlined, FormatPainterOutlined, GlobalOutlined, ImportOutlined, SaveOutlined, ControlOutlined } from "@ant-design/icons";
 import { useTranslations } from "next-intl";
 import { useCopyToClipboard } from "@/app/hooks/useCopyToClipboard";
 import useFileUpload from "@/app/hooks/useFileUpload";
@@ -35,7 +23,7 @@ import MultiLanguageSettingsModal from "@/app/components/MultiLanguageSettingsMo
 
 const { TextArea } = Input;
 const { Dragger } = Upload;
-const { Paragraph } = Typography;
+const { Paragraph, Text } = Typography;
 
 const SubtitleTranslator = () => {
   const tSubtitle = useTranslations("subtitle");
@@ -108,7 +96,7 @@ const SubtitleTranslator = () => {
   const needsBilingual = subtitleExportMode === "bilingual" || subtitleExportMode === "both";
   const showBilingualPosition = needsBilingual;
   const [contextAwareTranslation, setContextAwareTranslation] = useLocalStorage("subtitleContextAwareTranslation", true); // 上下文感知翻译开关
-  const [showAdvancedPanel, setShowAdvancedPanel] = useState(true);
+  const [activeCollapseKeys, setActiveCollapseKeys] = useLocalStorage<string[]>("subtitleTranslatorCollapseKeys", ["subtitle"]);
   const [multiLangModalOpen, setMultiLangModalOpen] = useState(false);
 
   useEffect(() => {
@@ -486,169 +474,187 @@ const SubtitleTranslator = () => {
 
         {/* Right Column: Settings and Configuration */}
         <Col xs={24} lg={10} xl={9}>
-          <Flex vertical gap="middle">
-            {/* Translation Configuration */}
-            <Card
-              title={
-                <Space>
-                  <SettingOutlined /> {t("configuration")}
-                </Space>
-              }
-              className="shadow-sm"
-              extra={
-                <Space>
-                  <Tooltip title={t("exportSettingTooltip")}>
-                    <Button
-                      type="text"
-                      icon={<SaveOutlined />}
-                      size="small"
-                      disabled={translateInProgress}
-                      onClick={async () => {
-                        await exportSettings();
-                      }}
-                    />
-                  </Tooltip>
-                  <Tooltip title={t("importSettingTooltip")}>
-                    <Button
-                      type="text"
-                      icon={<ImportOutlined />}
-                      size="small"
-                      disabled={translateInProgress}
-                      onClick={async () => {
-                        await importSettings();
-                      }}
-                    />
-                  </Tooltip>
-                  <Tooltip title={t("batchEditMultiLangTooltip")}>
-                    <Button type="text" icon={<GlobalOutlined />} size="small" disabled={translateInProgress} onClick={() => setMultiLangModalOpen(true)} />
-                  </Tooltip>
-                </Space>
-              }>
-              <Form layout="vertical" className="w-full">
-                {/* Language Selection */}
-                <LanguageSelector
-                  sourceLanguage={sourceLanguage}
-                  targetLanguage={targetLanguage}
-                  target_langs={target_langs}
-                  multiLanguageMode={multiLanguageMode}
-                  handleLanguageChange={handleLanguageChange}
-                  setTarget_langs={setTarget_langs}
-                  setMultiLanguageMode={setMultiLanguageMode}
-                />
+          <Card
+            title={
+              <Space>
+                <SettingOutlined /> {t("configuration")}
+              </Space>
+            }
+            className="shadow-sm"
+            extra={
+              <Space>
+                <Tooltip title={t("exportSettingTooltip")}>
+                  <Button
+                    type="text"
+                    icon={<SaveOutlined />}
+                    size="small"
+                    disabled={translateInProgress}
+                    onClick={async () => {
+                      await exportSettings();
+                    }}
+                    aria-label={t("exportSettingTooltip")}
+                  />
+                </Tooltip>
+                <Tooltip title={t("importSettingTooltip")}>
+                  <Button
+                    type="text"
+                    icon={<ImportOutlined />}
+                    size="small"
+                    disabled={translateInProgress}
+                    onClick={async () => {
+                      await importSettings();
+                    }}
+                    aria-label={t("importSettingTooltip")}
+                  />
+                </Tooltip>
+                <Tooltip title={t("batchEditMultiLangTooltip")}>
+                  <Button type="text" icon={<GlobalOutlined />} size="small" disabled={translateInProgress} onClick={() => setMultiLangModalOpen(true)} aria-label={t("batchEditMultiLangTooltip")} />
+                </Tooltip>
+              </Space>
+            }>
+            <Form layout="vertical" className="w-full">
+              {/* Language Selection */}
+              <LanguageSelector
+                sourceLanguage={sourceLanguage}
+                targetLanguage={targetLanguage}
+                target_langs={target_langs}
+                multiLanguageMode={multiLanguageMode}
+                handleLanguageChange={handleLanguageChange}
+                setTarget_langs={setTarget_langs}
+                setMultiLanguageMode={setMultiLanguageMode}
+              />
 
-                {/* API Settings */}
-                <TranslationAPISelector translationMethod={translationMethod} setTranslationMethod={setTranslationMethod} config={config} handleConfigChange={handleConfigChange} />
+              {/* API Settings */}
+              <TranslationAPISelector translationMethod={translationMethod} setTranslationMethod={setTranslationMethod} config={config} handleConfigChange={handleConfigChange} />
+            </Form>
 
-                {/* Subtitle Options */}
-                <Form.Item label={tSubtitle("subtitleFormat")} style={{ marginTop: -12, marginBottom: 6 }}>
-                  <div className="flex flex-col gap-2">
-                    <Segmented
-                      block
-                      size="small"
-                      value={subtitleExportMode}
-                      onChange={(value) => setSubtitleExportMode(value as "translatedOnly" | "bilingual" | "both")}
-                      options={[
-                        { label: tSubtitle("translatedOnly"), value: "translatedOnly" },
-                        { label: tSubtitle("bilingual"), value: "bilingual" },
-                        { label: tSubtitle("exportBoth"), value: "both" },
-                      ]}
-                    />
+            <Divider style={{ margin: "12px 0" }} />
 
-                    {showBilingualPosition && (
-                      <Segmented
-                        block
-                        size="small"
-                        value={bilingualPosition}
-                        onChange={(value) => setBilingualPosition(value as "above" | "below")}
-                        options={[
-                          { label: tSubtitle("translationAbove"), value: "above" },
-                          { label: tSubtitle("translationBelow"), value: "below" },
-                        ]}
-                      />
-                    )}
-                  </div>
-                </Form.Item>
-              </Form>
-            </Card>
+            <Collapse
+              ghost
+              activeKey={activeCollapseKeys}
+              onChange={(keys) => setActiveCollapseKeys(typeof keys === "string" ? [keys] : keys)}
+              expandIconPlacement="end"
+              items={[
+                {
+                  key: "subtitle",
+                  label: (
+                    <Space>
+                      <FileTextOutlined />
+                      <Text strong>{tSubtitle("subtitleFormat")}</Text>
+                    </Space>
+                  ),
+                  children: (
+                    <Form layout="vertical" className="w-full">
+                      <Form.Item style={{ marginBottom: 0 }}>
+                        <div className="flex flex-col gap-2">
+                          <Segmented
+                            block
+                            size="small"
+                            value={subtitleExportMode}
+                            onChange={(value) => setSubtitleExportMode(value as "translatedOnly" | "bilingual" | "both")}
+                            options={[
+                              { label: tSubtitle("translatedOnly"), value: "translatedOnly" },
+                              { label: tSubtitle("bilingual"), value: "bilingual" },
+                              { label: tSubtitle("exportBoth"), value: "both" },
+                            ]}
+                          />
 
-            {/* Advanced Settings */}
-            <Card
-              title={
-                <div className="cursor-pointer flex items-center justify-between w-full" onClick={() => setShowAdvancedPanel(!showAdvancedPanel)}>
-                  <Space>
-                    <SettingOutlined /> {t("advancedSettings")}
-                  </Space>
-                  {showAdvancedPanel ? <UpOutlined style={{ fontSize: "12px" }} /> : <DownOutlined style={{ fontSize: "12px" }} />}
-                </div>
-              }
-              className="shadow-sm"
-              styles={{
-                body: {
-                  display: showAdvancedPanel ? "block" : "none",
+                          {showBilingualPosition && (
+                            <Segmented
+                              block
+                              size="small"
+                              value={bilingualPosition}
+                              onChange={(value) => setBilingualPosition(value as "above" | "below")}
+                              options={[
+                                { label: tSubtitle("translationAbove"), value: "above" },
+                                { label: tSubtitle("translationBelow"), value: "below" },
+                              ]}
+                            />
+                          )}
+                        </div>
+                      </Form.Item>
+                    </Form>
+                  ),
                 },
-              }}>
-              <Form layout="vertical">
-                <Row gutter={[16, 16]}>
-                  <Col span={12}>
-                    <Tooltip title={t("singleFileModeTooltip")}>
-                      <Checkbox checked={singleFileMode} onChange={(e) => setSingleFileMode(e.target.checked)}>
-                        {t("singleFileMode")}
-                      </Checkbox>
-                    </Tooltip>
-                  </Col>
-                  <Col span={12}>
-                    <Tooltip title={t("useCacheTooltip")}>
-                      <Checkbox checked={useCache} onChange={(e) => setUseCache(e.target.checked)}>
-                        {t("useCache")}
-                      </Checkbox>
-                    </Tooltip>
-                  </Col>
-                  {LLM_MODELS.includes(translationMethod) && (
-                    <Col span={24}>
-                      <Tooltip title={t("contextAwareTranslationTooltip")}>
-                        <Checkbox checked={contextAwareTranslation} onChange={(e) => setContextAwareTranslation(e.target.checked)}>
-                          {t("contextAwareTranslation")}
-                        </Checkbox>
-                      </Tooltip>
-                    </Col>
-                  )}
-                  <Col span={24}>
-                    <Form.Item label={t("removeCharsAfterTranslation")}>
-                      <Input
-                        placeholder={`${t("example")}: ♪ <i> </i>`}
-                        value={removeChars}
-                        onChange={(e) => setRemoveChars(e.target.value)}
-                        allowClear
-                        aria-label={t("removeCharsAfterTranslation")}
-                      />
-                    </Form.Item>
-                  </Col>
-                  <Col span={12}>
-                    <Tooltip title={t("retryCountTooltip")}>
-                      <Form.Item label={t("retryCount")} style={{ marginBottom: 0 }}>
-                        <InputNumber min={1} max={10} value={retryCount} onChange={(value) => setRetryCount(value ?? 3)} style={{ width: "100%" }} aria-label={t("retryCount")} />
-                      </Form.Item>
-                    </Tooltip>
-                  </Col>
-                  <Col span={12}>
-                    <Tooltip title={t("retryTimeoutTooltip")}>
-                      <Form.Item label={t("retryTimeout")} style={{ marginBottom: 0 }}>
-                        <InputNumber
-                          min={5}
-                          max={1200}
-                          value={retryTimeout}
-                          onChange={(value) => setRetryTimeout(value ?? 30)}
-                          addonAfter="s"
-                          style={{ width: "100%" }}
-                          aria-label={t("retryTimeout")}
+                {
+                  key: "advanced",
+                  label: (
+                    <Space>
+                      <ControlOutlined />
+                      <Text strong>{t("advancedSettings")}</Text>
+                    </Space>
+                  ),
+                  children: (
+                    <Flex vertical gap="small">
+                      <Flex justify="space-between" align="center">
+                        <Tooltip title={t("singleFileModeTooltip")}>
+                          <span>{t("singleFileMode")}</span>
+                        </Tooltip>
+                        <Switch size="small" checked={singleFileMode} onChange={setSingleFileMode} aria-label={t("singleFileMode")} />
+                      </Flex>
+
+                      <Flex justify="space-between" align="center">
+                        <Tooltip title={t("useCacheTooltip")}>
+                          <span>{t("useCache")}</span>
+                        </Tooltip>
+                        <Switch size="small" checked={useCache} onChange={setUseCache} aria-label={t("useCache")} />
+                      </Flex>
+
+                      {LLM_MODELS.includes(translationMethod) && (
+                        <Flex justify="space-between" align="center">
+                          <Tooltip title={t("contextAwareTranslationTooltip")}>
+                            <span>{t("contextAwareTranslation")}</span>
+                          </Tooltip>
+                          <Switch size="small" checked={contextAwareTranslation} onChange={setContextAwareTranslation} aria-label={t("contextAwareTranslation")} />
+                        </Flex>
+                      )}
+
+                      <Divider style={{ margin: "8px 0" }} />
+
+                      <Flex vertical gap={4}>
+                        <span>{t("removeCharsAfterTranslation")}</span>
+                        <Input
+                          placeholder={`${t("example")}: ♪ <i> </i>`}
+                          value={removeChars}
+                          onChange={(e) => setRemoveChars(e.target.value)}
+                          allowClear
+                          aria-label={t("removeCharsAfterTranslation")}
                         />
-                      </Form.Item>
-                    </Tooltip>
-                  </Col>
-                </Row>
-              </Form>
-            </Card>
-          </Flex>
+                      </Flex>
+
+                      <Row gutter={16}>
+                        <Col span={12}>
+                          <Tooltip title={t("retryCountTooltip")}>
+                            <Flex vertical gap={4}>
+                              <span>{t("retryCount")}</span>
+                              <InputNumber min={1} max={10} value={retryCount} onChange={(value) => setRetryCount(value ?? 3)} style={{ width: "100%" }} aria-label={t("retryCount")} />
+                            </Flex>
+                          </Tooltip>
+                        </Col>
+                        <Col span={12}>
+                          <Tooltip title={t("retryTimeoutTooltip")}>
+                            <Flex vertical gap={4}>
+                              <span>{t("retryTimeout")}</span>
+                              <InputNumber
+                                min={5}
+                                max={1200}
+                                value={retryTimeout}
+                                onChange={(value) => setRetryTimeout(value ?? 30)}
+                                addonAfter="s"
+                                style={{ width: "100%" }}
+                                aria-label={t("retryTimeout")}
+                              />
+                            </Flex>
+                          </Tooltip>
+                        </Col>
+                      </Row>
+                    </Flex>
+                  ),
+                },
+              ]}
+            />
+          </Card>
         </Col>
       </Row>
 
