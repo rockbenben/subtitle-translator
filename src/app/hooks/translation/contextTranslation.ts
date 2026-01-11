@@ -23,7 +23,8 @@ export const cleanTranslatedContent = (content: string): string => {
  * Extract translated lines with numbered markers from AI response
  */
 export const extractTranslatedLinesWithNumbers = (response: string, expectedCount: number): string[] => {
-  const results = new Array<string | undefined>(expectedCount);
+  // Initialize with empty strings to ensure consistent return type
+  const results = new Array<string>(expectedCount).fill("");
 
   // Try to match numbered translation markers with relaxed regex
   for (let i = 0; i < expectedCount; i++) {
@@ -43,10 +44,10 @@ export const extractTranslatedLinesWithNumbers = (response: string, expectedCoun
     }
   }
 
-  // If partial matches succeeded, return results
+  // If partial matches succeeded, return results (empty strings for missing indices)
   const successCount = results.filter((r) => r).length;
   if (successCount > 0) {
-    return results as string[];
+    return results;
   }
 
   // Fallback: try unnumbered matching
