@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Modal, Input, Button, Space, App, Typography } from "antd";
 import { useTranslations, useLocale } from "next-intl";
 import { languages } from "@/app/lib/translation";
+import { getDocUrl } from "@/app/utils/localeUtils";
 
 const { TextArea } = Input;
 const { Text, Link } = Typography;
@@ -57,9 +58,7 @@ const MultiLanguageSettingsModal = ({ open, onClose, target_langs, setTarget_lan
     onClose();
   };
 
-  // Use zh for Chinese locales, en for others
-  const docLocale = locale === "zh" || locale === "zh-hant" ? "zh" : "en";
-  const langCodesUrl = `https://docs.newzone.top/${docLocale}/guide/translation/supported-languages.html`;
+  const langCodesUrl = getDocUrl("guide/translation/supported-languages.html", locale);
 
   return (
     <Modal

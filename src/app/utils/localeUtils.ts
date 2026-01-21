@@ -12,37 +12,13 @@ export const isChineseLocale = (locale: string): boolean => {
 };
 
 /**
- * 用户指南 URL 路径映射
- * User guide URL path mapping
- */
-const USER_GUIDE_PATHS: Record<string, string> = {
-  // 翻译工具
-  "json-translate": "translation/json-translate/index",
-  "subtitle-translator": "translation/subtitle-translator/index",
-  "md-translator": "translation/md-translator/index",
-  // 文本工具
-  "text-splitter": "tools/text-splitter",
-  // JSON 工具
-  "json-value-extractor": "json/json-value-extractor",
-  "json-node-edit": "json/json-node-edit",
-  "json-value-transformer": "json/json-value-transformer",
-  "json-value-swapper": "json/json-value-swapper",
-  "json-node-inserter": "json/json-node-inserter",
-  "json-sort-classify": "json/json-sort-classify",
-  "json-match-update": "json/json-match-update",
-};
-
-/**
- * 获取用户指南 URL
- * Get user guide URL based on tool key and locale
- * @param toolKey - 工具标识符 (e.g., "json-translate", "text-splitter")
+ * 获取文档 URL（通用）
+ * Get documentation URL with locale-aware prefix
+ * @param path - 文档路径 (e.g., "guide/translation/json-translate/index.html")
  * @param locale - 当前语言
- * @returns 完整的用户指南 URL
+ * @returns 完整的文档 URL
  */
-export const getUserGuideUrl = (toolKey: string, locale: string): string => {
-  const path = USER_GUIDE_PATHS[toolKey];
-  if (!path) return "#";
-
+export const getDocUrl = (path: string, locale: string): string => {
   const langPrefix = isChineseLocale(locale) ? "" : "en/";
-  return `https://docs.newzone.top/${langPrefix}guide/${path}.html`;
+  return `https://docs.newzone.top/${langPrefix}${path}`;
 };

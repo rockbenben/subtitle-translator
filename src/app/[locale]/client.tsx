@@ -7,7 +7,7 @@ import { VideoCameraOutlined, QuestionCircleOutlined } from "@ant-design/icons";
 import SubtitleTranslator from "./SubtitleTranslator";
 import { useTranslations, useLocale } from "next-intl";
 import { TranslationProvider } from "@/app/components/TranslationContext";
-import { getUserGuideUrl } from "@/app/utils";
+import { getDocUrl } from "@/app/utils";
 
 const TranslationSettings = dynamic(() => import("@/app/components/TranslationSettings"), {
   loading: () => (
@@ -23,7 +23,7 @@ const ClientPage = () => {
   const tSubtitle = useTranslations("subtitle");
   const t = useTranslations("common");
   const locale = useLocale();
-  const userGuideUrl = getUserGuideUrl("subtitle-translator", locale);
+  const userGuideUrl = getDocUrl("guide/translation/subtitle-translator/index.html", locale);
   // 使用时间戳来强制重新渲染
   const [activeKey, setActiveKey] = useState("basic");
 

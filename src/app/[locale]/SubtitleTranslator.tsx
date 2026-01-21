@@ -8,6 +8,7 @@ import { useCopyToClipboard } from "@/app/hooks/useCopyToClipboard";
 import useFileUpload from "@/app/hooks/useFileUpload";
 import { useLocalStorage } from "@/app/hooks/useLocalStorage";
 import { useTextStats } from "@/app/hooks/useTextStats";
+import { useExportFilename } from "@/app/hooks/useExportFilename";
 
 import { splitTextIntoLines, downloadFile, splitBySpaces, getErrorMessage } from "@/app/utils";
 import { VTT_SRT_TIME, LRC_TIME_REGEX, detectSubtitleFormat, getOutputFileExtension, filterSubLines, convertTimeToAss, assHeader } from "./subtitleUtils";
@@ -18,6 +19,7 @@ import TranslationAPISelector from "@/app/components/TranslationAPISelector";
 import TranslationProgressModal from "@/app/components/TranslationProgressModal";
 import { useTranslationContext } from "@/app/components/TranslationContext";
 import ResultCard from "@/app/components/ResultCard";
+import AdvancedTranslationSettings from "@/app/components/AdvancedTranslationSettings";
 
 import MultiLanguageSettingsModal from "@/app/components/MultiLanguageSettingsModal";
 
@@ -98,6 +100,7 @@ const SubtitleTranslator = () => {
   const [contextAwareTranslation, setContextAwareTranslation] = useLocalStorage("subtitleContextAwareTranslation", true); // 上下文感知翻译开关
   const [activeCollapseKeys, setActiveCollapseKeys] = useLocalStorage<string[]>("subtitleTranslatorCollapseKeys", ["subtitle"]);
   const [multiLangModalOpen, setMultiLangModalOpen] = useState(false);
+  const { customFileName, setCustomFileName, generateFileName } = useExportFilename("subtitle");
 
   useEffect(() => {
     setExtractedText("");
@@ -250,8 +253,8 @@ const SubtitleTranslator = () => {
         // Generate file name base
         const langLabel = currentTargetLang;
         const fileName = fileNameSet || multipleFiles[0]?.name || "subtitle";
-        const lastDotIndex = fileName.lastIndexOf(".");
-        const fileNameWithoutExt = lastDotIndex !== -1 ? fileName.slice(0, lastDotIndex) : fileName;
+        const translatedOnlyExt = getOutputFileExtension(fileType, false);
+        const bilingualExt = getOutputFileExtension(fileType, true);
 
         // Handle different export modes
         if (subtitleExportMode === "both") {
@@ -259,11 +262,8 @@ const SubtitleTranslator = () => {
           const translatedOnlySubtitle = generateSubtitle(false, translatedLines);
           const bilingualSubtitle = generateSubtitle(true, translatedLines);
 
-          const translatedOnlyExt = `.${getOutputFileExtension(fileType, false)}`;
-          const bilingualExt = `.${getOutputFileExtension(fileType, true)}`;
-
-          const translatedOnlyFileName = `${fileNameWithoutExt}_${langLabel}${translatedOnlyExt}`;
-          const bilingualFileName = `${fileNameWithoutExt}_${langLabel}_bilingual${bilingualExt}`;
+          const translatedOnlyFileName = generateFileName(fileName, langLabel, translatedOnlyExt);
+          const bilingualFileName = generateFileName(fileName, langLabel, bilingualExt);
 
           await downloadFile(translatedOnlySubtitle, translatedOnlyFileName);
           await downloadFile(bilingualSubtitle, bilingualFileName);
@@ -280,8 +280,8 @@ const SubtitleTranslator = () => {
         } else {
           // Generate single version based on mode
           const finalSubtitle = generateSubtitle(needsBilingual, translatedLines);
-          const fileExtension = `.${getOutputFileExtension(fileType, needsBilingual)}`;
-          const downloadFileName = `${fileNameWithoutExt}_${langLabel}${fileExtension}`;
+          const fileExt = getOutputFileExtension(fileType, needsBilingual);
+          const downloadFileName = generateFileName(fileName, langLabel, fileExt);
 
           // Always download in multi-language mode
           if (multiLanguageMode || multipleFiles.length > 1) {
@@ -345,15 +345,15 @@ const SubtitleTranslator = () => {
   };
 
   const handleExportFile = () => {
-    const uploadFileName = multipleFiles[0]?.name;
+    const uploadFileName = multipleFiles[0]?.name || "subtitle";
     const lines = splitTextIntoLines(sourceText);
     const fileType = detectSubtitleFormat(lines);
 
     // 如果 needsBilingual 为 true，则优先使用 .ass
-    const fileExtension = `.${getOutputFileExtension(fileType, needsBilingual)}`;
+    const fileExt = getOutputFileExtension(fileType, needsBilingual);
 
-    // 如果文件名存在，查找最后一个点的位置，如果存在则替换扩展名，否则直接添加
-    const fileName = uploadFileName ? uploadFileName.replace(/\.[^/.]+$/, "") + fileExtension : `subtitle${fileExtension}`;
+    // Use custom filename if set, otherwise use default pattern
+    const fileName = generateFileName(uploadFileName, targetLanguage, fileExt);
     downloadFile(translatedText, fileName);
     return fileName;
   };
@@ -383,7 +383,7 @@ const SubtitleTranslator = () => {
   const config = getCurrentConfig();
 
   return (
-    <Spin spinning={isFileProcessing} size="large">
+    <Spin spinning={isFileProcessing} tip="Please wait..." size="large">
       <Row gutter={[24, 24]}>
         {/* Left Column: Upload and Main Actions */}
         <Col xs={24} lg={14} xl={15}>
@@ -440,10 +440,10 @@ const SubtitleTranslator = () => {
                   aria-label={t("sourceArea")}
                 />
                 {sourceText && (
-                  <Flex justify="end">
-                    <Paragraph type="secondary">
-                      {t("inputStatsTitle")}: {sourceStats.charCount} {t("charLabel")}, {sourceStats.lineCount} {t("lineLabel")}
-                    </Paragraph>
+                  <Flex justify="end" className="mt-2">
+                    <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                      {sourceStats.charCount} {t("charLabel")} / {sourceStats.lineCount} {t("lineLabel")}
+                    </Typography.Text>
                   </Flex>
                 )}
               </>
@@ -526,6 +526,15 @@ const SubtitleTranslator = () => {
 
               {/* API Settings */}
               <TranslationAPISelector translationMethod={translationMethod} setTranslationMethod={setTranslationMethod} config={config} handleConfigChange={handleConfigChange} />
+
+              {LLM_MODELS.includes(translationMethod) && (
+                <Flex justify="space-between" align="center">
+                  <Tooltip title={t("contextAwareTranslationTooltip")}>
+                    <span>{t("contextAwareTranslation")}</span>
+                  </Tooltip>
+                  <Switch size="small" checked={contextAwareTranslation} onChange={setContextAwareTranslation} aria-label={t("contextAwareTranslation")} />
+                </Flex>
+              )}
             </Form>
 
             <Divider style={{ margin: "12px 0" }} />
@@ -556,7 +565,14 @@ const SubtitleTranslator = () => {
                             options={[
                               { label: tSubtitle("translatedOnly"), value: "translatedOnly" },
                               { label: tSubtitle("bilingual"), value: "bilingual" },
-                              { label: tSubtitle("exportBoth"), value: "both" },
+                              {
+                                label: (
+                                  <Tooltip title={tSubtitle("bilingualTooltip")}>
+                                    <div>{tSubtitle("exportBoth")}</div>
+                                  </Tooltip>
+                                ),
+                                value: "both",
+                              },
                             ]}
                           />
 
@@ -586,70 +602,20 @@ const SubtitleTranslator = () => {
                     </Space>
                   ),
                   children: (
-                    <Flex vertical gap="small">
-                      <Flex justify="space-between" align="center">
-                        <Tooltip title={t("singleFileModeTooltip")}>
-                          <span>{t("singleFileMode")}</span>
-                        </Tooltip>
-                        <Switch size="small" checked={singleFileMode} onChange={setSingleFileMode} aria-label={t("singleFileMode")} />
-                      </Flex>
-
-                      <Flex justify="space-between" align="center">
-                        <Tooltip title={t("useCacheTooltip")}>
-                          <span>{t("useCache")}</span>
-                        </Tooltip>
-                        <Switch size="small" checked={useCache} onChange={setUseCache} aria-label={t("useCache")} />
-                      </Flex>
-
-                      {LLM_MODELS.includes(translationMethod) && (
-                        <Flex justify="space-between" align="center">
-                          <Tooltip title={t("contextAwareTranslationTooltip")}>
-                            <span>{t("contextAwareTranslation")}</span>
-                          </Tooltip>
-                          <Switch size="small" checked={contextAwareTranslation} onChange={setContextAwareTranslation} aria-label={t("contextAwareTranslation")} />
-                        </Flex>
-                      )}
-
-                      <Divider style={{ margin: "8px 0" }} />
-
-                      <Flex vertical gap={4}>
-                        <span>{t("removeCharsAfterTranslation")}</span>
-                        <Input
-                          placeholder={`${t("example")}: ♪ <i> </i>`}
-                          value={removeChars}
-                          onChange={(e) => setRemoveChars(e.target.value)}
-                          allowClear
-                          aria-label={t("removeCharsAfterTranslation")}
-                        />
-                      </Flex>
-
-                      <Row gutter={16}>
-                        <Col span={12}>
-                          <Tooltip title={t("retryCountTooltip")}>
-                            <Flex vertical gap={4}>
-                              <span>{t("retryCount")}</span>
-                              <InputNumber min={1} max={10} value={retryCount} onChange={(value) => setRetryCount(value ?? 3)} style={{ width: "100%" }} aria-label={t("retryCount")} />
-                            </Flex>
-                          </Tooltip>
-                        </Col>
-                        <Col span={12}>
-                          <Tooltip title={t("retryTimeoutTooltip")}>
-                            <Flex vertical gap={4}>
-                              <span>{t("retryTimeout")}</span>
-                              <InputNumber
-                                min={5}
-                                max={1200}
-                                value={retryTimeout}
-                                onChange={(value) => setRetryTimeout(value ?? 30)}
-                                addonAfter="s"
-                                style={{ width: "100%" }}
-                                aria-label={t("retryTimeout")}
-                              />
-                            </Flex>
-                          </Tooltip>
-                        </Col>
-                      </Row>
-                    </Flex>
+                    <AdvancedTranslationSettings
+                      customFileName={customFileName}
+                      setCustomFileName={setCustomFileName}
+                      removeChars={removeChars}
+                      setRemoveChars={setRemoveChars}
+                      retryCount={retryCount}
+                      setRetryCount={setRetryCount}
+                      retryTimeout={retryTimeout}
+                      setRetryTimeout={setRetryTimeout}
+                      useCache={useCache}
+                      setUseCache={setUseCache}
+                      singleFileMode={singleFileMode}
+                      setSingleFileMode={setSingleFileMode}
+                    />
                   ),
                 },
               ]}

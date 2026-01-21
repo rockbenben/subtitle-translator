@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, memo } from "react";
-import { Tabs, Form, Input, InputNumber, Card, Typography, Button, Space, Tooltip, App, Switch } from "antd";
+import { Tabs, Form, Input, InputNumber, Card, Typography, Button, Space, Tooltip, App, Switch, Grid } from "antd";
 import { TRANSLATION_SERVICES, LLM_MODELS, DEFAULT_SYS_PROMPT, DEFAULT_USER_PROMPT, testTranslation, clearTranslationCache } from "@/app/lib/translation";
 import { useTranslationContext } from "@/app/components/TranslationContext";
 import { useTranslations } from "next-intl";
 
+const { useBreakpoint } = Grid;
 const { Text, Link } = Typography;
 const { TextArea } = Input;
 
@@ -13,6 +14,7 @@ const TranslationSettings = () => {
   const tCommon = useTranslations("common");
   const t = useTranslations("TranslationSettings");
   const { message } = App.useApp();
+  const screens = useBreakpoint();
   const { translationMethod, setTranslationMethod, translationConfigs, getCurrentConfig, handleConfigChange, resetTranslationConfig, sysPrompt, setSysPrompt, userPrompt, setUserPrompt } =
     useTranslationContext();
   const [testingService, setTestingService] = useState<string | null>(null);
@@ -118,8 +120,8 @@ const TranslationSettings = () => {
                     service === "llm"
                       ? `${tCommon("example")}: http://127.0.0.1:11434/v1/chat/completions`
                       : service === "azureopenai"
-                      ? `${tCommon("example")}: https://your-resource-name.openai.azure.com`
-                      : `${tCommon("example")}: http://192.168.2.3:32770/translate`
+                        ? `${tCommon("example")}: https://your-resource-name.openai.azure.com`
+                        : `${tCommon("example")}: http://192.168.2.3:32770/translate`
                   }
                   value={config?.url}
                   onChange={(e) => handleConfigChange(service, "url", e.target.value)}
@@ -248,11 +250,11 @@ const TranslationSettings = () => {
   };
 
   return (
-    <div className="flex flex-col md:flex-row">
+    <div className="flex flex-col">
       <Tabs
         activeKey={translationMethod}
         onChange={handleTabChange}
-        tabPlacement="start"
+        tabPlacement={screens.md ? "start" : "top"}
         className="w-full"
         destroyOnHidden
         items={TRANSLATION_SERVICES.map((service) => ({

@@ -124,7 +124,7 @@ export function LanguageSelector() {
       {isMobile ? (
         <>
           <Button type="text" icon={<TranslationOutlined />} aria-label="Select language" onClick={() => setLangOpen(true)} />
-          <Drawer title="Select Language / 选择语言" placement="bottom" onClose={() => setLangOpen(false)} open={langOpen} height="auto" styles={{ body: { padding: 16 } }}>
+          <Drawer title="Select Language / 选择语言" placement="bottom" onClose={() => setLangOpen(false)} open={langOpen} size="default" styles={{ body: { padding: 16 } }}>
             {renderLanguageList()}
           </Drawer>
         </>

@@ -147,3 +147,6 @@ export const parseSpaceSeparatedItems = (input: string): string[] => {
   // 处理每个项的转义字符
   return items.map((item) => parseEscapeChars(item));
 };
+
+// 转义正则表达式中的特殊字符，防止正则注入
+export const escapeRegExp = (str: string): string => str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");

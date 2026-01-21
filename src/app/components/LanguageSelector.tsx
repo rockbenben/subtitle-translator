@@ -133,7 +133,7 @@ const LanguageSelector = ({ sourceLanguage, targetLanguage, target_langs, multiL
       </Row>
 
       <Flex justify="end">
-        <Tooltip title={t("multiLanguageModeTooltip")}>
+        <Tooltip title={t("multiLanguageModeTooltip")} placement="bottom">
           <Flex gap={6} align="center" onClick={() => setMultiLanguageMode(!multiLanguageMode)} style={{ cursor: "pointer" }}>
             <Switch size="small" checked={multiLanguageMode} onChange={setMultiLanguageMode} aria-label={t("multiLanguageMode")} />
             <Text type="secondary">{t("multiLanguageMode")}</Text>
