@@ -312,32 +312,35 @@ export const openrouter: TranslationService = async (params) => {
 const useLocalApi = process.env.NODE_ENV === "development" || process.env.NEXT_PUBLIC_USE_LOCAL_API === "true";
 
 // Helper function to build thinking parameters based on model
+// Matches exact model names: glm4.7, kimi-k2.5, deepseek-v3.*, gpt-oss-*
 const buildNvidiaThinkingParams = (model: string, enableThinking: boolean): Record<string, unknown> => {
-  const modelLower = model.toLowerCase();
-
-  // GLM models: use enable_thinking and clear_thinking
-  if (modelLower.includes("glm")) {
+  // GLM4.7: use enable_thinking and clear_thinking
+  // Matches: glm4.7, z-ai/glm4.7
+  if (/(?:^|\/)glm4\.7$/i.test(model)) {
     return enableThinking
       ? { chat_template_kwargs: { enable_thinking: true, clear_thinking: false } }
       : { chat_template_kwargs: { enable_thinking: false } };
   }
 
-  // Kimi models: use thinking, and force temperature=1.0, top_p=1.0
-  if (modelLower.includes("kimi")) {
+  // Kimi-k2.5: use thinking, and force temperature=1.0, top_p=1.0
+  // Matches: kimi-k2.5, moonshotai/kimi-k2.5
+  if (/(?:^|\/)kimi-k2\.5$/i.test(model)) {
     return enableThinking
       ? { chat_template_kwargs: { thinking: true }, temperature: 1.0, top_p: 1.0 }
       : { chat_template_kwargs: { thinking: false }, temperature: 1.0, top_p: 1.0 };
   }
 
-  // DeepSeek models: use thinking
-  if (modelLower.includes("deepseek")) {
+  // DeepSeek-v3.*: use thinking
+  // Matches: deepseek-v3.1, deepseek-v3.1-terminus, deepseek-v3.2, deepseek-ai/deepseek-v3.1, etc.
+  if (/(?:^|\/)deepseek-v3\./i.test(model)) {
     return enableThinking
       ? { chat_template_kwargs: { thinking: true } }
       : { chat_template_kwargs: { thinking: false } };
   }
 
-  // GPT-OSS models: use reasoning_effort
-  if (modelLower.includes("gpt-oss")) {
+  // GPT-OSS-*: use reasoning_effort
+  // Matches: gpt-oss-120b, gpt-oss-20b, openai/gpt-oss-120b, etc.
+  if (/(?:^|\/)gpt-oss-/i.test(model)) {
     return { reasoning_effort: enableThinking ? "high" : "low" };
   }
 
