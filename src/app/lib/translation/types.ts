@@ -25,6 +25,7 @@ export interface TranslateTextParams {
   sysPrompt?: string;
   userPrompt?: string;
   useRelay?: boolean;
+  enableThinking?: boolean; // Optional: enable thinking mode for supported models (kimi, deepseek, glm, gpt-oss)
   fullText?: string; // Optional: complete text for ${fullText} variable
   signal?: AbortSignal; // Optional: for request cancellation
 }
@@ -45,4 +46,5 @@ export interface TranslationConfig {
   sysPrompt?: string;
   userPrompt?: string;
   useRelay?: boolean;
+  enableThinking?: boolean;
 }

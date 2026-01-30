@@ -159,6 +159,12 @@ const TranslationSettings = () => {
               </Form.Item>
             )}
 
+            {service === "nvidia" && (
+              <Form.Item label={t("enableThinking")} extra={t("enableThinkingTooltip")}>
+                <Switch checked={config?.enableThinking as boolean | undefined} onChange={(checked) => handleConfigChange(service, "enableThinking", checked)} aria-label={t("enableThinking")} />
+              </Form.Item>
+            )}
+
             {config?.region !== undefined && (
               <Form.Item label="Azure Region" required>
                 <Input

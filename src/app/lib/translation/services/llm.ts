@@ -307,6 +307,104 @@ export const openrouter: TranslationService = async (params) => {
   return getOpenAICompatContent(data, "OpenRouter");
 };
 
+// Use local API for: dev mode OR Docker (USE_LOCAL_API=true)
+// Use remote API for: static export (production without USE_LOCAL_API)
+const useLocalApi = process.env.NODE_ENV === "development" || process.env.NEXT_PUBLIC_USE_LOCAL_API === "true";
+
+// Helper function to build thinking parameters based on model
+const buildNvidiaThinkingParams = (model: string, enableThinking: boolean): Record<string, unknown> => {
+  const modelLower = model.toLowerCase();
+
+  // GLM models: use enable_thinking and clear_thinking
+  if (modelLower.includes("glm")) {
+    return enableThinking
+      ? { chat_template_kwargs: { enable_thinking: true, clear_thinking: false } }
+      : { chat_template_kwargs: { enable_thinking: false } };
+  }
+
+  // Kimi models: use thinking, and force temperature=1.0, top_p=1.0
+  if (modelLower.includes("kimi")) {
+    return enableThinking
+      ? { chat_template_kwargs: { thinking: true }, temperature: 1.0, top_p: 1.0 }
+      : { chat_template_kwargs: { thinking: false }, temperature: 1.0, top_p: 1.0 };
+  }
+
+  // DeepSeek models: use thinking
+  if (modelLower.includes("deepseek")) {
+    return enableThinking
+      ? { chat_template_kwargs: { thinking: true } }
+      : { chat_template_kwargs: { thinking: false } };
+  }
+
+  // GPT-OSS models: use reasoning_effort
+  if (modelLower.includes("gpt-oss")) {
+    return { reasoning_effort: enableThinking ? "high" : "low" };
+  }
+
+  return {};
+};
+
+export const nvidia: TranslationService = async (params) => {
+  const { text, targetLanguage, sourceLanguage, apiKey, url, model, temperature, sysPrompt, userPrompt, enableThinking } = params;
+  const effectiveSysPrompt = normalizePrompt(sysPrompt, DEFAULT_SYS_PROMPT);
+  const effectiveUserPrompt = normalizePrompt(userPrompt, DEFAULT_USER_PROMPT);
+  const prompt = getAIModelPrompt(text, effectiveUserPrompt, targetLanguage, sourceLanguage, params.fullText);
+
+  const apiEndpoint = url || defaultConfigs.nvidia.url;
+  const effectiveModel = model || defaultConfigs.nvidia.model;
+
+  // Build thinking parameters based on model
+  const thinkingParams = buildNvidiaThinkingParams(effectiveModel, enableThinking ?? false);
+
+  // Prepare request body - thinking params may override temperature for certain models
+  const requestBody: Record<string, unknown> = {
+    messages: [
+      { role: "system", content: effectiveSysPrompt },
+      { role: "user", content: prompt },
+    ],
+    model: effectiveModel,
+    temperature: normalizeNumber(temperature, defaultConfigs.nvidia.temperature),
+    ...thinkingParams,
+  };
+
+  let response;
+
+  if (useLocalApi) {
+    // Route through local proxy to avoid CORS
+    response = await fetch("/api/nvidia", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        url: apiEndpoint,
+        apiKey,
+        ...requestBody,
+      }),
+      signal: params.signal,
+    });
+  } else {
+    // Direct call (for static exports)
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
+    if (apiKey?.trim()) {
+      headers.Authorization = `Bearer ${apiKey}`;
+    }
+
+    response = await fetch(apiEndpoint, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(requestBody),
+      signal: params.signal,
+    });
+  }
+
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(getErrorMessage(data, response.status));
+  }
+  return getOpenAICompatContent(data, "Nvidia");
+};
+
 export const llm: TranslationService = async (params) => {
   const { text, targetLanguage, sourceLanguage, apiKey, url, model, temperature, sysPrompt, userPrompt } = params;
   const effectiveSysPrompt = normalizePrompt(sysPrompt, DEFAULT_SYS_PROMPT);
