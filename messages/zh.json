@@ -128,7 +128,7 @@
     "testConfigTooltip": "验证当前 API 配置是否可用",
     "testConfigSuccess": "API 配置正常",
     "testConfigFail": "API 测试失败，请检查配置",
-    "url": "接口地址",
+    "url": "API 接口地址",
     "urlExtra": "支持 localhost 和远程地址",
     "deeplxUrlExtra": "可选，留空使用默认节点",
     "modelExtra": "LLM 模型名称，请参考 API 文档选择可用模型",

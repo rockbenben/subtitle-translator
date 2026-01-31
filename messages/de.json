@@ -148,7 +148,9 @@
     "delayTime": "Verzögerungszeit",
     "CurrentTransConfig": "Aktuelle Konfiguration",
     "useRelay": "API-Relay",
-    "useRelayTooltip": "Aktivieren Sie API-Relay für DeepSeek bei CORS- oder 403-Fehlern"
+    "useRelayTooltip": "Aktivieren Sie API-Relay für DeepSeek bei CORS- oder 403-Fehlern",
+    "enableThinking": "Thinking-Modus aktivieren",
+    "enableThinkingTooltip": "Aktiviert den Thinking-Modus für unterstützte Modelle (Kimi, DeepSeek, GLM, GPT-OSS)"
   },
   "tools": {
     "subtitleTranslator": {

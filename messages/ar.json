@@ -148,7 +148,9 @@
     "delayTime": "تأخير",
     "CurrentTransConfig": "التكوين الحالي",
     "useRelay": "ترحيل API",
-    "useRelayTooltip": "قم بتمكين ترحيل API لـ DeepSeek في حالة حدوث أخطاء CORS أو 403"
+    "useRelayTooltip": "قم بتمكين ترحيل API لـ DeepSeek في حالة حدوث أخطاء CORS أو 403",
+    "enableThinking": "تمكين وضع التفكير",
+    "enableThinkingTooltip": "تمكين وضع التفكير للنماذج المدعومة (Kimi, DeepSeek, GLM, GPT-OSS)"
   },
   "tools": {
     "subtitleTranslator": {

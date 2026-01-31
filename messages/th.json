@@ -148,7 +148,9 @@
     "delayTime": "หน่วงเวลา",
     "CurrentTransConfig": "การตั้งค่าปัจจุบัน",
     "useRelay": "API Relay",
-    "useRelayTooltip": "เปิด API relay สำหรับ DeepSeek เมื่อพบข้อผิดพลาด CORS หรือ 403"
+    "useRelayTooltip": "เปิด API relay สำหรับ DeepSeek เมื่อพบข้อผิดพลาด CORS หรือ 403",
+    "enableThinking": "เปิดใช้งานโหมดการคิด",
+    "enableThinkingTooltip": "เปิดใช้งานโหมดการคิดสำหรับโมเดลที่รองรับ (Kimi, DeepSeek, GLM, GPT-OSS)"
   },
   "tools": {
     "subtitleTranslator": {

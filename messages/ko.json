@@ -148,7 +148,9 @@
     "delayTime": "지연 시간",
     "CurrentTransConfig": "현재 구성",
     "useRelay": "API 중계",
-    "useRelayTooltip": "CORS 또는 403 오류가 발생하면 API 중계를 활성화하여 DeepSeek에 액세스하세요"
+    "useRelayTooltip": "CORS 또는 403 오류가 발생하면 API 중계를 활성화하여 DeepSeek에 액세스하세요",
+    "enableThinking": "Thinking 모드 활성화",
+    "enableThinkingTooltip": "지원되는 모델(Kimi, DeepSeek, GLM, GPT-OSS)에 대해 Thinking 모드 활성화"
   },
   "tools": {
     "subtitleTranslator": {

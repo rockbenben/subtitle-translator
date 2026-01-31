@@ -148,7 +148,9 @@
     "delayTime": "Retraso",
     "CurrentTransConfig": "Config Actual",
     "useRelay": "Relé API",
-    "useRelayTooltip": "Habilita el relé API para DeepSeek si encuentras errores CORS o 403"
+    "useRelayTooltip": "Habilita el relé API para DeepSeek si encuentras errores CORS o 403",
+    "enableThinking": "Activar modo Pensamiento",
+    "enableThinkingTooltip": "Habilita el modo de pensamiento para modelos compatibles (Kimi, DeepSeek, GLM, GPT-OSS)"
   },
   "tools": {
     "subtitleTranslator": {

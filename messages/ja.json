@@ -148,7 +148,9 @@
     "delayTime": "遅延時間",
     "CurrentTransConfig": "現在の設定",
     "useRelay": "API 中継",
-    "useRelayTooltip": "CORS や 403 エラーが発生した場合は、API 中継を有効にして DeepSeek にアクセスしてください"
+    "useRelayTooltip": "CORS や 403 エラーが発生した場合は、API 中継を有効にして DeepSeek にアクセスしてください",
+    "enableThinking": "思考モードを有効化",
+    "enableThinkingTooltip": "対応モデル（Kimi、DeepSeek、GLM、GPT-OSS）で思考モードを有効にする"
   },
   "tools": {
     "subtitleTranslator": {

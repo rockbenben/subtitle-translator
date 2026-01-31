@@ -128,7 +128,7 @@
     "testConfigTooltip": "驗證當前 API 配置是否可用",
     "testConfigSuccess": "API 配置正常",
     "testConfigFail": "API 測試失敗，請檢查配置",
-    "url": "接口地址",
+    "url": "API 接口地址",
     "urlExtra": "支持 localhost 和遠程地址",
     "deeplxUrlExtra": "可選，留空使用默認節點",
     "modelExtra": "LLM 模型名稱，請參考 API 文檔選擇可用模型",
@@ -148,7 +148,9 @@
     "delayTime": "延遲時間",
     "CurrentTransConfig": "當前配置",
     "useRelay": "中轉 API",
-    "useRelayTooltip": "如遇到 CORS 或 403 錯誤，請開啟中轉 API 來訪問 DeepSeek"
+    "useRelayTooltip": "如遇到 CORS 或 403 錯誤，請開啟中轉 API 來訪問 DeepSeek",
+    "enableThinking": "啟用思考模式",
+    "enableThinkingTooltip": "為支持的模型啟用思考模式（Kimi、DeepSeek、GLM、GPT-OSS）"
   },
   "tools": {
     "subtitleTranslator": {

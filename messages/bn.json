@@ -148,7 +148,9 @@
     "delayTime": "বিলম্ব",
     "CurrentTransConfig": "বর্তমান কনফিগারেশন",
     "useRelay": "API রিলে",
-    "useRelayTooltip": "CORS বা 403 ত্রুটির ক্ষেত্রে DeepSeek-এর জন্য API রিলে সক্ষম করুন"
+    "useRelayTooltip": "CORS বা 403 ত্রুটির ক্ষেত্রে DeepSeek-এর জন্য API রিলে সক্ষম করুন",
+    "enableThinking": "Thinking মোড চালু করুন",
+    "enableThinkingTooltip": "সমर्थित মডেলের (Kimi, DeepSeek, GLM, GPT-OSS) জন্য Thinking মোড চালু করুন"
   },
   "tools": {
     "subtitleTranslator": {

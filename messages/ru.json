@@ -148,7 +148,9 @@
     "delayTime": "Время задержки",
     "CurrentTransConfig": "Текущая конфигурация",
     "useRelay": "Ретранслятор API",
-    "useRelayTooltip": "Включите ретранслятор API для DeepSeek при ошибках CORS или 403"
+    "useRelayTooltip": "Включите ретранслятор API для DeepSeek при ошибках CORS или 403",
+    "enableThinking": "Включить режим размышления",
+    "enableThinkingTooltip": "Включить режим размышления для поддерживаемых моделей (Kimi, DeepSeek, GLM, GPT-OSS)"
   },
   "tools": {
     "subtitleTranslator": {
