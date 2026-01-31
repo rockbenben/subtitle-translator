@@ -4,9 +4,12 @@ import type { TranslationService } from "../types";
 import { DEFAULT_SYS_PROMPT, DEFAULT_USER_PROMPT, defaultConfigs } from "../config";
 import { getAIModelPrompt } from "../utils";
 
-import { getErrorMessage, normalizeNumber, requireApiKey, requireUrl } from "./shared";
+import { getErrorMessage, normalizeNumber, requireApiKey, requireUrl, PROXY_ENDPOINTS, THIRD_PARTY_ENDPOINTS } from "./shared";
 
 const normalizePrompt = (value: string | undefined, fallback: string) => (typeof value === "string" && value.trim() ? value : fallback);
+
+// Default API endpoints for services
+const NVIDIA_DEFAULT_URL = "https://integrate.api.nvidia.com/v1/chat/completions";
 
 const getOpenAICompatContent = (data: unknown, serviceName: string): string => {
   const content = (data as { choices?: Array<{ message?: { content?: string } }> } | null)?.choices?.[0]?.message?.content;
@@ -25,7 +28,7 @@ export const deepseek: TranslationService = async (params) => {
   const key = requireApiKey("DeepSeek", apiKey);
 
   // 根据 useRelay 选择直连或中转 API
-  const apiUrl = useRelay ? "https://llm-proxy.aishort.top/api/deepseek" : "https://api.deepseek.com/chat/completions";
+  const apiUrl = useRelay ? THIRD_PARTY_ENDPOINTS.deepseekRelay : "https://api.deepseek.com/chat/completions";
 
   try {
     const response = await fetch(apiUrl, {
@@ -307,35 +310,25 @@ export const openrouter: TranslationService = async (params) => {
   return getOpenAICompatContent(data, "OpenRouter");
 };
 
-// Use local API for: dev mode OR Docker (USE_LOCAL_API=true)
-// Use remote API for: static export (production without USE_LOCAL_API)
-const useLocalApi = process.env.NODE_ENV === "development" || process.env.NEXT_PUBLIC_USE_LOCAL_API === "true";
-
 // Helper function to build thinking parameters based on model
 // Matches exact model names: glm4.7, kimi-k2.5, deepseek-v3.*, gpt-oss-*
 const buildNvidiaThinkingParams = (model: string, enableThinking: boolean): Record<string, unknown> => {
   // GLM4.7: use enable_thinking and clear_thinking
   // Matches: glm4.7, z-ai/glm4.7
   if (/(?:^|\/)glm4\.7$/i.test(model)) {
-    return enableThinking
-      ? { chat_template_kwargs: { enable_thinking: true, clear_thinking: false } }
-      : { chat_template_kwargs: { enable_thinking: false } };
+    return enableThinking ? { chat_template_kwargs: { enable_thinking: true, clear_thinking: false } } : { chat_template_kwargs: { enable_thinking: false } };
   }
 
   // Kimi-k2.5: use thinking, and force temperature=1.0, top_p=1.0
   // Matches: kimi-k2.5, moonshotai/kimi-k2.5
   if (/(?:^|\/)kimi-k2\.5$/i.test(model)) {
-    return enableThinking
-      ? { chat_template_kwargs: { thinking: true }, temperature: 1.0, top_p: 1.0 }
-      : { chat_template_kwargs: { thinking: false }, temperature: 1.0, top_p: 1.0 };
+    return enableThinking ? { chat_template_kwargs: { thinking: true }, temperature: 1.0, top_p: 1.0 } : { chat_template_kwargs: { thinking: false }, temperature: 1.0, top_p: 1.0 };
   }
 
   // DeepSeek-v3.*: use thinking
   // Matches: deepseek-v3.1, deepseek-v3.1-terminus, deepseek-v3.2, deepseek-ai/deepseek-v3.1, etc.
   if (/(?:^|\/)deepseek-v3\./i.test(model)) {
-    return enableThinking
-      ? { chat_template_kwargs: { thinking: true } }
-      : { chat_template_kwargs: { thinking: false } };
+    return enableThinking ? { chat_template_kwargs: { thinking: true } } : { chat_template_kwargs: { thinking: false } };
   }
 
   // GPT-OSS-*: use reasoning_effort
@@ -353,13 +346,12 @@ export const nvidia: TranslationService = async (params) => {
   const effectiveUserPrompt = normalizePrompt(userPrompt, DEFAULT_USER_PROMPT);
   const prompt = getAIModelPrompt(text, effectiveUserPrompt, targetLanguage, sourceLanguage, params.fullText);
 
-  const apiEndpoint = url || defaultConfigs.nvidia.url;
   const effectiveModel = model || defaultConfigs.nvidia.model;
 
   // Build thinking parameters based on model
   const thinkingParams = buildNvidiaThinkingParams(effectiveModel, enableThinking ?? false);
 
-  // Prepare request body - thinking params may override temperature for certain models
+  // Prepare request body
   const requestBody: Record<string, unknown> = {
     messages: [
       { role: "system", content: effectiveSysPrompt },
@@ -370,42 +362,44 @@ export const nvidia: TranslationService = async (params) => {
     ...thinkingParams,
   };
 
-  let response;
+  // If user provided a custom URL, call it directly (no proxy)
+  // Otherwise, use proxy to call the default Nvidia API
+  if (url) {
+    // Direct call to user's custom URL (e.g., private deployment)
+    const key = requireApiKey("Nvidia", apiKey);
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${key}`,
+      },
+      body: JSON.stringify(requestBody),
+      signal: params.signal,
+    });
 
-  if (useLocalApi) {
-    // Route through local proxy to avoid CORS
-    response = await fetch("/api/nvidia", {
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(getErrorMessage(data, response.status));
+    }
+    return getOpenAICompatContent(data, "Nvidia");
+  } else {
+    // Proxy call to default Nvidia API (avoids CORS in browser)
+    const response = await fetch(PROXY_ENDPOINTS.nvidia, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        url: apiEndpoint,
         apiKey,
         ...requestBody,
       }),
       signal: params.signal,
     });
-  } else {
-    // Direct call (for static exports)
-    const headers: Record<string, string> = {
-      "Content-Type": "application/json",
-    };
-    if (apiKey?.trim()) {
-      headers.Authorization = `Bearer ${apiKey}`;
+
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(getErrorMessage(data, response.status));
     }
-
-    response = await fetch(apiEndpoint, {
-      method: "POST",
-      headers,
-      body: JSON.stringify(requestBody),
-      signal: params.signal,
-    });
+    return getOpenAICompatContent(data, "Nvidia");
   }
-
-  const data = await response.json();
-  if (!response.ok) {
-    throw new Error(getErrorMessage(data, response.status));
-  }
-  return getOpenAICompatContent(data, "Nvidia");
 };
 
 export const llm: TranslationService = async (params) => {

@@ -1,5 +1,30 @@
 // Shared helpers for translation service implementations
 
+// Use local API for: dev mode OR Docker (USE_LOCAL_API=true)
+// Use remote API for: static export (production without USE_LOCAL_API)
+export const useLocalApi = process.env.NODE_ENV === "development" || process.env.NEXT_PUBLIC_USE_LOCAL_API === "true";
+
+// Proxy endpoints for services that need CORS bypass
+// These services are proxied through Next.js API routes (dev) or EdgeOne (prod)
+// Used when:
+//   - Official APIs have CORS restrictions in browser environments
+//   - Need server-side API key handling for security
+//   - Static export deployment requires edge function proxies
+export const PROXY_ENDPOINTS = {
+  deepl: useLocalApi ? "/api/deepl" : "https://api-edgeone.newzone.top/api/deepl",
+  nvidia: useLocalApi ? "/api/nvidia" : "https://api-edgeone.newzone.top/api/nvidia",
+} as const;
+
+// Third-party proxy services (community-maintained endpoints)
+// These are external proxy/relay services that provide:
+//   - Free or alternative access to paid APIs
+//   - CORS-friendly endpoints for browser-based applications
+//   - Regional access optimization or rate limit workarounds
+export const THIRD_PARTY_ENDPOINTS = {
+  deeplx: "https://deeplx.aishort.top/translate",
+  deepseekRelay: "https://llm-proxy.aishort.top/api/deepseek",
+} as const;
+
 export const normalizeNumber = (value: unknown, fallback: number): number => {
   const n = typeof value === "number" ? value : Number(value);
   return Number.isFinite(n) ? n : fallback;

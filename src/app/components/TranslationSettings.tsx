@@ -112,7 +112,7 @@ const TranslationSettings = () => {
           <Form layout="vertical">
             {config?.url !== undefined && (
               <Form.Item
-                label={`API ${t("url")}`}
+                label={`${t("url")}`}
                 extra={service === "llm" ? t("urlExtra") : service === "azureopenai" ? undefined : t("deeplxUrlExtra")}
                 required={service === "llm" || service === "azureopenai"}>
                 <Input
@@ -208,7 +208,7 @@ const TranslationSettings = () => {
                 <Form.Item
                   label={t("userPrompt")}
                   extra={`${t("userPromptExtra")}: \${sourceLanguage} ${t("for")} ${tCommon("sourceLanguage")}, \${targetLanguage} ${t("for")} ${tCommon("targetLanguage")}, \${content} ${t(
-                    "for"
+                    "for",
                   )} ${t("textToTranslate")}, \${fullText} ${t("for")} full text`}>
                   <TextArea value={userPrompt} onChange={(e) => setUserPrompt(e.target.value)} autoSize={{ minRows: 2, maxRows: 6 }} aria-label={t("userPrompt")} />
                 </Form.Item>

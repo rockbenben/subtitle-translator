@@ -2,13 +2,7 @@
 
 import type { TranslationService } from "../types";
 
-import { getErrorMessage, requireApiKey } from "./shared";
-
-// Use local API for: dev mode OR Docker (USE_LOCAL_API=true)
-// Use remote API for: static export (production without USE_LOCAL_API)
-const useLocalApi = process.env.NODE_ENV === "development" || process.env.NEXT_PUBLIC_USE_LOCAL_API === "true";
-const deeplEndpoint = useLocalApi ? "/api/deepl" : "https://api-edgeone.newzone.top/api/deepl";
-const deeplxEndpoint = "https://deeplx.aishort.top/translate";
+import { getErrorMessage, requireApiKey, PROXY_ENDPOINTS, THIRD_PARTY_ENDPOINTS } from "./shared";
 
 const getAzureRegion = (region: string | undefined): string => {
   const value = region?.trim();
@@ -63,7 +57,7 @@ export const deepl: TranslationService = async (params) => {
     ...(sourceLanguage !== "auto" && { source_lang: sourceLanguage }),
   };
 
-  const apiEndpoint = url || deeplEndpoint;
+  const apiEndpoint = url || PROXY_ENDPOINTS.deepl;
   const response = await fetch(apiEndpoint, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -88,7 +82,7 @@ export const deeplx: TranslationService = async (params) => {
     ...(sourceLanguage !== "auto" && { source_lang: sourceLanguage }),
   };
 
-  const apiEndpoint = url || deeplxEndpoint;
+  const apiEndpoint = url || THIRD_PARTY_ENDPOINTS.deeplx;
   const response = await fetch(apiEndpoint, {
     method: "POST",
     headers: { "Content-Type": "application/json" },

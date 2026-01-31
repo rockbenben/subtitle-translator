@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
 interface NvidiaRequest {
-  url: string;
   apiKey?: string;
   messages: Array<{ role: string; content: string }>;
   model: string;
@@ -11,14 +10,12 @@ interface NvidiaRequest {
   reasoning_effort?: string;
 }
 
+const NVIDIA_API_URL = "https://integrate.api.nvidia.com/v1/chat/completions";
+
 export async function POST(req: NextRequest) {
   try {
     const body = (await req.json()) as NvidiaRequest;
-    const { url, apiKey, messages, model, temperature, top_p, chat_template_kwargs, reasoning_effort } = body;
-
-    if (!url) {
-      return NextResponse.json({ error: "Missing required parameter: url" }, { status: 400 });
-    }
+    const { apiKey, messages, model, temperature, top_p, chat_template_kwargs, reasoning_effort } = body;
 
     if (!messages || !Array.isArray(messages)) {
       return NextResponse.json({ error: "Missing required parameter: messages" }, { status: 400 });
@@ -42,9 +39,9 @@ export async function POST(req: NextRequest) {
     if (chat_template_kwargs !== undefined) requestBody.chat_template_kwargs = chat_template_kwargs;
     if (reasoning_effort !== undefined) requestBody.reasoning_effort = reasoning_effort;
 
-    console.log("Nvidia proxy request:", { url, model, hasApiKey: !!apiKey?.trim() });
+    console.log("Nvidia proxy request:", { model, hasApiKey: !!apiKey?.trim() });
 
-    const response = await fetch(url, {
+    const response = await fetch(NVIDIA_API_URL, {
       method: "POST",
       headers,
       body: JSON.stringify(requestBody),
@@ -63,10 +60,10 @@ export async function POST(req: NextRequest) {
       console.error("Nvidia API returned non-JSON response:", responseText.substring(0, 500));
       return NextResponse.json(
         {
-          error: `Nvidia API returned invalid response (HTTP ${response.status}). Check your API URL and key.`,
+          error: `Nvidia API returned invalid response (HTTP ${response.status}). Check your API key.`,
           details: responseText.substring(0, 300),
         },
-        { status: 502 }
+        { status: 502 },
       );
     }
 

@@ -177,7 +177,7 @@ export const defaultConfigs = {
     contextWindow: 50,
   },
   nvidia: {
-    url: "https://integrate.api.nvidia.com/v1/chat/completions",
+    url: "",
     apiKey: "",
     model: "deepseek-ai/deepseek-v3.2",
     temperature: 0.7,
