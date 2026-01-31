@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Flex, Card, Button, Typography, Input, InputNumber, Upload, Form, Space, App, Tooltip, Segmented, Spin, Row, Col, Divider, Switch, Collapse } from "antd";
+import { Flex, Card, Button, Typography, Input, Upload, Form, Space, App, Tooltip, Segmented, Spin, Row, Col, Divider, Switch, Collapse } from "antd";
 import { CopyOutlined, InboxOutlined, SettingOutlined, FileTextOutlined, ClearOutlined, FormatPainterOutlined, GlobalOutlined, ImportOutlined, SaveOutlined, ControlOutlined } from "@ant-design/icons";
 import { useTranslations } from "next-intl";
 import { useCopyToClipboard } from "@/app/hooks/useCopyToClipboard";
@@ -25,7 +25,7 @@ import MultiLanguageSettingsModal from "@/app/components/MultiLanguageSettingsMo
 
 const { TextArea } = Input;
 const { Dragger } = Upload;
-const { Paragraph, Text } = Typography;
+const { Text } = Typography;
 
 const SubtitleTranslator = () => {
   const tSubtitle = useTranslations("subtitle");
@@ -107,7 +107,7 @@ const SubtitleTranslator = () => {
     setTranslatedText("");
   }, [sourceText, setExtractedText, setTranslatedText]);
 
-  const performTranslation = async (sourceText: string, fileNameSet?: string, fileIndex?: number, totalFiles?: number, documentType?: "subtitle" | "markdown" | "generic") => {
+  const performTranslation = async (sourceText: string, fileNameSet?: string, fileIndex?: number, totalFiles?: number) => {
     const lines = splitTextIntoLines(sourceText);
     const fileType = detectSubtitleFormat(lines);
     if (fileType === "error") {

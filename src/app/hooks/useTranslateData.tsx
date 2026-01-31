@@ -331,7 +331,7 @@ const useTranslateData = () => {
             const textPreview = text.length > 30 ? `${text.substring(0, 30)}...` : text;
             console.warn(`Translation attempt ${attemptNumber} failed for "${textPreview}": ${(error as Error).message} (${retriesLeft} retries left)`);
           },
-        }
+        },
       );
     } catch (error) {
       const textPreview = text.length > 30 ? `${text.substring(0, 30)}...` : text;
@@ -347,7 +347,7 @@ const useTranslateData = () => {
     cacheSuffix: string,
     updateProgress: (current: number, total: number) => void,
     documentType: "subtitle" | "markdown" | "generic" = "subtitle",
-    fullText?: string
+    fullText?: string,
   ) => {
     const initialContextWindow = Math.min(translationConfig.contextWindow || 20, contentLines.length);
     const translatedLines = new Array(contentLines.length);
@@ -379,7 +379,7 @@ const useTranslateData = () => {
             ...translationConfig,
             userPrompt: buildContextPrompt(contextWithMarkers, effectiveUserPrompt, batchEnd - batchStart, documentType),
           },
-          fullText
+          fullText,
         );
 
         const translatedBatch = extractTranslatedLinesWithNumbers(result || "", batchEnd - batchStart);
@@ -471,7 +471,7 @@ const useTranslateData = () => {
       if (!translatedLines[i]) {
         throw new Error(
           `翻译失败：第 ${i + 1} 行在多次重试后仍未成功翻译，请检查 API 设置或稍后重试。\n` +
-            `Translation failed: Line ${i + 1} could not be translated after multiple retries. Please check API settings or retry later.`
+            `Translation failed: Line ${i + 1} could not be translated after multiple retries. Please check API settings or retry later.`,
         );
       }
     }
@@ -486,7 +486,7 @@ const useTranslateData = () => {
     currentTargetLang: string,
     fileIndex: number = 0,
     totalFiles: number = 1,
-    documentType?: "subtitle" | "markdown" | "generic"
+    documentType?: "subtitle" | "markdown" | "generic",
   ) => {
     const config = getCurrentConfig();
     const concurrency = Math.max(Number(config?.batchSize) || 10, 1);
@@ -545,7 +545,7 @@ const useTranslateData = () => {
             if (baseDelay > 0 && completedCount < contentLines.length) {
               await delay(baseDelay);
             }
-          })
+          }),
         );
 
         await Promise.all(promises);

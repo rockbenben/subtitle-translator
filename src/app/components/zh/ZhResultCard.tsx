@@ -6,7 +6,6 @@ import { CopyOutlined, DownloadOutlined, SwapOutlined, ClearOutlined, InfoCircle
 import { useTextStats } from "@/app/hooks/useTextStats";
 
 const { TextArea } = Input;
-const { Paragraph } = Typography;
 
 interface ZhResultCardProps {
   /** 结果文本（直接绑定状态） */

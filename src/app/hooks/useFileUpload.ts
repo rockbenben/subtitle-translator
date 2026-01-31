@@ -2,7 +2,6 @@
 import { useState } from "react";
 import { normalizeNewlines } from "@/app/utils";
 import type { UploadFile, UploadProps } from "antd";
-import jschardet from "jschardet";
 
 const useFileUpload = () => {
   const [sourceText, setSourceText] = useState<string>("");
@@ -16,7 +15,7 @@ const useFileUpload = () => {
     setIsFileProcessing(true);
     const reader = new FileReader();
 
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
       const buffer = e.target?.result as ArrayBuffer;
       const uint8Array = new Uint8Array(buffer);
 
@@ -28,6 +27,8 @@ const useFileUpload = () => {
         .join("");
 
       // 检测编码（基于样本），后续仍对完整内容进行解码
+      // Lazy load jschardet
+      const jschardet = (await import("jschardet")).default;
       const detected = jschardet.detect(sampleString);
       console.log("Detected encoding", detected);
 

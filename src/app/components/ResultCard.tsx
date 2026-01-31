@@ -5,7 +5,6 @@ import { CopyOutlined, DownloadOutlined } from "@ant-design/icons";
 import { useTranslations } from "next-intl";
 
 const { TextArea } = Input;
-const { Paragraph } = Typography;
 
 interface ResultCardProps {
   /** Card title - defaults to "translationResult" translation key */
