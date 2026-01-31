@@ -72,6 +72,19 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(data, { status: response.status });
     }
 
+    if (response.ok && data.choices?.[0]?.message?.content) {
+      const isMinimax = model.toLowerCase().includes("minimax-m2");
+
+      if (isMinimax) {
+        let content = data.choices[0].message.content;
+        // Strip <think>...</think> tags and everything inside them
+        // Use a non-greedy regex to match correctly if multiple tags exist
+        content = content.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
+        data.choices[0].message.content = content;
+        console.log(`Stripped <think> tags for model: ${model}`);
+      }
+    }
+
     return NextResponse.json(data);
   } catch (error: unknown) {
     console.error("Nvidia proxy error:", error);
