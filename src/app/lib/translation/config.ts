@@ -75,10 +75,16 @@ export const TRANSLATION_SERVICES: TranslationServiceInfo[] = [
     docs: "https://openrouter.ai/models?q=free",
     apiKeyUrl: "https://openrouter.ai/settings/keys",
   },
+  {
+    value: "nvidia",
+    label: "Nvidia NIM",
+    docs: "https://build.nvidia.com/explore/discover",
+    apiKeyUrl: "https://build.nvidia.com/",
+  },
   { value: "llm", label: "Custom LLM" },
 ];
 
-export const LLM_MODELS = ["deepseek", "openai", "gemini", "perplexity", "azureopenai", "siliconflow", "groq", "openrouter", "llm"];
+export const LLM_MODELS = ["deepseek", "openai", "gemini", "perplexity", "azureopenai", "siliconflow", "groq", "openrouter", "nvidia", "llm"];
 
 export const categorizedOptions = [
   ...TRANSLATION_SERVICES.filter((s) => !LLM_MODELS.includes(s.value)).map((s) => ({
@@ -169,6 +175,15 @@ export const defaultConfigs = {
     temperature: 0.7,
     batchSize: 20,
     contextWindow: 50,
+  },
+  nvidia: {
+    url: "https://integrate.api.nvidia.com/v1/chat/completions",
+    apiKey: "",
+    model: "deepseek-ai/deepseek-v3.2",
+    temperature: 0.7,
+    batchSize: 20,
+    contextWindow: 50,
+    enableThinking: false,
   },
   llm: {
     url: "http://127.0.0.1:11434/v1/chat/completions",

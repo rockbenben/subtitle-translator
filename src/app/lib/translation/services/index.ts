@@ -23,6 +23,7 @@ export const translationServices: Record<string, TranslationService> = {
   siliconflow: llm.siliconflow,
   groq: llm.groq,
   openrouter: llm.openrouter,
+  nvidia: llm.nvidia,
   llm: llm.llm,
 };
 

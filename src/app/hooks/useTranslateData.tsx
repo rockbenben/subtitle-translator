@@ -298,6 +298,7 @@ const useTranslateData = () => {
       ...(config.sysPrompt !== undefined ? { sysPrompt: config.sysPrompt } : {}),
       ...(config.userPrompt !== undefined ? { userPrompt: config.userPrompt } : {}),
       ...(config.translationMethod === "deepseek" && config.useRelay !== undefined ? { useRelay: config.useRelay } : {}),
+      ...(config.translationMethod === "nvidia" && config.enableThinking !== undefined ? { enableThinking: config.enableThinking } : {}),
       ...(fullText !== undefined ? { fullText } : {}),
     };
 

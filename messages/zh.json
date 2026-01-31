@@ -148,7 +148,9 @@
     "delayTime": "延迟时间",
     "CurrentTransConfig": "当前配置",
     "useRelay": "中转 API",
-    "useRelayTooltip": "如遇到 CORS 或 403 错误，请开启中转 API 来访问 DeepSeek"
+    "useRelayTooltip": "如遇到 CORS 或 403 错误，请开启中转 API 来访问 DeepSeek",
+    "enableThinking": "启用思考模式",
+    "enableThinkingTooltip": "为支持的模型启用思考模式（Kimi、DeepSeek、GLM、GPT-OSS）"
   },
   "tools": {
     "subtitleTranslator": {
