@@ -7,6 +7,7 @@ interface TranslationRequest {
   source_lang?: string;
   target_lang: string;
   authKey: string;
+  tag_handling?: "html" | "xml";
 }
 
 const TARGET_LANG_MAPPING: Record<string, string> = {
@@ -22,7 +23,7 @@ export async function POST(req: NextRequest) {
     // 2. 安全地解析 JSON 并断言为我们定义的接口
     // 先转为 unknown 再转为接口是更安全的做法，或者直接断言
     const body = (await req.json()) as TranslationRequest;
-    const { text, source_lang, target_lang: rawTargetLang, authKey } = body;
+    const { text, source_lang, target_lang: rawTargetLang, authKey, tag_handling } = body;
 
     // 验证请求参数
     if (!text || !rawTargetLang) {
@@ -45,7 +46,8 @@ export async function POST(req: NextRequest) {
     const result = await translator.translateText(
       text,
       (source_lang as deepl.SourceLanguageCode) || null, // 如果未提供源语言，则为自动检测
-      target_lang as deepl.TargetLanguageCode
+      target_lang as deepl.TargetLanguageCode,
+      tag_handling ? { tagHandling: tag_handling } : undefined,
     );
 
     // 返回翻译结果
@@ -73,7 +75,7 @@ export async function POST(req: NextRequest) {
           error: `DeepL API error: ${errorMsg}`,
           suggestion: "请更新您的语言代码。例如，使用'en-US'或'en-GB'代替'en'，使用'pt-BR'或'pt-PT'代替'pt'。",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 

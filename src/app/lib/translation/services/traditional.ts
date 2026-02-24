@@ -54,6 +54,7 @@ export const deepl: TranslationService = async (params) => {
     text,
     target_lang: targetLanguage,
     authKey: key,
+    tag_handling: "html",
     ...(sourceLanguage !== "auto" && { source_lang: sourceLanguage }),
   };
 
