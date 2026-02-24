@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(data, { status: response.status });
     }
 
-    if (response.ok && data.choices?.[0]?.message?.content) {
+    if (data.choices?.[0]?.message?.content) {
       const isMinimax = model.toLowerCase().includes("minimax-m2");
 
       if (isMinimax) {

@@ -1,18 +1,12 @@
 import { useState, useEffect, useRef } from "react";
 import { loadFromLocalStorage, saveToLocalStorage } from "@/app/utils/localStorageUtils";
 
-export function useLocalStorage<T>(key: string, defaultValue: T) {
-  // Initialize with defaultValue to ensure server and client match during hydration
-  const [value, setValue] = useState<T>(defaultValue);
-
-  // Load from local storage after mount
-  useEffect(() => {
+export function useLocalStorage<T>(key: string, defaultValue: T): [T, (value: T | ((prev: T) => T)) => void] {
+  const [value, setValue] = useState<T>(() => {
+    if (typeof window === "undefined") return defaultValue;
     const storedValue = loadFromLocalStorage(key);
-    if (storedValue !== null) {
-      setValue(storedValue);
-    }
-  }, [key]);
-
+    return storedValue !== null ? (storedValue as T) : defaultValue;
+  });
   const isMounted = useRef(false);
 
   useEffect(() => {
@@ -23,5 +17,5 @@ export function useLocalStorage<T>(key: string, defaultValue: T) {
     }
   }, [key, value]);
 
-  return [value, setValue] as const;
+  return [value, setValue];
 }

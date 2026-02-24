@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { Modal, Input, Button, Space, App, Typography } from "antd";
 import { useTranslations, useLocale } from "next-intl";
 import { languages } from "@/app/lib/translation";
@@ -32,12 +32,15 @@ const MultiLanguageSettingsModal = ({ open, onClose, target_langs, setTarget_lan
 
   const [inputValue, setInputValue] = useState("");
 
-  // Update input value when modal opens
-  useEffect(() => {
-    if (open) {
-      setInputValue(target_langs.join(", "));
-    }
-  }, [open, target_langs]);
+  // Sync input value when modal finishes opening (avoids set-state-in-effect and ref-during-render)
+  const handleAfterOpenChange = useCallback(
+    (isOpen: boolean) => {
+      if (isOpen) {
+        setInputValue(target_langs.join(", "));
+      }
+    },
+    [target_langs],
+  );
 
   const handleApply = () => {
     // Parse input: split by comma (English/Chinese) or space
@@ -65,6 +68,7 @@ const MultiLanguageSettingsModal = ({ open, onClose, target_langs, setTarget_lan
       title={t("multiLangSettingsTitle")}
       open={open}
       onCancel={onClose}
+      afterOpenChange={handleAfterOpenChange}
       footer={
         <Space>
           <Button onClick={onClose}>{t("cancel")}</Button>
