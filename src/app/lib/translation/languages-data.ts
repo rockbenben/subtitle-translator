@@ -71,6 +71,7 @@ export const languages: LanguageOption[] = [
   { value: "gu", name: "Gujarati", nativelabel: "ગુજરાતી" },
   { value: "kn", name: "Kannada", nativelabel: "ಕನ್ನಡ" },
   { value: "ml", name: "Malayalam", nativelabel: "മലയാളം" },
+  { value: "si", name: "Sinhala", nativelabel: "සිංහල" },
   { value: "pa", name: "Punjabi", nativelabel: "ਪੰਜਾਬੀ" },
   { value: "ne", name: "Nepali", nativelabel: "नेपाली" },
   { value: "bho", name: "Bhojpuri", nativelabel: "भोजपुरी" },
@@ -87,7 +88,7 @@ export const languages: LanguageOption[] = [
 ];
 
 // DeepL/DeepLX 不支持的语言
-const DEEPL_UNSUPPORTED_LANGS = new Set(["kn", "am", "ug", "lo"]);
+const DEEPL_UNSUPPORTED_LANGS = new Set(["kn", "am", "ug", "si", "lo"]);
 
 // Azure 不支持的语言（仅 jv）
 const AZURE_UNSUPPORTED_LANGS = new Set(["jv"]);
