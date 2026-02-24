@@ -195,7 +195,7 @@ const TranslationSettings = () => {
                   step={0.1}
                   value={config.temperature as number | undefined}
                   onChange={(value) => handleConfigChange(service, "temperature", value ?? 0)}
-                  style={{ width: "100%" }}
+                  className="w-full"
                   aria-label="Temperature"
                 />
               </Form.Item>

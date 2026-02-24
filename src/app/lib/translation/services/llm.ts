@@ -8,9 +8,6 @@ import { getErrorMessage, normalizeNumber, requireApiKey, requireUrl, PROXY_ENDP
 
 const normalizePrompt = (value: string | undefined, fallback: string) => (typeof value === "string" && value.trim() ? value : fallback);
 
-// Default API endpoints for services
-const NVIDIA_DEFAULT_URL = "https://integrate.api.nvidia.com/v1/chat/completions";
-
 const getOpenAICompatContent = (data: unknown, serviceName: string): string => {
   const content = (data as { choices?: Array<{ message?: { content?: string } }> } | null)?.choices?.[0]?.message?.content;
   if (typeof content !== "string") {

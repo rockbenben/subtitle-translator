@@ -410,7 +410,7 @@ const SubtitleTranslator = () => {
                 </Button>
               </Tooltip>
             }
-            className="h-full shadow-sm">
+            className="shadow-md border-transparent hover:shadow-lg transition-shadow duration-300">
             <Dragger
               customRequest={({ file }) => handleFileUpload(file as File)}
               accept=".srt,.ass,.vtt,.lrc"
@@ -441,7 +441,7 @@ const SubtitleTranslator = () => {
                 />
                 {sourceText && (
                   <Flex justify="end" className="mt-2">
-                    <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                    <Typography.Text type="secondary" className="!text-xs">
                       {sourceStats.charCount} {t("charLabel")} / {sourceStats.lineCount} {t("lineLabel")}
                     </Typography.Text>
                   </Flex>
@@ -480,7 +480,7 @@ const SubtitleTranslator = () => {
                 <SettingOutlined /> {t("configuration")}
               </Space>
             }
-            className="shadow-sm"
+            className="shadow-md border-transparent hover:shadow-lg transition-shadow duration-300"
             extra={
               <Space>
                 <Tooltip title={t("exportSettingTooltip")}>
@@ -537,13 +537,13 @@ const SubtitleTranslator = () => {
               )}
             </Form>
 
-            <Divider style={{ margin: "12px 0" }} />
+            <Divider className="!my-3" />
 
             <Collapse
               ghost
+              size="small"
               activeKey={activeCollapseKeys}
               onChange={(keys) => setActiveCollapseKeys(typeof keys === "string" ? [keys] : keys)}
-              expandIconPlacement="end"
               items={[
                 {
                   key: "subtitle",
@@ -555,7 +555,7 @@ const SubtitleTranslator = () => {
                   ),
                   children: (
                     <Form layout="vertical" className="w-full">
-                      <Form.Item style={{ marginBottom: 0 }}>
+                      <Form.Item className="!mb-0">
                         <div className="flex flex-col gap-2">
                           <Segmented
                             block
@@ -651,7 +651,7 @@ const SubtitleTranslator = () => {
                       <FileTextOutlined /> {t("extractedText")}
                     </Space>
                   }
-                  className="shadow-sm h-full"
+                  className="shadow-md border-transparent hover:shadow-lg transition-shadow duration-300 h-full"
                   extra={
                     <Button type="text" icon={<CopyOutlined />} onClick={() => copyToClipboard(extractedText)}>
                       {t("copy")}

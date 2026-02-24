@@ -20,9 +20,9 @@ const TranslationAPISelector = ({ translationMethod, setTranslationMethod, confi
   const methodLabel = findMethodLabel(translationMethod);
 
   return (
-    <Form.Item label={t("translationAPI")} style={{ marginTop: 8 }}>
+    <Form.Item label={t("translationAPI")} className="!mt-2">
       <Space.Compact className="w-full">
-        <Select showSearch value={translationMethod} onChange={(e) => setTranslationMethod(e)} options={categorizedOptions} style={{ width: "40%" }} aria-label={t("translationAPI")} />
+        <Select showSearch value={translationMethod} onChange={(e) => setTranslationMethod(e)} options={categorizedOptions} className="w-[40%]" aria-label={t("translationAPI")} />
         {config?.apiKey !== undefined && translationMethod !== "llm" && (
           <Tooltip title={`${t("enter")} ${methodLabel} API Key`}>
             <Input.Password
@@ -30,7 +30,7 @@ const TranslationAPISelector = ({ translationMethod, setTranslationMethod, confi
               placeholder={`API Key`}
               value={config.apiKey as string | undefined}
               onChange={(e) => handleConfigChange(translationMethod, "apiKey", e.target.value)}
-              style={{ width: "60%" }}
+              className="w-[60%]"
               aria-label={`${methodLabel} API Key`}
             />
           </Tooltip>

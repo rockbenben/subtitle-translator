@@ -73,7 +73,7 @@ export function LanguageSelector() {
         value={langQuery}
         autoFocus={isMobile ? false : langOpen}
         onChange={(e) => setLangQuery(e.target.value)}
-        style={{ marginBottom: 12 }}
+        className="mb-2"
       />
       <div style={{ maxHeight: isMobile ? "60vh" : 360, overflowY: "auto", overflowX: "hidden", paddingBottom: 4 }}>
         <Row gutter={[8, 8]}>

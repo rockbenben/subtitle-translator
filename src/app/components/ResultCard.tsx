@@ -70,7 +70,7 @@ const ResultCard = ({ title, content, onChange, charCount, lineCount, showStats 
       />
       {showStats && charCount && lineCount && (
         <Flex justify="end" className="mt-2">
-          <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+          <Typography.Text type="secondary" className="!text-xs">
             {charCount} {t("charLabel")} / {lineCount} {t("lineLabel")}
           </Typography.Text>
         </Flex>

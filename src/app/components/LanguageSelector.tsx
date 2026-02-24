@@ -57,8 +57,8 @@ const LanguageSelector = ({ sourceLanguage, targetLanguage, target_langs, multiL
   // Custom dropdown content for multi-language mode
   const dropdownRender = () => (
     <div style={{ padding: 8 }}>
-      <Input prefix={<SearchOutlined />} placeholder={t("search")} value={searchValue} onChange={(e) => setSearchValue(e.target.value)} style={{ marginBottom: 8 }} allowClear />
-      <Flex gap={8} style={{ marginBottom: 8 }}>
+      <Input prefix={<SearchOutlined />} placeholder={t("search")} value={searchValue} onChange={(e) => setSearchValue(e.target.value)} className="!mb-2" allowClear />
+      <Flex gap={8} className="!mb-2">
         <Button size="small" onClick={handleSelectAll}>
           {t("selectAll")}
         </Button>
@@ -66,11 +66,11 @@ const LanguageSelector = ({ sourceLanguage, targetLanguage, target_langs, multiL
           {t("clearAll")}
         </Button>
       </Flex>
-      <Divider style={{ margin: "8px 0" }} />
+      <Divider className="!my-0" />
       <div style={{ maxHeight: 240, overflowY: "auto" }}>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 4 }}>
           {filteredOptions.map((opt) => (
-            <Checkbox key={opt.value} checked={target_langs.includes(opt.value)} onChange={(e) => handleCheckboxChange(opt.value, e.target.checked)} style={{ marginInlineStart: 0 }}>
+            <Checkbox key={opt.value} checked={target_langs.includes(opt.value)} onChange={(e) => handleCheckboxChange(opt.value, e.target.checked)} className="!m-0">
               {opt.label}
             </Checkbox>
           ))}
@@ -83,7 +83,7 @@ const LanguageSelector = ({ sourceLanguage, targetLanguage, target_langs, multiL
     <Card size="small" styles={{ body: { padding: 12 } }}>
       <Row gutter={12}>
         <Col span={12}>
-          <Form.Item label={t("sourceLanguage")} style={{ marginBottom: 8 }}>
+          <Form.Item label={t("sourceLanguage")} className="!mb-2">
             <Select
               value={sourceLanguage}
               onChange={(e) => handleLanguageChange("source", e)}
@@ -99,7 +99,7 @@ const LanguageSelector = ({ sourceLanguage, targetLanguage, target_langs, multiL
           </Form.Item>
         </Col>
         <Col span={12}>
-          <Form.Item label={t("targetLanguage")} style={{ marginBottom: 8 }}>
+          <Form.Item label={t("targetLanguage")} className="!mb-2">
             {!multiLanguageMode ? (
               <Select
                 value={targetLanguage}
