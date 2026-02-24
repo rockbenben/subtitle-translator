@@ -198,7 +198,7 @@ const SubtitleTranslator = () => {
 
           if (!timeLine) return;
 
-          const [startTime, endTime] = timeLine.split(" --> ");
+          const [startTime, endTime] = timeLine.split(" --> ").map((t) => t.trim().split(/\s/)[0]);
           const assStartTime = convertTimeToAss(startTime.trim());
           const assEndTime = convertTimeToAss(endTime.trim());
           const key = `${assStartTime} --> ${assEndTime}`;

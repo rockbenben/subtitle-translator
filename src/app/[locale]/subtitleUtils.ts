@@ -1,5 +1,5 @@
 // 用于匹配 VTT/SRT 时间行（支持默认小时省略、多位数小时以及 1 到 3 位毫秒值）
-export const VTT_SRT_TIME = /^(?:\d+:)?\d{2}:\d{2}[,.]\d{1,3} --> (?:\d+:)?\d{2}:\d{2}[,.]\d{1,3}$/;
+export const VTT_SRT_TIME = /^(?:\d+:)?\d{2}:\d{2}[,.]\d{1,3} --> (?:\d+:)?\d{2}:\d{2}[,.]\d{1,3}/;
 // LRC 格式的时间标记正则表达式
 export const LRC_TIME_REGEX = /^\[\d{2}:\d{2}(\.\d{2,3})?\]/;
 const LRC_METADATA_REGEX = /^\[(ar|ti|al|by|offset|re|ve):/i;
@@ -111,7 +111,7 @@ export const filterSubLines = (lines: string[], fileType: string) => {
 
     if (fileType === "srt" || fileType === "vtt") {
       if (!startExtracting) {
-        const isTimecode = /^[\d:,]+ --> [\d:,]+$/.test(line) || /^[\d:.]+ --> [\d:.]+$/.test(line);
+        const isTimecode = /^[\d:,]+ --> [\d:,]+/.test(line) || /^[\d:.]+ --> [\d:.]+/.test(line);
         if (isTimecode) {
           startExtracting = true;
         }
@@ -119,13 +119,14 @@ export const filterSubLines = (lines: string[], fileType: string) => {
 
       if (startExtracting) {
         if (fileType === "vtt") {
-          const isTimecode = /^[\d:.]+ --> [\d:.]+$/.test(trimmedLine);
+          const isTimecode = /^[\d:.]+ --> [\d:.]+/.test(trimmedLine);
           const isWebVTTHeader = trimmedLine.startsWith("WEBVTT");
           const isComment = trimmedLine.startsWith("#");
           isContent = isValidSubtitleLine(line) && !isTimecode && !isWebVTTHeader && !isComment;
-          extractedContent = line;
+          // Strip YouTube VTT inline tags: <c>, </c>, and karaoke timestamps like <00:00:06.040>
+          extractedContent = line.replace(/<\/?c>/g, "").replace(/<[\d:.]+>/g, "");
         } else {
-          const isTimecode = /^[\d:,]+ --> [\d:,]+$/.test(trimmedLine);
+          const isTimecode = /^[\d:,]+ --> [\d:,]+/.test(trimmedLine);
           isContent = isValidSubtitleLine(line) && !isTimecode;
           extractedContent = line;
         }
