@@ -122,10 +122,21 @@ const useTranslateData = () => {
   const handleConfigChange = (method: string, field: string, value: string | number | boolean) => {
     setTranslationConfigs((prev) => {
       const currentConfig = prev[method];
-      if (!currentConfig) return prev;
+      const defaultConfig = (defaultConfigs as unknown as TranslationConfigs)[method];
+
+      // If the config does not exist or structure is invalid, use the defaultConfig as base
+      // but preserve any existing apiKey if present
+      let baseConfig = currentConfig;
+      if (!currentConfig || !isConfigStructureValid(currentConfig as Record<string, unknown>, defaultConfig as Record<string, unknown>)) {
+        baseConfig = {
+          ...defaultConfig,
+          ...(currentConfig && (currentConfig as any).apiKey ? { apiKey: (currentConfig as any).apiKey } : {}),
+        };
+      }
+
       return {
         ...prev,
-        [method]: { ...currentConfig, [field]: value } as TranslationConfig,
+        [method]: { ...baseConfig, [field]: value } as TranslationConfig,
       };
     });
   };
@@ -144,19 +155,26 @@ const useTranslateData = () => {
     });
   };
 
+  // Pure function: Returns valid config without calling setState during render
   const getCurrentConfig = (): TranslationConfig => {
+    // If selected translationMethod doesn't exist in defaults (e.g. stale key in localStorage like "aliyun" -> "qwenMt")
     let effectiveMethod = translationMethod;
-    if (!translationConfigs[effectiveMethod] && !(defaultConfigs as unknown as TranslationConfigs)[effectiveMethod]) {
-      setTranslationMethod(DEFAULT_API);
+    if (!(defaultConfigs as unknown as TranslationConfigs)[effectiveMethod]) {
       effectiveMethod = DEFAULT_API;
     }
 
     const currentConfig = translationConfigs[effectiveMethod];
     const defaultConfig = (defaultConfigs as unknown as TranslationConfigs)[effectiveMethod];
 
+    // If no config found in localStorage, or structure is invalid (missing fields due to update)
+    // We do NOT call setTranslationConfigs here (which causes setState in render errors).
+    // Instead, we just return a merged config on the fly.
+    // It will be fixed in localStorage next time they intentionally change a setting or reset.
     if (!currentConfig || !isConfigStructureValid(currentConfig as Record<string, unknown>, defaultConfig as Record<string, unknown>)) {
-      resetTranslationConfig(effectiveMethod);
-      return defaultConfig;
+      return {
+        ...defaultConfig,
+        ...(currentConfig && (currentConfig as any).apiKey ? { apiKey: (currentConfig as any).apiKey } : {}),
+      };
     }
 
     return currentConfig;
