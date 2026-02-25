@@ -24,6 +24,7 @@ export const translationServices: Record<string, TranslationService> = {
   groq: llm.groq,
   openrouter: llm.openrouter,
   nvidia: llm.nvidia,
+  qwenMt: llm.qwenMt,
   llm: llm.llm,
 };
 
