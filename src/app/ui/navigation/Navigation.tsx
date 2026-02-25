@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, memo } from "react";
+import React, { memo, useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
 import { Layout, Menu, Space, Button, Dropdown, Flex } from "antd";
 import { GithubOutlined, QqOutlined, DiscordOutlined, SunOutlined, MoonOutlined, TeamOutlined, SendOutlined } from "@ant-design/icons";
@@ -35,12 +35,12 @@ export function Navigation() {
   const { resolvedTheme, setTheme } = useTheme();
   const locale = useLocale();
 
-  // mounted 状态用于主题图标的 hydration 安全渲染
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  // useSyncExternalStore for hydration-safe client detection
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
 
   const isChinese = isChineseLocale(locale);
   const currentMenuKey = getCurrentMenuKey(pathname);
