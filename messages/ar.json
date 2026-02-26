@@ -150,7 +150,18 @@
     "useRelay": "ترحيل API",
     "useRelayTooltip": "قم بتمكين ترحيل API لـ DeepSeek في حالة حدوث أخطاء CORS أو 403",
     "enableThinking": "تمكين وضع التفكير",
-    "enableThinkingTooltip": "تمكين وضع التفكير للنماذج المدعومة (Kimi, DeepSeek, GLM, GPT-OSS)"
+    "enableThinkingTooltip": "تمكين وضع التفكير للنماذج المدعومة (Kimi, DeepSeek, GLM, GPT-OSS)",
+    "presetSelect": "اختيار إعداد مسبق",
+    "presetSave": "حفظ الإعداد المسبق",
+    "presetDelete": "حذف الإعداد المسبق",
+    "presetNamePlaceholder": "أدخل اسم الإعداد المسبق",
+    "presetSaved": "تم حفظ الإعداد المسبق",
+    "presetDeleted": "تم حذف الإعداد المسبق",
+    "presetLoaded": "تم تحميل الإعداد المسبق",
+    "presetNameRequired": "يرجى إدخال اسم الإعداد المسبق",
+    "presetUpdate": "تحديث الإعداد المسبق",
+    "presetUpdated": "تم تحديث الإعداد المسبق",
+    "presetDeleteConfirm": "هل تريد حذف هذا الإعداد المسبق؟"
   },
   "tools": {
     "subtitleTranslator": {

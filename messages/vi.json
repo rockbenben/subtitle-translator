@@ -150,7 +150,18 @@
     "useRelay": "Chuyển tiếp API",
     "useRelayTooltip": "Bật chuyển tiếp API cho DeepSeek khi gặp lỗi CORS hoặc 403",
     "enableThinking": "Bật chế độ suy nghĩ",
-    "enableThinkingTooltip": "Bật chế độ suy nghĩ cho các mô hình được hỗ trợ (Kimi, DeepSeek, GLM, GPT-OSS)"
+    "enableThinkingTooltip": "Bật chế độ suy nghĩ cho các mô hình được hỗ trợ (Kimi, DeepSeek, GLM, GPT-OSS)",
+    "presetSelect": "Chọn cài đặt sẵn",
+    "presetSave": "Lưu cài đặt sẵn",
+    "presetDelete": "Xóa cài đặt sẵn",
+    "presetNamePlaceholder": "Nhập tên cài đặt sẵn",
+    "presetSaved": "Đã lưu cài đặt sẵn",
+    "presetDeleted": "Đã xóa cài đặt sẵn",
+    "presetLoaded": "Đã tải cài đặt sẵn",
+    "presetNameRequired": "Vui lòng nhập tên cài đặt sẵn",
+    "presetUpdate": "Cập nhật cài đặt sẵn",
+    "presetUpdated": "Đã cập nhật cài đặt sẵn",
+    "presetDeleteConfirm": "Xóa cài đặt sẵn này?"
   },
   "tools": {
     "subtitleTranslator": {

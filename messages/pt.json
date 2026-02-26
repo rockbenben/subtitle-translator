@@ -150,7 +150,18 @@
     "useRelay": "Relay da API",
     "useRelayTooltip": "Ative o relay da API para DeepSeek em caso de erros CORS ou 403",
     "enableThinking": "Ativar modo Pensamento",
-    "enableThinkingTooltip": "Ativar modo de pensamento para modelos suportados (Kimi, DeepSeek, GLM, GPT-OSS)"
+    "enableThinkingTooltip": "Ativar modo de pensamento para modelos suportados (Kimi, DeepSeek, GLM, GPT-OSS)",
+    "presetSelect": "Selecionar predefinição",
+    "presetSave": "Salvar predefinição",
+    "presetDelete": "Excluir predefinição",
+    "presetNamePlaceholder": "Digite o nome da predefinição",
+    "presetSaved": "Predefinição salva",
+    "presetDeleted": "Predefinição excluída",
+    "presetLoaded": "Predefinição carregada",
+    "presetNameRequired": "Digite um nome para a predefinição",
+    "presetUpdate": "Atualizar predefinição",
+    "presetUpdated": "Predefinição atualizada",
+    "presetDeleteConfirm": "Excluir esta predefinição?"
   },
   "tools": {
     "subtitleTranslator": {

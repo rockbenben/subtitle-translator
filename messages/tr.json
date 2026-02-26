@@ -150,7 +150,18 @@
     "useRelay": "API Aktarıcı",
     "useRelayTooltip": "CORS veya 403 hatalarında DeepSeek için API aktarıcıyı etkinleştirin",
     "enableThinking": "Düşünme Modunu Etkinleştir",
-    "enableThinkingTooltip": "Desteklenen modeller için düşünme modunu etkinleştir (Kimi, DeepSeek, GLM, GPT-OSS)"
+    "enableThinkingTooltip": "Desteklenen modeller için düşünme modunu etkinleştir (Kimi, DeepSeek, GLM, GPT-OSS)",
+    "presetSelect": "Ön Ayar Seç",
+    "presetSave": "Ön Ayarı Kaydet",
+    "presetDelete": "Ön Ayarı Sil",
+    "presetNamePlaceholder": "Ön ayar adını girin",
+    "presetSaved": "Ön ayar kaydedildi",
+    "presetDeleted": "Ön ayar silindi",
+    "presetLoaded": "Ön ayar yüklendi",
+    "presetNameRequired": "Lütfen bir ad girin",
+    "presetUpdate": "Ön Ayarı Güncelle",
+    "presetUpdated": "Ön ayar güncellendi",
+    "presetDeleteConfirm": "Bu ön ayarı silmek istiyor musunuz?"
   },
   "tools": {
     "subtitleTranslator": {

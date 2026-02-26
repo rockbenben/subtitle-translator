@@ -150,7 +150,18 @@
     "useRelay": "API Relay",
     "useRelayTooltip": "เปิด API relay สำหรับ DeepSeek เมื่อพบข้อผิดพลาด CORS หรือ 403",
     "enableThinking": "เปิดใช้งานโหมดการคิด",
-    "enableThinkingTooltip": "เปิดใช้งานโหมดการคิดสำหรับโมเดลที่รองรับ (Kimi, DeepSeek, GLM, GPT-OSS)"
+    "enableThinkingTooltip": "เปิดใช้งานโหมดการคิดสำหรับโมเดลที่รองรับ (Kimi, DeepSeek, GLM, GPT-OSS)",
+    "presetSelect": "เลือกพรีเซ็ต",
+    "presetSave": "บันทึกพรีเซ็ต",
+    "presetDelete": "ลบพรีเซ็ต",
+    "presetNamePlaceholder": "ป้อนชื่อพรีเซ็ต",
+    "presetSaved": "บันทึกพรีเซ็ตแล้ว",
+    "presetDeleted": "ลบพรีเซ็ตแล้ว",
+    "presetLoaded": "โหลดพรีเซ็ตแล้ว",
+    "presetNameRequired": "กรุณาป้อนชื่อพรีเซ็ต",
+    "presetUpdate": "อัปเดตพรีเซ็ต",
+    "presetUpdated": "อัปเดตพรีเซ็ตแล้ว",
+    "presetDeleteConfirm": "ลบพรีเซ็ตนี้หรือไม่?"
   },
   "tools": {
     "subtitleTranslator": {

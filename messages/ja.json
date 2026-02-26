@@ -150,7 +150,18 @@
     "useRelay": "API 中継",
     "useRelayTooltip": "CORS や 403 エラーが発生した場合は、API 中継を有効にして DeepSeek にアクセスしてください",
     "enableThinking": "思考モードを有効化",
-    "enableThinkingTooltip": "対応モデル（Kimi、DeepSeek、GLM、GPT-OSS）で思考モードを有効にする"
+    "enableThinkingTooltip": "対応モデル（Kimi、DeepSeek、GLM、GPT-OSS）で思考モードを有効にする",
+    "presetSelect": "プリセットを選択",
+    "presetSave": "プリセットを保存",
+    "presetDelete": "プリセットを削除",
+    "presetNamePlaceholder": "プリセット名を入力",
+    "presetSaved": "プリセットを保存しました",
+    "presetDeleted": "プリセットを削除しました",
+    "presetLoaded": "プリセットを読み込みました",
+    "presetNameRequired": "プリセット名を入力してください",
+    "presetUpdate": "プリセットを更新",
+    "presetUpdated": "プリセットを更新しました",
+    "presetDeleteConfirm": "このプリセットを削除しますか？"
   },
   "tools": {
     "subtitleTranslator": {

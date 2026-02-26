@@ -150,7 +150,18 @@
     "useRelay": "API-Relay",
     "useRelayTooltip": "Aktivieren Sie API-Relay für DeepSeek bei CORS- oder 403-Fehlern",
     "enableThinking": "Thinking-Modus aktivieren",
-    "enableThinkingTooltip": "Aktiviert den Thinking-Modus für unterstützte Modelle (Kimi, DeepSeek, GLM, GPT-OSS)"
+    "enableThinkingTooltip": "Aktiviert den Thinking-Modus für unterstützte Modelle (Kimi, DeepSeek, GLM, GPT-OSS)",
+    "presetSelect": "Voreinstellung wählen",
+    "presetSave": "Voreinstellung speichern",
+    "presetDelete": "Voreinstellung löschen",
+    "presetNamePlaceholder": "Name der Voreinstellung eingeben",
+    "presetSaved": "Voreinstellung gespeichert",
+    "presetDeleted": "Voreinstellung gelöscht",
+    "presetLoaded": "Voreinstellung geladen",
+    "presetNameRequired": "Bitte einen Namen eingeben",
+    "presetUpdate": "Voreinstellung aktualisieren",
+    "presetUpdated": "Voreinstellung aktualisiert",
+    "presetDeleteConfirm": "Diese Voreinstellung löschen?"
   },
   "tools": {
     "subtitleTranslator": {

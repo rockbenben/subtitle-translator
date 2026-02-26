@@ -150,7 +150,18 @@
     "useRelay": "API रिले",
     "useRelayTooltip": "CORS या 403 त्रुटियों के मामले में DeepSeek के लिए API रिले सक्षम करें",
     "enableThinking": "Thinking मोड सक्षम करें",
-    "enableThinkingTooltip": "समर्थित मॉडल (Kimi, DeepSeek, GLM, GPT-OSS) के लिए Thinking मोड सक्षम करें"
+    "enableThinkingTooltip": "समर्थित मॉडल (Kimi, DeepSeek, GLM, GPT-OSS) के लिए Thinking मोड सक्षम करें",
+    "presetSelect": "प्रीसेट चुनें",
+    "presetSave": "प्रीसेट सहेजें",
+    "presetDelete": "प्रीसेट हटाएं",
+    "presetNamePlaceholder": "प्रीसेट का नाम दर्ज करें",
+    "presetSaved": "प्रीसेट सहेजा गया",
+    "presetDeleted": "प्रीसेट हटाया गया",
+    "presetLoaded": "प्रीसेट लोड हो गया",
+    "presetNameRequired": "कृपया प्रीसेट का नाम दर्ज करें",
+    "presetUpdate": "प्रीसेट अपडेट करें",
+    "presetUpdated": "प्रीसेट अपडेट हो गया",
+    "presetDeleteConfirm": "क्या आप इस प्रीसेट को हटाना चाहते हैं?"
   },
   "tools": {
     "subtitleTranslator": {

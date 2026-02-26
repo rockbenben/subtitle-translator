@@ -150,7 +150,18 @@
     "useRelay": "Relé API",
     "useRelayTooltip": "Habilita el relé API para DeepSeek si encuentras errores CORS o 403",
     "enableThinking": "Activar modo Pensamiento",
-    "enableThinkingTooltip": "Habilita el modo de pensamiento para modelos compatibles (Kimi, DeepSeek, GLM, GPT-OSS)"
+    "enableThinkingTooltip": "Habilita el modo de pensamiento para modelos compatibles (Kimi, DeepSeek, GLM, GPT-OSS)",
+    "presetSelect": "Seleccionar preset",
+    "presetSave": "Guardar preset",
+    "presetDelete": "Eliminar preset",
+    "presetNamePlaceholder": "Ingrese nombre del preset",
+    "presetSaved": "Preset guardado",
+    "presetDeleted": "Preset eliminado",
+    "presetLoaded": "Preset cargado",
+    "presetNameRequired": "Por favor ingrese un nombre",
+    "presetUpdate": "Actualizar preset",
+    "presetUpdated": "Preset actualizado",
+    "presetDeleteConfirm": "¿Eliminar este preset?"
   },
   "tools": {
     "subtitleTranslator": {

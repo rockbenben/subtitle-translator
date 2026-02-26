@@ -150,7 +150,18 @@
     "useRelay": "API Relay",
     "useRelayTooltip": "Enable API relay for DeepSeek if you encounter CORS or 403 errors",
     "enableThinking": "Enable Thinking",
-    "enableThinkingTooltip": "Enable thinking mode for supported models (Kimi, DeepSeek, GLM, GPT-OSS)"
+    "enableThinkingTooltip": "Enable thinking mode for supported models (Kimi, DeepSeek, GLM, GPT-OSS)",
+    "presetSelect": "Select Preset",
+    "presetSave": "Save Preset",
+    "presetDelete": "Delete Preset",
+    "presetNamePlaceholder": "Enter preset name",
+    "presetSaved": "Preset saved",
+    "presetDeleted": "Preset deleted",
+    "presetLoaded": "Preset loaded",
+    "presetNameRequired": "Please enter a preset name",
+    "presetUpdate": "Update Preset",
+    "presetUpdated": "Preset updated",
+    "presetDeleteConfirm": "Delete this preset?"
   },
   "tools": {
     "subtitleTranslator": {

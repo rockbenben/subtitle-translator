@@ -150,7 +150,18 @@
     "useRelay": "中轉 API",
     "useRelayTooltip": "如遇到 CORS 或 403 錯誤，請開啟中轉 API 來訪問 DeepSeek",
     "enableThinking": "啟用思考模式",
-    "enableThinkingTooltip": "為支持的模型啟用思考模式（Kimi、DeepSeek、GLM、GPT-OSS）"
+    "enableThinkingTooltip": "為支持的模型啟用思考模式（Kimi、DeepSeek、GLM、GPT-OSS）",
+    "presetSelect": "選擇預設",
+    "presetSave": "儲存預設",
+    "presetDelete": "刪除預設",
+    "presetNamePlaceholder": "輸入預設名稱",
+    "presetSaved": "預設已儲存",
+    "presetDeleted": "預設已刪除",
+    "presetLoaded": "預設已載入",
+    "presetNameRequired": "請輸入預設名稱",
+    "presetUpdate": "更新預設",
+    "presetUpdated": "預設已更新",
+    "presetDeleteConfirm": "確定要刪除此預設嗎？"
   },
   "tools": {
     "subtitleTranslator": {

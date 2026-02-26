@@ -150,7 +150,18 @@
     "useRelay": "API রিলে",
     "useRelayTooltip": "CORS বা 403 ত্রুটির ক্ষেত্রে DeepSeek-এর জন্য API রিলে সক্ষম করুন",
     "enableThinking": "Thinking মোড চালু করুন",
-    "enableThinkingTooltip": "সমर्थित মডেলের (Kimi, DeepSeek, GLM, GPT-OSS) জন্য Thinking মোড চালু করুন"
+    "enableThinkingTooltip": "সমर्थित মডেলের (Kimi, DeepSeek, GLM, GPT-OSS) জন্য Thinking মোড চালু করুন",
+    "presetSelect": "প্রিসেট নির্বাচন করুন",
+    "presetSave": "প্রিসেট সংরক্ষণ করুন",
+    "presetDelete": "প্রিসেট মুছুন",
+    "presetNamePlaceholder": "প্রিসেটের নাম লিখুন",
+    "presetSaved": "প্রিসেট সংরক্ষিত",
+    "presetDeleted": "প্রিসেট মুছে ফেলা হয়েছে",
+    "presetLoaded": "প্রিসেট লোড হয়েছে",
+    "presetNameRequired": "অনুগ্রহ করে একটি প্রিসেটের নাম লিখুন",
+    "presetUpdate": "প্রিসেট আপডেট করুন",
+    "presetUpdated": "প্রিসেট আপডেট হয়েছে",
+    "presetDeleteConfirm": "এই প্রিসেটটি মুছবেন?"
   },
   "tools": {
     "subtitleTranslator": {

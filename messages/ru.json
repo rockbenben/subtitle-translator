@@ -150,7 +150,18 @@
     "useRelay": "Ретранслятор API",
     "useRelayTooltip": "Включите ретранслятор API для DeepSeek при ошибках CORS или 403",
     "enableThinking": "Включить режим размышления",
-    "enableThinkingTooltip": "Включить режим размышления для поддерживаемых моделей (Kimi, DeepSeek, GLM, GPT-OSS)"
+    "enableThinkingTooltip": "Включить режим размышления для поддерживаемых моделей (Kimi, DeepSeek, GLM, GPT-OSS)",
+    "presetSelect": "Выбрать пресет",
+    "presetSave": "Сохранить пресет",
+    "presetDelete": "Удалить пресет",
+    "presetNamePlaceholder": "Введите название пресета",
+    "presetSaved": "Пресет сохранён",
+    "presetDeleted": "Пресет удалён",
+    "presetLoaded": "Пресет загружен",
+    "presetNameRequired": "Введите название пресета",
+    "presetUpdate": "Обновить пресет",
+    "presetUpdated": "Пресет обновлён",
+    "presetDeleteConfirm": "Удалить этот пресет?"
   },
   "tools": {
     "subtitleTranslator": {
