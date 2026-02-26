@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, memo } from "react";
-import { Tabs, Form, Input, InputNumber, Card, Typography, Button, Space, Tooltip, App, Switch, Grid } from "antd";
+import { Tabs, Form, Input, InputNumber, Card, Typography, Button, Space, Tooltip, App, Switch, Grid, Select, Modal, Popconfirm } from "antd";
 import { TRANSLATION_SERVICES, LLM_MODELS, DEFAULT_SYS_PROMPT, DEFAULT_USER_PROMPT, testTranslation, clearTranslationCache } from "@/app/lib/translation";
 import { useTranslationContext } from "@/app/components/TranslationContext";
 import { useTranslations } from "next-intl";
@@ -15,9 +15,37 @@ const TranslationSettings = () => {
   const t = useTranslations("TranslationSettings");
   const { message } = App.useApp();
   const screens = useBreakpoint();
-  const { translationMethod, setTranslationMethod, translationConfigs, getCurrentConfig, handleConfigChange, resetTranslationConfig, sysPrompt, setSysPrompt, userPrompt, setUserPrompt } =
-    useTranslationContext();
+  const {
+    translationMethod,
+    setTranslationMethod,
+    translationConfigs,
+    getCurrentConfig,
+    handleConfigChange,
+    resetTranslationConfig,
+    sysPrompt,
+    setSysPrompt,
+    userPrompt,
+    setUserPrompt,
+    llmPresets,
+    activePresetId,
+    saveLlmPreset,
+    loadLlmPreset,
+    deleteLlmPreset,
+    updateLlmPreset,
+  } = useTranslationContext();
   const [testingService, setTestingService] = useState<string | null>(null);
+  const [presetModalOpen, setPresetModalOpen] = useState(false);
+  const [presetName, setPresetName] = useState("");
+
+  const handleSavePreset = () => {
+    if (!presetName.trim()) {
+      message.error(t("presetNameRequired"));
+      return;
+    }
+    saveLlmPreset(presetName.trim());
+    setPresetModalOpen(false);
+    message.success(t("presetSaved"));
+  };
 
   const resetTranslationCache = async () => {
     try {
@@ -110,6 +138,53 @@ const TranslationSettings = () => {
             </Space>
           }>
           <Form layout="vertical">
+            {service === "llm" && (
+              <Form.Item label={t("presetSelect")}>
+                <Space.Compact style={{ width: "100%" }}>
+                  <Select
+                    style={{ flex: 1 }}
+                    placeholder={t("presetSelect")}
+                    value={activePresetId || undefined}
+                    onChange={(value) => loadLlmPreset(value)}
+                    allowClear
+                    onClear={() => loadLlmPreset("")}
+                    options={llmPresets.map((p) => ({ label: p.name, value: p.id }))}
+                  />
+                  {activePresetId ? (
+                    <Button
+                      onClick={() => {
+                        updateLlmPreset(activePresetId);
+                        message.success(t("presetUpdated"));
+                      }}>
+                      {t("presetUpdate")}
+                    </Button>
+                  ) : null}
+                  <Button
+                    onClick={() => {
+                      setPresetName("");
+                      setPresetModalOpen(true);
+                    }}>
+                    {t("presetSave")}
+                  </Button>
+                  <Popconfirm
+                    title={t("presetDeleteConfirm")}
+                    onConfirm={() => {
+                      if (activePresetId) {
+                        deleteLlmPreset(activePresetId);
+                        message.success(t("presetDeleted"));
+                      }
+                    }}
+                    disabled={!activePresetId}>
+                    <Button danger disabled={!activePresetId}>
+                      {t("presetDelete")}
+                    </Button>
+                  </Popconfirm>
+                </Space.Compact>
+                <Modal title={t("presetSave")} open={presetModalOpen} onOk={handleSavePreset} onCancel={() => setPresetModalOpen(false)}>
+                  <Input placeholder={t("presetNamePlaceholder")} value={presetName} onChange={(e) => setPresetName(e.target.value)} onPressEnter={handleSavePreset} autoFocus />
+                </Modal>
+              </Form.Item>
+            )}
             {config?.url !== undefined && (
               <Form.Item
                 label={`${t("url")}`}

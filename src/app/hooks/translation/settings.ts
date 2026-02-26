@@ -12,6 +12,7 @@ export interface TranslationSettings {
   targetLanguage: string;
   target_langs: string[];
   multiLanguageMode: boolean;
+  llmPresets?: Array<{ id: string; name: string; config: TranslationConfig; sysPrompt?: string; userPrompt?: string }>;
   exportDate?: string;
   version?: string;
 }
@@ -39,7 +40,7 @@ export const exportTranslationSettings = async (settings: Omit<TranslationSettin
  */
 export const createSettingsFileInput = (
   onSettingsLoaded: (settings: TranslationSettings) => void,
-  readFile: (file: File, callback: (content: string) => void) => void
+  readFile: (file: File, callback: (content: string) => void) => void,
 ): Promise<TranslationSettings> => {
   return new Promise((resolve, reject) => {
     const fileInput = document.createElement("input");

@@ -40,6 +40,14 @@ const MAX_CONTEXT_PADDING = 25;
 
 type TranslationConfigs = Record<string, TranslationConfig>;
 
+type LlmPreset = {
+  id: string;
+  name: string;
+  config: TranslationConfig;
+  sysPrompt?: string;
+  userPrompt?: string;
+};
+
 type PerformTranslation = (sourceText: string, fileNameSet?: string, fileIndex?: number, totalFiles?: number, documentType?: "subtitle" | "markdown" | "generic") => Promise<void>;
 
 type TranslationRuntimeConfig = TranslationConfig & {
@@ -70,6 +78,8 @@ const useTranslateData = () => {
   const [multiLanguageMode, setMultiLanguageMode] = useLocalStorage<boolean>("multiLanguageMode", false);
   const [retryCount, setRetryCount] = useLocalStorage<number>("translationRetryCount", DEFAULT_RETRY_COUNT);
   const [retryTimeout, setRetryTimeout] = useLocalStorage<number>("translationRetryTimeout", DEFAULT_RETRY_TIMEOUT);
+  const [llmPresets, setLlmPresets] = useLocalStorage<LlmPreset[]>("llmPresets", []);
+  const [activePresetId, setActivePresetId] = useLocalStorage<string>("activePresetId", "");
   const [translatedText, setTranslatedText] = useState<string>("");
   const [extractedText, setExtractedText] = useState<string>("");
   const [translateInProgress, setTranslateInProgress] = useState(false);
@@ -93,6 +103,7 @@ const useTranslateData = () => {
         targetLanguage,
         target_langs,
         multiLanguageMode,
+        llmPresets,
       });
       message.success(t("exportSettingSuccess"));
     } catch (error) {
@@ -111,6 +122,7 @@ const useTranslateData = () => {
       if (settings.targetLanguage !== undefined) setTargetLanguage(settings.targetLanguage);
       if (settings.target_langs !== undefined) setTarget_langs(settings.target_langs);
       if (settings.multiLanguageMode !== undefined) setMultiLanguageMode(settings.multiLanguageMode);
+      if (settings.llmPresets !== undefined) setLlmPresets(settings.llmPresets);
       message.success(t("importSettingSuccess"));
     }, readFile).catch((error) => {
       console.error("Import settings error:", error);
@@ -153,6 +165,55 @@ const useTranslateData = () => {
         },
       };
     });
+  };
+
+  const saveLlmPreset = (name: string) => {
+    // Always save the llm config specifically, not whatever getCurrentConfig returns
+    const llmConfig = translationConfigs["llm"];
+    const defaultConfig = (defaultConfigs as unknown as TranslationConfigs)["llm"];
+    const config = llmConfig || defaultConfig;
+    const preset: LlmPreset = {
+      id: String(Date.now()),
+      name,
+      config: { ...config },
+      sysPrompt: effectiveSysPrompt,
+      userPrompt: effectiveUserPrompt,
+    };
+    setLlmPresets((prev) => [...prev, preset]);
+    setActivePresetId(preset.id);
+    return preset;
+  };
+
+  const loadLlmPreset = (id: string) => {
+    if (!id) {
+      setActivePresetId("");
+      return;
+    }
+    const preset = llmPresets.find((p) => p.id === id);
+    if (!preset) return;
+    setTranslationConfigs((prev) => ({
+      ...prev,
+      llm: { ...preset.config },
+    }));
+    if (preset.sysPrompt !== undefined) setSysPrompt(preset.sysPrompt);
+    if (preset.userPrompt !== undefined) setUserPrompt(preset.userPrompt);
+    setActivePresetId(id);
+  };
+
+  const deleteLlmPreset = (id: string) => {
+    setLlmPresets((prev) => prev.filter((p) => p.id !== id));
+    if (activePresetId === id) setActivePresetId("");
+  };
+
+  const renameLlmPreset = (id: string, name: string) => {
+    setLlmPresets((prev) => prev.map((p) => (p.id === id ? { ...p, name } : p)));
+  };
+
+  const updateLlmPreset = (id: string) => {
+    const llmConfig = translationConfigs["llm"];
+    const defaultConfig = (defaultConfigs as unknown as TranslationConfigs)["llm"];
+    const config = llmConfig || defaultConfig;
+    setLlmPresets((prev) => prev.map((p) => (p.id === id ? { ...p, config: { ...config }, sysPrompt: effectiveSysPrompt, userPrompt: effectiveUserPrompt } : p)));
   };
 
   // Pure function: Returns valid config without calling setState during render
@@ -653,6 +714,13 @@ const useTranslateData = () => {
     retryTimeout,
     setRetryTimeout,
     validateTranslate,
+    llmPresets,
+    activePresetId,
+    saveLlmPreset,
+    loadLlmPreset,
+    deleteLlmPreset,
+    renameLlmPreset,
+    updateLlmPreset,
   };
 };
 
