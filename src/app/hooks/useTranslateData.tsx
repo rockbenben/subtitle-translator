@@ -378,6 +378,7 @@ const useTranslateData = () => {
       ...(config.userPrompt !== undefined ? { userPrompt: config.userPrompt } : {}),
       ...(config.translationMethod === "deepseek" && config.useRelay !== undefined ? { useRelay: config.useRelay } : {}),
       ...(config.translationMethod === "nvidia" && config.enableThinking !== undefined ? { enableThinking: config.enableThinking } : {}),
+      ...(config.translationMethod === "qwenMt" && config.domains !== undefined ? { domains: config.domains } : {}),
       ...(fullText !== undefined ? { fullText } : {}),
     };
 
