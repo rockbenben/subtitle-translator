@@ -79,7 +79,7 @@ export const languages: LanguageOption[] = [
   { value: "lo", name: "Lao", nativelabel: "ລາວ" },
   { value: "my", name: "Burmese", nativelabel: "မြန်မာ" },
   { value: "ms", name: "Malay", nativelabel: "Bahasa Melayu" },
-  { value: "fil", name: "Filipino(Tagalog)", nativelabel: "Filipino" },
+  { value: "fil", name: "Filipino(Tagalog)", nativelabel: "Tagalog" },
   { value: "jv", name: "Javanese", nativelabel: "Basa Jawa" },
   { value: "sw", name: "Swahili", nativelabel: "Kiswahili" },
   { value: "ha", name: "Hausa", nativelabel: "هَرْشٜىٰن هَوْسَا" },
