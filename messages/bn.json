@@ -161,7 +161,8 @@
     "presetNameRequired": "অনুগ্রহ করে একটি প্রিসেটের নাম লিখুন",
     "presetUpdate": "প্রিসেট আপডেট করুন",
     "presetUpdated": "প্রিসেট আপডেট হয়েছে",
-    "presetDeleteConfirm": "এই প্রিসেটটি মুছবেন?"
+    "presetDeleteConfirm": "এই প্রিসেটটি মুছবেন?",
+    "qwenMtDomains": "ডোমেইন প্রম্পট (শুধুমাত্র ইংরেজি)"
   },
   "tools": {
     "subtitleTranslator": {

@@ -161,7 +161,8 @@
     "presetNameRequired": "กรุณาป้อนชื่อพรีเซ็ต",
     "presetUpdate": "อัปเดตพรีเซ็ต",
     "presetUpdated": "อัปเดตพรีเซ็ตแล้ว",
-    "presetDeleteConfirm": "ลบพรีเซ็ตนี้หรือไม่?"
+    "presetDeleteConfirm": "ลบพรีเซ็ตนี้หรือไม่?",
+    "qwenMtDomains": "พรอมต์โดเมน (ภาษาอังกฤษเท่านั้น)"
   },
   "tools": {
     "subtitleTranslator": {

@@ -161,7 +161,8 @@
     "presetNameRequired": "Silakan masukkan nama preset",
     "presetUpdate": "Perbarui Preset",
     "presetUpdated": "Preset diperbarui",
-    "presetDeleteConfirm": "Hapus preset ini?"
+    "presetDeleteConfirm": "Hapus preset ini?",
+    "qwenMtDomains": "Prompt Domain (hanya bahasa Inggris)"
   },
   "tools": {
     "subtitleTranslator": {

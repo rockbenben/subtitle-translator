@@ -161,7 +161,8 @@
     "presetNameRequired": "Введите название пресета",
     "presetUpdate": "Обновить пресет",
     "presetUpdated": "Пресет обновлён",
-    "presetDeleteConfirm": "Удалить этот пресет?"
+    "presetDeleteConfirm": "Удалить этот пресет?",
+    "qwenMtDomains": "Промпты домена (только на английском)"
   },
   "tools": {
     "subtitleTranslator": {

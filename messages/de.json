@@ -161,7 +161,8 @@
     "presetNameRequired": "Bitte einen Namen eingeben",
     "presetUpdate": "Voreinstellung aktualisieren",
     "presetUpdated": "Voreinstellung aktualisiert",
-    "presetDeleteConfirm": "Diese Voreinstellung löschen?"
+    "presetDeleteConfirm": "Diese Voreinstellung löschen?",
+    "qwenMtDomains": "Domänen-Prompts (nur Englisch)"
   },
   "tools": {
     "subtitleTranslator": {

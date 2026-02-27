@@ -161,7 +161,8 @@
     "presetNameRequired": "프리셋 이름을 입력하세요",
     "presetUpdate": "프리셋 업데이트",
     "presetUpdated": "프리셋 업데이트됨",
-    "presetDeleteConfirm": "이 프리셋을 삭제하시겠습니까?"
+    "presetDeleteConfirm": "이 프리셋을 삭제하시겠습니까?",
+    "qwenMtDomains": "도메인 프롬프트(영어로만 제공)"
   },
   "tools": {
     "subtitleTranslator": {

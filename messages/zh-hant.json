@@ -161,7 +161,8 @@
     "presetNameRequired": "請輸入預設名稱",
     "presetUpdate": "更新預設",
     "presetUpdated": "預設已更新",
-    "presetDeleteConfirm": "確定要刪除此預設嗎？"
+    "presetDeleteConfirm": "確定要刪除此預設嗎？",
+    "qwenMtDomains": "領域提示詞 (僅支持英文)"
   },
   "tools": {
     "subtitleTranslator": {

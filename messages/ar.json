@@ -161,7 +161,8 @@
     "presetNameRequired": "يرجى إدخال اسم الإعداد المسبق",
     "presetUpdate": "تحديث الإعداد المسبق",
     "presetUpdated": "تم تحديث الإعداد المسبق",
-    "presetDeleteConfirm": "هل تريد حذف هذا الإعداد المسبق؟"
+    "presetDeleteConfirm": "هل تريد حذف هذا الإعداد المسبق؟",
+    "qwenMtDomains": "مطالبات المجال (باللغة الإنجليزية فقط)"
   },
   "tools": {
     "subtitleTranslator": {

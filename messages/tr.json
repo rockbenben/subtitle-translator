@@ -161,7 +161,8 @@
     "presetNameRequired": "Lütfen bir ad girin",
     "presetUpdate": "Ön Ayarı Güncelle",
     "presetUpdated": "Ön ayar güncellendi",
-    "presetDeleteConfirm": "Bu ön ayarı silmek istiyor musunuz?"
+    "presetDeleteConfirm": "Bu ön ayarı silmek istiyor musunuz?",
+    "qwenMtDomains": "Etki Alanı İpuçları (yalnızca İngilizce)"
   },
   "tools": {
     "subtitleTranslator": {

@@ -161,7 +161,8 @@
     "presetNameRequired": "Por favor ingrese un nombre",
     "presetUpdate": "Actualizar preset",
     "presetUpdated": "Preset actualizado",
-    "presetDeleteConfirm": "¿Eliminar este preset?"
+    "presetDeleteConfirm": "¿Eliminar este preset?",
+    "qwenMtDomains": "Avisos de dominio (solo en inglés)"
   },
   "tools": {
     "subtitleTranslator": {

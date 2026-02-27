@@ -161,7 +161,8 @@
     "presetNameRequired": "कृपया प्रीसेट का नाम दर्ज करें",
     "presetUpdate": "प्रीसेट अपडेट करें",
     "presetUpdated": "प्रीसेट अपडेट हो गया",
-    "presetDeleteConfirm": "क्या आप इस प्रीसेट को हटाना चाहते हैं?"
+    "presetDeleteConfirm": "क्या आप इस प्रीसेट को हटाना चाहते हैं?",
+    "qwenMtDomains": "डोमेन प्रॉम्प्ट (केवल अंग्रेजी)"
   },
   "tools": {
     "subtitleTranslator": {

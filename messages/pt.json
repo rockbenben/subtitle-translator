@@ -161,7 +161,8 @@
     "presetNameRequired": "Digite um nome para a predefinição",
     "presetUpdate": "Atualizar predefinição",
     "presetUpdated": "Predefinição atualizada",
-    "presetDeleteConfirm": "Excluir esta predefinição?"
+    "presetDeleteConfirm": "Excluir esta predefinição?",
+    "qwenMtDomains": "Prompts de Domínio (apenas em inglês)"
   },
   "tools": {
     "subtitleTranslator": {

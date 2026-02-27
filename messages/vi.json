@@ -161,7 +161,8 @@
     "presetNameRequired": "Vui lòng nhập tên cài đặt sẵn",
     "presetUpdate": "Cập nhật cài đặt sẵn",
     "presetUpdated": "Đã cập nhật cài đặt sẵn",
-    "presetDeleteConfirm": "Xóa cài đặt sẵn này?"
+    "presetDeleteConfirm": "Xóa cài đặt sẵn này?",
+    "qwenMtDomains": "Lời nhắc tên miền (chỉ tiếng Anh)"
   },
   "tools": {
     "subtitleTranslator": {

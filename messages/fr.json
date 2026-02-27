@@ -161,7 +161,8 @@
     "presetNameRequired": "Veuillez entrer un nom",
     "presetUpdate": "Mettre à jour le préréglage",
     "presetUpdated": "Préréglage mis à jour",
-    "presetDeleteConfirm": "Supprimer ce préréglage ?"
+    "presetDeleteConfirm": "Supprimer ce préréglage ?",
+    "qwenMtDomains": "Invites de domaine (en anglais uniquement)"
   },
   "tools": {
     "subtitleTranslator": {

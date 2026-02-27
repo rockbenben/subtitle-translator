@@ -161,7 +161,8 @@
     "presetNameRequired": "プリセット名を入力してください",
     "presetUpdate": "プリセットを更新",
     "presetUpdated": "プリセットを更新しました",
-    "presetDeleteConfirm": "このプリセットを削除しますか？"
+    "presetDeleteConfirm": "このプリセットを削除しますか？",
+    "qwenMtDomains": "ドメインプロンプト（英語のみ）"
   },
   "tools": {
     "subtitleTranslator": {
