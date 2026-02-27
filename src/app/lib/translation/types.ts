@@ -26,6 +26,7 @@ export interface TranslateTextParams {
   userPrompt?: string;
   useRelay?: boolean;
   enableThinking?: boolean; // Optional: enable thinking mode for supported models (kimi, deepseek, glm, gpt-oss)
+  domains?: string; // Optional: domains setting for Qwen-MT
   fullText?: string; // Optional: complete text for ${fullText} variable
   signal?: AbortSignal; // Optional: for request cancellation
 }
@@ -47,4 +48,5 @@ export interface TranslationConfig {
   userPrompt?: string;
   useRelay?: boolean;
   enableThinking?: boolean;
+  domains?: string;
 }

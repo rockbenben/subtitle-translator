@@ -93,6 +93,9 @@ const DEEPL_UNSUPPORTED_LANGS = new Set(["kn", "am", "ug", "si", "lo"]);
 // Azure 不支持的语言（仅 jv）
 const AZURE_UNSUPPORTED_LANGS = new Set(["jv"]);
 
+// Qwen-MT 不支持的语言 (基于 qwen-mt-plus/flash/turbo 支持的92种语言)
+const QWEN_MT_UNSUPPORTED_LANGS = new Set(["ky", "tk", "tg", "mn", "ml", "pa", "bho", "ha", "am", "ug"]);
+
 /**
  * 检查翻译方法是否支持指定语言
  */
@@ -102,6 +105,9 @@ export function isMethodSupportedForLanguage(method: string, lang: string): bool
   }
   if (method === "azure") {
     return !AZURE_UNSUPPORTED_LANGS.has(lang);
+  }
+  if (method === "qwenMt") {
+    return !QWEN_MT_UNSUPPORTED_LANGS.has(lang);
   }
   return true; // GTX, Google, LLM 等都支持所有语言
 }

@@ -4,17 +4,9 @@ import type { TranslationService } from "../types";
 import { DEFAULT_SYS_PROMPT, DEFAULT_USER_PROMPT, defaultConfigs } from "../config";
 import { getAIModelPrompt, getLanguageName } from "../utils";
 
-import { getErrorMessage, normalizeNumber, requireApiKey, requireUrl, PROXY_ENDPOINTS, THIRD_PARTY_ENDPOINTS } from "./shared";
+import { getErrorMessage, normalizeNumber, requireApiKey, requireUrl, PROXY_ENDPOINTS, THIRD_PARTY_ENDPOINTS, getOpenAICompatContent } from "./shared";
 
 const normalizePrompt = (value: string | undefined, fallback: string) => (typeof value === "string" && value.trim() ? value : fallback);
-
-const getOpenAICompatContent = (data: unknown, serviceName: string): string => {
-  const content = (data as { choices?: Array<{ message?: { content?: string } }> } | null)?.choices?.[0]?.message?.content;
-  if (typeof content !== "string") {
-    throw new Error(`Invalid response format from ${serviceName} API`);
-  }
-  return content.trim();
-};
 
 export const deepseek: TranslationService = async (params) => {
   const { text, targetLanguage, sourceLanguage, apiKey, model, temperature, sysPrompt, userPrompt, useRelay } = params;
@@ -397,64 +389,6 @@ export const nvidia: TranslationService = async (params) => {
     }
     return getOpenAICompatContent(data, "Nvidia");
   }
-};
-
-export const qwenMt: TranslationService = async (params) => {
-  const { text, targetLanguage, sourceLanguage, apiKey, url, model, temperature, sysPrompt, userPrompt } = params;
-
-  const key = requireApiKey("Qwen-MT", apiKey);
-  const apiUrl = url?.trim() || defaultConfigs.qwenMt.url;
-
-  // Qwen-MT uses English language names (e.g., "English", "Chinese") for translation_options
-  const sourceLangName = sourceLanguage === "auto" ? "auto" : getLanguageName(sourceLanguage);
-  const targetLangName = getLanguageName(targetLanguage);
-
-  // Map system/user prompts to Qwen-MT's `domains` parameter for translation styling
-  const effectiveSysPrompt = sysPrompt?.trim();
-  const effectiveUserPrompt = userPrompt?.trim();
-
-  let domains = "";
-  if (effectiveSysPrompt && effectiveSysPrompt !== DEFAULT_SYS_PROMPT) {
-    domains += effectiveSysPrompt;
-  }
-  // If user changed the user prompt, add it as additional domain hints (stripping template vars for safety)
-  if (effectiveUserPrompt && effectiveUserPrompt !== DEFAULT_USER_PROMPT) {
-    const cleanUserPrompt = effectiveUserPrompt.replace(/\$\{.*?\}/g, "").trim();
-    if (cleanUserPrompt) {
-      domains += (domains ? "\n\n" : "") + cleanUserPrompt;
-    }
-  }
-
-  const translationOptions: any = {
-    source_lang: sourceLangName,
-    target_lang: targetLangName,
-  };
-
-  if (domains) {
-    translationOptions.domains = domains;
-  }
-
-  const response = await fetch(apiUrl, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${key}`,
-    },
-    body: JSON.stringify({
-      messages: [{ role: "user", content: text }],
-      model: model || defaultConfigs.qwenMt.model,
-      temperature: normalizeNumber(temperature, defaultConfigs.qwenMt.temperature),
-      translation_options: translationOptions,
-      stream: false,
-    }),
-    signal: params.signal,
-  });
-
-  const data = await response.json();
-  if (!response.ok) {
-    throw new Error(getErrorMessage(data, response.status));
-  }
-  return getOpenAICompatContent(data, "Qwen-MT");
 };
 
 export const llm: TranslationService = async (params) => {

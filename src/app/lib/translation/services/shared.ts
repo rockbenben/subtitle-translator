@@ -71,3 +71,11 @@ export const getErrorMessage = (data: unknown, status: number): string => {
 
   return `HTTP error! status: ${status}${getHint(status)}`;
 };
+
+export const getOpenAICompatContent = (data: unknown, serviceName: string): string => {
+  const content = (data as { choices?: Array<{ message?: { content?: string } }> } | null)?.choices?.[0]?.message?.content;
+  if (typeof content !== "string") {
+    throw new Error(`Invalid response format from ${serviceName} API`);
+  }
+  return content.trim();
+};

@@ -19,6 +19,12 @@ export const TRANSLATION_SERVICES: TranslationServiceInfo[] = [
     apiKeyUrl: "https://www.deepl.com/your-account/keys",
   },
   {
+    value: "qwenMt",
+    label: "Qwen-MT",
+    docs: "https://help.aliyun.com/zh/model-studio/machine-translation",
+    apiKeyUrl: "https://bailian.console.aliyun.com/?apiKey=1",
+  },
+  {
     value: "azure",
     label: "Azure Translate",
     docs: "https://learn.microsoft.com/azure/ai-services/translator/text-translation/reference/v3/translate",
@@ -81,16 +87,10 @@ export const TRANSLATION_SERVICES: TranslationServiceInfo[] = [
     docs: "https://build.nvidia.com/explore/discover",
     apiKeyUrl: "https://build.nvidia.com/",
   },
-  {
-    value: "qwenMt",
-    label: "Qwen-MT",
-    docs: "https://help.aliyun.com/zh/model-studio/machine-translation",
-    apiKeyUrl: "https://bailian.console.aliyun.com/?apiKey=1",
-  },
   { value: "llm", label: "Custom LLM" },
 ];
 
-export const LLM_MODELS = ["deepseek", "openai", "gemini", "perplexity", "azureopenai", "siliconflow", "groq", "openrouter", "nvidia", "qwenMt", "llm"];
+export const LLM_MODELS = ["deepseek", "openai", "gemini", "perplexity", "azureopenai", "siliconflow", "groq", "openrouter", "nvidia", "llm"];
 
 export const categorizedOptions = [
   ...TRANSLATION_SERVICES.filter((s) => !LLM_MODELS.includes(s.value)).map((s) => ({
@@ -121,6 +121,13 @@ export const defaultConfigs = {
     apiKey: "",
     chunkSize: 5000,
     delayTime: 200,
+    batchSize: 20,
+  },
+  qwenMt: {
+    url: "",
+    apiKey: "",
+    domains: "",
+    model: "qwen-mt-flash",
     batchSize: 20,
   },
   deepseek: {
@@ -190,14 +197,6 @@ export const defaultConfigs = {
     batchSize: 20,
     contextWindow: 50,
     enableThinking: false,
-  },
-  qwenMt: {
-    url: "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions",
-    apiKey: "",
-    model: "qwen-mt-flash",
-    temperature: 0.7,
-    batchSize: 20,
-    contextWindow: 50,
   },
   llm: {
     url: "http://127.0.0.1:11434/v1/chat/completions",
