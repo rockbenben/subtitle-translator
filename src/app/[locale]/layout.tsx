@@ -23,6 +23,10 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   return {
     title,
     description,
+    icons: {
+      icon: "/icon.png",
+      apple: "/apple-icon.png",
+    },
   };
 }
 
