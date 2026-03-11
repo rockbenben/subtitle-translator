@@ -26,6 +26,9 @@ const getDB = (): Promise<IDBPDatabase<TranslationCacheDB>> => {
           db.createObjectStore(STORE_NAME);
         }
       },
+    }).catch((error) => {
+      dbPromise = null;
+      throw error;
     });
   }
 
