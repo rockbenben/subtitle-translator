@@ -3,6 +3,8 @@
 import { ThemeProvider as NextThemesProvider, useTheme } from "next-themes";
 import { ConfigProvider, App, theme, Layout } from "antd";
 import { ReactNode } from "react";
+import { useLocale } from "next-intl";
+import { getLangDir } from "rtl-detect";
 
 export default function ThemesProvider({ children }: { children: ReactNode }) {
   return (
@@ -14,12 +16,15 @@ export default function ThemesProvider({ children }: { children: ReactNode }) {
 
 function AntdConfigProvider({ children }: { children: ReactNode }) {
   const { resolvedTheme } = useTheme();
+  const locale = useLocale();
+  const direction = getLangDir(locale);
 
   // 使用 resolvedTheme，SSR 时为 undefined，默认使用 dark（与 CSS 变量默认值一致）
   const algorithms = resolvedTheme === "light" ? [theme.defaultAlgorithm] : [theme.darkAlgorithm];
 
   return (
     <ConfigProvider
+      direction={direction}
       theme={{
         hashed: false,
         algorithm: algorithms,
