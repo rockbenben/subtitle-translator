@@ -39,8 +39,6 @@ export async function POST(req: NextRequest) {
     if (chat_template_kwargs !== undefined) requestBody.chat_template_kwargs = chat_template_kwargs;
     if (reasoning_effort !== undefined) requestBody.reasoning_effort = reasoning_effort;
 
-    console.log("Nvidia proxy request:", { model, hasApiKey: !!apiKey?.trim() });
-
     const response = await fetch(NVIDIA_API_URL, {
       method: "POST",
       headers,
@@ -49,8 +47,6 @@ export async function POST(req: NextRequest) {
 
     // Get response as text first to handle non-JSON responses
     const responseText = await response.text();
-    console.log("Nvidia API response status:", response.status, "length:", responseText.length);
-
     // Try to parse as JSON
     let data;
     try {
@@ -81,7 +77,6 @@ export async function POST(req: NextRequest) {
         // Use a non-greedy regex to match correctly if multiple tags exist
         content = content.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
         data.choices[0].message.content = content;
-        console.log(`Stripped <think> tags for model: ${model}`);
       }
     }
 

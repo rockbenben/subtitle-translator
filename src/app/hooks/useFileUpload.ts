@@ -30,7 +30,6 @@ const useFileUpload = () => {
       // Lazy load jschardet
       const jschardet = (await import("jschardet")).default;
       const detected = jschardet.detect(sampleString);
-      console.log("Detected encoding", detected);
 
       // 解码文件内容
       const decoder = new TextDecoder(detected.encoding || "utf-8");
@@ -91,7 +90,6 @@ const useFileUpload = () => {
         // 如果文件未添加，则添加
         if (!isFileAlreadyAdded) {
           const newFiles = [...prevFiles, uploadedFile];
-          console.log("New multiple files", newFiles);
           return newFiles;
         }
 
