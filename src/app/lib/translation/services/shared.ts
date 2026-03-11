@@ -49,7 +49,7 @@ export const requireUrl = (serviceName: string, url: string | undefined): string
 export const getErrorMessage = (data: unknown, status: number): string => {
   const nested = (data as { error?: { message?: string; code?: number } } | null)?.error?.message;
   const nestedCode = (data as { error?: { code?: number } } | null)?.error?.code;
-  const effectiveCode = nestedCode || status;
+  const effectiveCode = nestedCode ?? status;
 
   // User-friendly hints for common error codes
   const getHint = (code: number): string => {

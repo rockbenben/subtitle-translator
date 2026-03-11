@@ -196,7 +196,7 @@ export const qwenMt: TranslationService = async (params) => {
   const sourceLangCode = getQwenMtLangCode(sourceLanguage);
   const targetLangCode = getQwenMtLangCode(targetLanguage);
 
-  const translationOptions: any = {
+  const translationOptions: Record<string, string> = {
     source_lang: sourceLangCode,
     target_lang: targetLangCode,
   };

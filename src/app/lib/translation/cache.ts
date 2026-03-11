@@ -19,7 +19,7 @@ export const generateCacheSuffix = (
   if (LLM_MODELS.includes(translationMethod)) {
     const llmConfig = JSON.stringify({
       model: params.model || "",
-      temperature: params.temperature || 0,
+      temperature: params.temperature ?? 0,
       sysPrompt: normalizePrompt(params.sysPrompt, DEFAULT_SYS_PROMPT),
       userPrompt: normalizePrompt(params.userPrompt, DEFAULT_USER_PROMPT),
     });

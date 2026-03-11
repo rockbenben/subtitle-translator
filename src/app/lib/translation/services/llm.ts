@@ -57,7 +57,7 @@ export const deepseek: TranslationService = async (params) => {
 };
 
 export const openai: TranslationService = async (params) => {
-  const { text, targetLanguage, sourceLanguage, apiKey, model, sysPrompt, userPrompt } = params;
+  const { text, targetLanguage, sourceLanguage, apiKey, model, temperature, sysPrompt, userPrompt } = params;
   const effectiveSysPrompt = normalizePrompt(sysPrompt, DEFAULT_SYS_PROMPT);
   const effectiveUserPrompt = normalizePrompt(userPrompt, DEFAULT_USER_PROMPT);
   const prompt = getAIModelPrompt(text, effectiveUserPrompt, targetLanguage, sourceLanguage, params.fullText);
@@ -76,7 +76,8 @@ export const openai: TranslationService = async (params) => {
         { role: "user", content: prompt },
       ],
       model: model || defaultConfigs.openai.model,
-      temperature: 1,
+      temperature: normalizeNumber(temperature, defaultConfigs.openai.temperature),
+      stream: false,
     }),
     signal: params.signal,
   });
