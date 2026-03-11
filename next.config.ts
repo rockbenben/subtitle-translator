@@ -12,6 +12,9 @@ const nextConfig: NextConfig = {
     unoptimized: true,
   },
   reactCompiler: true,
+  experimental: {
+    optimizePackageImports: ["antd", "@ant-design/icons"],
+  },
 };
 
 export default withNextIntl(nextConfig);
