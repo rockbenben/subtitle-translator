@@ -134,10 +134,10 @@ const LanguageSelector = ({ sourceLanguage, targetLanguage, target_langs, multiL
 
       <Flex justify="end">
         <Tooltip title={t("multiLanguageModeTooltip")} placement="bottom">
-          <Flex gap={6} align="center" onClick={() => setMultiLanguageMode(!multiLanguageMode)} style={{ cursor: "pointer" }}>
+          <label className="inline-flex items-center gap-1.5 cursor-pointer">
             <Switch size="small" checked={multiLanguageMode} onChange={setMultiLanguageMode} aria-label={t("multiLanguageMode")} />
             <Text type="secondary">{t("multiLanguageMode")}</Text>
-          </Flex>
+          </label>
         </Tooltip>
       </Flex>
     </Card>

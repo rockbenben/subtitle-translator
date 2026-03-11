@@ -59,10 +59,10 @@ const ServiceSettingsTab = ({ service }: { service: string }) => {
   const resetTranslationCache = async () => {
     try {
       const count = await clearTranslationCache();
-      message.success(`Translation cache has been reset (${count} entries cleared)`);
+      message.success(`${t("resetCacheSuccess")} (${count})`);
     } catch (error) {
       console.error("Failed to clear cache:", error);
-      message.error("Failed to clear translation cache");
+      message.error(t("resetCacheFail"));
     }
   };
 
