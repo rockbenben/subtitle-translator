@@ -123,6 +123,8 @@
     "docs": "文档",
     "resetCacheTooltip": "清除所有翻译缓存（操作不可撤销）",
     "resetCache": "清除缓存",
+    "resetCacheSuccess": "翻译缓存已清除",
+    "resetCacheFail": "清除翻译缓存失败",
     "resetConfig": "恢复默认",
     "testConfig": "测试 API",
     "testConfigTooltip": "验证当前 API 配置是否可用",
@@ -232,12 +234,7 @@
     "homeTitle": "ToolsByAI 工具集",
     "homeDescription": "20+ 实用工具，涵盖多语言翻译、文本处理、JSON 编辑和数据转换，助力开发者和创作者提升效率。",
     "ogTitle": "ToolsByAI | 免费开源的 AI 翻译与数据处理工具集",
-    "ogDescription": "寻找高效开发工具？ToolsByAI 汇集字幕翻译、i18n 处理等 20+ 款免费开源应用。接入 DeepSeek 等主流模型，支持批量处理且数据隐私安全，立即开启 AI 提效之旅！",
-    "ogUrl": "https://tools.newzone.top/zh",
-    "ogSiteName": "Tools By AI",
-    "ogLogo": "https://tools.newzone.top/logo.png",
-    "authorName": "RockBen",
-    "authorUrl": "https://github.com/rockbenben"
+    "ogDescription": "寻找高效开发工具？ToolsByAI 汇集字幕翻译、i18n 处理等 20+ 款免费开源应用。接入 DeepSeek 等主流模型，支持批量处理且数据隐私安全，立即开启 AI 提效之旅！"
   },
   "languages": {
     "auto": "自动检测",

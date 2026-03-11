@@ -123,6 +123,8 @@
     "docs": "文檔",
     "resetCacheTooltip": "清除所有翻譯緩存（操作不可撤銷）",
     "resetCache": "清除緩存",
+    "resetCacheSuccess": "翻譯快取已清除",
+    "resetCacheFail": "清除翻譯快取失敗",
     "resetConfig": "恢復默認",
     "testConfig": "測試 API",
     "testConfigTooltip": "驗證當前 API 配置是否可用",
@@ -232,12 +234,7 @@
     "homeTitle": "ToolsByAI 工具集",
     "homeDescription": "20+ 實用工具，涵蓋多語言翻譯、文本處理、JSON 編輯和數據轉換，助力開發者和創作者提升效率。",
     "ogTitle": "ToolsByAI | 免費開源的 AI 翻譯與數據處理工具集",
-    "ogDescription": "尋找高效開發工具？ToolsByAI 匯集字幕翻譯、i18n 處理等 20+ 款免費開源應用。接入 DeepSeek 等主流模型，支持批量處理且數據隱私安全，立即開啟 AI 提效之旅！",
-    "ogUrl": "https://tools.newzone.top/zh-hant",
-    "ogSiteName": "Tools By AI",
-    "ogLogo": "https://tools.newzone.top/logo.png",
-    "authorName": "RockBen",
-    "authorUrl": "https://github.com/rockbenben"
+    "ogDescription": "尋找高效開發工具？ToolsByAI 匯集字幕翻譯、i18n 處理等 20+ 款免費開源應用。接入 DeepSeek 等主流模型，支持批量處理且數據隱私安全，立即開啟 AI 提效之旅！"
   },
   "languages": {
     "auto": "自動檢測",

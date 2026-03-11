@@ -123,6 +123,8 @@
     "docs": "Tài liệu",
     "resetCacheTooltip": "Xóa tất cả bộ nhớ đệm dịch (không thể hoàn tác)",
     "resetCache": "Xóa bộ nhớ đệm",
+    "resetCacheSuccess": "Đã xóa bộ nhớ đệm bản dịch",
+    "resetCacheFail": "Không thể xóa bộ nhớ đệm bản dịch",
     "resetConfig": "Khôi phục mặc định",
     "testConfig": "Kiểm tra API",
     "testConfigTooltip": "Xác minh cấu hình API hiện tại",
@@ -232,12 +234,7 @@
     "homeTitle": "Bộ ToolsByAI",
     "homeDescription": "20+ công cụ cho dịch, văn bản, JSON và chuyển đổi dữ liệu. Tăng cường hiệu quả cho nhà phát triển và người sáng tạo.",
     "ogTitle": "ToolsByAI - Công Cụ Dev AI Miễn Phí & Mã Nguồn Mở",
-    "ogDescription": "20+ tiện ích cho nhà phát triển: dịch thuật, xử lý dữ liệu và JSON. Bảo vệ quyền riêng tư với xử lý cục bộ ngay trên trình duyệt.",
-    "ogUrl": "https://tools.newzone.top/vi",
-    "ogSiteName": "Tools By AI",
-    "ogLogo": "https://tools.newzone.top/logo.png",
-    "authorName": "RockBen",
-    "authorUrl": "https://github.com/rockbenben"
+    "ogDescription": "20+ tiện ích cho nhà phát triển: dịch thuật, xử lý dữ liệu và JSON. Bảo vệ quyền riêng tư với xử lý cục bộ ngay trên trình duyệt."
   },
   "languages": {
     "auto": "Tự động phát hiện",

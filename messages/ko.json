@@ -123,6 +123,8 @@
     "docs": "문서",
     "resetCacheTooltip": "모든 번역 캐시 지우기 (작업 취소 불가)",
     "resetCache": "캐시 지우기",
+    "resetCacheSuccess": "번역 캐시가 지워졌습니다",
+    "resetCacheFail": "번역 캐시를 지우지 못했습니다",
     "resetConfig": "기본값 복원",
     "testConfig": "API 테스트",
     "testConfigTooltip": "현재 API 구성이 유효한지 검증",
@@ -232,12 +234,7 @@
     "homeTitle": "ToolsByAI 도구 모음",
     "homeDescription": "20+ 무료 도구. 다국어 번역, 텍스트 처리, JSON 변환 등 개발자와 크리에이터의 업무 효율 향상.",
     "ogTitle": "ToolsByAI | 무료 오픈소스 AI 번역 및 데이터 처리 도구",
-    "ogDescription": "효율적인 개발 도구를 원하시나요? 자막 번역, JSON 편집 등 20+ 무료 앱이 있습니다. DeepSeek AI 탑재, 안전한 로컬 데이터 처리. 지금 체험해보세요!",
-    "ogUrl": "https://tools.newzone.top/ko",
-    "ogSiteName": "Tools By AI",
-    "ogLogo": "https://tools.newzone.top/logo.png",
-    "authorName": "RockBen",
-    "authorUrl": "https://github.com/rockbenben"
+    "ogDescription": "효율적인 개발 도구를 원하시나요? 자막 번역, JSON 편집 등 20+ 무료 앱이 있습니다. DeepSeek AI 탑재, 안전한 로컬 데이터 처리. 지금 체험해보세요!"
   },
   "languages": {
     "auto": "자동 감지",

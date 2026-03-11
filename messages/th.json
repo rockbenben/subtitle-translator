@@ -123,6 +123,8 @@
     "docs": "เอกสาร",
     "resetCacheTooltip": "ล้างแคชการแปลทั้งหมด (ไม่สามารถเลิกทำ)",
     "resetCache": "ล้างแคช",
+    "resetCacheSuccess": "ล้างแคชการแปลแล้ว",
+    "resetCacheFail": "ล้างแคชการแปลล้มเหลว",
     "resetConfig": "รีเซ็ตค่าเริ่มต้น",
     "testConfig": "ทดสอบ API",
     "testConfigTooltip": "ยืนยันการตั้งค่า API ปัจจุบัน",
@@ -232,12 +234,7 @@
     "homeTitle": "ชุด ToolsByAI",
     "homeDescription": "20+ เครื่องมือสำหรับแปล ข้อความ JSON และแปลงข้อมูล เพิ่มประสิทธิภาพสำหรับนักพัฒนาและผู้สร้างเนื้อหา",
     "ogTitle": "ToolsByAI - เครื่องมือ Dev AI ฟรี & โอเพนซอร์ส",
-    "ogDescription": "20+ ยูทิลิตี้สำหรับนักพัฒนา: แปลภาษา ประมวลผลข้อมูล และ JSON ปกป้องความเป็นส่วนตัวด้วยการประมวลผลในเบราว์เซอร์",
-    "ogUrl": "https://tools.newzone.top/th",
-    "ogSiteName": "Tools By AI",
-    "ogLogo": "https://tools.newzone.top/logo.png",
-    "authorName": "RockBen",
-    "authorUrl": "https://github.com/rockbenben"
+    "ogDescription": "20+ ยูทิลิตี้สำหรับนักพัฒนา: แปลภาษา ประมวลผลข้อมูล และ JSON ปกป้องความเป็นส่วนตัวด้วยการประมวลผลในเบราว์เซอร์"
   },
   "languages": {
     "auto": "ตรวจจับอัตโนมัติ",

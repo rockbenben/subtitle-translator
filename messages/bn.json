@@ -123,6 +123,8 @@
     "docs": "ডকুমেন্টেশন",
     "resetCacheTooltip": "সমস্ত অনুবাদ ক্যাশ মুছুন (অপরিবর্তনীয়)",
     "resetCache": "ক্যাশ মুছুন",
+    "resetCacheSuccess": "অনুবাদ ক্যাশে মুছে ফেলা হয়েছে",
+    "resetCacheFail": "অনুবাদ ক্যাশে মুছতে ব্যর্থ",
     "resetConfig": "ডিফল্ট পুনরুদ্ধার করুন",
     "testConfig": "API টেস্ট",
     "testConfigTooltip": "বর্তমান API কনফিগারেশন যাচাই করুন",
@@ -232,12 +234,7 @@
     "homeTitle": "ToolsByAI স্যুট",
     "homeDescription": "অনুবাদ, টেক্সট, JSON এবং ডেটা রূপান্তরের জন্য 20+ টুল। ডেভেলপার এবং নির্মাতাদের দক্ষতা বাড়ান।",
     "ogTitle": "ToolsByAI - ফ্রি এবং ওপেন সোর্স ডেভেলপার টুলস",
-    "ogDescription": "20+ ডেভেলপার ইউটিলিটি: অনুবাদ, ডেটা এবং JSON প্রসেসিং। ব্রাউজারে সম্পূর্ণ স্থানীয় প্রসেসিংয়ের সাথে আপনার গোপনীয়তা রক্ষা করুন।",
-    "ogUrl": "https://tools.newzone.top/bn",
-    "ogSiteName": "Tools By AI",
-    "ogLogo": "https://tools.newzone.top/logo.png",
-    "authorName": "RockBen",
-    "authorUrl": "https://github.com/rockbenben"
+    "ogDescription": "20+ ডেভেলপার ইউটিলিটি: অনুবাদ, ডেটা এবং JSON প্রসেসিং। ব্রাউজারে সম্পূর্ণ স্থানীয় প্রসেসিংয়ের সাথে আপনার গোপনীয়তা রক্ষা করুন।"
   },
   "languages": {
     "auto": "স্বয়ংক্রিয় শনাক্তকরণ",

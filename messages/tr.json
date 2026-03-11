@@ -123,6 +123,8 @@
     "docs": "Belgeler",
     "resetCacheTooltip": "Tüm çeviri önbelleğini temizle (geri alınamaz)",
     "resetCache": "Önbelleği Temizle",
+    "resetCacheSuccess": "Çeviri önbelleği temizlendi",
+    "resetCacheFail": "Çeviri önbelleği temizlenemedi",
     "resetConfig": "Varsayılanları Yükle",
     "testConfig": "API Testi",
     "testConfigTooltip": "Mevcut API yapılandırmasını doğrula",
@@ -232,12 +234,7 @@
     "homeTitle": "ToolsByAI Paketi",
     "homeDescription": "Çeviri, metin, JSON ve veri dönüşümü için 20+ araç. Geliştirici ve yaratıcı verimliliğini artırın.",
     "ogTitle": "ToolsByAI - Ücretsiz ve Açık Kaynak Geliştirici Araçları",
-    "ogDescription": "Çeviri, veri işleme ve JSON düzenleme için 20+ araç. Yerel işlem gücüyle gizliliğinizi koruyan açık kaynaklı platform.",
-    "ogUrl": "https://tools.newzone.top/tr",
-    "ogSiteName": "Tools By AI",
-    "ogLogo": "https://tools.newzone.top/logo.png",
-    "authorName": "RockBen",
-    "authorUrl": "https://github.com/rockbenben"
+    "ogDescription": "Çeviri, veri işleme ve JSON düzenleme için 20+ araç. Yerel işlem gücüyle gizliliğinizi koruyan açık kaynaklı platform."
   },
   "languages": {
     "auto": "Otomatik Algılama",

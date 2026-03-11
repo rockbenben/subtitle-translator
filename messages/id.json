@@ -123,6 +123,8 @@
     "docs": "Dokumen",
     "resetCacheTooltip": "Hapus semua cache terjemahan (tidak dapat dibatalkan)",
     "resetCache": "Hapus Cache",
+    "resetCacheSuccess": "Cache terjemahan dibersihkan",
+    "resetCacheFail": "Gagal membersihkan cache terjemahan",
     "resetConfig": "Pulihkan Default",
     "testConfig": "Tes API",
     "testConfigTooltip": "Verifikasi konfigurasi API saat ini",
@@ -232,12 +234,7 @@
     "homeTitle": "Suite ToolsByAI",
     "homeDescription": "20+ alat untuk terjemahan, teks, JSON, dan konversi data. Tingkatkan efisiensi pengembang dan kreator.",
     "ogTitle": "ToolsByAI - Alat Dev AI Gratis dan Open Source",
-    "ogDescription": "20+ utilitas untuk pengembang: terjemahan, pemrosesan data, dan JSON. Hormati privasi Anda dengan pemrosesan lokal di browser.",
-    "ogUrl": "https://tools.newzone.top/id",
-    "ogSiteName": "Tools By AI",
-    "ogLogo": "https://tools.newzone.top/logo.png",
-    "authorName": "RockBen",
-    "authorUrl": "https://github.com/rockbenben"
+    "ogDescription": "20+ utilitas untuk pengembang: terjemahan, pemrosesan data, dan JSON. Hormati privasi Anda dengan pemrosesan lokal di browser."
   },
   "languages": {
     "auto": "Deteksi Otomatis",

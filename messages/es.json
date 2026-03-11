@@ -123,6 +123,8 @@
     "docs": "Docs",
     "resetCacheTooltip": "Borrar todo el caché de traducción (irreversible)",
     "resetCache": "Borrar Caché",
+    "resetCacheSuccess": "Caché de traducción borrada",
+    "resetCacheFail": "Error al borrar la caché de traducción",
     "resetConfig": "Restaurar Predeterminados",
     "testConfig": "Probar API",
     "testConfigTooltip": "Verificar configuración API actual",
@@ -232,12 +234,7 @@
     "homeTitle": "Suite ToolsByAI",
     "homeDescription": "20+ herramientas para traducción, texto, JSON y conversión de datos. Impulsa la eficiencia de desarrolladores y creadores.",
     "ogTitle": "ToolsByAI | Herramientas de Traducción y Dev con IA",
-    "ogDescription": "Más de 20 herramientas open source: traducción de subtítulos, i18n, JSON y Markdown. Soporta DeepSeek y ChatGPT. Privacidad local y eficiencia.",
-    "ogUrl": "https://tools.newzone.top/es",
-    "ogSiteName": "Tools By AI",
-    "ogLogo": "https://tools.newzone.top/logo.png",
-    "authorName": "RockBen",
-    "authorUrl": "https://github.com/rockbenben"
+    "ogDescription": "Más de 20 herramientas open source: traducción de subtítulos, i18n, JSON y Markdown. Soporta DeepSeek y ChatGPT. Privacidad local y eficiencia."
   },
   "languages": {
     "auto": "Detección Auto",

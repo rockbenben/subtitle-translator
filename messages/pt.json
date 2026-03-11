@@ -123,6 +123,8 @@
     "docs": "Docs",
     "resetCacheTooltip": "Limpar todo o cache de tradução (irreversível)",
     "resetCache": "Limpar Cache",
+    "resetCacheSuccess": "Cache de tradução limpo",
+    "resetCacheFail": "Falha ao limpar o cache de tradução",
     "resetConfig": "Restaurar Padrões",
     "testConfig": "Testar API",
     "testConfigTooltip": "Verificar configuração de API atual",
@@ -232,12 +234,7 @@
     "homeTitle": "Suíte ToolsByAI",
     "homeDescription": "20+ ferramentas para tradução, texto, JSON e conversão de dados. Impulsione a eficiência de desenvolvedores e criadores.",
     "ogTitle": "ToolsByAI - Ferramentas Dev IA Gratuitas e Open Source",
-    "ogDescription": "20+ utilitários para desenvolvedores: tradução, processamento de dados e JSON. Respeita sua privacidade com processamento local.",
-    "ogUrl": "https://tools.newzone.top/pt",
-    "ogSiteName": "Tools By AI",
-    "ogLogo": "https://tools.newzone.top/logo.png",
-    "authorName": "RockBen",
-    "authorUrl": "https://github.com/rockbenben"
+    "ogDescription": "20+ utilitários para desenvolvedores: tradução, processamento de dados e JSON. Respeita sua privacidade com processamento local."
   },
   "languages": {
     "auto": "Detecção Auto",

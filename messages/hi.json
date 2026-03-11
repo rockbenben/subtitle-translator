@@ -123,6 +123,8 @@
     "docs": "दस्तावेज़",
     "resetCacheTooltip": "सभी अनुवाद कैश साफ़ करें (अपरिवर्तनीय)",
     "resetCache": "कैश साफ़ करें",
+    "resetCacheSuccess": "अनुवाद कैश साफ़ किया गया",
+    "resetCacheFail": "अनुवाद कैश साफ़ करने में विफल",
     "resetConfig": "डिफ़ॉल्ट पुनर्स्थापित करें",
     "testConfig": "API टेस्ट",
     "testConfigTooltip": "वर्तमान API कॉन्फ़िगरेशन सत्यापित करें",
@@ -232,12 +234,7 @@
     "homeTitle": "ToolsByAI सूट",
     "homeDescription": "अनुवाद, टेक्स्ट, JSON और डेटा रूपांतरण के लिए 20+ उपकरण। डेवलपर्स और क्रिएटर्स की दक्षता बढ़ाएं।",
     "ogTitle": "ToolsByAI - मुफ्त और ओपन सोर्स डेवलपर टूल्स",
-    "ogDescription": "20+ डेवलपर उपयोगिताएँ: अनुवाद, डेटा और JSON प्रसंस्करण। ब्राउज़र में पूरी तरह से स्थानीय प्रसंस्करण के साथ अपनी गोपनीयता की रक्षा करें।",
-    "ogUrl": "https://tools.newzone.top/hi",
-    "ogSiteName": "Tools By AI",
-    "ogLogo": "https://tools.newzone.top/logo.png",
-    "authorName": "RockBen",
-    "authorUrl": "https://github.com/rockbenben"
+    "ogDescription": "20+ डेवलपर उपयोगिताएँ: अनुवाद, डेटा और JSON प्रसंस्करण। ब्राउज़र में पूरी तरह से स्थानीय प्रसंस्करण के साथ अपनी गोपनीयता की रक्षा करें।"
   },
   "languages": {
     "auto": "स्वतः पहचान",

@@ -123,6 +123,8 @@
     "docs": "Docs",
     "resetCacheTooltip": "Clear all translation cache (irreversible)",
     "resetCache": "Clear Cache",
+    "resetCacheSuccess": "Translation cache cleared",
+    "resetCacheFail": "Failed to clear translation cache",
     "resetConfig": "Reset Defaults",
     "testConfig": "Test API",
     "testConfigTooltip": "Verify current API configuration",
@@ -232,12 +234,7 @@
     "homeTitle": "ToolsByAI Toolset",
     "homeDescription": "20+ tools for translation, text, JSON, and data conversion. Boost efficiency for developers and creators.",
     "ogTitle": "ToolsByAI | Free Open Source AI Translation & Data Tools",
-    "ogDescription": "Looking for efficient dev tools? ToolsByAI offers 20+ free apps like Subtitle Translator & JSON Editor. Powered by DeepSeek & AI, secure & local. Start now!",
-    "ogUrl": "https://tools.newzone.top/en",
-    "ogSiteName": "Tools By AI",
-    "ogLogo": "https://tools.newzone.top/logo.png",
-    "authorName": "RockBen",
-    "authorUrl": "https://github.com/rockbenben"
+    "ogDescription": "Looking for efficient dev tools? ToolsByAI offers 20+ free apps like Subtitle Translator & JSON Editor. Powered by DeepSeek & AI, secure & local. Start now!"
   },
   "languages": {
     "auto": "Auto Detect",

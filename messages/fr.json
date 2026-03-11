@@ -123,6 +123,8 @@
     "docs": "Docs",
     "resetCacheTooltip": "Effacer tout le cache de traduction (irréversible)",
     "resetCache": "Effacer cache",
+    "resetCacheSuccess": "Cache de traduction effacé",
+    "resetCacheFail": "Échec de l'effacement du cache de traduction",
     "resetConfig": "Rétablir défauts",
     "testConfig": "Tester API",
     "testConfigTooltip": "Vérifier la configuration API actuelle",
@@ -232,12 +234,7 @@
     "homeTitle": "Suite ToolsByAI",
     "homeDescription": "20+ outils pour traduction, texte, JSON et conversion de données. Boostez l'efficacité des développeurs et créateurs.",
     "ogTitle": "ToolsByAI | Outils de Traduction & Dev IA Gratuits",
-    "ogDescription": "Suite de 20+ outils open source : traduction de sous-titres, i18n, JSON & Markdown. Supporte DeepSeek & ChatGPT. Données locales et sécurisées.",
-    "ogUrl": "https://tools.newzone.top/fr",
-    "ogSiteName": "Tools By AI",
-    "ogLogo": "https://tools.newzone.top/logo.png",
-    "authorName": "RockBen",
-    "authorUrl": "https://github.com/rockbenben"
+    "ogDescription": "Suite de 20+ outils open source : traduction de sous-titres, i18n, JSON & Markdown. Supporte DeepSeek & ChatGPT. Données locales et sécurisées."
   },
   "languages": {
     "auto": "Détection auto",

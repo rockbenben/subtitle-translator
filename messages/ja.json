@@ -123,6 +123,8 @@
     "docs": "ドキュメント",
     "resetCacheTooltip": "すべての翻訳キャッシュをクリア（操作は取り消せません）",
     "resetCache": "キャッシュをクリア",
+    "resetCacheSuccess": "翻訳キャッシュをクリアしました",
+    "resetCacheFail": "翻訳キャッシュのクリアに失敗しました",
     "resetConfig": "デフォルトに戻す",
     "testConfig": "APIテスト",
     "testConfigTooltip": "現在のAPI設定が有効か検証",
@@ -232,12 +234,7 @@
     "homeTitle": "ToolsByAI ツールセット",
     "homeDescription": "20+ ツール。多言語翻訳、テキスト処理、JSONデータ変換など、開発者とクリエイターの効率向上を支援。",
     "ogTitle": "ToolsByAI | 無料で使えるAI翻訳＆データ処理ツール集",
-    "ogDescription": "効率的な開発ツールをお探しですか？ToolsByAIは字幕翻訳やJSON編集など20+の無料アプリを提供。DeepSeekなどのAI搭載、安全なローカル処理。今すぐ体験！",
-    "ogUrl": "https://tools.newzone.top/ja",
-    "ogSiteName": "Tools By AI",
-    "ogLogo": "https://tools.newzone.top/logo.png",
-    "authorName": "RockBen",
-    "authorUrl": "https://github.com/rockbenben"
+    "ogDescription": "効率的な開発ツールをお探しですか？ToolsByAIは字幕翻訳やJSON編集など20+の無料アプリを提供。DeepSeekなどのAI搭載、安全なローカル処理。今すぐ体験！"
   },
   "languages": {
     "auto": "自動検出",

@@ -123,6 +123,8 @@
     "docs": "وثائق",
     "resetCacheTooltip": "مسح جميع ذاكرة التخزين المؤقت للترجمة (لا يمكن التراجع عنه)",
     "resetCache": "مسح ذاكرة التخزين المؤقت",
+    "resetCacheSuccess": "تم مسح ذاكرة التخزين المؤقت للترجمة",
+    "resetCacheFail": "فشل مسح ذاكرة التخزين المؤقت للترجمة",
     "resetConfig": "استعادة الافتراضيات",
     "testConfig": "اختبار API",
     "testConfigTooltip": "التحقق من تكوين API الحالي",
@@ -232,12 +234,7 @@
     "homeTitle": "مجموعة ToolsByAI",
     "homeDescription": "20+ أداة للترجمة والنص و JSON وتحويل البيانات. تعزيز كفاءة المطورين والمبدعين.",
     "ogTitle": "ToolsByAI - أدوات مطورين ذكية ومجانية المصدر",
-    "ogDescription": "20+ أداة للمطورين: الترجمة، معالجة البيانات و JSON. حماية لخصوصيتك مع معالجة محلية بالكامل في المتصفح.",
-    "ogUrl": "https://tools.newzone.top/ar",
-    "ogSiteName": "Tools By AI",
-    "ogLogo": "https://tools.newzone.top/logo.png",
-    "authorName": "RockBen",
-    "authorUrl": "https://github.com/rockbenben"
+    "ogDescription": "20+ أداة للمطورين: الترجمة، معالجة البيانات و JSON. حماية لخصوصيتك مع معالجة محلية بالكامل في المتصفح."
   },
   "languages": {
     "auto": "كشف تلقائي",
