@@ -297,7 +297,7 @@ const SubtitleTranslator = () => {
           await delay(500);
         }
       } catch (error: unknown) {
-        console.log(error);
+        console.error(error);
 
         const errorMessage = getErrorMessage(error);
         const langLabel = sourceOptions.find((o) => o.value === currentTargetLang)?.label || currentTargetLang;
