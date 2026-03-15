@@ -615,10 +615,17 @@ const useTranslateData = () => {
         // Note: abort logic is now handled centrally in retryTranslate via shared abortControllerRef
         const translatedLines = new Array(contentLines.length);
         let completedCount = 0;
+        let aborted = false;
 
         const promises = contentLines.map((line, index) =>
           limit(async () => {
-            translatedLines[index] = await retryTranslate(line, cacheSuffix, translationConfig, fullText);
+            if (aborted) return;
+            try {
+              translatedLines[index] = await retryTranslate(line, cacheSuffix, translationConfig, fullText);
+            } catch (error) {
+              aborted = true;
+              throw error;
+            }
             completedCount++;
             if (completedCount % 10 === 0 || completedCount === contentLines.length) {
               updateProgress(completedCount, contentLines.length);
@@ -670,8 +677,11 @@ const useTranslateData = () => {
 
     setTranslateInProgress(true);
     setProgressPercent(0);
-    await performTranslation(sourceText, undefined, undefined, undefined, documentType);
-    setTranslateInProgress(false);
+    try {
+      await performTranslation(sourceText, undefined, undefined, undefined, documentType);
+    } finally {
+      setTranslateInProgress(false);
+    }
   };
 
   return {
