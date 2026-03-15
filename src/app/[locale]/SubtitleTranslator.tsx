@@ -10,7 +10,7 @@ import { useLocalStorage } from "@/app/hooks/useLocalStorage";
 import { useTextStats } from "@/app/hooks/useTextStats";
 import { useExportFilename } from "@/app/hooks/useExportFilename";
 
-import { splitTextIntoLines, downloadFile, splitBySpaces, getErrorMessage } from "@/app/utils";
+import { splitTextIntoLines, downloadFile, splitBySpaces, getErrorMessage, getFileTypePresetConfig } from "@/app/utils";
 import { VTT_SRT_TIME, LRC_TIME_REGEX, detectSubtitleFormat, getOutputFileExtension, filterSubLines, convertTimeToAss, assHeader } from "./subtitleUtils";
 import { LLM_MODELS } from "@/app/lib/translation";
 import { useLanguageOptions } from "@/app/components/languages";
@@ -26,6 +26,8 @@ import MultiLanguageSettingsModal from "@/app/components/MultiLanguageSettingsMo
 const { TextArea } = Input;
 const { Dragger } = Upload;
 const { Text } = Typography;
+
+const uploadFileTypes = getFileTypePresetConfig("subtitle");
 
 const SubtitleTranslator = () => {
   const tSubtitle = useTranslations("subtitle");
@@ -303,7 +305,7 @@ const SubtitleTranslator = () => {
         const langLabel = sourceOptions.find((o) => o.value === currentTargetLang)?.label || currentTargetLang;
         const content = needsBilingual ? `${errorMessage} ${tSubtitle("bilingualError")}` : `${errorMessage} ${langLabel} ${t("translationError")}`;
 
-        message.error(content, 5);
+        message.error(content, 60);
       }
     }
 
@@ -328,20 +330,23 @@ const SubtitleTranslator = () => {
     setTranslateInProgress(true);
     setProgressPercent(0);
 
-    for (let i = 0; i < multipleFiles.length; i++) {
-      const currentFile = multipleFiles[i];
-      await new Promise<void>((resolve) => {
-        readFile(currentFile, async (text) => {
-          await performTranslation(text, currentFile.name, i, multipleFiles.length);
-          await delay(1500);
-          resolve();
+    try {
+      for (let i = 0; i < multipleFiles.length; i++) {
+        const currentFile = multipleFiles[i];
+        await new Promise<void>((resolve) => {
+          readFile(currentFile, async (text) => {
+            await performTranslation(text, currentFile.name, i, multipleFiles.length);
+            await delay(1500);
+            resolve();
+          });
         });
-      });
-    }
+      }
 
-    //setMultipleFiles([]);
-    setTranslateInProgress(false);
-    message.success(t("translationExported"), 10);
+      //setMultipleFiles([]);
+      message.success(t("translationExported"), 10);
+    } finally {
+      setTranslateInProgress(false);
+    }
   };
 
   const handleExportFile = () => {
@@ -413,7 +418,7 @@ const SubtitleTranslator = () => {
             className="shadow-md border-transparent hover:shadow-lg transition-shadow duration-300">
             <Dragger
               customRequest={({ file }) => handleFileUpload(file as File)}
-              accept=".srt,.ass,.vtt,.lrc"
+              accept={uploadFileTypes.accept}
               multiple={!singleFileMode}
               showUploadList
               beforeUpload={singleFileMode ? resetUpload : undefined}
@@ -424,7 +429,9 @@ const SubtitleTranslator = () => {
                 <InboxOutlined />
               </p>
               <p className="ant-upload-text">{t("dragAndDropText")}</p>
-              <p className="ant-upload-hint">{t("supportedFormats")} .srt, .ass, .vtt, .lrc</p>
+              <p className="ant-upload-hint">
+                {t("supportedFormats")} {uploadFileTypes.label}
+              </p>
             </Dragger>
 
             {uploadMode === "single" && (
