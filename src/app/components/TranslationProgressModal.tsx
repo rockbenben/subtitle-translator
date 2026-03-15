@@ -26,7 +26,7 @@ const TranslationProgressModal = ({ open, percent, multiLanguageMode = false, ta
 
   if (!open) return null;
 
-  const displayPercent = Math.round(percent * 100) / 100;
+  const displayPercent = percent >= 100 ? 100 : Math.min(Math.floor(percent), 99);
 
   return (
     <Modal open={open} footer={null} closable={false} centered width={320} styles={{ body: { padding: "32px 24px" } }}>
