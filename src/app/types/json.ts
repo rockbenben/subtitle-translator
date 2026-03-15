@@ -7,6 +7,8 @@ export type { JsonArray, JsonObject, JsonPrimitive, JsonValue };
 export type JsonPathNode = {
   path: string;
   value: JsonValue;
+  parent: Record<string, JsonValue>;
+  parentProperty: string;
 };
 
 // Mapping configuration used in UI (includes a stable id).
