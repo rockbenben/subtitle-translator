@@ -11,7 +11,7 @@ import { useTextStats } from "@/app/hooks/useTextStats";
 import { useExportFilename } from "@/app/hooks/useExportFilename";
 
 import { splitTextIntoLines, downloadFile, splitBySpaces, getErrorMessage, getFileTypePresetConfig } from "@/app/utils";
-import { VTT_SRT_TIME, LRC_TIME_REGEX, detectSubtitleFormat, getOutputFileExtension, filterSubLines, convertTimeToAss, assHeader } from "./subtitleUtils";
+import { VTT_SRT_TIME, LRC_TIME_REGEX, detectSubtitleFormat, getOutputFileExtension, filterSubLines, convertTimeToAss, assHeader, prepareAssForTranslation, restoreAssAfterTranslation } from "./subtitleUtils";
 import { LLM_MODELS } from "@/app/lib/translation";
 import { useLanguageOptions } from "@/app/components/languages";
 import LanguageSelector from "@/app/components/LanguageSelector";
@@ -246,11 +246,16 @@ const SubtitleTranslator = () => {
       return finalSubtitle;
     };
 
+    // ASS 标签保护：翻译前剥离覆盖标签和 \N，翻译后还原
+    const isAss = fileType === "ass";
+    const { cleanLines, tagMaps } = isAss ? prepareAssForTranslation(contentLines) : { cleanLines: contentLines, tagMaps: [] };
+
     // For each target language, perform translation
     for (const currentTargetLang of targetLanguagesToUse) {
       try {
         // Translate content using the specific target language
-        const translatedLines = await translateContent(contentLines, translationMethod, currentTargetLang, fileIndex, totalFiles, contextAwareTranslation ? "subtitle" : undefined);
+        const rawTranslatedLines = await translateContent(cleanLines, translationMethod, currentTargetLang, fileIndex, totalFiles, contextAwareTranslation ? "subtitle" : undefined);
+        const translatedLines = isAss ? restoreAssAfterTranslation(rawTranslatedLines, tagMaps) : rawTranslatedLines;
 
         // Generate file name base
         const langLabel = currentTargetLang;

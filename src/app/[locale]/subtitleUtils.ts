@@ -176,6 +176,71 @@ export const convertTimeToAss = (time: string): string => {
   return `${parseInt(hours || "0", 10)}:${minutes}:${seconds}.${msValue}`;
 };
 
+// ASS 覆盖标签处理：翻译前剥离，翻译后还原
+// 匹配行首连续的 ASS 覆盖标签块，如 {\an8}、{\an8\i1\b1}
+const ASS_LEADING_TAGS_REGEX = /^(\{[^}]*\})+/;
+// 匹配所有 ASS 覆盖标签块（用于剥离内联标签）
+const ASS_ALL_TAGS_REGEX = /\{[^}]*\}/g;
+// 匹配 ASS 换行符 \N 和 \n（字面反斜杠+字母，非转义字符）
+const ASS_NEWLINE_REGEX = /\\[Nn]/g;
+
+interface AssTagMap {
+  /** 行首的覆盖标签，如 "{\an8}" */
+  leadingTags: string;
+}
+
+/**
+ * 翻译前：剥离 ASS 覆盖标签，将 \N/\n 转为真实换行
+ * - {\...} 头部标签记录后剥离，内联标签直接剥离
+ * - \N/\n 转为 \n，让 AI 自然理解换行
+ */
+export const prepareAssForTranslation = (contentLines: string[]): { cleanLines: string[]; tagMaps: AssTagMap[] } => {
+  const cleanLines: string[] = [];
+  const tagMaps: AssTagMap[] = [];
+
+  for (const line of contentLines) {
+    // 1. 提取行首的连续覆盖标签
+    let leadingTags = "";
+    let remaining = line;
+    const leadingMatch = line.match(ASS_LEADING_TAGS_REGEX);
+    if (leadingMatch) {
+      leadingTags = leadingMatch[0];
+      remaining = line.substring(leadingTags.length);
+    }
+
+    // 2. 剥离剩余文本中的内联覆盖标签
+    remaining = remaining.replace(ASS_ALL_TAGS_REGEX, "");
+
+    // 3. 将 ASS 换行符 \N/\n 转为真实换行
+    remaining = remaining.replace(ASS_NEWLINE_REGEX, "\n");
+
+    tagMaps.push({ leadingTags });
+    cleanLines.push(remaining);
+  }
+
+  return { cleanLines, tagMaps };
+};
+
+/**
+ * 翻译后：将真实换行转回 \N，还原行首覆盖标签
+ */
+export const restoreAssAfterTranslation = (translatedLines: string[], tagMaps: AssTagMap[]): string[] => {
+  return translatedLines.map((line, i) => {
+    const map = tagMaps[i];
+    if (!map) return line;
+
+    // 1. 将真实换行转回 ASS 硬换行 \N
+    let restored = line.replace(/\n/g, "\\N");
+
+    // 2. 还原行首覆盖标签
+    if (map.leadingTags) {
+      restored = map.leadingTags + restored;
+    }
+
+    return restored;
+  });
+};
+
 // ASS 文件头模板
 export const assHeader = `[Script Info]
 Title: Bilingual Subtitles
