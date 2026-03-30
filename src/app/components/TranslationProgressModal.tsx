@@ -1,6 +1,6 @@
 "use client";
 
-import { Modal, Progress, Typography } from "antd";
+import { Modal, Progress, Typography, theme } from "antd";
 import { LoadingOutlined } from "@ant-design/icons";
 import { useTranslations } from "next-intl";
 
@@ -23,6 +23,7 @@ interface TranslationProgressModalProps {
  */
 const TranslationProgressModal = ({ open, percent, multiLanguageMode = false, targetLanguageCount = 0 }: TranslationProgressModalProps) => {
   const t = useTranslations("common");
+  const { token } = theme.useToken();
 
   if (!open) return null;
 
@@ -38,8 +39,8 @@ const TranslationProgressModal = ({ open, percent, multiLanguageMode = false, ta
           size={120}
           strokeWidth={8}
           strokeColor={{
-            "0%": "#1677ff",
-            "100%": "#52c41a",
+            "0%": token.colorPrimary,
+            "100%": token.colorSuccess,
           }}
           format={(p) => (
             <div className="flex flex-col items-center">

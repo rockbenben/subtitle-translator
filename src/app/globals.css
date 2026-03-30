@@ -1,1 +1,28 @@
 @import "tailwindcss";
+
+/* Sync browser UI (scrollbars, form controls) with theme */
+html.dark {
+  color-scheme: dark;
+}
+html.light {
+  color-scheme: light;
+}
+
+/* Base typography */
+body {
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Minimum touch target size for nav icon buttons (WCAG 2.5.8) */
+.ant-layout-header .ant-btn-icon-only {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+/* Focus-visible ring for keyboard accessibility */
+:focus-visible {
+  outline: 2px solid #1668dc;
+  outline-offset: 2px;
+}
