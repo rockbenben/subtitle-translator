@@ -41,6 +41,12 @@ export const TRANSLATION_SERVICES: TranslationServiceInfo[] = [
     apiKeyUrl: "https://platform.deepseek.com/api_keys",
   },
   {
+    value: "claude",
+    label: "Claude",
+    docs: "https://docs.anthropic.com/en/api/messages",
+    apiKeyUrl: "https://console.anthropic.com/settings/keys",
+  },
+  {
     value: "openai",
     label: "OpenAI",
     docs: "https://platform.openai.com/docs/api-reference/chat",
@@ -90,7 +96,7 @@ export const TRANSLATION_SERVICES: TranslationServiceInfo[] = [
   { value: "llm", label: "Custom LLM" },
 ];
 
-export const LLM_MODELS = ["deepseek", "openai", "gemini", "perplexity", "azureopenai", "siliconflow", "groq", "openrouter", "nvidia", "llm"];
+export const LLM_MODELS = ["deepseek", "claude", "openai", "gemini", "perplexity", "azureopenai", "siliconflow", "groq", "openrouter", "nvidia", "llm"];
 
 export const categorizedOptions = [
   ...TRANSLATION_SERVICES.filter((s) => !LLM_MODELS.includes(s.value)).map((s) => ({
@@ -138,9 +144,17 @@ export const defaultConfigs = {
     contextWindow: 50,
     useRelay: false,
   },
+  claude: {
+    apiKey: "",
+    model: "claude-sonnet-4-6",
+    temperature: 0.7,
+    batchSize: 20,
+    contextWindow: 50,
+    enableThinking: false,
+  },
   openai: {
     apiKey: "",
-    model: "gpt-5-mini",
+    model: "gpt-5.4-mini",
     temperature: 1,
     batchSize: 20,
     contextWindow: 50,
@@ -184,7 +198,7 @@ export const defaultConfigs = {
   },
   openrouter: {
     apiKey: "",
-    model: "mistralai/devstral-2512:free",
+    model: "nvidia/nemotron-3-super-120b-a12b:free",
     temperature: 0.7,
     batchSize: 20,
     contextWindow: 50,

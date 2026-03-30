@@ -79,3 +79,22 @@ export const getOpenAICompatContent = (data: unknown, serviceName: string): stri
   }
   return content.trim();
 };
+
+export const getClaudeContent = (data: unknown, enableThinking: boolean): string => {
+  const contentArray = (data as { content?: Array<{ type?: string; text?: string }> } | null)?.content;
+  if (!Array.isArray(contentArray) || contentArray.length === 0) {
+    throw new Error("Invalid response format from Claude API");
+  }
+  if (enableThinking) {
+    const textBlock = contentArray.find((block) => block.type === "text");
+    if (!textBlock || typeof textBlock.text !== "string") {
+      throw new Error("Invalid response format from Claude API (no text block found)");
+    }
+    return textBlock.text.trim();
+  }
+  const text = contentArray[0]?.text;
+  if (typeof text !== "string") {
+    throw new Error("Invalid response format from Claude API");
+  }
+  return text.trim();
+};

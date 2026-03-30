@@ -4,7 +4,7 @@ import type { TranslationService } from "../types";
 import { DEFAULT_SYS_PROMPT, DEFAULT_USER_PROMPT, defaultConfigs } from "../config";
 import { getAIModelPrompt, getLanguageName } from "../utils";
 
-import { getErrorMessage, normalizeNumber, requireApiKey, requireUrl, PROXY_ENDPOINTS, THIRD_PARTY_ENDPOINTS, getOpenAICompatContent } from "./shared";
+import { getErrorMessage, normalizeNumber, requireApiKey, requireUrl, PROXY_ENDPOINTS, THIRD_PARTY_ENDPOINTS, getOpenAICompatContent, getClaudeContent } from "./shared";
 
 const normalizePrompt = (value: string | undefined, fallback: string) => (typeof value === "string" && value.trim() ? value : fallback);
 
@@ -425,4 +425,45 @@ export const llm: TranslationService = async (params) => {
     throw new Error(getErrorMessage(data, response.status));
   }
   return getOpenAICompatContent(data, "Custom LLM");
+};
+
+export const claude: TranslationService = async (params) => {
+  const { text, targetLanguage, sourceLanguage, apiKey, model, temperature, sysPrompt, userPrompt, enableThinking } = params;
+  const effectiveSysPrompt = normalizePrompt(sysPrompt, DEFAULT_SYS_PROMPT);
+  const effectiveUserPrompt = normalizePrompt(userPrompt, DEFAULT_USER_PROMPT);
+  const prompt = getAIModelPrompt(text, effectiveUserPrompt, targetLanguage, sourceLanguage, params.fullText);
+
+  const key = requireApiKey("Claude", apiKey);
+  const effectiveModel = model || defaultConfigs.claude.model;
+  const isThinking = enableThinking ?? false;
+
+  const requestBody: Record<string, unknown> = {
+    model: effectiveModel,
+    system: effectiveSysPrompt,
+    messages: [{ role: "user", content: prompt }],
+    max_tokens: 8096,
+  };
+
+  if (isThinking) {
+    requestBody.thinking = { type: "enabled", budget_tokens: 10000 };
+  } else {
+    requestBody.temperature = normalizeNumber(temperature, defaultConfigs.claude.temperature);
+  }
+
+  const response = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": key,
+      "anthropic-version": "2023-06-01",
+    },
+    body: JSON.stringify(requestBody),
+    signal: params.signal,
+  });
+
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(getErrorMessage(data, response.status));
+  }
+  return getClaudeContent(data, isThinking);
 };

@@ -17,6 +17,7 @@ export const translationServices: Record<string, TranslationService> = {
 
   // LLM APIs
   deepseek: llm.deepseek,
+  claude: llm.claude,
   openai: llm.openai,
   gemini: llm.gemini,
   perplexity: llm.perplexity,
