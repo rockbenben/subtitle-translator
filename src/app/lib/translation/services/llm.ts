@@ -1,183 +1,159 @@
 // Translation services - LLM APIs (OpenAI, DeepSeek, Gemini, etc.)
 
-import type { TranslationService } from "../types";
-import { DEFAULT_SYS_PROMPT, DEFAULT_USER_PROMPT, defaultConfigs } from "../config";
-import { getAIModelPrompt, getLanguageName } from "../utils";
+import type { TranslateTextParams, TranslationService } from "../types";
+import { DEFAULT_SYS_PROMPT, DEFAULT_USER_PROMPT } from "../config";
+import { defaultConfigs, OPENAI_COMPAT_KEYS, OPENAI_COMPAT_PROVIDERS, type OpenAICompatProviderKey, type OpenAICompatProviderSpec } from "../registry";
+import { getAIModelPrompt } from "../utils";
 
-import { getErrorMessage, normalizeNumber, requireApiKey, requireUrl, PROXY_ENDPOINTS, THIRD_PARTY_ENDPOINTS, getOpenAICompatContent, getClaudeContent } from "./shared";
+import { fetchJSON, normalizeNumber, normalizePrompt, relayUrl, requireApiKey, requireUrl, PROXY_ENDPOINTS, getOpenAICompatContent, getClaudeContent } from "./shared";
 
-const normalizePrompt = (value: string | undefined, fallback: string) => (typeof value === "string" && value.trim() ? value : fallback);
+// Prepare prompts common to all LLM services
+const preparePrompts = (params: { text: string; targetLanguage: string; sourceLanguage: string; sysPrompt?: string; userPrompt?: string; fullText?: string }) => {
+  const effectiveSysPrompt = normalizePrompt(params.sysPrompt, DEFAULT_SYS_PROMPT);
+  const effectiveUserPrompt = normalizePrompt(params.userPrompt, DEFAULT_USER_PROMPT);
+  const prompt = getAIModelPrompt(params.text, effectiveUserPrompt, params.targetLanguage, params.sourceLanguage, params.fullText);
+  return { effectiveSysPrompt, prompt };
+};
 
-export const deepseek: TranslationService = async (params) => {
-  const { text, targetLanguage, sourceLanguage, apiKey, model, temperature, sysPrompt, userPrompt, useRelay } = params;
-  const effectiveSysPrompt = normalizePrompt(sysPrompt, DEFAULT_SYS_PROMPT);
-  const effectiveUserPrompt = normalizePrompt(userPrompt, DEFAULT_USER_PROMPT);
-  const prompt = getAIModelPrompt(text, effectiveUserPrompt, targetLanguage, sourceLanguage, params.fullText);
+// Common OpenAI-compatible request helper (named-parameter config object)
+type OpenAICompatRequestConfig = {
+  params: TranslateTextParams;
+  serviceName: string;
+  endpoint: string;
+  defaultModel: string;
+  defaultTemperature: number;
+  extraHeaders?: Record<string, string>;
+};
 
-  const key = requireApiKey("DeepSeek", apiKey);
+const openAICompatRequest = async (cfg: OpenAICompatRequestConfig): Promise<string> => {
+  const { params, serviceName, endpoint, defaultModel, defaultTemperature, extraHeaders } = cfg;
+  const { apiKey, model, temperature } = params;
+  const { effectiveSysPrompt, prompt } = preparePrompts(params);
+  const key = requireApiKey(serviceName, apiKey);
 
-  // 根据 useRelay 选择直连或中转 API
-  const apiUrl = useRelay ? THIRD_PARTY_ENDPOINTS.deepseekRelay : "https://api.deepseek.com/chat/completions";
+  const data = await fetchJSON(endpoint, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${key}`,
+      ...extraHeaders,
+    },
+    body: JSON.stringify({
+      messages: [
+        { role: "system", content: effectiveSysPrompt },
+        { role: "user", content: prompt },
+      ],
+      model: model || defaultModel,
+      temperature: normalizeNumber(temperature, defaultTemperature),
+      stream: false,
+    }),
+    signal: params.signal,
+  });
+  return getOpenAICompatContent(data, serviceName);
+};
 
-  try {
-    const response = await fetch(apiUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${key}`,
-      },
-      body: JSON.stringify({
-        messages: [
-          { role: "system", content: effectiveSysPrompt },
-          { role: "user", content: prompt },
-        ],
-        model: model || defaultConfigs.deepseek.model,
-        temperature: normalizeNumber(temperature, defaultConfigs.deepseek.temperature),
-        stream: false,
-      }),
-      signal: params.signal,
+// Resolve the endpoint for a provider with allowCustomUrl / allowRelay priority:
+// user-supplied URL > relay (when useRelay toggled) > default endpoint.
+const resolveEndpoint = (key: OpenAICompatProviderKey, spec: OpenAICompatProviderSpec, params: TranslateTextParams): string => {
+  const customUrl = params.url?.trim();
+  if (spec.allowCustomUrl && customUrl) return customUrl;
+  if (spec.allowRelay && params.useRelay) return relayUrl(key);
+  return spec.endpoint;
+};
+
+// Factory: generate a TranslationService from a provider spec key.
+// The cast widens `as const` literal types so optional fields (allowCustomUrl,
+// allowRelay, extraHeaders) are accessible uniformly across all provider entries.
+const makeOpenAICompat = (key: OpenAICompatProviderKey): TranslationService => {
+  const spec = OPENAI_COMPAT_PROVIDERS[key] as OpenAICompatProviderSpec;
+  return async (params) => {
+    return openAICompatRequest({
+      params,
+      serviceName: spec.label,
+      endpoint: resolveEndpoint(key, spec, params),
+      defaultModel: spec.defaultModel,
+      defaultTemperature: spec.defaultTemperature,
+      extraHeaders: spec.extraHeaders,
     });
+  };
+};
 
-    const data = await response.json();
-    if (!response.ok) {
-      // 检测 403 错误，提示开启中转 API
-      if (response.status === 403 && !useRelay) {
+// Auto-generate base services from the provider table
+const baseOpenAICompatServices = Object.fromEntries(OPENAI_COMPAT_KEYS.map((k) => [k, makeOpenAICompat(k)])) as Record<OpenAICompatProviderKey, TranslationService>;
+
+// DeepSeek: wraps the factory with CORS/403 error hints that point users at
+// the "API Relay" toggle. Applies only on direct-call failures.
+export const deepseek: TranslationService = async (params) => {
+  try {
+    return await baseOpenAICompatServices.deepseek(params);
+  } catch (error) {
+    if (!params.useRelay && error instanceof Error) {
+      if (error instanceof TypeError && error.message.includes("Failed to fetch")) {
+        throw new Error("Network error (possibly CORS). Please enable 'API Relay' in API Settings. / 网络错误（可能是 CORS 限制），请在 API 设置中开启「中转 API」。");
+      }
+      if (error.message.includes("[403]")) {
         throw new Error("DeepSeek API returned 403 Forbidden. Please enable 'API Relay' in API Settings. / DeepSeek API 返回 403 禁止访问，请在 API 设置中开启「中转 API」。");
       }
-      throw new Error(getErrorMessage(data, response.status));
-    }
-    return getOpenAICompatContent(data, "DeepSeek");
-  } catch (error) {
-    // 检测 CORS 错误，提示开启中转 API
-    if (error instanceof TypeError && error.message.includes("Failed to fetch") && !useRelay) {
-      throw new Error("Network error (possibly CORS). Please enable 'API Relay' in API Settings. / 网络错误（可能是 CORS 限制），请在 API 设置中开启「中转 API」。");
     }
     throw error;
   }
 };
 
-export const openai: TranslationService = async (params) => {
-  const { text, targetLanguage, sourceLanguage, apiKey, model, temperature, sysPrompt, userPrompt } = params;
-  const effectiveSysPrompt = normalizePrompt(sysPrompt, DEFAULT_SYS_PROMPT);
-  const effectiveUserPrompt = normalizePrompt(userPrompt, DEFAULT_USER_PROMPT);
-  const prompt = getAIModelPrompt(text, effectiveUserPrompt, targetLanguage, sourceLanguage, params.fullText);
+// Named exports for each factory-generated service (backwards-compatible direct imports)
+export const openai = baseOpenAICompatServices.openai;
+export const perplexity = baseOpenAICompatServices.perplexity;
+export const siliconflow = baseOpenAICompatServices.siliconflow;
+export const groq = baseOpenAICompatServices.groq;
+export const openrouter = baseOpenAICompatServices.openrouter;
+export const moonshot = baseOpenAICompatServices.moonshot;
+export const zhipu = baseOpenAICompatServices.zhipu;
+export const grok = baseOpenAICompatServices.grok;
+export const doubao = baseOpenAICompatServices.doubao;
+export const qwen = baseOpenAICompatServices.qwen;
+export const mistral = baseOpenAICompatServices.mistral;
 
-  const key = requireApiKey("OpenAI", apiKey);
-
-  const response = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${key}`,
-    },
-    body: JSON.stringify({
-      messages: [
-        { role: "system", content: effectiveSysPrompt },
-        { role: "user", content: prompt },
-      ],
-      model: model || defaultConfigs.openai.model,
-      temperature: normalizeNumber(temperature, defaultConfigs.openai.temperature),
-      stream: false,
-    }),
-    signal: params.signal,
-  });
-
-  const data = await response.json();
-  if (!response.ok) {
-    throw new Error(getErrorMessage(data, response.status));
-  }
-  return getOpenAICompatContent(data, "OpenAI");
+// Dispatch table — deepseek overrides the base factory with its custom wrapper
+export const openAICompatServices: Record<OpenAICompatProviderKey, TranslationService> = {
+  ...baseOpenAICompatServices,
+  deepseek,
 };
+
+// --- Special-case services that don't fit the OpenAI-compatible pattern ---
 
 export const gemini: TranslationService = async (params) => {
-  const { text, targetLanguage, sourceLanguage, apiKey, model, temperature, sysPrompt, userPrompt } = params;
-  const effectiveSysPrompt = normalizePrompt(sysPrompt, DEFAULT_SYS_PROMPT);
-  const effectiveUserPrompt = normalizePrompt(userPrompt, DEFAULT_USER_PROMPT);
-  const prompt = getAIModelPrompt(text, effectiveUserPrompt, targetLanguage, sourceLanguage, params.fullText);
-
+  const { apiKey, model, temperature } = params;
+  const { effectiveSysPrompt, prompt } = preparePrompts(params);
   const key = requireApiKey("Gemini", apiKey);
 
-  const requestBody = {
-    contents: [
-      {
-        parts: [{ text: prompt }],
-      },
-    ],
-    systemInstruction: {
-      parts: [{ text: effectiveSysPrompt }],
-    },
-    generationConfig: {
-      temperature: normalizeNumber(temperature, defaultConfigs.gemini.temperature),
-    },
-  };
-
-  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model || defaultConfigs.gemini.model}:generateContent?key=${key}`, {
+  const data = (await fetchJSON(`https://generativelanguage.googleapis.com/v1beta/models/${model || defaultConfigs.gemini.model!}:generateContent?key=${key}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(requestBody),
-    signal: params.signal,
-  });
-
-  const data = await response.json();
-
-  if (!response.ok) {
-    const errorMessage = data.error?.message || `HTTP error! status: ${response.status}`;
-    throw new Error(errorMessage);
-  }
-
-  if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
-    throw new Error("Invalid response format from Gemini API");
-  }
-
-  return data.candidates[0].content.parts[0].text.trim();
-};
-
-export const perplexity: TranslationService = async (params) => {
-  const { text, targetLanguage, sourceLanguage, apiKey, model, temperature, sysPrompt, userPrompt } = params;
-  const effectiveSysPrompt = normalizePrompt(sysPrompt, DEFAULT_SYS_PROMPT);
-  const effectiveUserPrompt = normalizePrompt(userPrompt, DEFAULT_USER_PROMPT);
-  const prompt = getAIModelPrompt(text, effectiveUserPrompt, targetLanguage, sourceLanguage, params.fullText);
-
-  const key = requireApiKey("Perplexity", apiKey);
-
-  const response = await fetch("https://api.perplexity.ai/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${key}`,
-    },
     body: JSON.stringify({
-      messages: [
-        { role: "system", content: effectiveSysPrompt },
-        { role: "user", content: prompt },
-      ],
-      model: model || defaultConfigs.perplexity.model,
-      temperature: normalizeNumber(temperature, defaultConfigs.perplexity.temperature),
-      stream: false,
+      contents: [{ parts: [{ text: prompt }] }],
+      systemInstruction: { parts: [{ text: effectiveSysPrompt }] },
+      generationConfig: { temperature: normalizeNumber(temperature, defaultConfigs.gemini.temperature) },
     }),
     signal: params.signal,
-  });
+  })) as { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }> };
 
-  const data = await response.json();
-  if (!response.ok) {
-    throw new Error(getErrorMessage(data, response.status));
+  const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (typeof text !== "string") {
+    throw new Error("Invalid response format from Gemini API");
   }
-  return getOpenAICompatContent(data, "Perplexity");
+  return text.trim();
 };
 
 export const azureopenai: TranslationService = async (params) => {
-  const { text, targetLanguage, sourceLanguage, apiKey, url, model, apiVersion, temperature, sysPrompt, userPrompt } = params;
-  const effectiveSysPrompt = normalizePrompt(sysPrompt, DEFAULT_SYS_PROMPT);
-  const effectiveUserPrompt = normalizePrompt(userPrompt, DEFAULT_USER_PROMPT);
-  const prompt = getAIModelPrompt(text, effectiveUserPrompt, targetLanguage, sourceLanguage, params.fullText);
+  const { apiKey, url, model, apiVersion, temperature } = params;
+  const { effectiveSysPrompt, prompt } = preparePrompts(params);
   const endpoint = requireUrl("Azure OpenAI", url);
-  const deployment = model || defaultConfigs.azureopenai.model;
-  const version = apiVersion || defaultConfigs.azureopenai.apiVersion;
+  const deployment = model || defaultConfigs.azureopenai.model!;
+  const version = apiVersion || defaultConfigs.azureopenai.apiVersion!;
   const requestUrl = `${endpoint}/openai/deployments/${deployment}/chat/completions?api-version=${version}`;
 
   const key = requireApiKey("Azure OpenAI", apiKey);
 
-  const response = await fetch(requestUrl, {
+  const data = await fetchJSON(requestUrl, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -192,156 +168,30 @@ export const azureopenai: TranslationService = async (params) => {
     }),
     signal: params.signal,
   });
-
-  const data = await response.json();
-  if (!response.ok) {
-    throw new Error(getErrorMessage(data, response.status));
-  }
   return getOpenAICompatContent(data, "Azure OpenAI");
 };
 
-export const siliconflow: TranslationService = async (params) => {
-  const { text, targetLanguage, sourceLanguage, apiKey, model, temperature, sysPrompt, userPrompt } = params;
-  const effectiveSysPrompt = normalizePrompt(sysPrompt, DEFAULT_SYS_PROMPT);
-  const effectiveUserPrompt = normalizePrompt(userPrompt, DEFAULT_USER_PROMPT);
-  const prompt = getAIModelPrompt(text, effectiveUserPrompt, targetLanguage, sourceLanguage, params.fullText);
+// Nvidia thinking parameter rules — data-driven, add new models by appending to the array
+const NVIDIA_THINKING_RULES: Array<{ pattern: RegExp; build: (on: boolean) => Record<string, unknown> }> = [
+  // GLM4.7: enable_thinking + clear_thinking
+  { pattern: /(?:^|\/)glm4\.7$/i, build: (on) => ({ chat_template_kwargs: { enable_thinking: on, ...(on && { clear_thinking: false }) } }) },
+  // Kimi-k2.5: thinking, force temperature=1.0, top_p=1.0
+  { pattern: /(?:^|\/)kimi-k2\.5$/i, build: (on) => ({ chat_template_kwargs: { thinking: on }, temperature: 1.0, top_p: 1.0 }) },
+  // DeepSeek-v3.*: thinking
+  { pattern: /(?:^|\/)deepseek-v3\./i, build: (on) => ({ chat_template_kwargs: { thinking: on } }) },
+  // GPT-OSS-*: reasoning_effort
+  { pattern: /(?:^|\/)gpt-oss-/i, build: (on) => ({ reasoning_effort: on ? "high" : "low" }) },
+];
 
-  const key = requireApiKey("SiliconFlow", apiKey);
-
-  const response = await fetch("https://api.siliconflow.cn/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${key}`,
-    },
-    body: JSON.stringify({
-      messages: [
-        { role: "system", content: effectiveSysPrompt },
-        { role: "user", content: prompt },
-      ],
-      model: model || defaultConfigs.siliconflow.model,
-      temperature: normalizeNumber(temperature, defaultConfigs.siliconflow.temperature),
-    }),
-    signal: params.signal,
-  });
-
-  const data = await response.json();
-  if (!response.ok) {
-    throw new Error(getErrorMessage(data, response.status));
-  }
-  return getOpenAICompatContent(data, "SiliconFlow");
-};
-
-export const groq: TranslationService = async (params) => {
-  const { text, targetLanguage, sourceLanguage, apiKey, model, temperature, sysPrompt, userPrompt } = params;
-  const effectiveSysPrompt = normalizePrompt(sysPrompt, DEFAULT_SYS_PROMPT);
-  const effectiveUserPrompt = normalizePrompt(userPrompt, DEFAULT_USER_PROMPT);
-  const prompt = getAIModelPrompt(text, effectiveUserPrompt, targetLanguage, sourceLanguage, params.fullText);
-
-  const key = requireApiKey("Groq", apiKey);
-
-  const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${key}`,
-    },
-    body: JSON.stringify({
-      messages: [
-        { role: "system", content: effectiveSysPrompt },
-        { role: "user", content: prompt },
-      ],
-      model: model || defaultConfigs.groq.model,
-      temperature: normalizeNumber(temperature, defaultConfigs.groq.temperature),
-      stream: false,
-    }),
-    signal: params.signal,
-  });
-
-  const data = await response.json();
-  if (!response.ok) {
-    throw new Error(getErrorMessage(data, response.status));
-  }
-  return getOpenAICompatContent(data, "Groq");
-};
-
-export const openrouter: TranslationService = async (params) => {
-  const { text, targetLanguage, sourceLanguage, apiKey, model, temperature, sysPrompt, userPrompt } = params;
-  const effectiveSysPrompt = normalizePrompt(sysPrompt, DEFAULT_SYS_PROMPT);
-  const effectiveUserPrompt = normalizePrompt(userPrompt, DEFAULT_USER_PROMPT);
-  const prompt = getAIModelPrompt(text, effectiveUserPrompt, targetLanguage, sourceLanguage, params.fullText);
-
-  const key = requireApiKey("OpenRouter", apiKey);
-
-  const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${key}`,
-      "HTTP-Referer": "https://aishort.top",
-      "X-Title": "AIShort",
-    },
-    body: JSON.stringify({
-      messages: [
-        { role: "system", content: effectiveSysPrompt },
-        { role: "user", content: prompt },
-      ],
-      model: model || defaultConfigs.openrouter.model,
-      temperature: normalizeNumber(temperature, defaultConfigs.openrouter.temperature),
-      stream: false,
-    }),
-    signal: params.signal,
-  });
-
-  const data = await response.json();
-  if (!response.ok) {
-    throw new Error(getErrorMessage(data, response.status));
-  }
-  return getOpenAICompatContent(data, "OpenRouter");
-};
-
-// Helper function to build thinking parameters based on model
-// Matches exact model names: glm4.7, kimi-k2.5, deepseek-v3.*, gpt-oss-*
-const buildNvidiaThinkingParams = (model: string, enableThinking: boolean): Record<string, unknown> => {
-  // GLM4.7: use enable_thinking and clear_thinking
-  // Matches: glm4.7, z-ai/glm4.7
-  if (/(?:^|\/)glm4\.7$/i.test(model)) {
-    return enableThinking ? { chat_template_kwargs: { enable_thinking: true, clear_thinking: false } } : { chat_template_kwargs: { enable_thinking: false } };
-  }
-
-  // Kimi-k2.5: use thinking, and force temperature=1.0, top_p=1.0
-  // Matches: kimi-k2.5, moonshotai/kimi-k2.5
-  if (/(?:^|\/)kimi-k2\.5$/i.test(model)) {
-    return enableThinking ? { chat_template_kwargs: { thinking: true }, temperature: 1.0, top_p: 1.0 } : { chat_template_kwargs: { thinking: false }, temperature: 1.0, top_p: 1.0 };
-  }
-
-  // DeepSeek-v3.*: use thinking
-  // Matches: deepseek-v3.1, deepseek-v3.1-terminus, deepseek-v3.2, deepseek-ai/deepseek-v3.1, etc.
-  if (/(?:^|\/)deepseek-v3\./i.test(model)) {
-    return enableThinking ? { chat_template_kwargs: { thinking: true } } : { chat_template_kwargs: { thinking: false } };
-  }
-
-  // GPT-OSS-*: use reasoning_effort
-  // Matches: gpt-oss-120b, gpt-oss-20b, openai/gpt-oss-120b, etc.
-  if (/(?:^|\/)gpt-oss-/i.test(model)) {
-    return { reasoning_effort: enableThinking ? "high" : "low" };
-  }
-
-  return {};
-};
+const buildNvidiaThinkingParams = (model: string, enableThinking: boolean): Record<string, unknown> => NVIDIA_THINKING_RULES.find((r) => r.pattern.test(model))?.build(enableThinking) ?? {};
 
 export const nvidia: TranslationService = async (params) => {
-  const { text, targetLanguage, sourceLanguage, apiKey, url, model, temperature, sysPrompt, userPrompt, enableThinking } = params;
-  const effectiveSysPrompt = normalizePrompt(sysPrompt, DEFAULT_SYS_PROMPT);
-  const effectiveUserPrompt = normalizePrompt(userPrompt, DEFAULT_USER_PROMPT);
-  const prompt = getAIModelPrompt(text, effectiveUserPrompt, targetLanguage, sourceLanguage, params.fullText);
+  const { apiKey, url, model, temperature, enableThinking } = params;
+  const { effectiveSysPrompt, prompt } = preparePrompts(params);
 
-  const effectiveModel = model || defaultConfigs.nvidia.model;
-
-  // Build thinking parameters based on model
+  const effectiveModel = model || defaultConfigs.nvidia.model!;
   const thinkingParams = buildNvidiaThinkingParams(effectiveModel, enableThinking ?? false);
 
-  // Prepare request body
   const requestBody: Record<string, unknown> = {
     messages: [
       { role: "system", content: effectiveSysPrompt },
@@ -352,61 +202,39 @@ export const nvidia: TranslationService = async (params) => {
     ...thinkingParams,
   };
 
-  // If user provided a custom URL, call it directly (no proxy)
-  // Otherwise, use proxy to call the default Nvidia API
-  if (url) {
-    // Direct call to user's custom URL (e.g., private deployment)
+  // Direct call (custom URL) vs proxy call (default Nvidia API, avoids CORS)
+  const isDirectCall = !!url;
+  const fetchUrl = isDirectCall ? url : PROXY_ENDPOINTS.nvidia;
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  let body: Record<string, unknown> = requestBody;
+
+  if (isDirectCall) {
     const key = requireApiKey("Nvidia", apiKey);
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${key}`,
-      },
-      body: JSON.stringify(requestBody),
-      signal: params.signal,
-    });
-
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(getErrorMessage(data, response.status));
-    }
-    return getOpenAICompatContent(data, "Nvidia");
+    headers.Authorization = `Bearer ${key}`;
   } else {
-    // Proxy call to default Nvidia API (avoids CORS in browser)
-    const response = await fetch(PROXY_ENDPOINTS.nvidia, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        apiKey,
-        ...requestBody,
-      }),
-      signal: params.signal,
-    });
-
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(getErrorMessage(data, response.status));
-    }
-    return getOpenAICompatContent(data, "Nvidia");
+    body = { apiKey, ...requestBody };
   }
+
+  const data = await fetchJSON(fetchUrl, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(body),
+    signal: params.signal,
+  });
+  return getOpenAICompatContent(data, "Nvidia");
 };
 
 export const llm: TranslationService = async (params) => {
-  const { text, targetLanguage, sourceLanguage, apiKey, url, model, temperature, sysPrompt, userPrompt } = params;
-  const effectiveSysPrompt = normalizePrompt(sysPrompt, DEFAULT_SYS_PROMPT);
-  const effectiveUserPrompt = normalizePrompt(userPrompt, DEFAULT_USER_PROMPT);
-  const prompt = getAIModelPrompt(text, effectiveUserPrompt, targetLanguage, sourceLanguage, params.fullText);
+  const { apiKey, url, model, temperature } = params;
+  const { effectiveSysPrompt, prompt } = preparePrompts(params);
 
-  const apiEndpoint = url || defaultConfigs.llm.url;
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-  };
+  const apiEndpoint = url || defaultConfigs.llm.url!;
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
   if (apiKey?.trim()) {
     headers.Authorization = `Bearer ${apiKey}`;
   }
 
-  const response = await fetch(apiEndpoint, {
+  const data = await fetchJSON(apiEndpoint, {
     method: "POST",
     headers,
     body: JSON.stringify({
@@ -414,34 +242,30 @@ export const llm: TranslationService = async (params) => {
         { role: "system", content: effectiveSysPrompt },
         { role: "user", content: prompt },
       ],
-      model: model || defaultConfigs.llm.model,
+      model: model || defaultConfigs.llm.model!,
       temperature: normalizeNumber(temperature, defaultConfigs.llm.temperature),
     }),
     signal: params.signal,
   });
-
-  const data = await response.json();
-  if (!response.ok) {
-    throw new Error(getErrorMessage(data, response.status));
-  }
   return getOpenAICompatContent(data, "Custom LLM");
 };
 
 export const claude: TranslationService = async (params) => {
-  const { text, targetLanguage, sourceLanguage, apiKey, model, temperature, sysPrompt, userPrompt, enableThinking } = params;
-  const effectiveSysPrompt = normalizePrompt(sysPrompt, DEFAULT_SYS_PROMPT);
-  const effectiveUserPrompt = normalizePrompt(userPrompt, DEFAULT_USER_PROMPT);
-  const prompt = getAIModelPrompt(text, effectiveUserPrompt, targetLanguage, sourceLanguage, params.fullText);
+  const { apiKey, model, temperature, enableThinking, useRelay } = params;
+  const { effectiveSysPrompt, prompt } = preparePrompts(params);
 
   const key = requireApiKey("Claude", apiKey);
-  const effectiveModel = model || defaultConfigs.claude.model;
+  const effectiveModel = model || defaultConfigs.claude.model!;
   const isThinking = enableThinking ?? false;
 
+  // Anthropic requires budget_tokens < max_tokens. When thinking is on we
+  // reserve 10K for reasoning + ~6K for the visible response, so max_tokens
+  // must grow. Plain (non-thinking) requests stay at the original 8096 cap.
   const requestBody: Record<string, unknown> = {
     model: effectiveModel,
     system: effectiveSysPrompt,
     messages: [{ role: "user", content: prompt }],
-    max_tokens: 8096,
+    max_tokens: isThinking ? 16384 : 8096,
   };
 
   if (isThinking) {
@@ -450,20 +274,22 @@ export const claude: TranslationService = async (params) => {
     requestBody.temperature = normalizeNumber(temperature, defaultConfigs.claude.temperature);
   }
 
-  const response = await fetch("https://api.anthropic.com/v1/messages", {
+  // Direct-to-Anthropic from the browser requires the explicit opt-in CORS
+  // header since 2024-08 (bring-your-own-key apps). When proxied through the
+  // Cloudflare relay the header is harmless but unnecessary — we keep it
+  // unconditionally to avoid branching.
+  const endpoint = useRelay ? relayUrl("claude") : "https://api.anthropic.com/v1/messages";
+
+  const data = await fetchJSON(endpoint, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       "x-api-key": key,
       "anthropic-version": "2023-06-01",
+      "anthropic-dangerous-direct-browser-access": "true",
     },
     body: JSON.stringify(requestBody),
     signal: params.signal,
   });
-
-  const data = await response.json();
-  if (!response.ok) {
-    throw new Error(getErrorMessage(data, response.status));
-  }
   return getClaudeContent(data, isThinking);
 };

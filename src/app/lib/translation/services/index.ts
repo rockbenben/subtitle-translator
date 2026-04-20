@@ -1,11 +1,11 @@
 // Translation services index
 
-import type { TranslationService } from "../types";
+import type { TranslationMethod, TranslationService } from "../types";
 import * as traditional from "./traditional";
 import * as llm from "./llm";
 
-// Combine all translation services
-export const translationServices: Record<string, TranslationService> = {
+// Combine all translation services with type-safe keys
+export const translationServices: Record<TranslationMethod, TranslationService> = {
   // Traditional APIs
   gtxFreeAPI: traditional.gtxFreeAPI,
   google: traditional.google,
@@ -15,16 +15,13 @@ export const translationServices: Record<string, TranslationService> = {
   webgoogletranslate: traditional.webgoogletranslate,
   qwenMt: traditional.qwenMt,
 
-  // LLM APIs
-  deepseek: llm.deepseek,
+  // LLM APIs — 12 OpenAI-compatible services auto-registered from OPENAI_COMPAT_PROVIDERS
+  ...llm.openAICompatServices,
+
+  // LLM APIs — special-case providers that don't fit the OpenAI-compatible shape
   claude: llm.claude,
-  openai: llm.openai,
   gemini: llm.gemini,
-  perplexity: llm.perplexity,
   azureopenai: llm.azureopenai,
-  siliconflow: llm.siliconflow,
-  groq: llm.groq,
-  openrouter: llm.openrouter,
   nvidia: llm.nvidia,
   llm: llm.llm,
 };
