@@ -1,12 +1,12 @@
 // Translation cache utilities
 
 import SparkMD5 from "spark-md5";
-import { DEFAULT_SYS_PROMPT, DEFAULT_USER_PROMPT, LLM_MODELS } from "./config";
+import { DEFAULT_SYS_PROMPT, DEFAULT_USER_PROMPT } from "./config";
+import { LLM_MODELS } from "./registry";
+import { normalizePrompt } from "./services/shared";
 import { translationCache } from "@/app/lib/storage/indexedDBStorage";
 
 export const CACHE_PREFIX = "t_";
-
-const normalizePrompt = (value: string | undefined, fallback: string) => (typeof value === "string" && value.trim() ? value : fallback);
 
 export const generateCacheSuffix = (
   sourceLanguage: string,
@@ -31,11 +31,9 @@ export const generateCacheSuffix = (
 };
 
 export const generateCacheKey = (text: string, cacheSuffix: string): string => {
-  if (text.length > 32) {
-    return `${CACHE_PREFIX}${SparkMD5.hash(text)}_${cacheSuffix}`;
-  }
-  const encoded = encodeURIComponent(text);
-  return encoded.length > 50 ? `${CACHE_PREFIX}${SparkMD5.hash(text)}_${cacheSuffix}` : `${CACHE_PREFIX}${encoded}_${cacheSuffix}`;
+  const encoded = text.length <= 32 ? encodeURIComponent(text) : null;
+  const key = encoded && encoded.length <= 50 ? encoded : SparkMD5.hash(text);
+  return `${CACHE_PREFIX}${key}_${cacheSuffix}`;
 };
 
 export const getCachedTranslation = async (cacheKey: string): Promise<string | null> => {
