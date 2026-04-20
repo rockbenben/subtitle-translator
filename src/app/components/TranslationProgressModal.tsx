@@ -15,19 +15,26 @@ interface TranslationProgressModalProps {
   multiLanguageMode?: boolean;
   /** Number of target languages */
   targetLanguageCount?: number;
+  /** Lines / items completed so far — rendered as a "current / total" hint */
+  currentCount?: number;
+  /** Total lines / items — omit (or 0) to hide the hint */
+  totalCount?: number;
 }
 
 /**
  * Shared progress modal component for translation operations.
  * Shows a circular progress indicator with optional multi-language info.
  */
-const TranslationProgressModal = ({ open, percent, multiLanguageMode = false, targetLanguageCount = 0 }: TranslationProgressModalProps) => {
+const TranslationProgressModal = ({ open, percent, multiLanguageMode = false, targetLanguageCount = 0, currentCount, totalCount }: TranslationProgressModalProps) => {
   const t = useTranslations("common");
   const { token } = theme.useToken();
 
   if (!open) return null;
 
-  const displayPercent = percent >= 100 ? 100 : Math.min(Math.floor(percent), 99);
+  // Show at least 1% once translation has kicked off, so users see the bar move
+  // even when a single LLM batch is still in-flight and no lines have returned yet.
+  const displayPercent = percent >= 100 ? 100 : percent > 0 ? Math.min(Math.max(1, Math.floor(percent)), 99) : 0;
+  const hasCountInfo = typeof currentCount === "number" && typeof totalCount === "number" && totalCount > 0;
 
   return (
     <Modal open={open} footer={null} closable={false} centered width={320} styles={{ body: { padding: "32px 24px" } }}>
@@ -61,6 +68,13 @@ const TranslationProgressModal = ({ open, percent, multiLanguageMode = false, ta
         {multiLanguageMode && targetLanguageCount > 0 && (
           <Text type="secondary" className="mt-2">
             {t("multiTranslating")} <Text strong>{targetLanguageCount}</Text>
+          </Text>
+        )}
+
+        {/* Count info: "32 / 150" */}
+        {hasCountInfo && (
+          <Text type="secondary" className="mt-2 text-sm">
+            <Text strong>{currentCount}</Text> / {totalCount}
           </Text>
         )}
 
