@@ -3,6 +3,9 @@ import { useState } from "react";
 import { normalizeNewlines } from "@/app/utils";
 import type { UploadFile, UploadProps } from "antd";
 
+// Shared dedup predicate: match by name + size
+const isDuplicateFile = (a: { name: string; size?: number }, b: { name: string; size?: number }): boolean => a.name === b.name && a.size === b.size;
+
 const useFileUpload = () => {
   const [sourceText, setSourceText] = useState<string>("");
   const [multipleFiles, setMultipleFiles] = useState<File[]>([]);
@@ -19,12 +22,16 @@ const useFileUpload = () => {
       const buffer = e.target?.result as ArrayBuffer;
       const uint8Array = new Uint8Array(buffer);
 
-      // 大文件性能优化：仅抽样前 512KB 用于编码检测，避免将整文件转为字符串
+      // Sample first 512KB for encoding detection (avoids converting full file to string)
       const SAMPLE_SIZE = 512 * 1024;
       const sample = uint8Array.subarray(0, Math.min(SAMPLE_SIZE, uint8Array.length));
-      const sampleString = Array.from(sample)
-        .map((byte) => String.fromCharCode(byte))
-        .join("");
+      // Build binary string where charCode === byte value (required by jschardet)
+      // Cannot use TextDecoder("latin1") because browsers map it to Windows-1252,
+      // which remaps bytes 0x80-0x9F to different code points and breaks detection
+      let sampleString = "";
+      for (let i = 0; i < sample.length; i += 8192) {
+        sampleString += String.fromCharCode.apply(null, sample.subarray(i, i + 8192) as unknown as number[]);
+      }
 
       // 检测编码（基于样本），后续仍对完整内容进行解码
       // Lazy load jschardet
@@ -63,8 +70,7 @@ const useFileUpload = () => {
       originFileObj: f.originFileObj,
     }));
 
-    // Deduplicate files based on name and size
-    const uniqueFileList = updatedFileList.filter((value, index, self) => index === self.findIndex((t) => t.name === value.name && t.size === value.size));
+    const uniqueFileList = updatedFileList.filter((value, index, self) => index === self.findIndex((t) => isDuplicateFile(t, value)));
     setFileList(uniqueFileList);
 
     if (uniqueFileList.length > 1 && uploadMode === "single") {
@@ -84,16 +90,8 @@ const useFileUpload = () => {
       });
     } else {
       setMultipleFiles((prevFiles) => {
-        // Prevent adding duplicate files
-        const isFileAlreadyAdded = prevFiles.some((existingFile) => existingFile.name === uploadedFile.name && existingFile.size === uploadedFile.size);
-
-        // 如果文件未添加，则添加
-        if (!isFileAlreadyAdded) {
-          const newFiles = [...prevFiles, uploadedFile];
-          return newFiles;
-        }
-
-        return prevFiles;
+        if (prevFiles.some((f) => isDuplicateFile(f, uploadedFile))) return prevFiles;
+        return [...prevFiles, uploadedFile];
       });
     }
 
@@ -108,8 +106,7 @@ const useFileUpload = () => {
 
     // 从 multipleFiles 中移除
     setMultipleFiles((prevFiles) => {
-      // 使用文件名和大小作为唯一标识
-      const updatedMultipleFiles = prevFiles.filter((f) => !(f.name === file.name && f.size === file.size));
+      const updatedMultipleFiles = prevFiles.filter((f) => !isDuplicateFile(f, file));
 
       // 如果只剩下一个文件，则切换到单文件模式，且读取文件内容
       if (updatedMultipleFiles.length === 1 && uploadMode === "multiple") {
