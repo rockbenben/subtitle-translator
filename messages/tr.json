@@ -117,7 +117,13 @@
     "noSourceText": "Lütfen dosya yükleyin veya metin yapıştırın",
     "noExtractedText": "İçerik çıkarılamadı, dosya formatını kontrol edin",
     "textExtracted": "Altyazı metni çıkarıldı, ",
-    "bilingualError": "Karmaşık stil etiketleri algılandı. İki dilli mod format hatalarına neden olabilir. 'İki Dilli Altyazı'yı kapatmanız önerilir."
+    "bilingualError": "Karmaşık stil etiketleri algılandı. İki dilli mod format hatalarına neden olabilir. 'İki Dilli Altyazı'yı kapatmanız önerilir.",
+    "faq1q": "YouTube'dan indirilen SRT ve ASS altyazıları çevirebilir mi?",
+    "faq1a": "SRT, ASS, VTT, LRC desteği. ASS konum/hizalama etiketleri (\\\\an8 vb.) çeviri sonrası korunur. YouTube altyazıları yt-dlp ile, Bilibili yaratıcı kontrol panelinden, yayın platformlarının altyazıları yasal kaynaklardan. Not: Karmaşık ASS satır içi efektleri (renk, animasyon, karaoke) çeviri sırasında basitleştirilir.",
+    "faq2q": "Çeviriden sonra zaman kodları uyuşmazsa veya okunamayan karakter (□□□) çıkarsa?",
+    "faq2a": "Araç yalnızca metni çevirir, zaman kodlarını değiştirmez. Uyuşmazlık genelde kaynak ve hedef videonun kare hızı farklılığından (23.976 vs 25 fps) kaynaklanır — Aegisub veya Subtitle Edit ile düzeltin. Kodlama: jschardet UTF-8/UTF-16/GBK/Shift-JIS'i otomatik algılar; başarısız olursa UTF-8'e döner.",
+    "faq3q": "YouTube veya dil öğrenimi için iki dilli altyazı nasıl oluşturulur?",
+    "faq3a": "Hedef dille birlikte 'İki Dilli' modunu seçin. Çeviriyi üste (öğrenme için) veya alta (izleme için) yerleştirin. ASS formatında dışa aktararak renkli iki dilli altyazılar elde edin — YouTube, Premiere veya DaVinci Resolve'de doğrudan kullanın."
   },
   "TranslationSettings": {
     "docs": "Belgeler",
@@ -150,9 +156,9 @@
     "delayTime": "Gecikme",
     "CurrentTransConfig": "Mevcut Yapılandırma",
     "useRelay": "API Aktarıcı",
-    "useRelayTooltip": "CORS veya 403 hatalarında DeepSeek için API aktarıcıyı etkinleştirin",
+    "useRelayTooltip": "CORS veya 403 hatalarında API aktarıcıyı etkinleştirin",
     "enableThinking": "Düşünme Modunu Etkinleştir",
-    "enableThinkingTooltip": "Desteklenen modeller için düşünme modunu etkinleştir (Kimi, DeepSeek, GLM, GPT-OSS)",
+    "enableThinkingTooltip": "Desteklenen modeller için düşünme / akıl yürütme modunu etkinleştir",
     "presetSelect": "Ön Ayar Seç",
     "presetSave": "Ön Ayarı Kaydet",
     "presetDelete": "Ön Ayarı Sil",
@@ -164,7 +170,11 @@
     "presetUpdate": "Ön Ayarı Güncelle",
     "presetUpdated": "Ön ayar güncellendi",
     "presetDeleteConfirm": "Bu ön ayarı silmek istiyor musunuz?",
-    "qwenMtDomains": "Etki Alanı İpuçları (yalnızca İngilizce)"
+    "qwenMtDomains": "Etki Alanı İpuçları (yalnızca İngilizce)",
+    "selectService": "Çeviri hizmeti seç",
+    "configuredServices": "Yapılandırılmış",
+    "globalPrompts": "LLM İstemleri (global)",
+    "globalPromptsExtra": "Tüm LLM hizmetleri bu istemleri paylaşır; hizmet değiştirmek onları sıfırlamaz"
   },
   "tools": {
     "subtitleTranslator": {

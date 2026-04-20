@@ -117,7 +117,13 @@
     "noSourceText": "Silakan unggah file atau tempel teks",
     "noExtractedText": "Tidak ada konten yang diekstrak, periksa format file",
     "textExtracted": "Teks subtitle diekstrak, ",
-    "bilingualError": "Tag gaya kompleks terdeteksi. Mode dwibahasa dapat menyebabkan kesalahan format. Disarankan untuk mematikan 'Subtitle Dwibahasa'."
+    "bilingualError": "Tag gaya kompleks terdeteksi. Mode dwibahasa dapat menyebabkan kesalahan format. Disarankan untuk mematikan 'Subtitle Dwibahasa'.",
+    "faq1q": "Bisakah menerjemahkan subtitle SRT dan ASS dari YouTube?",
+    "faq1a": "Mendukung SRT, ASS, VTT, LRC. Tag posisi/perataan ASS (\\\\an8 dll.) dipertahankan setelah terjemahan. Subtitle YouTube via yt-dlp, Bilibili via dasbor kreator, platform streaming dari sumber yang sah. Catatan: Efek ASS inline kompleks (warna, animasi, karaoke) disederhanakan saat terjemahan.",
+    "faq2q": "Bagaimana mengatasi timecode tidak sinkron atau karakter rusak (□□□) setelah terjemahan?",
+    "faq2a": "Alat hanya menerjemahkan teks, tidak pernah mengubah timecode. Ketidaksesuaian biasanya karena framerate berbeda (23.976 vs 25 fps) antara sumber dan video target — perbaiki dengan Aegisub atau Subtitle Edit. Pengkodean: jschardet mendeteksi UTF-8/UTF-16/GBK/Shift-JIS otomatis; jika gagal, default ke UTF-8.",
+    "faq3q": "Bagaimana membuat subtitle dwibahasa untuk YouTube atau pembelajaran bahasa?",
+    "faq3a": "Pilih mode 'Dwibahasa' dengan bahasa target. Tempatkan terjemahan di atas (untuk pembelajaran) atau bawah (untuk menonton). Ekspor sebagai ASS untuk subtitle dwibahasa berwarna — langsung dapat digunakan di YouTube, Premiere, atau DaVinci Resolve."
   },
   "TranslationSettings": {
     "docs": "Dokumen",
@@ -150,9 +156,9 @@
     "delayTime": "Penundaan",
     "CurrentTransConfig": "Konfigurasi Saat Ini",
     "useRelay": "Relay API",
-    "useRelayTooltip": "Aktifkan relay API untuk DeepSeek jika terjadi kesalahan CORS atau 403",
+    "useRelayTooltip": "Aktifkan relay API jika terjadi kesalahan CORS atau 403",
     "enableThinking": "Aktifkan Mode Berpikir",
-    "enableThinkingTooltip": "Aktifkan mode berpikir untuk model yang didukung (Kimi, DeepSeek, GLM, GPT-OSS)",
+    "enableThinkingTooltip": "Aktifkan mode berpikir / penalaran untuk model yang didukung",
     "presetSelect": "Pilih Preset",
     "presetSave": "Simpan Preset",
     "presetDelete": "Hapus Preset",
@@ -164,7 +170,11 @@
     "presetUpdate": "Perbarui Preset",
     "presetUpdated": "Preset diperbarui",
     "presetDeleteConfirm": "Hapus preset ini?",
-    "qwenMtDomains": "Prompt Domain (hanya bahasa Inggris)"
+    "qwenMtDomains": "Prompt Domain (hanya bahasa Inggris)",
+    "selectService": "Pilih layanan terjemahan",
+    "configuredServices": "Terkonfigurasi",
+    "globalPrompts": "Prompt LLM (global)",
+    "globalPromptsExtra": "Semua layanan LLM berbagi prompt ini; berpindah layanan tidak akan mereset-nya"
   },
   "tools": {
     "subtitleTranslator": {

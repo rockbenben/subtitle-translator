@@ -117,7 +117,13 @@
     "noSourceText": "Bitte Untertiteldatei hochladen oder Text einfügen",
     "noExtractedText": "Kein Untertitelinhalt extrahiert, bitte Dateiformat prüfen",
     "textExtracted": "Untertiteltext extrahiert, ",
-    "bilingualError": "Komplexe Stil-Tags erkannt. Zweisprachiger Modus kann zu Formatierungsfehlern führen. Empfohlen: 'Zweisprachige Untertitel' deaktivieren."
+    "bilingualError": "Komplexe Stil-Tags erkannt. Zweisprachiger Modus kann zu Formatierungsfehlern führen. Empfohlen: 'Zweisprachige Untertitel' deaktivieren.",
+    "faq1q": "Kann ich SRT- und ASS-Untertitel von YouTube übersetzen?",
+    "faq1a": "Unterstützt SRT, ASS, VTT, LRC. ASS-Position/Ausrichtungs-Tags (\\\\an8 etc.) werden nach der Übersetzung beibehalten. YouTube-Untertitel via yt-dlp, Bilibili via Creator-Dashboard, Streaming-Plattformen aus legitimen Quellen. Hinweis: Komplexe ASS-Inline-Effekte (Farbe, Animation, Karaoke) werden bei der Übersetzung vereinfacht.",
+    "faq2q": "Was tun bei Timecode-Abweichungen oder Zeichensalat (□□□) nach der Übersetzung?",
+    "faq2a": "Das Tool übersetzt nur Text und ändert Timecodes nie. Timing-Abweichungen kommen von Framerate-Unterschieden (23,976 vs 25 fps) zwischen Quelle und Zielvideo — mit Aegisub oder Subtitle Edit korrigieren. Kodierung: jschardet erkennt UTF-8/UTF-16/GBK/Shift-JIS automatisch; bei Fehlschlag Standardeinstellung UTF-8. Bei Problemen Quelldatei als UTF-8 neu speichern.",
+    "faq3q": "Wie erstelle ich zweisprachige Untertitel für YouTube oder zum Sprachenlernen?",
+    "faq3a": "Wählen Sie den 'Zweisprachig'-Modus mit Ihrer Zielsprache. Position der Übersetzung wählbar: oben (Lernfokus) oder unten (Konsumfokus). Export als ASS für farbige zweisprachige Untertitel, direkt für YouTube, Premiere oder DaVinci Resolve einsetzbar."
   },
   "TranslationSettings": {
     "docs": "Dokumentation",
@@ -150,9 +156,9 @@
     "delayTime": "Verzögerungszeit",
     "CurrentTransConfig": "Aktuelle Konfiguration",
     "useRelay": "API-Relay",
-    "useRelayTooltip": "Aktivieren Sie API-Relay für DeepSeek bei CORS- oder 403-Fehlern",
+    "useRelayTooltip": "Aktivieren Sie API-Relay bei CORS- oder 403-Fehlern",
     "enableThinking": "Thinking-Modus aktivieren",
-    "enableThinkingTooltip": "Aktiviert den Thinking-Modus für unterstützte Modelle (Kimi, DeepSeek, GLM, GPT-OSS)",
+    "enableThinkingTooltip": "Aktiviert den Thinking- / Reasoning-Modus für unterstützte Modelle",
     "presetSelect": "Voreinstellung wählen",
     "presetSave": "Voreinstellung speichern",
     "presetDelete": "Voreinstellung löschen",
@@ -164,7 +170,11 @@
     "presetUpdate": "Voreinstellung aktualisieren",
     "presetUpdated": "Voreinstellung aktualisiert",
     "presetDeleteConfirm": "Diese Voreinstellung löschen?",
-    "qwenMtDomains": "Domänen-Prompts (nur Englisch)"
+    "qwenMtDomains": "Domänen-Prompts (nur Englisch)",
+    "selectService": "Übersetzungsdienst auswählen",
+    "configuredServices": "Konfiguriert",
+    "globalPrompts": "LLM-Prompts (global)",
+    "globalPromptsExtra": "Alle LLM-Dienste teilen sich diese Prompts; ein Dienstwechsel setzt sie nicht zurück"
   },
   "tools": {
     "subtitleTranslator": {

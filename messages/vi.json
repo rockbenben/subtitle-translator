@@ -117,7 +117,13 @@
     "noSourceText": "Vui lòng tải tệp hoặc dán văn bản",
     "noExtractedText": "Không trích xuất được nội dung, kiểm tra định dạng tệp",
     "textExtracted": "Đã trích xuất văn bản phụ đề, ",
-    "bilingualError": "Phát hiện thẻ kiểu phức tạp. Chế độ song ngữ có thể gây lỗi định dạng. Khuyên dùng tắt 'Phụ đề song ngữ'."
+    "bilingualError": "Phát hiện thẻ kiểu phức tạp. Chế độ song ngữ có thể gây lỗi định dạng. Khuyên dùng tắt 'Phụ đề song ngữ'.",
+    "faq1q": "Có thể dịch phụ đề SRT và ASS tải từ YouTube không?",
+    "faq1a": "Hỗ trợ SRT, ASS, VTT, LRC. Thẻ vị trí/căn chỉnh ASS (\\\\an8, v.v.) được bảo toàn sau dịch. Phụ đề YouTube trích xuất qua yt-dlp, Bilibili qua bảng điều khiển sáng tạo, nền tảng streaming từ nguồn hợp pháp. Lưu ý: Hiệu ứng ASS nội tuyến phức tạp (màu, hoạt hình, karaoke) được đơn giản hóa khi dịch.",
+    "faq2q": "Làm gì nếu timecode sai lệch hoặc xuất hiện ký tự lỗi (□□□) sau khi dịch?",
+    "faq2a": "Công cụ chỉ dịch văn bản, không sửa timecode. Lệch thời gian thường do framerate không khớp (23.976 vs 25 fps) giữa nguồn và video đích — chỉnh bằng Aegisub hoặc Subtitle Edit. Mã hóa: jschardet tự phát hiện UTF-8/UTF-16/GBK/Shift-JIS; nếu thất bại, mặc định UTF-8.",
+    "faq3q": "Làm sao tạo phụ đề song ngữ cho YouTube hoặc học ngoại ngữ?",
+    "faq3a": "Chọn chế độ 'Song ngữ' với ngôn ngữ đích. Đặt bản dịch phía trên (học) hoặc phía dưới (xem). Xuất ASS cho phụ đề song ngữ có màu, dùng trực tiếp trên YouTube, Premiere hoặc DaVinci Resolve."
   },
   "TranslationSettings": {
     "docs": "Tài liệu",
@@ -150,9 +156,9 @@
     "delayTime": "Độ trễ",
     "CurrentTransConfig": "Cấu hình hiện tại",
     "useRelay": "Chuyển tiếp API",
-    "useRelayTooltip": "Bật chuyển tiếp API cho DeepSeek khi gặp lỗi CORS hoặc 403",
+    "useRelayTooltip": "Bật chuyển tiếp API khi gặp lỗi CORS hoặc 403",
     "enableThinking": "Bật chế độ suy nghĩ",
-    "enableThinkingTooltip": "Bật chế độ suy nghĩ cho các mô hình được hỗ trợ (Kimi, DeepSeek, GLM, GPT-OSS)",
+    "enableThinkingTooltip": "Bật chế độ suy nghĩ / suy luận cho các mô hình được hỗ trợ",
     "presetSelect": "Chọn cài đặt sẵn",
     "presetSave": "Lưu cài đặt sẵn",
     "presetDelete": "Xóa cài đặt sẵn",
@@ -164,7 +170,11 @@
     "presetUpdate": "Cập nhật cài đặt sẵn",
     "presetUpdated": "Đã cập nhật cài đặt sẵn",
     "presetDeleteConfirm": "Xóa cài đặt sẵn này?",
-    "qwenMtDomains": "Lời nhắc tên miền (chỉ tiếng Anh)"
+    "qwenMtDomains": "Lời nhắc tên miền (chỉ tiếng Anh)",
+    "selectService": "Chọn dịch vụ dịch thuật",
+    "configuredServices": "Đã cấu hình",
+    "globalPrompts": "Prompt LLM (toàn cục)",
+    "globalPromptsExtra": "Tất cả dịch vụ LLM dùng chung bộ prompt này; chuyển dịch vụ sẽ không đặt lại chúng"
   },
   "tools": {
     "subtitleTranslator": {

@@ -117,7 +117,13 @@
     "noSourceText": "Please upload subtitle file or paste text",
     "noExtractedText": "No subtitle content extracted, please check file format",
     "textExtracted": "Subtitle text extracted,",
-    "bilingualError": "Complex style tags detected. Bilingual mode may cause formatting issues. Recommended to disable 'Bilingual Subtitles'."
+    "bilingualError": "Complex style tags detected. Bilingual mode may cause formatting issues. Recommended to disable 'Bilingual Subtitles'.",
+    "faq1q": "Can I translate SRT and ASS subtitles downloaded from YouTube?",
+    "faq1a": "Supports SRT, ASS, VTT, LRC subtitle formats. Position/alignment tags like \\\\an8 in ASS are preserved after translation. YouTube subtitles can be exported via yt-dlp, Bilibili subtitles via the creator dashboard, streaming platform subtitles should come from legitimate sources. Note: Complex inline ASS effects (color, animation, karaoke) are simplified during translation.",
+    "faq2q": "How do I fix subtitle timing mismatch or encoding (□□□) issues after translation?",
+    "faq2a": "The tool only translates text and never modifies timecodes. Timing mismatches after translation usually stem from framerate inconsistencies (23.976 vs 25 fps) in the source — fix with Aegisub or Subtitle Edit. For encoding, jschardet auto-detects UTF-8/UTF-16/GBK/Shift-JIS; if detection fails it defaults to UTF-8, so re-save source as UTF-8 via Notepad++ or VS Code before uploading.",
+    "faq3q": "How do I create bilingual subtitles for YouTube, Bilibili, or language learning?",
+    "faq3a": "Select 'Bilingual' mode with your target language. Position translation above (for learning — focus on translation) or below (for consumption — primary is original). Export as ASS for colored dual-language subtitles, then upload to YouTube community subs, Bilibili subtitle system, or embed in Premiere/DaVinci Resolve."
   },
   "TranslationSettings": {
     "docs": "Docs",
@@ -150,9 +156,9 @@
     "delayTime": "Delay Time",
     "CurrentTransConfig": "Current Config",
     "useRelay": "API Relay",
-    "useRelayTooltip": "Enable API relay for DeepSeek if you encounter CORS or 403 errors",
+    "useRelayTooltip": "Enable API relay if you encounter CORS or 403 errors",
     "enableThinking": "Enable Thinking",
-    "enableThinkingTooltip": "Enable thinking mode for supported models (Kimi, DeepSeek, GLM, GPT-OSS)",
+    "enableThinkingTooltip": "Enable thinking / reasoning mode for supported models",
     "presetSelect": "Select Preset",
     "presetSave": "Save Preset",
     "presetDelete": "Delete Preset",
@@ -164,7 +170,11 @@
     "presetUpdate": "Update Preset",
     "presetUpdated": "Preset updated",
     "presetDeleteConfirm": "Delete this preset?",
-    "qwenMtDomains": "Domain Prompts (English only)"
+    "qwenMtDomains": "Domain Prompts (English only)",
+    "selectService": "Select translation service",
+    "configuredServices": "Configured",
+    "globalPrompts": "LLM Prompts (Global)",
+    "globalPromptsExtra": "All LLM services share these prompts; switching services will not reset them"
   },
   "tools": {
     "subtitleTranslator": {

@@ -117,7 +117,13 @@
     "noSourceText": "Por favor, envie arquivo ou cole texto",
     "noExtractedText": "Nenhum conteúdo extraído, verifique o formato do arquivo",
     "textExtracted": "Texto de legenda extraído, ",
-    "bilingualError": "Tags de estilo complexas detectadas. Modo bilíngue pode causar erros de formatação. Recomendado desativar 'Legendas Bilíngues'."
+    "bilingualError": "Tags de estilo complexas detectadas. Modo bilíngue pode causar erros de formatação. Recomendado desativar 'Legendas Bilíngues'.",
+    "faq1q": "Posso traduzir legendas SRT e ASS baixadas do YouTube?",
+    "faq1a": "Suporta SRT, ASS, VTT, LRC. Tags de posição/alinhamento ASS (\\\\an8, etc.) são preservadas após tradução. Legendas YouTube via yt-dlp, Bilibili via painel de criador, plataformas streaming de fontes legítimas. Nota: Efeitos ASS inline complexos (cor, animação, karaokê) são simplificados durante a tradução.",
+    "faq2q": "O que fazer se os timecodes não coincidirem ou aparecerem caracteres ilegíveis (□□□)?",
+    "faq2a": "A ferramenta apenas traduz texto sem modificar timecodes. Desajustes vêm de framerates inconsistentes (23,976 vs 25 fps) entre origem e vídeo destino — ajuste com Aegisub ou Subtitle Edit. Codificação: jschardet detecta UTF-8/UTF-16/GBK/Shift-JIS automaticamente; se falhar, UTF-8 por padrão.",
+    "faq3q": "Como criar legendas bilíngues para YouTube ou aprendizado de idiomas?",
+    "faq3a": "Selecione modo 'Bilíngue' com o idioma alvo. Posicione a tradução acima (para aprendizado) ou abaixo (para consumo). Exporte como ASS para legendas bilíngues coloridas, diretamente usáveis no YouTube, Premiere ou DaVinci Resolve."
   },
   "TranslationSettings": {
     "docs": "Docs",
@@ -150,9 +156,9 @@
     "delayTime": "Atraso",
     "CurrentTransConfig": "Config Atual",
     "useRelay": "Relay da API",
-    "useRelayTooltip": "Ative o relay da API para DeepSeek em caso de erros CORS ou 403",
+    "useRelayTooltip": "Ative o relay da API em caso de erros CORS ou 403",
     "enableThinking": "Ativar modo Pensamento",
-    "enableThinkingTooltip": "Ativar modo de pensamento para modelos suportados (Kimi, DeepSeek, GLM, GPT-OSS)",
+    "enableThinkingTooltip": "Ativar modo de pensamento / raciocínio para modelos suportados",
     "presetSelect": "Selecionar predefinição",
     "presetSave": "Salvar predefinição",
     "presetDelete": "Excluir predefinição",
@@ -164,7 +170,11 @@
     "presetUpdate": "Atualizar predefinição",
     "presetUpdated": "Predefinição atualizada",
     "presetDeleteConfirm": "Excluir esta predefinição?",
-    "qwenMtDomains": "Prompts de Domínio (apenas em inglês)"
+    "qwenMtDomains": "Prompts de Domínio (apenas em inglês)",
+    "selectService": "Selecionar serviço de tradução",
+    "configuredServices": "Configurados",
+    "globalPrompts": "Prompts LLM (globais)",
+    "globalPromptsExtra": "Todos os serviços LLM compartilham esses prompts; alternar de serviço não os redefinirá"
   },
   "tools": {
     "subtitleTranslator": {

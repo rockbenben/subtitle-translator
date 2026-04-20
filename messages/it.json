@@ -117,7 +117,13 @@
     "noSourceText": "Per favore carica file o incolla testo",
     "noExtractedText": "Nessun contenuto estratto, verifica formato file",
     "textExtracted": "Testo sottotitoli estratto, ",
-    "bilingualError": "Tag stile complessi rilevati. Modalità bilingue può causare errori di formattazione. Consigliato disattivare 'Sottotitoli Bilingue'."
+    "bilingualError": "Tag stile complessi rilevati. Modalità bilingue può causare errori di formattazione. Consigliato disattivare 'Sottotitoli Bilingue'.",
+    "faq1q": "È possibile tradurre sottotitoli SRT e ASS scaricati da YouTube?",
+    "faq1a": "Supporta SRT, ASS, VTT, LRC. I tag di posizione/allineamento ASS (\\\\an8, ecc.) vengono preservati dopo la traduzione. Sottotitoli YouTube via yt-dlp, Bilibili via dashboard creatore, piattaforme streaming da fonti legittime. Nota: Effetti ASS inline complessi (colore, animazione, karaoke) vengono semplificati durante la traduzione.",
+    "faq2q": "Cosa fare se i timecode non coincidono o appaiono caratteri illeggibili (□□□)?",
+    "faq2a": "Lo strumento traduce solo il testo senza modificare i timecode. Discrepanze temporali vengono da framerate incoerenti (23,976 vs 25 fps) tra sorgente e video target — correggi con Aegisub o Subtitle Edit. Codifica: jschardet rileva automaticamente UTF-8/UTF-16/GBK/Shift-JIS; se fallisce, default UTF-8.",
+    "faq3q": "Come creare sottotitoli bilingue per YouTube o apprendimento linguistico?",
+    "faq3a": "Seleziona modalità 'Bilingue' con la lingua target. Posiziona la traduzione sopra (per apprendimento) o sotto (per fruizione). Esporta come ASS per sottotitoli bilingue colorati — direttamente utilizzabile in YouTube, Premiere o DaVinci Resolve."
   },
   "TranslationSettings": {
     "docs": "Docs",
@@ -150,9 +156,9 @@
     "delayTime": "Ritardo",
     "CurrentTransConfig": "Config Corrente",
     "useRelay": "Relay API",
-    "useRelayTooltip": "Attiva il relay API per DeepSeek in caso di errori CORS o 403",
+    "useRelayTooltip": "Attiva il relay API in caso di errori CORS o 403",
     "enableThinking": "Abilita modalità Pensiero",
-    "enableThinkingTooltip": "Abilita la modalità di pensiero per i modelli supportati (Kimi, DeepSeek, GLM, GPT-OSS)",
+    "enableThinkingTooltip": "Abilita la modalità pensiero / ragionamento per i modelli supportati",
     "presetSelect": "Seleziona preset",
     "presetSave": "Salva preset",
     "presetDelete": "Elimina preset",
@@ -164,7 +170,11 @@
     "presetUpdate": "Aggiorna preset",
     "presetUpdated": "Preset aggiornato",
     "presetDeleteConfirm": "Eliminare questo preset?",
-    "qwenMtDomains": "Prompt di dominio (solo in inglese)"
+    "qwenMtDomains": "Prompt di dominio (solo in inglese)",
+    "selectService": "Seleziona il servizio di traduzione",
+    "configuredServices": "Configurati",
+    "globalPrompts": "Prompt LLM (globali)",
+    "globalPromptsExtra": "Tutti i servizi LLM condividono questi prompt; cambiare servizio non li ripristinerà"
   },
   "tools": {
     "subtitleTranslator": {

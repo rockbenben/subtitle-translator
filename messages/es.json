@@ -117,7 +117,13 @@
     "noSourceText": "Por favor sube archivo o pega texto",
     "noExtractedText": "No se extrajo contenido, verifica formato de archivo",
     "textExtracted": "Texto de subtítulos extraído, ",
-    "bilingualError": "Etiquetas de estilo complejas detectadas. Modo bilingüe puede causar errores de formato. Recomendado desactivar 'Subtítulos Bilingües'."
+    "bilingualError": "Etiquetas de estilo complejas detectadas. Modo bilingüe puede causar errores de formato. Recomendado desactivar 'Subtítulos Bilingües'.",
+    "faq1q": "¿Se pueden traducir subtítulos SRT y ASS descargados de YouTube?",
+    "faq1a": "Compatible con SRT, ASS, VTT, LRC. Las etiquetas de posición/alineación ASS (\\\\an8, etc.) se preservan tras la traducción. Subtítulos YouTube vía yt-dlp, Bilibili vía panel de creador, plataformas streaming desde fuentes legítimas. Nota: Efectos ASS inline complejos (color, animación, karaoke) se simplifican durante la traducción.",
+    "faq2q": "¿Qué hacer si los timecodes no coinciden o aparecen caracteres ilegibles (□□□)?",
+    "faq2a": "La herramienta solo traduce texto sin modificar timecodes. Los desfases vienen de framerates inconsistentes (23,976 vs 25 fps) entre origen y video destino — ajuste con Aegisub o Subtitle Edit. Codificación: jschardet detecta UTF-8/UTF-16/GBK/Shift-JIS automáticamente; si falla, UTF-8 por defecto. Si aparecen caracteres ilegibles, guarde el archivo origen como UTF-8 con Notepad++ o VS Code.",
+    "faq3q": "¿Cómo crear subtítulos bilingües para YouTube o aprendizaje de idiomas?",
+    "faq3a": "Seleccione modo 'Bilingüe' con su idioma de destino. Posición de la traducción: arriba (para aprender) o abajo (para ver contenido). Exporte como ASS para subtítulos bilingües con colores, directamente usable en YouTube, Premiere o DaVinci Resolve."
   },
   "TranslationSettings": {
     "docs": "Docs",
@@ -150,9 +156,9 @@
     "delayTime": "Retraso",
     "CurrentTransConfig": "Config Actual",
     "useRelay": "Relé API",
-    "useRelayTooltip": "Habilita el relé API para DeepSeek si encuentras errores CORS o 403",
+    "useRelayTooltip": "Habilita el relé API si encuentras errores CORS o 403",
     "enableThinking": "Activar modo Pensamiento",
-    "enableThinkingTooltip": "Habilita el modo de pensamiento para modelos compatibles (Kimi, DeepSeek, GLM, GPT-OSS)",
+    "enableThinkingTooltip": "Habilita el modo de pensamiento / razonamiento para modelos compatibles",
     "presetSelect": "Seleccionar preset",
     "presetSave": "Guardar preset",
     "presetDelete": "Eliminar preset",
@@ -164,7 +170,11 @@
     "presetUpdate": "Actualizar preset",
     "presetUpdated": "Preset actualizado",
     "presetDeleteConfirm": "¿Eliminar este preset?",
-    "qwenMtDomains": "Avisos de dominio (solo en inglés)"
+    "qwenMtDomains": "Avisos de dominio (solo en inglés)",
+    "selectService": "Seleccionar servicio de traducción",
+    "configuredServices": "Configurado",
+    "globalPrompts": "Prompts LLM (globales)",
+    "globalPromptsExtra": "Todos los servicios LLM comparten estos prompts; cambiar de servicio no los restablecerá"
   },
   "tools": {
     "subtitleTranslator": {

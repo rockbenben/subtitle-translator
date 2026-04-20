@@ -117,7 +117,13 @@
     "noSourceText": "请上传字幕文件或粘贴文本",
     "noExtractedText": "未提取到字幕内容，请检查文件格式",
     "textExtracted": "已提取字幕文本，",
-    "bilingualError": "检测到复杂样式标签，双语模式可能导致格式错乱，建议关闭「双语字幕」。"
+    "bilingualError": "检测到复杂样式标签，双语模式可能导致格式错乱，建议关闭「双语字幕」。",
+    "faq1q": "能翻译 YouTube 下载的 SRT 和 ASS 字幕文件吗？",
+    "faq1a": "支持 SRT、ASS、VTT、LRC 四种字幕格式，对白文本翻译后 ASS 位置样式标签（如 \\\\an8）会被保留。YouTube 视频字幕可用 yt-dlp 导出再上传翻译；B 站视频字幕可通过创作中心下载；流媒体平台的字幕需从合法来源获取。注：复杂的 ASS 内联特效标签（颜色、动画、卡拉 OK）在翻译过程中会被简化。",
+    "faq2q": "翻译后字幕时间轴对不上或出现乱码（□□□）怎么办？",
+    "faq2a": "工具只翻译文本，时间轴完整保留不做任何修改。如翻译后时间对不上，通常是源文件帧率与目标视频不一致（23.976 vs 25 fps）所致，需用 Aegisub 或 Subtitle Edit 调整。乱码问题：工具通过 jschardet 自动识别 UTF-8/UTF-16/GBK/Shift-JIS 等编码，识别失败会回退到 UTF-8，此时请先用 Notepad++ 或 VS Code 另存为 UTF-8 再上传。",
+    "faq3q": "怎么做 B 站、YouTube 的中英双语字幕？能用于语言学习吗？",
+    "faq3a": "选择「双语」导出模式，译文位置可选在原文上方（学英语推荐）或下方（看外语剧推荐）。导出 ASS 格式可为原文和译文设置不同颜色、字体大小和位置，直接上传至 B 站字幕系统或 YouTube 社区字幕，Premiere/DaVinci Resolve 也可直接嵌入。"
   },
   "TranslationSettings": {
     "docs": "文档",
@@ -150,9 +156,9 @@
     "delayTime": "延迟时间",
     "CurrentTransConfig": "当前配置",
     "useRelay": "中转 API",
-    "useRelayTooltip": "如遇到 CORS 或 403 错误，请开启中转 API 来访问 DeepSeek",
+    "useRelayTooltip": "如遇到 CORS 或 403 错误，请开启中转 API",
     "enableThinking": "启用思考模式",
-    "enableThinkingTooltip": "为支持的模型启用思考模式（Kimi、DeepSeek、GLM、GPT-OSS）",
+    "enableThinkingTooltip": "为支持的模型启用思考 / 推理模式",
     "presetSelect": "选择预设",
     "presetSave": "保存预设",
     "presetDelete": "删除预设",
@@ -164,7 +170,11 @@
     "presetUpdate": "更新预设",
     "presetUpdated": "预设已更新",
     "presetDeleteConfirm": "确定要删除此预设吗？",
-    "qwenMtDomains": "领域提示词 (仅支持英文)"
+    "qwenMtDomains": "领域提示词 (仅支持英文)",
+    "selectService": "选择翻译服务",
+    "configuredServices": "已配置",
+    "globalPrompts": "LLM 提示词（全局）",
+    "globalPromptsExtra": "所有 LLM 服务共用这组提示词，切换服务不会重置"
   },
   "tools": {
     "subtitleTranslator": {

@@ -117,7 +117,13 @@
     "noSourceText": "Veuillez télécharger un fichier ou coller du texte",
     "noExtractedText": "Aucun contenu extrait, vérifiez le format du fichier",
     "textExtracted": "Texte de sous-titres extrait, ",
-    "bilingualError": "Balises de style complexes détectées. Le mode bilingue peut causer des erreurs de format. Recommandé de désactiver 'Sous-titres bilingues'."
+    "bilingualError": "Balises de style complexes détectées. Le mode bilingue peut causer des erreurs de format. Recommandé de désactiver 'Sous-titres bilingues'.",
+    "faq1q": "Peut-on traduire des SRT et ASS téléchargés depuis YouTube ?",
+    "faq1a": "Compatible avec SRT, ASS, VTT, LRC. Les balises de position/alignement ASS (\\\\an8, etc.) sont préservées après traduction. Les sous-titres YouTube peuvent être extraits avec yt-dlp, ceux de Bilibili via le tableau de bord créateur, ceux des plateformes de streaming doivent provenir de sources légitimes. Note : les effets ASS inline complexes (couleur, animation, karaoké) sont simplifiés lors de la traduction.",
+    "faq2q": "Que faire si les timecodes sont décalés ou si des caractères illisibles (□□□) apparaissent ?",
+    "faq2a": "L'outil traduit uniquement le texte sans modifier les timecodes. Les décalages viennent généralement d'incohérence de framerate (23,976 vs 25 fps) entre source et vidéo cible — corrigez avec Aegisub ou Subtitle Edit. Encodage : jschardet détecte UTF-8/UTF-16/GBK/Shift-JIS ; en cas d'échec, UTF-8 par défaut. Réenregistrez la source en UTF-8 via Notepad++ ou VS Code si nécessaire.",
+    "faq3q": "Comment créer des sous-titres bilingues pour YouTube ou l'apprentissage des langues ?",
+    "faq3a": "Sélectionnez le mode 'Bilingue' avec la langue cible. Placez la traduction au-dessus (pour l'apprentissage) ou en dessous (pour la consommation). Exportez en ASS pour des sous-titres bilingues colorés, à importer dans YouTube, Premiere ou DaVinci Resolve."
   },
   "TranslationSettings": {
     "docs": "Docs",
@@ -150,9 +156,9 @@
     "delayTime": "Délai",
     "CurrentTransConfig": "Config actuelle",
     "useRelay": "Relais API",
-    "useRelayTooltip": "Activez le relais API pour DeepSeek en cas d'erreurs CORS ou 403",
+    "useRelayTooltip": "Activez le relais API en cas d'erreurs CORS ou 403",
     "enableThinking": "Activer le mode Pensée",
-    "enableThinkingTooltip": "Activer le mode pensée pour les modèles pris en charge (Kimi, DeepSeek, GLM, GPT-OSS)",
+    "enableThinkingTooltip": "Activer le mode pensée / raisonnement pour les modèles pris en charge",
     "presetSelect": "Sélectionner un préréglage",
     "presetSave": "Enregistrer le préréglage",
     "presetDelete": "Supprimer le préréglage",
@@ -164,7 +170,11 @@
     "presetUpdate": "Mettre à jour le préréglage",
     "presetUpdated": "Préréglage mis à jour",
     "presetDeleteConfirm": "Supprimer ce préréglage ?",
-    "qwenMtDomains": "Invites de domaine (en anglais uniquement)"
+    "qwenMtDomains": "Invites de domaine (en anglais uniquement)",
+    "selectService": "Sélectionner le service de traduction",
+    "configuredServices": "Configurés",
+    "globalPrompts": "Prompts LLM (globaux)",
+    "globalPromptsExtra": "Tous les services LLM partagent ces prompts ; changer de service ne les réinitialisera pas"
   },
   "tools": {
     "subtitleTranslator": {

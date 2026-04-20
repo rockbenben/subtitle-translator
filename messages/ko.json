@@ -117,7 +117,13 @@
     "noSourceText": "자막 파일을 업로드하거나 텍스트를 붙여넣으세요",
     "noExtractedText": "자막 내용이 추출되지 않았습니다. 파일 형식을 확인하세요",
     "textExtracted": "자막 텍스트 추출됨,",
-    "bilingualError": "복잡한 스타일 태그가 감지되었습니다. 이중 언어 모드에서는 서식이 깨질 수 있으므로 '이중 언어 자막'을 끄는 것을 권장합니다."
+    "bilingualError": "복잡한 스타일 태그가 감지되었습니다. 이중 언어 모드에서는 서식이 깨질 수 있으므로 '이중 언어 자막'을 끄는 것을 권장합니다.",
+    "faq1q": "YouTube에서 다운로드한 SRT 및 ASS 자막을 번역할 수 있나요?",
+    "faq1a": "SRT, ASS, VTT, LRC 4개 형식 지원. ASS의 위치/정렬 태그(\\\\an8 등)는 번역 후에도 보존됩니다. YouTube 자막은 yt-dlp로 추출, 네이버TV 등은 크리에이터 대시보드에서 다운로드, 스트리밍 서비스 자막은 공식 경로를 통해 얻으세요. 참고: ASS 복잡한 인라인 효과(색상, 애니메이션, 가라오케)는 번역 중 단순화됩니다.",
+    "faq2q": "번역 후 자막 타임코드가 어긋나거나 깨진 글자(□□□)가 나올 때는?",
+    "faq2a": "도구는 텍스트만 번역하며 타임코드는 전혀 수정하지 않습니다. 번역 후 타이밍 불일치는 주로 소스 파일과 대상 비디오의 프레임률 차이(23.976 vs 25 fps) 때문이며 Aegisub나 Subtitle Edit으로 조정하세요. 인코딩: jschardet가 UTF-8/UTF-16/EUC-KR/Shift-JIS를 자동 감지, 실패 시 UTF-8로 대체. 깨진 글자가 나오면 Notepad++나 VS Code로 UTF-8로 저장 후 업로드하세요.",
+    "faq3q": "YouTube나 한국 자막 학습용 이중 언어 자막은 어떻게 만드나요?",
+    "faq3a": "'이중 언어' 모드와 대상 언어를 선택하세요. 번역문 위치를 원문 위(학습 중심) 또는 아래(시청 중심)로 설정할 수 있습니다. ASS 형식으로 내보내면 색상·폰트·위치를 다르게 설정할 수 있으며, YouTube 커뮤니티 자막이나 Premiere/DaVinci Resolve에 바로 삽입 가능합니다."
   },
   "TranslationSettings": {
     "docs": "문서",
@@ -150,9 +156,9 @@
     "delayTime": "지연 시간",
     "CurrentTransConfig": "현재 구성",
     "useRelay": "API 중계",
-    "useRelayTooltip": "CORS 또는 403 오류가 발생하면 API 중계를 활성화하여 DeepSeek에 액세스하세요",
+    "useRelayTooltip": "CORS 또는 403 오류가 발생하면 API 중계를 활성화하세요",
     "enableThinking": "Thinking 모드 활성화",
-    "enableThinkingTooltip": "지원되는 모델(Kimi, DeepSeek, GLM, GPT-OSS)에 대해 Thinking 모드 활성화",
+    "enableThinkingTooltip": "지원되는 모델에 대해 사고 / 추론 모드 활성화",
     "presetSelect": "프리셋 선택",
     "presetSave": "프리셋 저장",
     "presetDelete": "프리셋 삭제",
@@ -164,7 +170,11 @@
     "presetUpdate": "프리셋 업데이트",
     "presetUpdated": "프리셋 업데이트됨",
     "presetDeleteConfirm": "이 프리셋을 삭제하시겠습니까?",
-    "qwenMtDomains": "도메인 프롬프트(영어로만 제공)"
+    "qwenMtDomains": "도메인 프롬프트(영어로만 제공)",
+    "selectService": "번역 서비스 선택",
+    "configuredServices": "구성됨",
+    "globalPrompts": "LLM 프롬프트 (전역)",
+    "globalPromptsExtra": "모든 LLM 서비스가 이 프롬프트를 공유하며, 서비스를 전환해도 초기화되지 않습니다"
   },
   "tools": {
     "subtitleTranslator": {

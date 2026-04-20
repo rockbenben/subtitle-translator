@@ -117,7 +117,13 @@
     "noSourceText": "字幕ファイルをアップロードするか、テキストを貼り付けてください",
     "noExtractedText": "字幕内容が抽出されませんでした。ファイル形式を確認してください",
     "textExtracted": "字幕テキストを抽出しました、",
-    "bilingualError": "複雑なスタイルタグが検出されました。対訳モードでは書式が崩れる可能性があるため、「対訳字幕」をオフにすることをお勧めします。"
+    "bilingualError": "複雑なスタイルタグが検出されました。対訳モードでは書式が崩れる可能性があるため、「対訳字幕」をオフにすることをお勧めします。",
+    "faq1q": "YouTube からダウンロードした SRT や ASS 字幕の翻訳はできますか？",
+    "faq1a": "SRT、ASS、VTT、LRC 4 形式に対応。ASS の位置・配置タグ（\\\\an8 など）は翻訳後も保持されます。YouTube 字幕は yt-dlp、ニコ動は配信者ダッシュボード、ストリーミング配信の字幕は正規のルートから取得してください。注：ASS の複雑なインラインエフェクト（色、アニメーション、カラオケ）は翻訳時に簡略化されます。",
+    "faq2q": "翻訳後にタイムコードがずれたり文字化け（□□□）する場合は？",
+    "faq2a": "本ツールはテキストのみ翻訳し、タイムコードは一切変更しません。翻訳後のずれは主にソースファイルとターゲット動画のフレームレート不一致（23.976 vs 25 fps）が原因で、Aegisub や Subtitle Edit で調整します。文字化け：jschardet で UTF-8/UTF-16/GBK/Shift-JIS を自動検出し、失敗時は UTF-8 にフォールバック。改善しない場合は Notepad++ や VS Code で UTF-8 保存後アップロードしてください。",
+    "faq3q": "ニコニコ、YouTube の日英二言語字幕や語学学習用字幕を作成できますか？",
+    "faq3a": "「バイリンガル」モードを選択し、訳文位置を原文の上（学習重視）または下（視聴重視）に配置できます。ASS 形式で出力すると原文と訳文に異なる色・フォントサイズ・位置を設定可能で、YouTube コミュニティ字幕や Premiere/DaVinci Resolve に直接埋め込めます。"
   },
   "TranslationSettings": {
     "docs": "ドキュメント",
@@ -150,9 +156,9 @@
     "delayTime": "遅延時間",
     "CurrentTransConfig": "現在の設定",
     "useRelay": "API 中継",
-    "useRelayTooltip": "CORS や 403 エラーが発生した場合は、API 中継を有効にして DeepSeek にアクセスしてください",
+    "useRelayTooltip": "CORS や 403 エラーが発生した場合は API 中継を有効にしてください",
     "enableThinking": "思考モードを有効化",
-    "enableThinkingTooltip": "対応モデル（Kimi、DeepSeek、GLM、GPT-OSS）で思考モードを有効にする",
+    "enableThinkingTooltip": "対応モデルで思考 / 推論モードを有効にします",
     "presetSelect": "プリセットを選択",
     "presetSave": "プリセットを保存",
     "presetDelete": "プリセットを削除",
@@ -164,7 +170,11 @@
     "presetUpdate": "プリセットを更新",
     "presetUpdated": "プリセットを更新しました",
     "presetDeleteConfirm": "このプリセットを削除しますか？",
-    "qwenMtDomains": "ドメインプロンプト（英語のみ）"
+    "qwenMtDomains": "ドメインプロンプト（英語のみ）",
+    "selectService": "翻訳サービスを選択",
+    "configuredServices": "設定済み",
+    "globalPrompts": "LLM プロンプト（グローバル）",
+    "globalPromptsExtra": "すべての LLM サービスでこのプロンプトを共有します。サービスを切り替えてもリセットされません"
   },
   "tools": {
     "subtitleTranslator": {
