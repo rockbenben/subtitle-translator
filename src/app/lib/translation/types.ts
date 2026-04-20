@@ -7,7 +7,10 @@ export interface TranslationServiceInfo {
   apiKeyUrl?: string;
 }
 
-export type TranslationMethod = string;
+// Derived from the registry's PROVIDERS so adding a service is a single-file change.
+// Literal union gives IDE autocomplete; `(string & {})` keeps the type open
+// for user-supplied strings while preserving completions.
+export type TranslationMethod = keyof typeof import("./registry").defaultConfigs | (string & {});
 
 export interface TranslateTextParams {
   text: string;

@@ -1,249 +1,59 @@
-// Translation service configuration
+// Config migration utilities. Provider data lives in `./registry`.
 
-import type { TranslationServiceInfo } from "./types";
+import type { TranslationConfig } from "./types";
 
 export const DEFAULT_SYS_PROMPT = "You are a professional translator. Respond only with the content, either translated or rewritten. Do not add explanations, comments, or any extra text.";
 export const DEFAULT_USER_PROMPT = "Please respect the original meaning, maintain the original format, and rewrite the following content in ${targetLanguage}.\n\n${content}";
 
-export const TRANSLATION_SERVICES: TranslationServiceInfo[] = [
-  { value: "gtxFreeAPI", label: "GTX API (Free)" },
-  {
-    value: "google",
-    label: "Google Translate",
-    docs: "https://docs.cloud.google.com/translate/docs/setup",
-  },
-  {
-    value: "deepl",
-    label: "DeepL",
-    docs: "https://developers.deepl.com/docs/api-reference/translate",
-    apiKeyUrl: "https://www.deepl.com/your-account/keys",
-  },
-  {
-    value: "qwenMt",
-    label: "Qwen-MT",
-    docs: "https://help.aliyun.com/zh/model-studio/machine-translation",
-    apiKeyUrl: "https://bailian.console.aliyun.com/?apiKey=1",
-  },
-  {
-    value: "azure",
-    label: "Azure Translate",
-    docs: "https://learn.microsoft.com/azure/ai-services/translator/text-translation/reference/v3/translate",
-  },
-  {
-    value: "deeplx",
-    label: "DeepLX (Free)",
-    docs: "https://deeplx.owo.network/endpoints/free.html",
-  },
-  {
-    value: "deepseek",
-    label: "DeepSeek",
-    docs: "https://api-docs.deepseek.com/zh-cn/",
-    apiKeyUrl: "https://platform.deepseek.com/api_keys",
-  },
-  {
-    value: "claude",
-    label: "Claude",
-    docs: "https://docs.anthropic.com/en/api/messages",
-    apiKeyUrl: "https://console.anthropic.com/settings/keys",
-  },
-  {
-    value: "openai",
-    label: "OpenAI",
-    docs: "https://platform.openai.com/docs/api-reference/chat",
-    apiKeyUrl: "https://platform.openai.com/api-keys",
-  },
-  {
-    value: "gemini",
-    label: "Gemini",
-    docs: "https://ai.google.dev/gemini-api/docs/text-generation",
-    apiKeyUrl: "https://aistudio.google.com/app/api-keys",
-  },
-  {
-    value: "perplexity",
-    label: "Perplexity",
-    docs: "https://docs.perplexity.ai/api-reference/chat-completions-post",
-    apiKeyUrl: "https://www.perplexity.ai/account/api/keys",
-  },
-  {
-    value: "azureopenai",
-    label: "Azure OpenAI",
-    docs: "https://learn.microsoft.com/azure/ai-foundry/foundry-models/concepts/models-sold-directly-by-azure",
-  },
-  {
-    value: "siliconflow",
-    label: "SiliconFlow",
-    docs: "https://docs.siliconflow.cn/api-reference/chat-completions/chat-completions",
-    apiKeyUrl: "https://cloud.siliconflow.cn/me/account/ak",
-  },
-  {
-    value: "groq",
-    label: "Groq",
-    docs: "https://console.groq.com/docs/text-chat",
-    apiKeyUrl: "https://console.groq.com/keys",
-  },
-  {
-    value: "openrouter",
-    label: "OpenRouter",
-    docs: "https://openrouter.ai/models?q=free",
-    apiKeyUrl: "https://openrouter.ai/settings/keys",
-  },
-  {
-    value: "nvidia",
-    label: "Nvidia NIM",
-    docs: "https://build.nvidia.com/explore/discover",
-    apiKeyUrl: "https://build.nvidia.com/",
-  },
-  { value: "llm", label: "Custom LLM" },
-];
+// Fields to preserve when resetting config to defaults (user credentials should not be lost).
+// apiVersion (Azure OpenAI) and region (Azure Translate) are effectively credential-adjacent —
+// users set them once per Azure deployment and don't expect a reset to forget them.
+const PRESERVE_FIELDS: (keyof TranslationConfig)[] = ["apiKey", "url", "apiVersion", "region"];
 
-export const LLM_MODELS = ["deepseek", "claude", "openai", "gemini", "perplexity", "azureopenai", "siliconflow", "groq", "openrouter", "nvidia", "llm"];
-
-export const categorizedOptions = [
-  ...TRANSLATION_SERVICES.filter((s) => !LLM_MODELS.includes(s.value)).map((s) => ({
-    label: s.label,
-    value: s.value,
-  })),
-  {
-    label: "AI LLM Models",
-    options: TRANSLATION_SERVICES.filter((s) => LLM_MODELS.includes(s.value)).map((s) => ({
-      label: s.label,
-      value: s.value,
-    })),
-  },
-];
-
-export const defaultConfigs = {
-  gtxFreeAPI: {
-    batchSize: 100,
-  },
-  deeplx: {
-    url: "",
-    chunkSize: 1000,
-    delayTime: 200,
-    batchSize: 10,
-  },
-  deepl: {
-    url: "",
-    apiKey: "",
-    chunkSize: 5000,
-    delayTime: 200,
-    batchSize: 20,
-  },
-  qwenMt: {
-    url: "",
-    apiKey: "",
-    domains: "",
-    model: "qwen-mt-flash",
-    batchSize: 20,
-  },
-  deepseek: {
-    apiKey: "",
-    model: "deepseek-chat",
-    temperature: 0.7,
-    batchSize: 20,
-    contextWindow: 50,
-    useRelay: false,
-  },
-  claude: {
-    apiKey: "",
-    model: "claude-sonnet-4-6",
-    temperature: 0.7,
-    batchSize: 20,
-    contextWindow: 50,
-    enableThinking: false,
-  },
-  openai: {
-    apiKey: "",
-    model: "gpt-5.4-mini",
-    temperature: 1,
-    batchSize: 20,
-    contextWindow: 50,
-  },
-  gemini: {
-    apiKey: "",
-    model: "gemini-2.5-flash",
-    temperature: 0.7,
-    batchSize: 20,
-    contextWindow: 50,
-  },
-  perplexity: {
-    apiKey: "",
-    model: "sonar",
-    temperature: 0.7,
-    batchSize: 20,
-    contextWindow: 50,
-  },
-  azureopenai: {
-    url: "",
-    apiKey: "",
-    model: "gpt-5-mini",
-    apiVersion: "2025-08-07",
-    temperature: 0.7,
-    batchSize: 20,
-    contextWindow: 50,
-  },
-  siliconflow: {
-    apiKey: "",
-    model: "deepseek-ai/DeepSeek-V3",
-    temperature: 0.7,
-    batchSize: 20,
-    contextWindow: 50,
-  },
-  groq: {
-    apiKey: "",
-    model: "openai/gpt-oss-20b",
-    temperature: 0.7,
-    batchSize: 20,
-    contextWindow: 50,
-  },
-  openrouter: {
-    apiKey: "",
-    model: "nvidia/nemotron-3-super-120b-a12b:free",
-    temperature: 0.7,
-    batchSize: 20,
-    contextWindow: 50,
-  },
-  nvidia: {
-    url: "",
-    apiKey: "",
-    model: "deepseek-ai/deepseek-v3.2",
-    temperature: 0.7,
-    batchSize: 20,
-    contextWindow: 50,
-    enableThinking: false,
-  },
-  llm: {
-    url: "http://127.0.0.1:11434/v1/chat/completions",
-    apiKey: "",
-    model: "llama3.2",
-    temperature: 0.7,
-    batchSize: 20,
-    contextWindow: 50,
-  },
-  azure: {
-    apiKey: "",
-    chunkSize: 10000,
-    delayTime: 200,
-    region: "eastasia",
-    batchSize: 100,
-  },
-  google: {
-    apiKey: "",
-    delayTime: 200,
-    batchSize: 100,
-  },
-  webgoogletranslate: {
-    batchSize: 1,
-  },
-} as const;
-
-export const findMethodLabel = (method: string): string => {
-  const service = TRANSLATION_SERVICES.find((s) => s.value === method);
-  return service ? service.label : method;
+/**
+ * Reset config to defaults while preserving user credential fields (apiKey, url, apiVersion, region).
+ * Used by the explicit "Reset" button.
+ */
+export const resetConfigWithCredentials = (currentConfig: TranslationConfig | undefined, defaultConfig: TranslationConfig | undefined): TranslationConfig => {
+  const preserved: Partial<TranslationConfig> = {};
+  if (currentConfig) {
+    for (const field of PRESERVE_FIELDS) {
+      if (currentConfig[field] !== undefined) {
+        (preserved as Record<string, unknown>)[field] = currentConfig[field];
+      }
+    }
+  }
+  return { ...defaultConfig, ...preserved };
 };
 
+/**
+ * Legacy structure validator — kept for any external consumer that might still
+ * reference it. All in-repo callers migrated to `migrateConfig` below.
+ */
 export const isConfigStructureValid = (config: Record<string, unknown>, defaultConfig: Record<string, unknown>): boolean => {
-  const configKeys = Object.keys(config).sort();
-  const defaultKeys = Object.keys(defaultConfig).sort();
-  return JSON.stringify(configKeys) === JSON.stringify(defaultKeys);
+  const configKeys = Object.keys(config);
+  const defaultKeys = Object.keys(defaultConfig);
+  if (configKeys.length !== defaultKeys.length) return false;
+  const keySet = new Set(configKeys);
+  return defaultKeys.every((key) => keySet.has(key));
+};
+
+/**
+ * Graceful config migration for stored user configs.
+ *
+ * When defaults evolve (new fields added, old fields removed), this merges
+ * defaults into the saved config so missing fields get backfilled and obsolete
+ * fields get pruned — without resetting the user's valid choices (model,
+ * temperature, apiKey, ...). Explicit user-initiated resets should still call
+ * resetConfigWithCredentials.
+ */
+export const migrateConfig = (saved: TranslationConfig | undefined, defaults: TranslationConfig | undefined): TranslationConfig => {
+  if (!defaults) return { ...(saved ?? {}) };
+  if (!saved) return { ...defaults };
+  const merged: Record<string, unknown> = { ...defaults, ...saved };
+  // Drop keys that no longer exist in defaults (removed fields)
+  for (const key of Object.keys(merged)) {
+    if (!(key in defaults)) delete merged[key];
+  }
+  return merged as TranslationConfig;
 };
