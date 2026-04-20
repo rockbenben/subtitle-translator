@@ -20,34 +20,37 @@ export interface UserRetryConfig {
   retryTimeout?: number; // in seconds
 }
 
+// Extract status and message from error once, reuse across checks
+const getErrorInfo = (error: unknown): { status: number | undefined; message: string } => ({
+  status: (error as { status?: number })?.status,
+  message: ((error as Error)?.message || "").toLowerCase(),
+});
+
 /**
  * Check if error is a non-retryable authentication/authorization error
  * Exported for use in abort logic
  */
 export const isAuthError = (error: unknown): boolean => {
-  const status = (error as { status?: number })?.status;
-  const message = ((error as Error)?.message || "").toLowerCase();
-
-  // Status-based auth errors
+  const { status, message } = getErrorInfo(error);
   if (status === 401 || status === 403) return true;
-
-  // Message-based auth errors
-  if (message.includes("unauthorized") || message.includes("invalid api key") || message.includes("authentication") || message.includes("forbidden")) {
-    return true;
-  }
-
-  return false;
+  return message.includes("unauthorized") || message.includes("invalid api key") || message.includes("authentication") || message.includes("forbidden");
 };
+
+/**
+ * Errors that retrying won't fix — bail out immediately so the user isn't stuck
+ * at 0% for 30-60s of doomed retries. These are thrown by service layers (e.g.
+ * the DeepSeek CORS → "enable API Relay" rewrite) when the next attempt will
+ * fail the same way.
+ */
+const NON_RETRYABLE_MESSAGES = ["enable 'api relay'", "请在 api 设置中开启"];
 
 /**
  * Check if error is retryable (server errors or rate limits)
  */
 const isRetryableError = (error: unknown): boolean => {
-  // Never retry auth errors
   if (isAuthError(error)) return false;
-
-  const status = (error as { status?: number })?.status;
-  // Retry on: no status (network error), 5xx server errors, 429 rate limit
+  const { status, message } = getErrorInfo(error);
+  if (NON_RETRYABLE_MESSAGES.some((m) => message.includes(m))) return false;
   return !status || status >= 500 || status === 429;
 };
 
@@ -70,39 +73,22 @@ export const getRetryConfig = (translationMethod: string, userConfig?: UserRetry
     shouldRetry: ({ error }) => isRetryableError(error),
   };
 
-  switch (translationMethod) {
-    case "gtxFreeAPI":
-      return {
-        ...baseConfig,
-        minTimeout: 2000,
-        maxTimeout: 60000,
-      };
-
-    case "deeplx":
-    case "deepl":
-    case "google":
-    case "azure":
-      // Use default shouldRetry from baseConfig
-      return baseConfig;
-
-    default:
-      if (LLM_MODELS.includes(translationMethod)) {
-        return {
-          ...baseConfig,
-          shouldRetry: ({ error }: { error: unknown }) => {
-            const message = ((error as Error)?.message || "").toLowerCase();
-
-            // Don't retry token/context limit errors
-            if (message.includes("context length") || message.includes("token limit")) {
-              return false;
-            }
-
-            return isRetryableError(error);
-          },
-        };
-      }
-      return baseConfig;
+  if (translationMethod === "gtxFreeAPI") {
+    return { ...baseConfig, minTimeout: 2000, maxTimeout: 60000 };
   }
+
+  if (LLM_MODELS.includes(translationMethod)) {
+    return {
+      ...baseConfig,
+      shouldRetry: ({ error }: { error: unknown }) => {
+        const { message } = getErrorInfo(error);
+        if (message.includes("context length") || message.includes("token limit")) return false;
+        return isRetryableError(error);
+      },
+    };
+  }
+
+  return baseConfig;
 };
 
 /**
