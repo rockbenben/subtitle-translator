@@ -1,3 +1,5 @@
+"use client";
+
 import { App } from "antd";
 import { useTranslations } from "next-intl";
 

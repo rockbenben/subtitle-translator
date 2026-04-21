@@ -1,3 +1,5 @@
+"use client";
+
 import { languages } from "@/app/lib/translation";
 import { useTranslations } from "next-intl";
 
