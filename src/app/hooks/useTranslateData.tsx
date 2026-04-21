@@ -40,7 +40,7 @@ import pRetry from "p-retry";
 import { useTranslations } from "next-intl";
 
 const DEFAULT_API = "gtxFreeAPI";
-const MAX_CONTEXT_PADDING = 25;
+const MAX_CONTEXT_PADDING = 50;
 
 type TranslationConfigs = Record<string, TranslationConfig>;
 
@@ -76,6 +76,12 @@ const useTranslateData = () => {
   const [retryTimeout, setRetryTimeout] = useLocalStorage<number>("translationRetryTimeout", DEFAULT_RETRY_TIMEOUT);
   const [translatedText, setTranslatedText] = useState<string>("");
   const [extractedText, setExtractedText] = useState<string>("");
+  // Soft-failure telemetry: count and original text of lines that failed
+  // even after the 10s auto-retry pass. UI uses these to show an Alert
+  // with a retry button; re-clicking Translate hits the IndexedDB cache
+  // for successful lines, only re-requesting the failed ones.
+  const [translateFailedCount, setTranslateFailedCount] = useState<number>(0);
+  const [translateFailedLines, setTranslateFailedLines] = useState<string[]>([]);
 
   const effectiveSysPrompt = sysPrompt.trim() ? sysPrompt : DEFAULT_SYS_PROMPT;
   const effectiveUserPrompt = userPrompt.trim() ? userPrompt : DEFAULT_USER_PROMPT;
@@ -346,7 +352,10 @@ const useTranslateData = () => {
     documentType: "subtitle" | "markdown" | "generic" = "subtitle",
     fullText?: string,
   ) => {
-    const initialContextWindow = Math.min(translationConfig.contextWindow || 20, contentLines.length);
+    // Clamp to >= 1: `|| 20` only catches 0/null/undefined, not negatives.
+    // A negative contextWindow (from corrupted localStorage or bad migration)
+    // would make the main loop `i += -5` → infinite loop.
+    const initialContextWindow = Math.max(1, Math.min(translationConfig.contextWindow || 20, contentLines.length));
     const translatedLines = new Array(contentLines.length);
     const MAX_CONTEXT_RETRIES = 2; // Maximum times to reduce context window
 
@@ -405,19 +414,29 @@ const useTranslateData = () => {
       const success = await translateSingleBatch(batchStart, batchEnd, contextWindow);
       if (success) return true;
 
-      // Reduce context window and retry incomplete sub-batches (up to MAX_CONTEXT_RETRIES times)
+      // Reduce context window and retry ONLY the contiguous gaps (up to MAX_CONTEXT_RETRIES times)
+      // Old behavior stepped through fixed-size sub-ranges and re-translated the whole sub-range
+      // if any line in it was still missing — wasting tokens on already-successful neighbors and
+      // risking LLM non-determinism overwriting them with slightly different translations.
+      // New behavior finds the still-empty indices, clusters them into contiguous [s, e) ranges
+      // (capped at RETRY_MAX_CLUSTER_SIZE), and retranslates only those — fewer tokens, stable
+      // results for the lines that already succeeded.
       let currentWindow = contextWindow;
       for (let attempt = 0; attempt < MAX_CONTEXT_RETRIES && currentWindow > 5; attempt++) {
         currentWindow = Math.max(5, Math.floor(currentWindow / 2));
-        console.warn(`Batch ${batchStart + 1}-${batchEnd} incomplete, reducing context window to ${currentWindow}`);
 
-        for (let subStart = batchStart; subStart < batchEnd; subStart += currentWindow) {
-          const subEnd = Math.min(subStart + currentWindow, batchEnd);
-          if (translatedLines.slice(subStart, subEnd).includes(undefined)) {
-            if (!(await translateSingleBatch(subStart, subEnd, currentWindow))) {
-              // Sub-batch still failed at this window size, continue reducing
-            }
-          }
+        const missing: number[] = [];
+        for (let k = batchStart; k < batchEnd; k++) {
+          if (!translatedLines[k]) missing.push(k);
+        }
+        if (missing.length === 0) return true;
+
+        const gapClusters = clusterAscendingIndices(missing);
+        console.warn(`Batch ${batchStart + 1}-${batchEnd} incomplete (${missing.length} line(s) missing in ${gapClusters.length} gap(s)); reducing window to ${currentWindow}`);
+
+        for (const [gs, ge] of gapClusters) {
+          if (abortControllerRef.current?.signal.aborted) return false;
+          await translateSingleBatch(gs, ge, currentWindow);
         }
 
         if (!translatedLines.slice(batchStart, batchEnd).includes(undefined)) return true;
@@ -426,48 +445,144 @@ const useTranslateData = () => {
       return false;
     };
 
+    // Helper: group contiguous failed indices into [start, end) clusters
+    // (capped so a total blowout doesn't retry as one mega-batch). Reused
+    // below by the batch-level fallback and the post-pass auto-retry.
+    const RETRY_MAX_CLUSTER_SIZE = 10;
+    const RETRY_CONTEXT_WINDOW = 6; // ±3 neighbor lines wrapped as [CONTEXT]
+    const clusterAscendingIndices = (sortedIndices: number[]): Array<[number, number]> => {
+      if (sortedIndices.length === 0) return [];
+      const out: Array<[number, number]> = [];
+      let s = sortedIndices[0];
+      let e = sortedIndices[0];
+      for (let k = 1; k < sortedIndices.length; k++) {
+        const idx = sortedIndices[k];
+        if (idx === e + 1 && e - s + 1 < RETRY_MAX_CLUSTER_SIZE) {
+          e = idx;
+        } else {
+          out.push([s, e + 1]);
+          s = idx;
+          e = idx;
+        }
+      }
+      out.push([s, e + 1]);
+      return out;
+    };
+
+    // Helper: retry any still-empty slots in [rangeStart, rangeEnd) by
+    // clustering them and feeding each cluster through translateSingleBatch
+    // with a small context window. Keeps LLM coherence on fallback and
+    // shares the ±3 neighbor context across cluster members — much cheaper
+    // than the old line-by-line-without-context fallback.
+    const clusterRetryFailures = async (rangeStart: number, rangeEnd: number): Promise<void> => {
+      const failed: number[] = [];
+      for (let i = rangeStart; i < rangeEnd; i++) {
+        if (!translatedLines[i]) failed.push(i);
+      }
+      if (failed.length === 0) return;
+
+      for (const [cStart, cEnd] of clusterAscendingIndices(failed)) {
+        if (abortControllerRef.current?.signal.aborted) return;
+        try {
+          await translateSingleBatch(cStart, cEnd, RETRY_CONTEXT_WINDOW);
+        } catch (err) {
+          if (isAuthError(err)) throw err;
+          // non-auth failures leave slots empty; final soft-fill handles them
+        }
+        updateProgress(translatedLines.filter(Boolean).length, contentLines.length);
+      }
+    };
+
     // Show non-zero progress immediately so users see the modal is alive
     // (a single LLM batch can take 20-60s before the first updateProgress call)
     updateProgress(0.5, contentLines.length);
 
-    // Main loop: process batches
+    // Main loop: run batches in parallel with user-configurable concurrency.
+    // Context mode uses `contextBatchSize` — each task sends ~contextWindow
+    // lines to the LLM in a single heavy request, so we cap hard. Non-context
+    // line-by-line mode uses the separate `batchSize` (see translateContent
+    // below) which is safe to run higher since each request is a single short
+    // prompt. Defaults per provider:
+    //   - Cloud LLMs (claude, gemini, openai-compat, ...): 3 — under every
+    //     mainstream provider's concurrent cap (Claude paid 5-10, DeepSeek
+    //     30, Gemini generous). Free-tier users hitting 429 get caught by
+    //     pRetry + auto-retry.
+    //   - Custom LLM (Ollama local): 1 — Ollama runs inference single-threaded
+    //     by default, >1 concurrent would queue on the server and our 180s
+    //     retryTimeout would fire on queued requests before they run.
+    // Power users with proper paid tiers can raise contextBatchSize in
+    // Advanced Settings for faster throughput.
+    //
+    // Rate-limit safety: pRetry already treats 429 as retryable with backoff,
+    // auth errors cascade through abortControllerRef.abort() to stop peers
+    // immediately. Each task operates on a disjoint [batchStart, batchEnd)
+    // slice of translatedLines — no write contention.
+    const batchConcurrency = Math.max(Number(translationConfig.contextBatchSize) || 3, 1);
+    const batchLimit = pLimit(batchConcurrency);
+    const interBatchDelay = translationConfig.delayTime ?? 0;
+
+    const batchTasks: Promise<void>[] = [];
     for (let i = 0; i < contentLines.length; i += initialContextWindow) {
+      const batchStart = i;
       const batchEnd = Math.min(i + initialContextWindow, contentLines.length);
 
-      const success = await translateBatch(i, batchEnd, initialContextWindow);
-
-      if (!success) {
-        // Individual line fallback for any remaining untranslated lines
-        console.warn(`Batch ${i + 1}-${batchEnd} requires individual translation fallback`);
-        for (let j = i; j < batchEnd; j++) {
-          if (translatedLines[j]) continue; // Skip already translated
-
-          try {
-            translatedLines[j] = await retryTranslate(contentLines[j], cacheSuffix, translationConfig, fullText);
-          } catch (lineError) {
-            throw lineError; // Fail-stop
+      batchTasks.push(
+        batchLimit(async () => {
+          if (abortControllerRef.current?.signal.aborted) return;
+          // translateBatch handles context-window halving internally with
+          // cluster-aware gap retry. If it still returns false, the post-pass
+          // auto-retry (below, after Promise.all) handles it with a 10s
+          // breather — the only layer that actually gives rate-limited
+          // providers time to reset. translateSingleBatch catches all
+          // non-auth errors and returns false, so the only exception that
+          // escapes here is isAuthError, which we rethrow so Promise.all
+          // rejects and peer tasks abort via the shared signal.
+          await translateBatch(batchStart, batchEnd, initialContextWindow);
+          // Small gap AFTER each batch — helps severely rate-limited providers.
+          // pLimit already throttles concurrency; this adds an optional per-slot
+          // pause when users configure delayTime.
+          if (interBatchDelay > 0 && !abortControllerRef.current?.signal.aborted) {
+            await delay(interBatchDelay);
           }
-          // Use the monotonic total count across all batches so progress can't
-          // regress (j+1 is local to this batch and may lag actual completions).
-          updateProgress(translatedLines.filter(Boolean).length, contentLines.length);
-          if (j < batchEnd - 1) await delay(translationConfig.delayTime || 200);
-        }
-      }
+        }),
+      );
+    }
+    await Promise.all(batchTasks);
 
-      updateProgress(batchEnd, contentLines.length);
-      if (batchEnd < contentLines.length) {
-        await delay(translationConfig.delayTime || 500);
+    // ─── Auto-retry pass ────────────────────────────────────────────────
+    // After the main pass (batches + halved-context retry), any slot still
+    // empty most likely hit a rate-limit window or a transient service
+    // hiccup — not something pRetry's sub-7s backoff would recover. Wait
+    // 10s to let rate-limit counters reset / the service stabilize, then
+    // retry via the same cluster helper over the entire range.
+    if (translatedLines.some((x) => !x) && !abortControllerRef.current?.signal.aborted) {
+      console.log("Auto-retry remaining failed lines after 10s with clustered small-context retry...");
+      await delay(10000);
+      try {
+        await clusterRetryFailures(0, contentLines.length);
+      } catch (err) {
+        if (isAuthError(err)) throw err;
+        // Non-auth: leave remaining failures for the final soft-fill.
       }
     }
 
-    // Final validation - this should rarely happen as individual fallback should catch everything
+    // ─── Final soft-fail ────────────────────────────────────────────────
+    // Slots still empty after auto-retry get filled with the original text
+    // so the output is usable. Only non-whitespace originals count as real
+    // failures — empty/whitespace-only lines (common in subtitle spacing,
+    // markdown blank lines) weren't meaningful translations in the first
+    // place, so flagging them as failures would just confuse the UI.
+    const failedLinesList: string[] = [];
     for (let i = 0; i < translatedLines.length; i++) {
       if (!translatedLines[i]) {
-        throw new Error(
-          `翻译失败：第 ${i + 1} 行在多次重试后仍未成功翻译，请检查 API 设置或稍后重试。\n` +
-            `Translation failed: Line ${i + 1} could not be translated after multiple retries. Please check API settings or retry later.`,
-        );
+        const original = contentLines[i];
+        translatedLines[i] = original;
+        if (original && original.trim()) failedLinesList.push(original);
       }
+    }
+    if (failedLinesList.length > 0) {
+      setTranslateFailedCount((prev) => prev + failedLinesList.length);
+      setTranslateFailedLines((prev) => [...prev, ...failedLinesList]);
     }
 
     return translatedLines;
@@ -582,6 +697,9 @@ const useTranslateData = () => {
   // Translation handlers
   const handleTranslate = async (performTranslation: PerformTranslation, sourceText: string, documentType?: "subtitle" | "markdown" | "generic") => {
     setTranslatedText("");
+    // Reset soft-failure state for this run — the UI Alert is driven by these.
+    setTranslateFailedCount(0);
+    setTranslateFailedLines([]);
     if (!sourceText.trim()) {
       message.error("No source text provided.");
       return;
@@ -627,6 +745,8 @@ const useTranslateData = () => {
     setMultiLanguageMode,
     translatedText,
     setTranslatedText,
+    translateFailedCount,
+    translateFailedLines,
     translateInProgress,
     setTranslateInProgress,
     progressPercent,
