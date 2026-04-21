@@ -46,6 +46,7 @@ export interface TranslationConfig {
   chunkSize?: number;
   delayTime?: number;
   batchSize?: number;
+  contextBatchSize?: number;
   contextWindow?: number;
   sysPrompt?: string;
   userPrompt?: string;

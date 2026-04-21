@@ -339,6 +339,17 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
           </Form.Item>
         )}
 
+        {isLLMModel && config?.contextBatchSize !== undefined && (
+          <Form.Item label={t("contextBatchSize")} extra={t("contextBatchSizeExtra")}>
+            <Input
+              type="number"
+              value={config?.contextBatchSize as number | undefined}
+              onChange={(e) => handleConfigChange(service, "contextBatchSize", e.target.value)}
+              aria-label={t("contextBatchSize")}
+            />
+          </Form.Item>
+        )}
+
         {isLLMModel && config?.contextWindow !== undefined && (
           <Form.Item label={t("contextWindow")} extra={t("contextWindowExtra")}>
             <Input type="number" value={config?.contextWindow as number | undefined} onChange={(e) => handleConfigChange(service, "contextWindow", e.target.value)} aria-label={t("contextWindow")} />

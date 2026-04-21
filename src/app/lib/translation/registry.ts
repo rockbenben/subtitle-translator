@@ -115,7 +115,7 @@ export const PROVIDERS = {
     label: "Claude",
     docs: "https://docs.anthropic.com/en/api/messages",
     apiKeyUrl: "https://console.anthropic.com/settings/keys",
-    defaults: { apiKey: "", model: "claude-sonnet-4-6", temperature: 0.7, batchSize: 20, contextWindow: 50, enableThinking: false, useRelay: false },
+    defaults: { apiKey: "", model: "claude-sonnet-4-6", temperature: 0.7, batchSize: 20, contextBatchSize: 3, contextWindow: 100, enableThinking: false, useRelay: false },
   },
   gemini: {
     kind: "custom",
@@ -123,7 +123,7 @@ export const PROVIDERS = {
     label: "Gemini",
     docs: "https://ai.google.dev/gemini-api/docs/text-generation",
     apiKeyUrl: "https://aistudio.google.com/app/api-keys",
-    defaults: { apiKey: "", model: "gemini-3-flash", temperature: 0.7, batchSize: 20, contextWindow: 50 },
+    defaults: { apiKey: "", model: "gemini-3-flash", temperature: 0.7, batchSize: 20, contextBatchSize: 3, contextWindow: 100 },
   },
   qwen: {
     kind: "openai-compat",
@@ -243,20 +243,20 @@ export const PROVIDERS = {
     label: "Nvidia NIM",
     docs: "https://build.nvidia.com/explore/discover",
     apiKeyUrl: "https://build.nvidia.com/",
-    defaults: { url: "", apiKey: "", model: "deepseek-ai/deepseek-v3.2", temperature: 0.7, batchSize: 20, contextWindow: 50, enableThinking: false },
+    defaults: { url: "", apiKey: "", model: "deepseek-ai/deepseek-v3.2", temperature: 0.7, batchSize: 20, contextBatchSize: 3, contextWindow: 100, enableThinking: false },
   },
   azureopenai: {
     kind: "custom",
     category: "aggregator",
     label: "Azure OpenAI",
     docs: "https://learn.microsoft.com/azure/ai-foundry/foundry-models/concepts/models-sold-directly-by-azure",
-    defaults: { url: "", apiKey: "", model: "gpt-5-mini", apiVersion: "2025-11-18", temperature: 0.7, batchSize: 20, contextWindow: 50 },
+    defaults: { url: "", apiKey: "", model: "gpt-5-mini", apiVersion: "2025-11-18", temperature: 0.7, batchSize: 20, contextBatchSize: 3, contextWindow: 100 },
   },
   llm: {
     kind: "custom",
     category: "aggregator",
     label: "Custom LLM",
-    defaults: { url: "http://127.0.0.1:11434/v1/chat/completions", apiKey: "", model: "llama3.2", temperature: 0.7, batchSize: 20, contextWindow: 50 },
+    defaults: { url: "http://127.0.0.1:11434/v1/chat/completions", apiKey: "", model: "llama3.2", temperature: 0.7, batchSize: 10, contextBatchSize: 1, contextWindow: 100 },
   },
 
   // ===== Internal-only (in defaultConfigs + dispatch but omitted from user-facing lists) =====
@@ -318,8 +318,13 @@ const buildOpenAICompatDefault = (spec: OpenAICompatProviderSpec): TranslationCo
     apiKey: "",
     model: spec.defaultModel,
     temperature: spec.defaultTemperature,
+    // batchSize = line-by-line / non-context concurrency; kept high because
+    // each request is a single short prompt. contextBatchSize = concurrent
+    // context batches (heavy payloads, ~100 lines each); low default to avoid
+    // rate-limit storms. Users with paid tier can raise either in settings.
     batchSize: 20,
-    contextWindow: 50,
+    contextBatchSize: 3,
+    contextWindow: 100,
   };
   if (spec.allowCustomUrl) base.url = "";
   if (spec.allowRelay) base.useRelay = false;

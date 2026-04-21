@@ -4,7 +4,7 @@ import { LLM_MODELS } from "@/app/lib/translation";
 
 // User-configurable defaults (in seconds for timeout)
 export const DEFAULT_RETRY_COUNT = 3;
-export const DEFAULT_RETRY_TIMEOUT = 60; // seconds
+export const DEFAULT_RETRY_TIMEOUT = 180; // seconds — covers P99 of LLM thinking + typical batches; power users bump via Advanced Settings
 
 export interface RetryConfig {
   retries: number;
