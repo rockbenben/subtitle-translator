@@ -20,6 +20,7 @@ import TranslationProgressModal from "@/app/components/TranslationProgressModal"
 import { useTranslationContext } from "@/app/components/TranslationContext";
 import ResultCard from "@/app/components/ResultCard";
 import AdvancedTranslationSettings from "@/app/components/AdvancedTranslationSettings";
+import TranslateFailurePanel from "@/app/components/TranslateFailurePanel";
 
 import MultiLanguageSettingsModal from "@/app/components/MultiLanguageSettingsModal";
 
@@ -73,6 +74,8 @@ const SubtitleTranslator = () => {
     setMultiLanguageMode,
     translatedText,
     setTranslatedText,
+    translateFailedCount,
+    translateFailedLines,
     translateInProgress,
     setTranslateInProgress,
     progressPercent,
@@ -636,6 +639,14 @@ const SubtitleTranslator = () => {
           </Card>
         </Col>
       </Row>
+
+      {/* Partial-failure panel: auto-retried once, still-failed lines kept originals */}
+      <TranslateFailurePanel
+        count={translateFailedCount}
+        lines={translateFailedLines}
+        disabled={translateInProgress}
+        onRetry={() => (uploadMode === "single" ? handleTranslate(performTranslation, sourceText, contextAwareTranslation ? "subtitle" : undefined) : handleMultipleTranslate())}
+      />
 
       {/* Results Section */}
       {uploadMode === "single" && (translatedText || extractedText) && (
