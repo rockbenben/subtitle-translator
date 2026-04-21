@@ -8,6 +8,19 @@ html.light {
   color-scheme: light;
 }
 
+/* Base page background — applied before AntD CSS-in-JS paints Layout.
+   Without this, refresh shows a brief white flash because <body> falls
+   back to browser default before AntD's Layout bg covers it.
+   Values match AntD's colorBgBase for light/dark themes. */
+html,
+body {
+  background-color: #141414; /* dark default (matches defaultTheme="dark") */
+}
+html.light,
+html.light body {
+  background-color: #ffffff;
+}
+
 /* Base typography */
 body {
   line-height: 1.5;
