@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Flex, Card, Button, Typography, Input, Upload, Form, Space, App, Tooltip, Segmented, Spin, Row, Col, Divider, Switch, Collapse } from "antd";
+import { Flex, Card, Button, Typography, Input, Upload, Form, Space, App, Tooltip, Segmented, Spin, Row, Col, Divider, Collapse, theme } from "antd";
 import { CopyOutlined, InboxOutlined, SettingOutlined, FileTextOutlined, ClearOutlined, FormatPainterOutlined, GlobalOutlined, ImportOutlined, SaveOutlined, ControlOutlined } from "@ant-design/icons";
 import { useTranslations } from "next-intl";
 import { useCopyToClipboard } from "@/app/hooks/useCopyToClipboard";
@@ -15,7 +15,8 @@ import { VTT_SRT_TIME, LRC_TIME_REGEX, detectSubtitleFormat, getOutputFileExtens
 import { LLM_MODELS } from "@/app/lib/translation";
 import { useLanguageOptions } from "@/app/components/languages";
 import LanguageSelector from "@/app/components/LanguageSelector";
-import TranslationAPISelector from "@/app/components/TranslationAPISelector";
+import ApiStatusBlock from "@/app/components/ApiStatusBlock";
+import ContextTranslationBlock from "@/app/components/ContextTranslationBlock";
 import TranslationProgressModal from "@/app/components/TranslationProgressModal";
 import { useTranslationContext } from "@/app/components/TranslationContext";
 import ResultCard from "@/app/components/ResultCard";
@@ -30,7 +31,11 @@ const { Text } = Typography;
 
 const uploadFileTypes = getFileTypePresetConfig("subtitle");
 
-const SubtitleTranslator = () => {
+interface SubtitleTranslatorProps {
+  onOpenApiSettings?: () => void;
+}
+
+const SubtitleTranslator = ({ onOpenApiSettings }: SubtitleTranslatorProps) => {
   const tSubtitle = useTranslations("subtitle");
   const t = useTranslations("common");
 
@@ -57,11 +62,8 @@ const SubtitleTranslator = () => {
     exportSettings,
     importSettings,
     translationMethod,
-    setTranslationMethod,
     translateContent,
     handleTranslate,
-    getCurrentConfig,
-    handleConfigChange,
     sourceLanguage,
     targetLanguage,
     target_langs,
@@ -84,6 +86,7 @@ const SubtitleTranslator = () => {
     extractedText,
     setExtractedText,
     handleLanguageChange,
+    handleSwapLanguages,
     delay,
     validateTranslate,
     retryCount,
@@ -92,6 +95,8 @@ const SubtitleTranslator = () => {
     setRetryTimeout,
   } = useTranslationContext();
   const { message } = App.useApp();
+  const { token } = theme.useToken();
+  const cardStyle: React.CSSProperties = { boxShadow: token.boxShadowTertiary };
 
   const sourceStats = useTextStats(sourceText);
   const resultStats = useTextStats(translatedText);
@@ -394,8 +399,6 @@ const SubtitleTranslator = () => {
     copyToClipboard(extractedText, tSubtitle("textExtracted"));
   };
 
-  const config = getCurrentConfig();
-
   return (
     <Spin spinning={isFileProcessing} description="Please wait..." size="large">
       <Row gutter={[24, 24]}>
@@ -424,7 +427,7 @@ const SubtitleTranslator = () => {
                 </Button>
               </Tooltip>
             }
-            className="shadow-md border-transparent hover:shadow-lg transition-shadow duration-300">
+            style={cardStyle}>
             <Dragger
               customRequest={({ file }) => handleFileUpload(file as File)}
               accept={uploadFileTypes.accept}
@@ -472,7 +475,7 @@ const SubtitleTranslator = () => {
                 type="primary"
                 size="large"
                 icon={<GlobalOutlined spin={translateInProgress} />}
-                className="flex-1 shadow-md"
+                className="flex-1"
                 onClick={() => (uploadMode === "single" ? handleTranslate(performTranslation, sourceText, contextAwareTranslation ? "subtitle" : undefined) : handleMultipleTranslate())}
                 disabled={translateInProgress}
                 loading={translateInProgress}>
@@ -496,7 +499,7 @@ const SubtitleTranslator = () => {
                 <SettingOutlined /> {t("configuration")}
               </Space>
             }
-            className="shadow-md border-transparent hover:shadow-lg transition-shadow duration-300"
+            style={cardStyle}
             extra={
               <Space>
                 <Tooltip title={t("exportSettingTooltip")}>
@@ -528,32 +531,28 @@ const SubtitleTranslator = () => {
                 </Tooltip>
               </Space>
             }>
-            <Form layout="vertical" className="w-full">
-              {/* Language Selection */}
+            <Form layout="vertical" className="w-full !mb-3">
               <LanguageSelector
                 sourceLanguage={sourceLanguage}
                 targetLanguage={targetLanguage}
                 target_langs={target_langs}
                 multiLanguageMode={multiLanguageMode}
                 handleLanguageChange={handleLanguageChange}
+                handleSwapLanguages={handleSwapLanguages}
                 setTarget_langs={setTarget_langs}
                 setMultiLanguageMode={setMultiLanguageMode}
               />
-
-              {/* API Settings */}
-              <TranslationAPISelector translationMethod={translationMethod} setTranslationMethod={setTranslationMethod} config={config} handleConfigChange={handleConfigChange} />
-
-              {LLM_MODELS.includes(translationMethod) && (
-                <Flex justify="space-between" align="center">
-                  <Tooltip title={t("contextAwareTranslationTooltip")}>
-                    <span>{t("contextAwareTranslation")}</span>
-                  </Tooltip>
-                  <Switch size="small" checked={contextAwareTranslation} onChange={setContextAwareTranslation} aria-label={t("contextAwareTranslation")} />
-                </Flex>
-              )}
             </Form>
 
-            <Divider className="!my-3" />
+            <ApiStatusBlock onOpenApiSettings={onOpenApiSettings} disabled={translateInProgress} />
+
+            {LLM_MODELS.includes(translationMethod) && (
+              <ContextTranslationBlock
+                enabled={contextAwareTranslation}
+                onEnabledChange={setContextAwareTranslation}
+                disabled={translateInProgress}
+              />
+            )}
 
             <Collapse
               ghost
@@ -570,43 +569,48 @@ const SubtitleTranslator = () => {
                     </Space>
                   ),
                   children: (
-                    <Form layout="vertical" className="w-full">
-                      <Form.Item className="!mb-0">
-                        <div className="flex flex-col gap-2">
-                          <Segmented
-                            block
-                            size="small"
-                            value={subtitleExportMode}
-                            onChange={(value) => setSubtitleExportMode(value as "translatedOnly" | "bilingual" | "both")}
-                            options={[
-                              { label: tSubtitle("translatedOnly"), value: "translatedOnly" },
-                              { label: tSubtitle("bilingual"), value: "bilingual" },
-                              {
-                                label: (
-                                  <Tooltip title={tSubtitle("bilingualTooltip")}>
-                                    <div>{tSubtitle("exportBoth")}</div>
-                                  </Tooltip>
-                                ),
-                                value: "both",
-                              },
-                            ]}
-                          />
+                    <div
+                      style={{
+                        padding: token.paddingSM,
+                        background: "transparent",
+                        border: `1px solid ${token.colorBorderSecondary}`,
+                        borderRadius: token.borderRadiusLG,
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: token.marginXS,
+                      }}>
+                      <Segmented
+                        block
+                        size="small"
+                        value={subtitleExportMode}
+                        onChange={(value) => setSubtitleExportMode(value as "translatedOnly" | "bilingual" | "both")}
+                        options={[
+                          { label: tSubtitle("translatedOnly"), value: "translatedOnly" },
+                          { label: tSubtitle("bilingual"), value: "bilingual" },
+                          {
+                            label: (
+                              <Tooltip title={tSubtitle("bilingualTooltip")}>
+                                <div>{tSubtitle("exportBoth")}</div>
+                              </Tooltip>
+                            ),
+                            value: "both",
+                          },
+                        ]}
+                      />
 
-                          {showBilingualPosition && (
-                            <Segmented
-                              block
-                              size="small"
-                              value={bilingualPosition}
-                              onChange={(value) => setBilingualPosition(value as "above" | "below")}
-                              options={[
-                                { label: tSubtitle("translationAbove"), value: "above" },
-                                { label: tSubtitle("translationBelow"), value: "below" },
-                              ]}
-                            />
-                          )}
-                        </div>
-                      </Form.Item>
-                    </Form>
+                      {showBilingualPosition && (
+                        <Segmented
+                          block
+                          size="small"
+                          value={bilingualPosition}
+                          onChange={(value) => setBilingualPosition(value as "above" | "below")}
+                          options={[
+                            { label: tSubtitle("translationAbove"), value: "above" },
+                            { label: tSubtitle("translationBelow"), value: "below" },
+                          ]}
+                        />
+                      )}
+                    </div>
                   ),
                 },
                 {
@@ -675,7 +679,8 @@ const SubtitleTranslator = () => {
                       <FileTextOutlined /> {t("extractedText")}
                     </Space>
                   }
-                  className="shadow-md border-transparent hover:shadow-lg transition-shadow duration-300 h-full"
+                  className="h-full"
+                  style={{ boxShadow: token.boxShadowTertiary }}
                   extra={
                     <Button type="text" icon={<CopyOutlined />} onClick={() => copyToClipboard(extractedText)}>
                       {t("copy")}
