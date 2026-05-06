@@ -34,8 +34,10 @@ body {
   min-height: 44px;
 }
 
-/* Focus-visible ring for keyboard accessibility */
+/* Focus-visible ring for keyboard accessibility — uses the OS Highlight
+   color so it adapts to the user's system accent / high-contrast mode.
+   Avoids hardcoding a Tailwind/AntD color that won't match custom themes. */
 :focus-visible {
-  outline: 2px solid #1668dc;
+  outline: 2px solid Highlight;
   outline-offset: 2px;
 }
