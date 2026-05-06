@@ -58,6 +58,42 @@ export const requireUrl = (serviceName: string, url: string | undefined): string
   return endpoint;
 };
 
+/**
+ * Auto-complete a user-supplied OpenAI-compatible URL to its full
+ * /v1/chat/completions endpoint. Handles common copy-paste shortcuts AND
+ * fixes the two wrong-endpoint mistakes users commonly make:
+ *   http://host:port            → http://host:port/v1/chat/completions
+ *   http://host:port/v1         → http://host:port/v1/chat/completions
+ *   http://host:port/v1/responses    → http://host:port/v1/chat/completions
+ *     (Responses API, 2025 — different request shape, would 400)
+ *   http://host:port/v1/completions  → http://host:port/v1/chat/completions
+ *     (legacy text-completion API — takes 'prompt', not 'messages', 400s)
+ * URLs that already end with /chat/completions or have a non-standard path
+ * (Fireworks /inference/v1, custom proxies, etc.) are returned unchanged —
+ * those users know what they're doing.
+ */
+export const completeOpenAICompatUrl = (url: string): string => {
+  const cleaned = url.trim().replace(/\/+$/, "");
+  if (!cleaned) return cleaned;
+  if (cleaned.endsWith("/chat/completions")) return cleaned;
+  // Rewrite OpenAI's other top-level endpoints (Responses / legacy completions)
+  // to chat/completions. Strict /v\d+/ prefix so we don't mangle custom paths
+  // like /custom/responses that happen to end the same way.
+  if (/\/v\d+\/(responses|completions)$/.test(cleaned)) {
+    return cleaned.replace(/\/(responses|completions)$/, "/chat/completions");
+  }
+  if (/\/v\d+$/.test(cleaned)) return `${cleaned}/chat/completions`;
+  try {
+    const parsed = new URL(cleaned);
+    if (parsed.pathname === "" || parsed.pathname === "/") {
+      return `${cleaned}/v1/chat/completions`;
+    }
+  } catch {
+    // Invalid URL — leave alone, requireUrl/fetch will throw a clearer error
+  }
+  return cleaned;
+};
+
 const ERROR_HINTS: Record<number, string> = {
   401: " (API Key invalid or expired / API 密钥无效或已过期)",
   403: " (Access forbidden / 访问被禁止)",

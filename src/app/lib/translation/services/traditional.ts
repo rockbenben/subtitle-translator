@@ -2,7 +2,7 @@
 
 import type { TranslationService } from "../types";
 import { defaultConfigs } from "../registry";
-import { fetchJSON, requireApiKey, PROXY_ENDPOINTS, THIRD_PARTY_ENDPOINTS, getOpenAICompatContent } from "./shared";
+import { fetchJSON, requireApiKey, completeOpenAICompatUrl, PROXY_ENDPOINTS, THIRD_PARTY_ENDPOINTS, getOpenAICompatContent } from "./shared";
 
 // DeepL source language: Chinese variants → ZH, Portuguese variants → PT, fil → TL
 const DEEPL_SOURCE_MAP: Record<string, string> = {
@@ -146,7 +146,7 @@ export const qwenMt: TranslationService = async (params) => {
   const { text, targetLanguage, sourceLanguage, apiKey, url, model, domains } = params;
 
   const key = requireApiKey("Qwen-MT", apiKey);
-  const apiUrl = url?.trim() || defaultConfigs.qwenMt.url!;
+  const apiUrl = completeOpenAICompatUrl(url?.trim() || defaultConfigs.qwenMt.url!);
 
   // Qwen-MT accepts both English names and codes. Using mapped codes is more precise.
   const getQwenMtLangCode = (lang: string) => {

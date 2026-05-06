@@ -16,6 +16,7 @@ export * from "./cache";
 export * from "./languages-data";
 export * from "./utils";
 export { translationServices } from "./services";
+export { completeOpenAICompatUrl } from "./services/shared";
 
 /**
  * Test translation with a given method and config
