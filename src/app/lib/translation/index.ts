@@ -16,6 +16,7 @@ export * from "./cache";
 export * from "./languages-data";
 export * from "./utils";
 export { translationServices } from "./services";
+export { translategemmaHealthCheck } from "./services/traditional";
 export { completeOpenAICompatUrl } from "./services/shared";
 
 /**

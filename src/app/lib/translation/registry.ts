@@ -14,6 +14,16 @@ type BaseProvider = {
   category: ServiceCategory;
   docs?: string;
   apiKeyUrl?: string;
+  /**
+   * Quick-pick endpoints surfaced as tags above the URL field. Useful for
+   * providers with multiple regional / product variants (Qwen mainland/intl/us,
+   * MiniMax io/cn, Doubao standard/coding) and for Custom (llm) where it
+   * lists common local/cloud OpenAI-compat servers as starter URLs.
+   * Convention: for providers with an implicit runtime default (OpenAI-compat
+   * `endpoint` or a populated `defaults.url`), `endpoints[0].url` should match
+   * that default — so the active tag highlights correctly.
+   */
+  endpoints?: Array<{ label: string; url: string }>;
 };
 
 /** OpenAI-compatible providers driven by the shared chat-completions factory. */
@@ -28,6 +38,8 @@ export type OpenAICompatProviderSpec = BaseProvider & {
   allowCustomUrl?: boolean;
   /** When true, UI renders a "useRelay" toggle that routes through the Cloudflare Worker. */
   allowRelay?: boolean;
+  /** Models on this provider that support thinking-mode. UI shows the toggle only when the current model matches; service injects thinking params only when matched + enabled. */
+  thinkingModelPattern?: RegExp;
 };
 
 /** Providers with hand-written implementations (Claude, Gemini, Azure OpenAI, Nvidia, Custom LLM, all MT). */
@@ -83,7 +95,41 @@ export const PROVIDERS = {
     label: "Qwen-MT",
     docs: "https://help.aliyun.com/zh/model-studio/machine-translation",
     apiKeyUrl: "https://bailian.console.aliyun.com/?tab=model#/api-key",
-    defaults: { url: "", apiKey: "", domains: "", model: "qwen-mt-flash", batchSize: 20 },
+    defaults: { url: "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions", apiKey: "", domains: "", model: "qwen-mt-flash", batchSize: 20 },
+    endpoints: [
+      { label: "Mainland (CN)", url: "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions" },
+      { label: "International", url: "https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions" },
+      { label: "US", url: "https://dashscope-us.aliyuncs.com/compatible-mode/v1/chat/completions" },
+    ],
+  },
+  translategemma: {
+    kind: "custom",
+    category: "machine-translation",
+    // Google's TranslateGemma family — translation-specialized Gemma derivative
+    // with a non-standard chat template (structured `content` array w/ lang
+    // codes). The service implementation pre-renders the template and POSTs to
+    // /v1/completions to bypass servers that normalize multimodal content
+    // (notably LM Studio's OpenAI-compat layer).
+    label: "TranslateGemma",
+    docs: "https://huggingface.co/collections/google/translategemma",
+    // No apiKey field — TranslateGemma is a model (weights), not a hosted
+    // service. Users self-host on LM Studio / llama.cpp / Ollama / vLLM,
+    // none of which require an API key by default. (Users behind an auth
+    // proxy should use Custom (OpenAI-compatible) instead — that path
+    // exposes apiKey + URL together. Importing apiKey via JSON here won't
+    // work because migrateConfig strips fields not in defaults.)
+    // No temperature field — Google's model card uses greedy decoding
+    // (`do_sample=False`); the model wasn't trained for sampling and
+    // non-zero values degrade output. Service hardcodes temperature=0
+    // so LM Studio's UI default (typically 0.7-1.0) doesn't bleed in.
+    defaults: { url: "http://127.0.0.1:1234/v1/chat/completions", model: "translategemma-4b-it", batchSize: 10, delayTime: 200 },
+    endpoints: [
+      // Same local-server order as Custom (OpenAI-compatible) — LM Studio first
+      // (matches `defaults.url` + placeholder), then Ollama / llama.cpp.
+      { label: "LM Studio", url: "http://127.0.0.1:1234/v1/chat/completions" },
+      { label: "Ollama", url: "http://127.0.0.1:11434/v1/chat/completions" },
+      { label: "llama.cpp", url: "http://127.0.0.1:8080/v1/chat/completions" },
+    ],
   },
 
   // ===== LLM APIs (mixed OpenAI-compat + custom; ordered by usage) =====
@@ -92,11 +138,12 @@ export const PROVIDERS = {
     category: "llm",
     label: "DeepSeek",
     endpoint: "https://api.deepseek.com/chat/completions",
-    defaultModel: "deepseek-chat",
+    defaultModel: "deepseek-v4-flash",
     defaultTemperature: 0.7,
     docs: "https://api-docs.deepseek.com/",
     apiKeyUrl: "https://platform.deepseek.com/api_keys",
     allowRelay: true,
+    thinkingModelPattern: /^deepseek-v4-pro$/i,
   },
   openai: {
     kind: "openai-compat",
@@ -136,6 +183,11 @@ export const PROVIDERS = {
     apiKeyUrl: "https://bailian.console.aliyun.com/?tab=model#/api-key",
     allowCustomUrl: true,
     allowRelay: true,
+    endpoints: [
+      { label: "Mainland (CN)", url: "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions" },
+      { label: "International", url: "https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions" },
+      { label: "US", url: "https://dashscope-us.aliyuncs.com/compatible-mode/v1/chat/completions" },
+    ],
   },
   moonshot: {
     kind: "openai-compat",
@@ -144,20 +196,14 @@ export const PROVIDERS = {
     endpoint: "https://api.moonshot.cn/v1/chat/completions",
     defaultModel: "kimi-k2.5",
     defaultTemperature: 0.7,
-    docs: "https://platform.moonshot.ai/docs",
-    apiKeyUrl: "https://platform.moonshot.ai/console/api-keys",
+    docs: "https://platform.moonshot.cn/docs",
+    apiKeyUrl: "https://platform.moonshot.cn/console/api-keys",
+    allowCustomUrl: true,
     allowRelay: true,
-  },
-  zhipu: {
-    kind: "openai-compat",
-    category: "llm",
-    label: "Zhipu GLM",
-    endpoint: "https://open.bigmodel.cn/api/paas/v4/chat/completions",
-    defaultModel: "glm-4.6",
-    defaultTemperature: 0.7,
-    docs: "https://docs.bigmodel.cn/",
-    apiKeyUrl: "https://open.bigmodel.cn/usercenter/apikeys",
-    allowRelay: true,
+    endpoints: [
+      { label: "Mainland (CN)", url: "https://api.moonshot.cn/v1/chat/completions" },
+      { label: "International", url: "https://api.moonshot.ai/v1/chat/completions" },
+    ],
   },
   doubao: {
     kind: "openai-compat",
@@ -169,6 +215,72 @@ export const PROVIDERS = {
     docs: "https://www.volcengine.com/docs/82379",
     apiKeyUrl: "https://console.volcengine.com/ark/region:ark+cn-beijing/apiKey",
     allowCustomUrl: true,
+    allowRelay: true,
+    endpoints: [
+      { label: "Standard", url: "https://ark.cn-beijing.volces.com/api/v3/chat/completions" },
+      { label: "Coding Plan", url: "https://ark.cn-beijing.volces.com/api/coding/v3/chat/completions" },
+    ],
+  },
+  zhipu: {
+    kind: "openai-compat",
+    category: "llm",
+    label: "Zhipu GLM",
+    endpoint: "https://open.bigmodel.cn/api/paas/v4/chat/completions",
+    defaultModel: "glm-4.6",
+    defaultTemperature: 0.7,
+    docs: "https://docs.bigmodel.cn/",
+    apiKeyUrl: "https://open.bigmodel.cn/usercenter/apikeys",
+    allowCustomUrl: true,
+    allowRelay: true,
+    endpoints: [
+      { label: "Mainland (CN)", url: "https://open.bigmodel.cn/api/paas/v4/chat/completions" },
+      { label: "International (Z.ai)", url: "https://api.z.ai/api/paas/v4/chat/completions" },
+    ],
+  },
+  minimax: {
+    kind: "openai-compat",
+    category: "llm",
+    label: "MiniMax",
+    endpoint: "https://api.minimaxi.com/v1/chat/completions",
+    defaultModel: "MiniMax-M2.7",
+    defaultTemperature: 0.7,
+    docs: "https://platform.minimax.io/docs/api-reference/text-chat",
+    apiKeyUrl: "https://platform.minimax.io/user-center/basic-information/interface-key",
+    allowCustomUrl: true,
+    endpoints: [
+      { label: "Mainland (CN)", url: "https://api.minimaxi.com/v1/chat/completions" },
+      { label: "International", url: "https://api.minimax.io/v1/chat/completions" },
+    ],
+  },
+  hunyuan: {
+    kind: "openai-compat",
+    category: "llm",
+    label: "Tencent Hunyuan (混元)",
+    endpoint: "https://api.hunyuan.cloud.tencent.com/v1/chat/completions",
+    defaultModel: "hunyuan-turbos-latest",
+    defaultTemperature: 0.7,
+    docs: "https://cloud.tencent.com/document/product/1729/111007",
+    apiKeyUrl: "https://console.cloud.tencent.com/hunyuan/api-key",
+  },
+  qianfan: {
+    kind: "openai-compat",
+    category: "llm",
+    label: "Baidu ERNIE (百度千帆)",
+    endpoint: "https://qianfan.baidubce.com/v2/chat/completions",
+    defaultModel: "ernie-5.0",
+    defaultTemperature: 0.7,
+    docs: "https://cloud.baidu.com/doc/qianfan/s/wmh4sv6ya",
+    apiKeyUrl: "https://console.bce.baidu.com/iam/#/iam/apikey/list",
+  },
+  mistral: {
+    kind: "openai-compat",
+    category: "llm",
+    label: "Mistral",
+    endpoint: "https://api.mistral.ai/v1/chat/completions",
+    defaultModel: "mistral-large-latest",
+    defaultTemperature: 0.7,
+    docs: "https://docs.mistral.ai/api/",
+    apiKeyUrl: "https://console.mistral.ai/api-keys",
     allowRelay: true,
   },
   grok: {
@@ -182,17 +294,6 @@ export const PROVIDERS = {
     apiKeyUrl: "https://console.x.ai/",
     allowRelay: true,
   },
-  mistral: {
-    kind: "openai-compat",
-    category: "llm",
-    label: "Mistral",
-    endpoint: "https://api.mistral.ai/v1/chat/completions",
-    defaultModel: "mistral-large-latest",
-    defaultTemperature: 0.7,
-    docs: "https://docs.mistral.ai/api/",
-    apiKeyUrl: "https://console.mistral.ai/api-keys",
-    allowRelay: true,
-  },
   perplexity: {
     kind: "openai-compat",
     category: "llm",
@@ -203,6 +304,16 @@ export const PROVIDERS = {
     docs: "https://docs.perplexity.ai/api-reference/chat-completions-post",
     apiKeyUrl: "https://www.perplexity.ai/account/api/keys",
     allowRelay: true,
+  },
+  cohere: {
+    kind: "openai-compat",
+    category: "llm",
+    label: "Cohere",
+    endpoint: "https://api.cohere.ai/compatibility/v1/chat/completions",
+    defaultModel: "command-a-translate-08-2025",
+    defaultTemperature: 0.7,
+    docs: "https://docs.cohere.com/docs/compatibility-api",
+    apiKeyUrl: "https://dashboard.cohere.com/api-keys",
   },
 
   // ===== Aggregators & Self-hosted (no relay — already cross-provider / CORS-friendly / user-controlled) =====
@@ -243,7 +354,7 @@ export const PROVIDERS = {
     label: "Nvidia NIM",
     docs: "https://build.nvidia.com/explore/discover",
     apiKeyUrl: "https://build.nvidia.com/",
-    defaults: { url: "", apiKey: "", model: "deepseek-ai/deepseek-v3.2", temperature: 0.7, batchSize: 20, contextBatchSize: 3, contextWindow: 100, enableThinking: false },
+    defaults: { url: "", apiKey: "", model: "deepseek-ai/deepseek-v4-flash", temperature: 0.7, batchSize: 20, contextBatchSize: 3, contextWindow: 100, enableThinking: false },
   },
   azureopenai: {
     kind: "custom",
@@ -255,8 +366,28 @@ export const PROVIDERS = {
   llm: {
     kind: "custom",
     category: "aggregator",
-    label: "Custom LLM",
-    defaults: { url: "http://127.0.0.1:11434/v1/chat/completions", apiKey: "", model: "llama3.2", temperature: 0.7, batchSize: 10, contextBatchSize: 1, contextWindow: 100 },
+    // Catch-all for any OpenAI-compatible endpoint not in the dedicated list above
+    // (Ollama / LM Studio / vLLM / Together AI / Fireworks AI / self-hosted, etc).
+    // defaults.url stays empty intentionally — Custom has no implicit default URL,
+    // user must pick. The `endpoints` array offers common starting points.
+    label: "Custom (OpenAI-compatible)",
+    // sendSystemPrompt: true by default to match historical behavior. Users running
+    // models with chat templates that reject `system` role (Gemma family on LM Studio,
+    // some codegemma variants) can switch this off so only the user message is sent
+    // — avoids jinja "Conversations must start with a user prompt".
+    // (TranslateGemma is its own dedicated service — see `translategemma` provider.)
+    defaults: { url: "", apiKey: "", model: "", temperature: 0.7, sendSystemPrompt: true, batchSize: 10, contextBatchSize: 1, contextWindow: 100 },
+    endpoints: [
+      // Local servers first (LM Studio → Ollama → llama.cpp by general
+      // popularity), cloud aggregators after. Order matches translategemma's
+      // local section so users get the same chip order across both
+      // URL-primary services.
+      { label: "LM Studio", url: "http://127.0.0.1:1234/v1/chat/completions" },
+      { label: "Ollama", url: "http://127.0.0.1:11434/v1/chat/completions" },
+      { label: "llama.cpp", url: "http://127.0.0.1:8080/v1/chat/completions" },
+      { label: "Together AI", url: "https://api.together.xyz/v1/chat/completions" },
+      { label: "Fireworks AI", url: "https://api.fireworks.ai/inference/v1/chat/completions" },
+    ],
   },
 
   // ===== Internal-only (in defaultConfigs + dispatch but omitted from user-facing lists) =====
@@ -298,6 +429,18 @@ export const LLM_MODELS: string[] = Object.entries(PROVIDERS)
   .filter(([, p]) => p.category !== "machine-translation")
   .map(([k]) => k);
 
+/**
+ * Services where URL is the primary credential — apiKey is optional/absent
+ * because the runtime is typically self-hosted (LM Studio, llama.cpp, vLLM)
+ * and doesn't require auth. Affects:
+ *   - UI: URL field shows as required (red *), apiKey hidden / not-required
+ *   - Validation: URL emptiness blocks translation; missing apiKey is OK
+ *   - Status: empty URL → "needs-config"; otherwise → "configured" (not "free")
+ *
+ * Add new services here when they fit this profile (URL required, apiKey optional).
+ */
+export const URL_IS_PRIMARY_CRED: ReadonlySet<string> = new Set(["llm", "translategemma"]);
+
 // User-facing service list, declaration-order. The cast widens `as const` literal
 // types so optional `docs` / `apiKeyUrl` are uniformly accessible across entries.
 export const TRANSLATION_SERVICES: TranslationServiceInfo[] = Object.entries(PROVIDERS)
@@ -329,6 +472,28 @@ const buildOpenAICompatDefault = (spec: OpenAICompatProviderSpec): TranslationCo
   if (spec.allowCustomUrl) base.url = "";
   if (spec.allowRelay) base.useRelay = false;
   return base;
+};
+
+/**
+ * Pattern of models on `service` that support thinking-mode, or undefined if the
+ * service has no model-conditional thinking support. UI uses this to gate the
+ * thinking toggle on the current model; services use it to decide whether to
+ * inject thinking params upstream.
+ */
+export const getThinkingModelPattern = (service: string): RegExp | undefined => {
+  const p = PROVIDERS[service as ProviderKey] as ProviderSpec | undefined;
+  return p?.kind === "openai-compat" ? p.thinkingModelPattern : undefined;
+};
+
+/**
+ * Quick-pick endpoints for providers that surface multiple URL options (regional
+ * variants like qwen mainland/intl/us, or curated starter URLs for Custom).
+ * Returns undefined when the provider doesn't declare any. The cast widens the
+ * literal `as const` inference so TS sees endpoints as an optional BaseProvider
+ * field on every entry.
+ */
+export const getProviderEndpoints = (service: string): Array<{ label: string; url: string }> | undefined => {
+  return (PROVIDERS[service as ProviderKey] as ProviderSpec | undefined)?.endpoints;
 };
 
 export const defaultConfigs = Object.fromEntries(Object.entries(PROVIDERS).map(([k, p]) => [k, p.kind === "openai-compat" ? buildOpenAICompatDefault(p) : p.defaults])) as Record<

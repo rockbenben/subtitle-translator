@@ -1,6 +1,6 @@
 // Translation utility functions
 
-import { languages, isMethodSupportedForLanguage } from "./languages-data";
+import { languages, isMethodSupportedForLanguage, REQUIRES_EXPLICIT_SOURCE } from "./languages-data";
 import type { TranslationMethod } from "./types";
 
 // Pre-computed lookup maps for O(1) language access
@@ -25,12 +25,25 @@ export const isValidLanguageValue = (testValue: string): boolean => {
  * Check if a translation method supports the given source and target languages
  */
 
-export const checkLanguageSupport = (translationMethod: TranslationMethod, sourceLanguage: string, targetLanguage: string): { supported: boolean; errorMessage?: string } => {
+export const checkLanguageSupport = (translationMethod: TranslationMethod, sourceLanguage: string, targetLanguage: string): { supported: boolean; errorMessage?: string; preserveMethod?: boolean } => {
   const sourceName = languageNameMap.get(sourceLanguage);
   const targetName = languageNameMap.get(targetLanguage);
 
   if (!sourceName || !targetName) {
     return { supported: false, errorMessage: "Invalid language code provided" };
+  }
+
+  // Methods that need explicit source (no auto-detect mode in the model). Keep
+  // this check ahead of UNSUPPORTED_LANGS so the user sees a fix-the-source
+  // hint instead of the misleading "doesn't support Auto" wording.
+  // preserveMethod=true so the caller doesn't switch to the fallback service —
+  // the user picked this method on purpose, they just need to fix the source.
+  if (sourceLanguage === "auto" && REQUIRES_EXPLICIT_SOURCE.has(translationMethod)) {
+    return {
+      supported: false,
+      preserveMethod: true,
+      errorMessage: `${translationMethod.toUpperCase()} requires an explicit source language (no auto-detect). Please select a specific source language. / ${translationMethod.toUpperCase()} 不支持自动检测源语言，请明确选择一个源语言。`,
+    };
   }
 
   if (!isMethodSupportedForLanguage(translationMethod, sourceLanguage)) {
