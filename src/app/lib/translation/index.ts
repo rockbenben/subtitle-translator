@@ -91,7 +91,9 @@ const translateText = async (params: TranslateTextParams): Promise<string> => {
 
   // Clean and cache result
   const cleanedText = cleanTranslatedText(translatedText);
-  await setCachedTranslation(cacheKey, cleanedText);
+  if (useCache) {
+    await setCachedTranslation(cacheKey, cleanedText);
+  }
 
   return cleanedText;
 };

@@ -2,6 +2,12 @@
 
 import { LLM_MODELS } from "@/app/lib/translation";
 
+// MT-categorized services that actually delegate to an LLM runtime under the
+// hood (Qwen-MT → Qwen, translategemma → Gemma 3). They share LLM-style
+// retry semantics: context-length errors aren't retryable, since the next
+// attempt sends the same payload and hits the same limit.
+const LLM_BACKED_MT_SERVICES: ReadonlySet<string> = new Set(["qwenMt", "translategemma"]);
+
 // User-configurable defaults (in seconds for timeout)
 export const DEFAULT_RETRY_COUNT = 3;
 export const DEFAULT_RETRY_TIMEOUT = 180; // seconds — covers P99 of LLM thinking + typical batches; power users bump via Advanced Settings
@@ -77,7 +83,7 @@ export const getRetryConfig = (translationMethod: string, userConfig?: UserRetry
     return { ...baseConfig, minTimeout: 2000, maxTimeout: 60000 };
   }
 
-  if (LLM_MODELS.includes(translationMethod)) {
+  if (LLM_MODELS.includes(translationMethod) || LLM_BACKED_MT_SERVICES.has(translationMethod)) {
     return {
       ...baseConfig,
       shouldRetry: ({ error }: { error: unknown }) => {
