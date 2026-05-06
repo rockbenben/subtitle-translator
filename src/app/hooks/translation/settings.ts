@@ -13,6 +13,8 @@ export interface TranslationSettings {
   target_langs: string[];
   multiLanguageMode: boolean;
   llmPresets?: Array<{ id: string; name: string; config: TranslationConfig; sysPrompt?: string; userPrompt?: string }>;
+  promptPresets?: Array<{ id: string; name: string; sysPrompt: string; userPrompt: string }>;
+  activePromptPresetId?: string;
   exportDate?: string;
   version?: string;
 }
