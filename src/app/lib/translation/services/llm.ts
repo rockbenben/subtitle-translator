@@ -1,11 +1,11 @@
 // Translation services - LLM APIs (OpenAI, DeepSeek, Gemini, etc.)
 
-import type { TranslateTextParams, TranslationService } from "../types";
+import type { ReasoningEffort, TranslateTextParams, TranslationService } from "../types";
 import { DEFAULT_SYS_PROMPT, DEFAULT_USER_PROMPT } from "../config";
 import { defaultConfigs, OPENAI_COMPAT_KEYS, OPENAI_COMPAT_PROVIDERS, type OpenAICompatProviderKey, type OpenAICompatProviderSpec } from "../registry";
 import { getAIModelPrompt } from "../utils";
 
-import { fetchJSON, normalizeNumber, normalizePrompt, relayUrl, requireApiKey, requireUrl, PROXY_ENDPOINTS, getOpenAICompatContent, getClaudeContent } from "./shared";
+import { fetchJSON, normalizeNumber, normalizePrompt, relayUrl, requireApiKey, requireUrl, completeOpenAICompatUrl, PROXY_ENDPOINTS, getOpenAICompatContent, getClaudeContent } from "./shared";
 
 // Prepare prompts common to all LLM services
 const preparePrompts = (params: { text: string; targetLanguage: string; sourceLanguage: string; sysPrompt?: string; userPrompt?: string; fullText?: string }) => {
@@ -23,10 +23,11 @@ type OpenAICompatRequestConfig = {
   defaultModel: string;
   defaultTemperature: number;
   extraHeaders?: Record<string, string>;
+  extraBody?: Record<string, unknown>;
 };
 
 const openAICompatRequest = async (cfg: OpenAICompatRequestConfig): Promise<string> => {
-  const { params, serviceName, endpoint, defaultModel, defaultTemperature, extraHeaders } = cfg;
+  const { params, serviceName, endpoint, defaultModel, defaultTemperature, extraHeaders, extraBody } = cfg;
   const { apiKey, model, temperature } = params;
   const { effectiveSysPrompt, prompt } = preparePrompts(params);
   const key = requireApiKey(serviceName, apiKey);
@@ -46,6 +47,7 @@ const openAICompatRequest = async (cfg: OpenAICompatRequestConfig): Promise<stri
       model: model || defaultModel,
       temperature: normalizeNumber(temperature, defaultTemperature),
       stream: false,
+      ...extraBody,
     }),
     signal: params.signal,
   });
@@ -54,9 +56,12 @@ const openAICompatRequest = async (cfg: OpenAICompatRequestConfig): Promise<stri
 
 // Resolve the endpoint for a provider with allowCustomUrl / allowRelay priority:
 // user-supplied URL > relay (when useRelay toggled) > default endpoint.
+// completeOpenAICompatUrl normalizes user-supplied URLs (bare host, /v1, wrong
+// /v1/responses or /v1/completions paths) — safety net for settings imported
+// from file or hand-edited localStorage that bypass the UI's onBlur fix.
 const resolveEndpoint = (key: OpenAICompatProviderKey, spec: OpenAICompatProviderSpec, params: TranslateTextParams): string => {
   const customUrl = params.url?.trim();
-  if (spec.allowCustomUrl && customUrl) return customUrl;
+  if (spec.allowCustomUrl && customUrl) return completeOpenAICompatUrl(customUrl);
   if (spec.allowRelay && params.useRelay) return relayUrl(key);
   return spec.endpoint;
 };
@@ -83,9 +88,28 @@ const baseOpenAICompatServices = Object.fromEntries(OPENAI_COMPAT_KEYS.map((k) =
 
 // DeepSeek: wraps the factory with CORS/403 error hints that point users at
 // the "API Relay" toggle. Applies only on direct-call failures.
+// Also injects thinking-mode params for models matching the spec's thinkingModelPattern.
+// Direct DeepSeek API uses top-level `thinking: {type}` + `reasoning_effort` (different
+// from NVIDIA which nests both inside `chat_template_kwargs`).
+const buildDeepseekExtraBody = (model: string | undefined, enableThinking: boolean | undefined, reasoningEffort: ReasoningEffort | undefined): Record<string, unknown> => {
+  const spec = OPENAI_COMPAT_PROVIDERS.deepseek;
+  const effectiveModel = model || spec.defaultModel;
+  if (!enableThinking || !spec.thinkingModelPattern?.test(effectiveModel)) return {};
+  return { thinking: { type: "enabled" }, reasoning_effort: reasoningEffort || "medium" };
+};
+
 export const deepseek: TranslationService = async (params) => {
+  const spec = OPENAI_COMPAT_PROVIDERS.deepseek;
   try {
-    return await baseOpenAICompatServices.deepseek(params);
+    return await openAICompatRequest({
+      params,
+      serviceName: spec.label,
+      endpoint: resolveEndpoint("deepseek", spec, params),
+      defaultModel: spec.defaultModel,
+      defaultTemperature: spec.defaultTemperature,
+      extraHeaders: spec.extraHeaders,
+      extraBody: buildDeepseekExtraBody(params.model, params.enableThinking, params.reasoningEffort),
+    });
   } catch (error) {
     if (!params.useRelay && error instanceof Error) {
       if (error instanceof TypeError && error.message.includes("Failed to fetch")) {
@@ -171,26 +195,29 @@ export const azureopenai: TranslationService = async (params) => {
   return getOpenAICompatContent(data, "Azure OpenAI");
 };
 
-// Nvidia thinking parameter rules — data-driven, add new models by appending to the array
-const NVIDIA_THINKING_RULES: Array<{ pattern: RegExp; build: (on: boolean) => Record<string, unknown> }> = [
+// Nvidia thinking parameter rules — data-driven, add new models by appending to the array.
+// `effort` (low/medium/high) is honored only by rules that support it; others ignore it.
+const NVIDIA_THINKING_RULES: Array<{ pattern: RegExp; build: (on: boolean, effort: ReasoningEffort) => Record<string, unknown> }> = [
   // GLM4.7: enable_thinking + clear_thinking
   { pattern: /(?:^|\/)glm4\.7$/i, build: (on) => ({ chat_template_kwargs: { enable_thinking: on, ...(on && { clear_thinking: false }) } }) },
   // Kimi-k2.5: thinking, force temperature=1.0, top_p=1.0
   { pattern: /(?:^|\/)kimi-k2\.5$/i, build: (on) => ({ chat_template_kwargs: { thinking: on }, temperature: 1.0, top_p: 1.0 }) },
-  // DeepSeek-v3.*: thinking
-  { pattern: /(?:^|\/)deepseek-v3\./i, build: (on) => ({ chat_template_kwargs: { thinking: on } }) },
-  // GPT-OSS-*: reasoning_effort
-  { pattern: /(?:^|\/)gpt-oss-/i, build: (on) => ({ reasoning_effort: on ? "high" : "low" }) },
+  // DeepSeek-v4-{flash,pro}: thinking + reasoning_effort (effort only when thinking is on)
+  { pattern: /(?:^|\/)deepseek-v4-(?:flash|pro)$/i, build: (on, effort) => ({ chat_template_kwargs: { thinking: on, ...(on && { reasoning_effort: effort }) } }) },
+  // GPT-OSS-*: reasoning_effort (honors user's effort when on; "low" when off,
+  // since GPT-OSS has no boolean thinking toggle — minimal effort is the off-equivalent)
+  { pattern: /(?:^|\/)gpt-oss-/i, build: (on, effort) => ({ reasoning_effort: on ? effort : "low" }) },
 ];
 
-const buildNvidiaThinkingParams = (model: string, enableThinking: boolean): Record<string, unknown> => NVIDIA_THINKING_RULES.find((r) => r.pattern.test(model))?.build(enableThinking) ?? {};
+const buildNvidiaThinkingParams = (model: string, enableThinking: boolean, reasoningEffort: ReasoningEffort): Record<string, unknown> =>
+  NVIDIA_THINKING_RULES.find((r) => r.pattern.test(model))?.build(enableThinking, reasoningEffort) ?? {};
 
 export const nvidia: TranslationService = async (params) => {
-  const { apiKey, url, model, temperature, enableThinking } = params;
+  const { apiKey, url, model, temperature, enableThinking, reasoningEffort } = params;
   const { effectiveSysPrompt, prompt } = preparePrompts(params);
 
   const effectiveModel = model || defaultConfigs.nvidia.model!;
-  const thinkingParams = buildNvidiaThinkingParams(effectiveModel, enableThinking ?? false);
+  const thinkingParams = buildNvidiaThinkingParams(effectiveModel, enableThinking ?? false, reasoningEffort || "medium");
 
   const requestBody: Record<string, unknown> = {
     messages: [
@@ -204,7 +231,7 @@ export const nvidia: TranslationService = async (params) => {
 
   // Direct call (custom URL) vs proxy call (default Nvidia API, avoids CORS)
   const isDirectCall = !!url;
-  const fetchUrl = isDirectCall ? url : PROXY_ENDPOINTS.nvidia;
+  const fetchUrl = isDirectCall ? completeOpenAICompatUrl(url) : PROXY_ENDPOINTS.nvidia;
   const headers: Record<string, string> = { "Content-Type": "application/json" };
   let body: Record<string, unknown> = requestBody;
 
@@ -225,29 +252,53 @@ export const nvidia: TranslationService = async (params) => {
 };
 
 export const llm: TranslationService = async (params) => {
-  const { apiKey, url, model, temperature } = params;
+  const { apiKey, url, model, temperature, sendSystemPrompt } = params;
   const { effectiveSysPrompt, prompt } = preparePrompts(params);
 
-  const apiEndpoint = url || defaultConfigs.llm.url!;
+  const serviceName = "Custom (OpenAI-compatible)";
+  // Belt-and-suspenders: UI auto-completes on blur, but settings imported from
+  // file or edited via localStorage may bypass that — re-normalize here.
+  const apiEndpoint = completeOpenAICompatUrl(requireUrl(serviceName, url));
+
   const headers: Record<string, string> = { "Content-Type": "application/json" };
   if (apiKey?.trim()) {
     headers.Authorization = `Bearer ${apiKey}`;
   }
 
+  // sendSystemPrompt=false omits the system message entirely. Required for chat
+  // templates that reject the system role (e.g. Gemma family raises jinja
+  // "Conversations must start with a user prompt"). The user prompt template
+  // still contains "Please respect the original meaning... rewrite in
+  // ${targetLanguage}" so translation guidance survives. undefined defaults to
+  // include — existing imports/presets without this field keep original behavior.
+  const messages =
+    sendSystemPrompt === false
+      ? [{ role: "user", content: prompt }]
+      : [
+          { role: "system", content: effectiveSysPrompt },
+          { role: "user", content: prompt },
+        ];
+
+  // Model is optional here — single-model endpoints (vLLM, llama.cpp server,
+  // thin user-built proxies) ignore or forbid the field. Only include it when
+  // the user provides a value; let the server return a precise error if it
+  // genuinely requires one (more accurate than a client-side guess).
+  const requestBody: Record<string, unknown> = {
+    messages,
+    temperature: normalizeNumber(temperature, defaultConfigs.llm.temperature),
+  };
+  const effectiveModel = model?.trim();
+  if (effectiveModel) {
+    requestBody.model = effectiveModel;
+  }
+
   const data = await fetchJSON(apiEndpoint, {
     method: "POST",
     headers,
-    body: JSON.stringify({
-      messages: [
-        { role: "system", content: effectiveSysPrompt },
-        { role: "user", content: prompt },
-      ],
-      model: model || defaultConfigs.llm.model!,
-      temperature: normalizeNumber(temperature, defaultConfigs.llm.temperature),
-    }),
+    body: JSON.stringify(requestBody),
     signal: params.signal,
   });
-  return getOpenAICompatContent(data, "Custom LLM");
+  return getOpenAICompatContent(data, serviceName);
 };
 
 export const claude: TranslationService = async (params) => {

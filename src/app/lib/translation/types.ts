@@ -27,12 +27,16 @@ export interface TranslateTextParams {
   temperature?: number;
   sysPrompt?: string;
   userPrompt?: string;
+  sendSystemPrompt?: boolean; // When false, omit the system message (Custom OpenAI-compat — Gemma-style chat templates rejecting system role)
   useRelay?: boolean;
   enableThinking?: boolean; // Optional: enable thinking mode for supported models (kimi, deepseek, glm, gpt-oss)
+  reasoningEffort?: ReasoningEffort; // Optional: effort level when thinking is on (deepseek-v4)
   domains?: string; // Optional: domains setting for Qwen-MT
   fullText?: string; // Optional: complete text for ${fullText} variable
   signal?: AbortSignal; // Optional: for request cancellation
 }
+
+export type ReasoningEffort = "low" | "medium" | "high";
 
 export type TranslationService = (params: TranslateTextParams) => Promise<string>;
 
@@ -50,7 +54,9 @@ export interface TranslationConfig {
   contextWindow?: number;
   sysPrompt?: string;
   userPrompt?: string;
+  sendSystemPrompt?: boolean;
   useRelay?: boolean;
   enableThinking?: boolean;
+  reasoningEffort?: ReasoningEffort;
   domains?: string;
 }
