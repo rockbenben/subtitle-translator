@@ -5,6 +5,7 @@ import { App } from "antd";
 import { useLocalStorage } from "@/app/hooks/useLocalStorage";
 import useFileUpload from "@/app/hooks/useFileUpload";
 import { useLlmPresets } from "@/app/hooks/useLlmPresets";
+import { usePromptPresets } from "@/app/hooks/usePromptPresets";
 import { useTranslationProgress } from "@/app/hooks/useTranslationProgress";
 import {
   generateCacheSuffix,
@@ -14,11 +15,14 @@ import {
   useTranslation,
   defaultConfigs,
   getDefaultConfig,
+  getThinkingModelPattern,
   migrateConfig,
   resetConfigWithCredentials,
   LLM_MODELS,
+  URL_IS_PRIMARY_CRED,
   DEFAULT_SYS_PROMPT,
   DEFAULT_USER_PROMPT,
+  translategemmaHealthCheck,
   type TranslateTextParams,
   type TranslationConfig,
 } from "@/app/lib/translation";
@@ -92,6 +96,19 @@ const useTranslateData = () => {
   const { llmPresets, setLlmPresets, activePresetId, saveLlmPreset, loadLlmPreset, deleteLlmPreset, renameLlmPreset, updateLlmPreset } = useLlmPresets({
     translationConfigs,
     setTranslationConfigs,
+  });
+
+  const {
+    promptPresets,
+    setPromptPresets,
+    activePromptPresetId,
+    setActivePromptPresetId,
+    savePromptPreset,
+    loadPromptPreset,
+    deletePromptPreset,
+    renamePromptPreset,
+    updatePromptPreset,
+  } = usePromptPresets({
     effectiveSysPrompt,
     effectiveUserPrompt,
     setSysPrompt,
@@ -111,6 +128,8 @@ const useTranslateData = () => {
         target_langs,
         multiLanguageMode,
         llmPresets,
+        promptPresets,
+        activePromptPresetId,
       });
       message.success(t("exportSettingSuccess"));
     } catch (error) {
@@ -130,6 +149,8 @@ const useTranslateData = () => {
       if (settings.target_langs !== undefined) setTarget_langs(settings.target_langs);
       if (settings.multiLanguageMode !== undefined) setMultiLanguageMode(settings.multiLanguageMode);
       if (settings.llmPresets !== undefined) setLlmPresets(settings.llmPresets);
+      if (settings.promptPresets !== undefined) setPromptPresets(settings.promptPresets);
+      if (settings.activePromptPresetId !== undefined) setActivePromptPresetId(settings.activePromptPresetId);
       message.success(t("importSettingSuccess"));
     }, readFile).catch((error) => {
       console.error("Import settings error:", error);
@@ -144,10 +165,21 @@ const useTranslateData = () => {
       const defaultConfig = getDefaultConfig(method);
 
       const baseConfig = migrateConfig(currentConfig, defaultConfig);
-      return {
-        ...prev,
-        [method]: { ...baseConfig, [field]: value } as TranslationConfig,
-      };
+      const next = { ...baseConfig, [field]: value } as TranslationConfig;
+
+      // When the model field changes on a service with model-conditional thinking
+      // (e.g. DeepSeek: only deepseek-v4-pro supports thinking), strip stale
+      // enableThinking + reasoningEffort so they don't ghost-activate after
+      // switching back later.
+      if (field === "model") {
+        const pattern = getThinkingModelPattern(method);
+        if (pattern && !pattern.test(String(value))) {
+          if (next.enableThinking !== undefined) delete next.enableThinking;
+          if (next.reasoningEffort !== undefined) delete next.reasoningEffort;
+        }
+      }
+
+      return { ...prev, [method]: next };
     });
   };
 
@@ -183,7 +215,7 @@ const useTranslateData = () => {
         const newTargetValue = value === "zh" ? "en" : "zh";
         setSourceLanguage(value);
         setTargetLanguage(newTargetValue);
-        message.error(`${t("sameLanguageTarget")} ${newTargetValue === "zh" ? tLanguages("chinese") : tLanguages("english")}`);
+        message.error(`${t("sameLanguageTarget")} ${newTargetValue === "zh" ? tLanguages("zh") : tLanguages("en")}`);
       } else {
         setTargetLanguage(value);
         setSourceLanguage("auto");
@@ -198,16 +230,28 @@ const useTranslateData = () => {
     }
   };
 
+  // Swap source <-> target. Bypasses handleLanguageChange's same-language
+  // guard because a swap never lands on a same-language state. Disabled by
+  // the UI when sourceLanguage === "auto" (can't move "detect" to target) or
+  // multiLanguageMode === true (no single target to swap against).
+  const handleSwapLanguages = () => {
+    const previousSource = sourceLanguage;
+    setSourceLanguage(targetLanguage);
+    setTargetLanguage(previousSource);
+  };
+
   // Validation
   const validateTranslate = async () => {
     const config = getCurrentConfig();
-    if (config && "apiKey" in config && !config.apiKey && translationMethod !== "llm") {
+    // URL_IS_PRIMARY_CRED services treat URL as the credential — apiKey can be
+    // empty (local LM Studio / llama.cpp typically don't require a key).
+    if (config && "apiKey" in config && !config.apiKey && !URL_IS_PRIMARY_CRED.has(translationMethod)) {
       message.error(t("enterApiKey"));
       return false;
     }
 
-    if (translationMethod === "llm" && !config.url) {
-      message.error(t("enterLlmUrl"));
+    if (URL_IS_PRIMARY_CRED.has(translationMethod) && !(config.url as string | undefined)?.trim()) {
+      message.error(t("enterApiUrl"));
       return false;
     }
 
@@ -215,7 +259,10 @@ const useTranslateData = () => {
       const result = checkLanguageSupport(translationMethod, sourceLanguage, targetLanguage);
       if (!result.supported) {
         if (result.errorMessage) message.error({ content: result.errorMessage, duration: 10 });
-        setTranslationMethod(DEFAULT_API);
+        // preserveMethod=true means the user just needs to fix their input
+        // (e.g. pick an explicit source language) — keep their chosen method
+        // instead of silently falling back to GTX.
+        if (!result.preserveMethod) setTranslationMethod(DEFAULT_API);
         return false;
       }
     } else {
@@ -223,24 +270,34 @@ const useTranslateData = () => {
         const result = checkLanguageSupport(translationMethod, sourceLanguage, lang);
         if (!result.supported) {
           if (result.errorMessage) message.error({ content: result.errorMessage, duration: 10 });
-          setTranslationMethod(DEFAULT_API);
+          if (!result.preserveMethod) setTranslationMethod(DEFAULT_API);
           return false;
         }
       }
     }
 
-    if (["deepl", "deeplx", "llm", "gtxFreeAPI"].includes(translationMethod)) {
+    if (["deepl", "deeplx", "llm", "gtxFreeAPI", "translategemma"].includes(translationMethod)) {
       setTranslateInProgress(true);
       setProgressPercent(1);
-      const tempSysPrompt = translationMethod === "llm" ? effectiveSysPrompt : undefined;
-      const tempUserPrompt = translationMethod === "llm" ? effectiveUserPrompt : undefined;
-      const testResult = await testTranslation(translationMethod, config, tempSysPrompt, tempUserPrompt);
+      // translategemma uses a lightweight reachability check (GET /v1/models)
+      // instead of full inference — avoids the 5-30s wait for cold-start model
+      // loading on LM Studio. Catches the common "server not running" case fast.
+      let testResult: boolean;
+      if (translationMethod === "translategemma") {
+        testResult = await translategemmaHealthCheck(config.url as string);
+      } else {
+        const tempSysPrompt = translationMethod === "llm" ? effectiveSysPrompt : undefined;
+        const tempUserPrompt = translationMethod === "llm" ? effectiveUserPrompt : undefined;
+        testResult = await testTranslation(translationMethod, config, tempSysPrompt, tempUserPrompt);
+      }
       if (testResult !== true) {
         const errorMessages: Record<string, string> = {
           deeplx: t("deepLXUnavailable"),
           deepl: t("deeplUnavailable"),
           llm: t("llmUnavailable"),
           gtxFreeAPI: "GTX Free 接口当前不可用，请检查您的网络连接。The free Google Translate API (GTX) is currently unavailable. Please check your network connection.",
+          translategemma:
+            "TranslateGemma 节点不可用，请确认本地服务器（LM Studio / llama.cpp / Ollama）已启动且 URL 正确。/ TranslateGemma node unavailable. Please verify the local server (LM Studio / llama.cpp / Ollama) is running and the URL is correct.",
         };
         if (translationMethod === "deeplx") setTranslationMethod(DEFAULT_API);
         message.open({ type: "error", content: errorMessages[translationMethod] || t("translationError"), duration: 10 });
@@ -285,7 +342,7 @@ const useTranslateData = () => {
     };
 
     // Build translate params - pick defined optional fields from config
-    const optionalFields = ["useCache", "apiKey", "region", "url", "model", "apiVersion", "temperature", "sysPrompt", "userPrompt", "useRelay", "enableThinking", "domains"] as const;
+    const optionalFields = ["useCache", "apiKey", "region", "url", "model", "apiVersion", "temperature", "sysPrompt", "userPrompt", "sendSystemPrompt", "useRelay", "enableThinking", "reasoningEffort", "domains"] as const;
     const extras: Record<string, unknown> = {};
     const configRecord = config as unknown as Record<string, unknown>;
     for (const key of optionalFields) {
@@ -623,9 +680,11 @@ const useTranslateData = () => {
       // Only create fullText if the prompt uses ${fullText} variable
       const fullText = effectiveUserPrompt.includes("${fullText}") ? contentLines.join("\n") : undefined;
 
-      const cacheSuffix = await generateCacheSuffix(sourceLanguage, currentTargetLang, translationMethodArg, {
-        model: config?.model,
-        temperature: config?.temperature,
+      const cacheSuffix = generateCacheSuffix({
+        sourceLanguage,
+        targetLanguage: currentTargetLang,
+        translationMethod: translationMethodArg,
+        config,
         sysPrompt: effectiveSysPrompt,
         userPrompt: effectiveUserPrompt,
       });
@@ -755,6 +814,7 @@ const useTranslateData = () => {
     extractedText,
     setExtractedText,
     handleLanguageChange,
+    handleSwapLanguages,
     delay,
     retryCount,
     setRetryCount,
@@ -768,6 +828,15 @@ const useTranslateData = () => {
     deleteLlmPreset,
     renameLlmPreset,
     updateLlmPreset,
+    promptPresets,
+    setPromptPresets,
+    activePromptPresetId,
+    setActivePromptPresetId,
+    savePromptPreset,
+    loadPromptPreset,
+    deletePromptPreset,
+    renamePromptPreset,
+    updatePromptPreset,
   };
 };
 

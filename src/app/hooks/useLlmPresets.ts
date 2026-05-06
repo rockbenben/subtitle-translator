@@ -7,8 +7,6 @@ export type LlmPreset = {
   id: string;
   name: string;
   config: TranslationConfig;
-  sysPrompt?: string;
-  userPrompt?: string;
 };
 
 type TranslationConfigs = Record<string, TranslationConfig>;
@@ -16,18 +14,15 @@ type TranslationConfigs = Record<string, TranslationConfig>;
 type UseLlmPresetsDeps = {
   translationConfigs: TranslationConfigs;
   setTranslationConfigs: React.Dispatch<React.SetStateAction<TranslationConfigs>>;
-  effectiveSysPrompt: string;
-  effectiveUserPrompt: string;
-  setSysPrompt: (value: string) => void;
-  setUserPrompt: (value: string) => void;
 };
 
 /**
- * CRUD for named "Custom LLM" presets. Each preset snapshots the current
- * llm service config + sys/user prompts so a user can jump between e.g.
- * local Ollama and a remote gateway without re-typing settings.
+ * CRUD for named "Custom LLM" API config presets. Each preset snapshots the
+ * current llm service config so a user can jump between e.g. local Ollama
+ * and a remote gateway without re-typing settings. Prompts are managed
+ * separately via usePromptPresets.
  */
-export const useLlmPresets = ({ translationConfigs, setTranslationConfigs, effectiveSysPrompt, effectiveUserPrompt, setSysPrompt, setUserPrompt }: UseLlmPresetsDeps) => {
+export const useLlmPresets = ({ translationConfigs, setTranslationConfigs }: UseLlmPresetsDeps) => {
   const [llmPresets, setLlmPresets] = useLocalStorage<LlmPreset[]>("llmPresets", []);
   const [activePresetId, setActivePresetId] = useLocalStorage<string>("activePresetId", "");
 
@@ -40,8 +35,6 @@ export const useLlmPresets = ({ translationConfigs, setTranslationConfigs, effec
       id: String(Date.now()),
       name,
       config: { ...config },
-      sysPrompt: effectiveSysPrompt,
-      userPrompt: effectiveUserPrompt,
     };
     setLlmPresets((prev) => [...prev, preset]);
     setActivePresetId(preset.id);
@@ -59,8 +52,6 @@ export const useLlmPresets = ({ translationConfigs, setTranslationConfigs, effec
       ...prev,
       llm: { ...preset.config },
     }));
-    if (preset.sysPrompt !== undefined) setSysPrompt(preset.sysPrompt);
-    if (preset.userPrompt !== undefined) setUserPrompt(preset.userPrompt);
     setActivePresetId(id);
   };
 
@@ -76,7 +67,7 @@ export const useLlmPresets = ({ translationConfigs, setTranslationConfigs, effec
   const updateLlmPreset = (id: string) => {
     const config = getLlmConfig();
     if (!config) return;
-    setLlmPresets((prev) => prev.map((p) => (p.id === id ? { ...p, config: { ...config }, sysPrompt: effectiveSysPrompt, userPrompt: effectiveUserPrompt } : p)));
+    setLlmPresets((prev) => prev.map((p) => (p.id === id ? { ...p, config: { ...config } } : p)));
   };
 
   return {
