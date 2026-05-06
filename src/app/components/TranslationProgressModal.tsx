@@ -58,7 +58,7 @@ const TranslationProgressModal = ({ open, percent, multiLanguageMode = false, ta
 
         {/* Title with spinning icon */}
         <div className="mt-6 flex items-center gap-2">
-          <LoadingOutlined spin className="text-blue-500" />
+          <LoadingOutlined spin style={{ color: token.colorPrimary }} />
           <Text strong className="text-base">
             {t("translating")}
           </Text>

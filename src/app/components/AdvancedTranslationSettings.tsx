@@ -1,8 +1,9 @@
 "use client";
 
 import React from "react";
-import { Flex, Input, InputNumber, Row, Col, Tooltip, Switch, Form, theme, Typography } from "antd";
+import { Flex, Input, InputNumber, Row, Col, Tooltip, Switch, Form, Typography } from "antd";
 import { useTranslations } from "next-intl";
+import Section from "@/app/components/styled/Section";
 
 const { Text } = Typography;
 
@@ -44,24 +45,13 @@ const AdvancedTranslationSettings: React.FC<AdvancedTranslationSettingsProps> = 
   setSingleFileMode,
 }) => {
   const t = useTranslations("common");
-  const { token } = theme.useToken();
-
-  const blockStyle: React.CSSProperties = {
-    padding: "12px",
-    backgroundColor: token.colorFillQuaternary,
-    borderRadius: token.borderRadiusLG,
-    width: "100%",
-  };
 
   return (
     <Flex vertical gap="middle">
-      {/* 1. Genernal Switches Block */}
-      <div style={blockStyle}>
+      {/* 1. General Switches */}
+      <Section variant="neutral" noGap>
         <Flex vertical gap="small">
-          {/* Component-specific settings (injected checkboxes like Direct Export) */}
           {children}
-
-          {/* Single File Mode */}
           {setSingleFileMode && (
             <Flex justify="space-between" align="center">
               <Tooltip title={t("singleFileModeTooltip")}>
@@ -70,8 +60,6 @@ const AdvancedTranslationSettings: React.FC<AdvancedTranslationSettingsProps> = 
               <Switch size="small" checked={singleFileMode} onChange={setSingleFileMode} aria-label={t("singleFileMode")} />
             </Flex>
           )}
-
-          {/* Use cache toggle */}
           <Flex justify="space-between" align="center">
             <Tooltip title={t("useCacheTooltip")}>
               <Text>{t("useCache")}</Text>
@@ -79,10 +67,10 @@ const AdvancedTranslationSettings: React.FC<AdvancedTranslationSettingsProps> = 
             <Switch size="small" checked={useCache} onChange={setUseCache} aria-label={t("useCache")} />
           </Flex>
         </Flex>
-      </div>
+      </Section>
 
-      {/* 2. Network / Resilience Block */}
-      <div style={blockStyle}>
+      {/* 2. Network / Resilience */}
+      <Section variant="neutral" noGap>
         <Form layout="vertical" component="div">
           <Row gutter={16}>
             <Col span={12}>
@@ -97,22 +85,19 @@ const AdvancedTranslationSettings: React.FC<AdvancedTranslationSettingsProps> = 
             </Col>
           </Row>
         </Form>
-      </div>
+      </Section>
 
-      {/* 3. Output Formatting Block */}
-      <div style={blockStyle}>
+      {/* 3. Output Formatting */}
+      <Section variant="neutral" noGap>
         <Form layout="vertical">
-          {/* Remove chars input */}
-          <Form.Item label={t("removeCharsAfterTranslation")} tooltip={t("removeCharsAfterTranslationTooltip")}>
+          <Form.Item label={t("removeCharsAfterTranslation")} tooltip={t("removeCharsAfterTranslationTooltip")} className="!mb-3">
             <Input placeholder={`${t("example")}: ♪ <i> </i>`} value={removeChars} onChange={(e) => setRemoveChars(e.target.value)} allowClear aria-label={t("removeCharsAfterTranslation")} />
           </Form.Item>
-
-          {/* Export filename input */}
-          <Form.Item label={t("customExportFilename")} tooltip={t("customExportFilenameTooltip")} className="!-mt-3 !mb-0">
+          <Form.Item label={t("customExportFilename")} tooltip={t("customExportFilenameTooltip")} className="!mb-0">
             <Input value={customFileName} placeholder="{name}_{lang}.{ext}" onChange={(e) => setCustomFileName(e.target.value)} allowClear aria-label={t("customExportFilename")} />
           </Form.Item>
         </Form>
-      </div>
+      </Section>
     </Flex>
   );
 };

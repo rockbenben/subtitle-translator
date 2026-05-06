@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Row, Col, Form, Select, Switch, Card, Flex, Tooltip, Typography, Checkbox, Input, Button, Divider } from "antd";
-import { SearchOutlined } from "@ant-design/icons";
+import { Row, Col, Form, Select, Switch, Flex, Tooltip, Typography, Checkbox, Input, Button, Divider, theme } from "antd";
+import { SearchOutlined, SwapOutlined } from "@ant-design/icons";
 import { useTranslations } from "next-intl";
 import { useLanguageOptions, filterLanguageOption } from "@/app/components/languages";
 
@@ -14,6 +14,7 @@ interface LanguageSelectorProps {
   target_langs: string[];
   multiLanguageMode: boolean;
   handleLanguageChange: (type: "source" | "target", value: string) => void;
+  handleSwapLanguages?: () => void;
   setTarget_langs: (value: string[]) => void;
   setMultiLanguageMode: (value: boolean) => void;
 }
@@ -22,10 +23,11 @@ interface LanguageSelectorProps {
  * Shared component for source/target language selection with multi-language mode toggle.
  * Used in SubtitleTranslator, MDTranslator, and JSONTranslator.
  */
-const LanguageSelector = ({ sourceLanguage, targetLanguage, target_langs, multiLanguageMode, handleLanguageChange, setTarget_langs, setMultiLanguageMode }: LanguageSelectorProps) => {
+const LanguageSelector = ({ sourceLanguage, targetLanguage, target_langs, multiLanguageMode, handleLanguageChange, handleSwapLanguages, setTarget_langs, setMultiLanguageMode }: LanguageSelectorProps) => {
   const t = useTranslations("common");
   const { sourceOptions, targetOptions } = useLanguageOptions();
   const [searchValue, setSearchValue] = useState("");
+  const { token } = theme.useToken();
 
   // Filter options based on search - using same logic as source language selector
   const filteredOptions = useMemo(() => {
@@ -80,10 +82,16 @@ const LanguageSelector = ({ sourceLanguage, targetLanguage, target_langs, multiL
   );
 
   return (
-    <Card size="small" styles={{ body: { padding: 12 } }}>
-      <Row gutter={12}>
-        <Col span={12}>
-          <Form.Item label={t("sourceLanguage")} className="!mb-2">
+    <div
+      style={{
+        padding: token.paddingSM,
+        background: "transparent",
+        border: `1px solid ${token.colorBorderSecondary}`,
+        borderRadius: token.borderRadiusLG,
+      }}>
+      <Row gutter={8} align="bottom" wrap={false}>
+        <Col flex="1" style={{ minWidth: 0 }}>
+          <Form.Item label={t("sourceLanguage")} className="!mb-0">
             <Select
               value={sourceLanguage}
               onChange={(e) => handleLanguageChange("source", e)}
@@ -98,8 +106,22 @@ const LanguageSelector = ({ sourceLanguage, targetLanguage, target_langs, multiL
             />
           </Form.Item>
         </Col>
-        <Col span={12}>
-          <Form.Item label={t("targetLanguage")} className="!mb-2">
+        {handleSwapLanguages && (
+          <Col flex="none" style={{ paddingBottom: 1 }}>
+            <Tooltip title={`${t("sourceLanguage")} ⇄ ${t("targetLanguage")}`} placement="top">
+              <Button
+                type="text"
+                size="small"
+                icon={<SwapOutlined />}
+                onClick={handleSwapLanguages}
+                disabled={sourceLanguage === "auto" || multiLanguageMode}
+                aria-label={`${t("sourceLanguage")} ⇄ ${t("targetLanguage")}`}
+              />
+            </Tooltip>
+          </Col>
+        )}
+        <Col flex="1" style={{ minWidth: 0 }}>
+          <Form.Item label={t("targetLanguage")} className="!mb-0">
             {!multiLanguageMode ? (
               <Select
                 value={targetLanguage}
@@ -119,7 +141,7 @@ const LanguageSelector = ({ sourceLanguage, targetLanguage, target_langs, multiL
                 value={target_langs.length > 0 ? `${t("selectedLanguages")} ${target_langs.length}` : undefined}
                 placeholder={t("selectMultiTargetLanguages")}
                 popupRender={dropdownRender}
-                popupStyle={{ minWidth: 480 }}
+                popupStyle={{ minWidth: "min(480px, 90vw)" }}
                 className="w-full"
                 aria-label={t("targetLanguage")}
                 popupMatchSelectWidth={false}
@@ -132,7 +154,7 @@ const LanguageSelector = ({ sourceLanguage, targetLanguage, target_langs, multiL
         </Col>
       </Row>
 
-      <Flex justify="end">
+      <Flex justify="end" style={{ marginTop: token.marginXS }}>
         <Tooltip title={t("multiLanguageModeTooltip")} placement="bottom">
           <label className="inline-flex items-center gap-1.5 cursor-pointer">
             <Switch size="small" checked={multiLanguageMode} onChange={setMultiLanguageMode} aria-label={t("multiLanguageMode")} />
@@ -140,7 +162,7 @@ const LanguageSelector = ({ sourceLanguage, targetLanguage, target_langs, multiL
           </label>
         </Tooltip>
       </Flex>
-    </Card>
+    </div>
   );
 };
 

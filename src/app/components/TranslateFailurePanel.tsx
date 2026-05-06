@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Alert, Button, Modal, List, Space, App } from "antd";
+import { Alert, Button, Modal, List, Space, App, theme } from "antd";
 import { ReloadOutlined, UnorderedListOutlined, CopyOutlined } from "@ant-design/icons";
 import { useTranslations } from "next-intl";
 import { useCopyToClipboard } from "@/app/hooks/useCopyToClipboard";
@@ -20,6 +20,7 @@ export default function TranslateFailurePanel({ count, lines, onRetry, disabled 
   const { message } = App.useApp();
   const { copyToClipboard } = useCopyToClipboard();
   const [modalOpen, setModalOpen] = useState(false);
+  const { token } = theme.useToken();
 
   if (count <= 0) return null;
 
@@ -37,7 +38,7 @@ export default function TranslateFailurePanel({ count, lines, onRetry, disabled 
         message={t("partialFailureTitle", { count })}
         description={t("partialFailureDesc")}
         action={
-          <Space direction="vertical" size="small">
+          <Space orientation="vertical" size="small">
             <Button size="small" type="primary" icon={<ReloadOutlined />} onClick={onRetry} disabled={disabled}>
               {t("retryFailedLines")}
             </Button>
@@ -70,7 +71,7 @@ export default function TranslateFailurePanel({ count, lines, onRetry, disabled 
           style={{ maxHeight: "60vh", overflowY: "auto" }}
           renderItem={(item, idx) => (
             <List.Item>
-              <span style={{ color: "rgba(255,255,255,0.45)", marginRight: 8 }}>{idx + 1}.</span>
+              <span style={{ color: token.colorTextTertiary, marginRight: 8 }}>{idx + 1}.</span>
               {item}
             </List.Item>
           )}
