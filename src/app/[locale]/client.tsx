@@ -2,12 +2,13 @@
 
 import React, { useState } from "react";
 import dynamic from "next/dynamic";
-import { Tabs, TabsProps, Typography, Spin } from "antd";
-import { VideoCameraOutlined, QuestionCircleOutlined } from "@ant-design/icons";
+import { Tabs, TabsProps, Spin } from "antd";
+import { VideoCameraOutlined } from "@ant-design/icons";
 import SubtitleTranslator from "./SubtitleTranslator";
 import { useTranslations, useLocale } from "next-intl";
 import { TranslationProvider } from "@/app/components/TranslationContext";
 import { getDocUrl } from "@/app/utils";
+import ToolPage from "@/app/components/styled/ToolPage";
 
 const TranslationSettings = dynamic(() => import("@/app/components/TranslationSettings"), {
   loading: () => (
@@ -16,8 +17,6 @@ const TranslationSettings = dynamic(() => import("@/app/components/TranslationSe
     </div>
   ),
 });
-
-const { Title, Paragraph, Link } = Typography;
 
 const ClientPage = () => {
   const tSubtitle = useTranslations("subtitle");
@@ -35,7 +34,7 @@ const ClientPage = () => {
     {
       key: "basic",
       label: t("basicTab"),
-      children: <SubtitleTranslator />,
+      children: <SubtitleTranslator onOpenApiSettings={() => setActiveKey("advanced")} />,
     },
     {
       key: "advanced",
@@ -46,17 +45,9 @@ const ClientPage = () => {
 
   return (
     <TranslationProvider>
-      <Title level={1} style={{ fontSize: "1.6em", fontWeight: 600, marginTop: 0 }}>
-        <VideoCameraOutlined /> {tSubtitle("clientTitle")}
-      </Title>
-      <Paragraph type="secondary" ellipsis={{ rows: 3, expandable: true, symbol: "more" }}>
-        <Link href={userGuideUrl} target="_blank" rel="noopener noreferrer">
-          <QuestionCircleOutlined /> {t("userGuide")}
-        </Link>{" "}
-        {tSubtitle("clientDescription")}
-        {t("privacyNotice")}
-      </Paragraph>
-      <Tabs activeKey={activeKey} onChange={handleTabChange} items={items} type="card" className="w-full" animated={{ inkBar: true, tabPane: true }} />
+      <ToolPage icon={<VideoCameraOutlined />} title={tSubtitle("clientTitle")} description={tSubtitle("clientDescription")} guideUrl={userGuideUrl}>
+        <Tabs activeKey={activeKey} onChange={handleTabChange} items={items} type="card" className="w-full" animated={{ inkBar: true, tabPane: true }} />
+      </ToolPage>
     </TranslationProvider>
   );
 };
