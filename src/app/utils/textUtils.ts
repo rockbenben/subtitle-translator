@@ -55,6 +55,7 @@ export const splitParagraph = async (text: string, method: ParagraphSplitMethod 
 export const toHalfWidth = (text: string): string => text.replace(/[０-９Ａ-Ｚａ-ｚ]/g, (char) => String.fromCharCode(char.charCodeAt(0) - 65248));
 
 // 过滤文本中的行；filters 可为逗号分隔字符串或字符串数组
+// maxLen：长度阈值。0、undefined、负数 均视作"未启用"（不保留超长行的豁免规则）
 export const filterLines = (text: string, filters: string | string[], maxLen?: number): string => {
   const list = Array.isArray(filters)
     ? filters
@@ -62,9 +63,10 @@ export const filterLines = (text: string, filters: string | string[], maxLen?: n
         .split(",")
         .map((w) => w.trim())
         .filter(Boolean);
+  const hasMaxLen = typeof maxLen === "number" && maxLen > 0;
   return splitTextIntoLines(text)
     .filter((line) => {
-      if (maxLen !== undefined && line.trim().length > maxLen) return true;
+      if (hasMaxLen && line.trim().length > maxLen) return true;
       return !list.some((f) => f && line.includes(f));
     })
     .join("\n");
