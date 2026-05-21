@@ -2,13 +2,13 @@
 
 import { ThemeProvider as NextThemesProvider, useTheme } from "next-themes";
 import { ConfigProvider, App, theme, Layout } from "antd";
-import { ReactNode } from "react";
+import { ReactNode, useSyncExternalStore } from "react";
 import { useLocale } from "next-intl";
 import { getLangDir } from "rtl-detect";
 
 export default function ThemesProvider({ children }: { children: ReactNode }) {
   return (
-    <NextThemesProvider attribute="class" defaultTheme="dark">
+    <NextThemesProvider attribute="class" defaultTheme="dark" enableSystem={false}>
       <AntdConfigProvider>{children}</AntdConfigProvider>
     </NextThemesProvider>
   );
@@ -78,7 +78,18 @@ function AntdConfigProvider({ children }: { children: ReactNode }) {
   const locale = useLocale();
   const direction = getLangDir(locale);
 
-  const isDark = resolvedTheme !== "light";
+  // next-themes 的 resolvedTheme 在 SSR + 首次 client render 都是 undefined,
+  // 等 mount 后才确定。SSR 直接 isDark=true 跟 defaultTheme="dark" 对齐 (避
+  // 免 hydration mismatch),mount 后才相信 resolvedTheme。
+  // useSyncExternalStore 而非 useState+useEffect: 后者会被 react-hooks 规则
+  // (set-state-in-effect) 报错, 且 Navigation.tsx 已用同样写法做 SSR-safe
+  // mounted 检测。
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
+  const isDark = mounted ? resolvedTheme !== "light" : true;
   const algorithms = isDark ? [theme.darkAlgorithm] : [theme.defaultAlgorithm];
   const tokens = isDark ? darkTokens : lightTokens;
 
