@@ -126,8 +126,12 @@ export const filterSubLines = (lines: string[], fileType: string) => {
         if (fileType === "vtt") {
           const isTimecode = /^[\d:.]+ --> [\d:.]+/.test(trimmedLine);
           const isWebVTTHeader = trimmedLine.startsWith("WEBVTT");
-          const isComment = trimmedLine.startsWith("#");
-          isContent = isValidSubtitleLine(line) && !isTimecode && !isWebVTTHeader && !isComment;
+          // WebVTT non-cue blocks per spec — NOTE (comments), STYLE (CSS),
+          // REGION (positioning). Previously checked `startsWith("#")` which
+          // is Markdown syntax, not WebVTT: real NOTE blocks were treated as
+          // cue text and hashtag-starting cues were dropped.
+          const isMetaBlock = /^(NOTE|STYLE|REGION)(\s|$)/.test(trimmedLine);
+          isContent = isValidSubtitleLine(line) && !isTimecode && !isWebVTTHeader && !isMetaBlock;
           // Strip YouTube VTT inline tags: <c>, </c>, and karaoke timestamps like <00:00:06.040>
           extractedContent = line.replace(/<\/?c>/g, "").replace(/<[\d:.]+>/g, "");
         } else {
