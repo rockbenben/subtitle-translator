@@ -9,7 +9,6 @@ import { usePromptPresets } from "@/app/hooks/usePromptPresets";
 import { useTranslationProgress } from "@/app/hooks/useTranslationProgress";
 import {
   generateCacheSuffix,
-  checkLanguageSupport,
   splitTextIntoChunks,
   testTranslation,
   useTranslation,
@@ -19,7 +18,6 @@ import {
   migrateConfig,
   resetConfigWithCredentials,
   LLM_MODELS,
-  URL_IS_PRIMARY_CRED,
   DEFAULT_SYSTEM_PROMPT,
   DEFAULT_USER_PROMPT,
   translategemmaHealthCheck,
@@ -33,6 +31,7 @@ import {
   buildContextPrompt,
   exportTranslationSettings,
   createSettingsFileInput,
+  validateTranslationInputs,
   DEFAULT_RETRY_COUNT,
   DEFAULT_RETRY_TIMEOUT,
   isAuthError,
@@ -67,7 +66,17 @@ const useTranslationState = () => {
 
   // State
   const [useCache, setUseCache] = useState<boolean>(true);
+  // Drawer for the full provider/model/prompt config surface. Replaces the
+  // previous "Advanced" Tab; sits per-translator inside TranslationProvider.
+  const [apiSettingsOpen, setApiSettingsOpen] = useState<boolean>(false);
   const [translationMethod, setTranslationMethod] = useLocalStorage<string>("translation-method", DEFAULT_API);
+  // localStorage 残留旧/已删 service key (比如重命名前的 "aliyun" 或 已 retire 的
+  // method) → getDefaultConfig 返回 undefined。getSelectedConfig 内部翻译路径会
+  // fallback,但 translationMethod state 本身没修,ApiStatusBlock 的 Select 会显示
+  // 空白值。render-time 一次性纠偏,覆盖所有 mount 入口 (而非只 Drawer 打开时)。
+  if (!getDefaultConfig(translationMethod)) {
+    setTranslationMethod(DEFAULT_API);
+  }
   const [translationConfigs, setTranslationConfigs] = useLocalStorage<TranslationConfigs>("translation-configs", defaultConfigs as TranslationConfigs);
   const [systemPrompt, setSystemPrompt] = useLocalStorage<string>("translation-systemPrompt", DEFAULT_SYSTEM_PROMPT);
   const [userPrompt, setUserPrompt] = useLocalStorage<string>("translation-userPrompt", DEFAULT_USER_PROMPT);
@@ -80,7 +89,6 @@ const useTranslationState = () => {
   // Per-request timeout in seconds (fetch signal setTimeout).
   const [requestTimeoutSec, setRequestTimeoutSec] = useLocalStorage<number>("translation-requestTimeoutSec", DEFAULT_RETRY_TIMEOUT);
   const [translatedText, setTranslatedText] = useState<string>("");
-  const [extractedText, setExtractedText] = useState<string>("");
   // Soft-failure telemetry: count and original text of lines that failed
   // even after the 10s auto-retry pass. UI uses these to show an Alert
   // with a retry button; re-clicking Translate hits the IndexedDB cache
@@ -131,6 +139,9 @@ const useTranslationState = () => {
         llmPresets,
         promptPresets,
         activePromptPresetId,
+        retryCount,
+        requestTimeoutSec,
+        removeChars,
       });
       message.success(t("exportSettingSuccess"));
     } catch (error) {
@@ -152,6 +163,9 @@ const useTranslationState = () => {
       if (settings.llmPresets !== undefined) setLlmPresets(settings.llmPresets);
       if (settings.promptPresets !== undefined) setPromptPresets(settings.promptPresets);
       if (settings.activePromptPresetId !== undefined) setActivePromptPresetId(settings.activePromptPresetId);
+      if (settings.retryCount !== undefined) setRetryCount(settings.retryCount);
+      if (settings.requestTimeoutSec !== undefined) setRequestTimeoutSec(settings.requestTimeoutSec);
+      if (settings.removeChars !== undefined) setRemoveChars(settings.removeChars);
       message.success(t("importSettingSuccess"));
     }, readFile).catch((error) => {
       console.error("Import settings error:", error);
@@ -209,6 +223,8 @@ const useTranslationState = () => {
   };
 
   // Language management
+  // 任何 source/target 变化都会让 translatedText invalidate——避免用户改了语言
+  // 但屏幕上还显示旧译文,误以为切换没生效。
   const handleLanguageChange = (type: "source" | "target", value: string) => {
     const otherValue = type === "source" ? targetLanguage : sourceLanguage;
     if (value === otherValue) {
@@ -222,12 +238,15 @@ const useTranslationState = () => {
         setSourceLanguage("auto");
         message.error(`${t("sameLanguageSource")} ${tLanguages("auto")}`);
       }
+      setTranslatedText("");
       return;
     }
     if (type === "source" && value !== sourceLanguage) {
       setSourceLanguage(value);
+      setTranslatedText("");
     } else if (type === "target" && value !== targetLanguage) {
       setTargetLanguage(value);
+      setTranslatedText("");
     }
   };
 
@@ -239,53 +258,58 @@ const useTranslationState = () => {
     const previousSource = sourceLanguage;
     setSourceLanguage(targetLanguage);
     setTargetLanguage(previousSource);
+    setTranslatedText("");
   };
 
   // Validation
-  const validateTranslate = async () => {
+  //
+  // 设计要点 (踩坑后留的注释,改之前先理解):
+  //
+  // 1. 不在此处碰 isTranslating —— 该 flag 由调用方 (runTranslation /
+  //    handleMultipleTranslate) 的 try/finally 统一管。validate 内部自己开关
+  //    会跟外层 set 冲突,触发 progress modal 闪烁,职责也乱。
+  //
+  // 2. 语言不支持时不再自动改 translationMethod —— 早期版本会偷偷 fallback
+  //    到 DEFAULT_API,用户察觉不到 method 被换。现在只报错,让用户自己决定
+  //    换语言还是换 method。
+  //
+  // 3. test ping 只对这 5 个服务执行 (deepl/deeplx/llm/gtxFreeAPI/translategemma):
+  //    它们是"免费/自托管/本地"类,可用性不稳定 (GFW 墙、自架挂了、模型没启动)
+  //    需要提前探测。付费 API (DeepSeek/Claude/Gemini 等) 假定 API key 给了就能
+  //    用,出错让翻译请求本身去报。
+  //
+  // 4. test ping 失败时只有 deeplx 自动 fallback —— deeplx 是自托管代理,
+  //    URL 配错 / 服务挂了的概率最高;其他 4 个失败通常是真实问题 (key 错、
+  //    服务真不可用),fallback 没意义。
+  const validate = async () => {
     const config = getSelectedConfig();
-    // URL_IS_PRIMARY_CRED services treat URL as the credential — apiKey can be
-    // empty (local LM Studio / llama.cpp typically don't require a key).
-    if (config && "apiKey" in config && !config.apiKey && !URL_IS_PRIMARY_CRED.has(translationMethod)) {
-      message.error(t("enterApiKey"));
-      return false;
-    }
 
-    if (URL_IS_PRIMARY_CRED.has(translationMethod) && !(config.url as string | undefined)?.trim()) {
-      message.error(t("enterApiUrl"));
+    // Sync validation: creds + language support. Extracted to a pure function
+    // (hooks/translation/validation.ts) so it's unit-testable without React.
+    const syncResult = validateTranslationInputs({
+      config,
+      method: translationMethod,
+      sourceLanguage,
+      targetLanguage,
+      multiLanguageMode,
+      targetLanguages,
+    });
+    if (!syncResult.ok) {
+      if ("errorKey" in syncResult) {
+        message.error(t(syncResult.errorKey));
+      } else if (syncResult.errorMessage) {
+        message.error({ content: syncResult.errorMessage, duration: 10 });
+      }
       return false;
-    }
-
-    if (!multiLanguageMode) {
-      const result = checkLanguageSupport(translationMethod, sourceLanguage, targetLanguage);
-      if (!result.supported) {
-        if (result.errorMessage) message.error({ content: result.errorMessage, duration: 10 });
-        // preserveMethod=true means the user just needs to fix their input
-        // (e.g. pick an explicit source language) — keep their chosen method
-        // instead of silently falling back to GTX.
-        if (!result.preserveMethod) setTranslationMethod(DEFAULT_API);
-        return false;
-      }
-    } else {
-      for (const lang of targetLanguages) {
-        const result = checkLanguageSupport(translationMethod, sourceLanguage, lang);
-        if (!result.supported) {
-          if (result.errorMessage) message.error({ content: result.errorMessage, duration: 10 });
-          if (!result.preserveMethod) setTranslationMethod(DEFAULT_API);
-          return false;
-        }
-      }
     }
 
     if (["deepl", "deeplx", "llm", "gtxFreeAPI", "translategemma"].includes(translationMethod)) {
-      setIsTranslating(true);
-      setProgressPercent(1);
       // translategemma uses a lightweight reachability check (GET /v1/models)
       // instead of full inference — avoids the 5-30s wait for cold-start model
       // loading on LM Studio. Catches the common "server not running" case fast.
       let testResult: boolean;
       if (translationMethod === "translategemma") {
-        testResult = await translategemmaHealthCheck(config.url as string);
+        testResult = await translategemmaHealthCheck(String(config.url ?? ""));
       } else {
         const tempSystemPrompt = translationMethod === "llm" ? effectiveSystemPrompt : undefined;
         const tempUserPrompt = translationMethod === "llm" ? effectiveUserPrompt : undefined;
@@ -300,11 +324,13 @@ const useTranslationState = () => {
           translategemma: t("translategemmaUnavailable"),
         };
         if (translationMethod === "deeplx") setTranslationMethod(DEFAULT_API);
+        // ⚠ Footgun: setState is async; below this line `translationMethod` in this
+        // scope still reads the old value (deeplx). Currently safe because we
+        // immediately `return false`. If you add code that re-reads
+        // `translationMethod` after this point, expect stale value.
         message.open({ type: "error", content: errorMessages[translationMethod] || t("translationError"), duration: 10 });
-        setIsTranslating(false);
         return false;
       }
-      setIsTranslating(false);
     }
 
     return true;
@@ -312,7 +338,7 @@ const useTranslationState = () => {
 
   // Retry translation with config - throws on failure (no fallback to original text)
   // Uses shared abortControllerRef to allow cancellation across concurrent requests
-  const retryTranslate = async (text: string, cacheSuffix: string, config: TranslationRuntimeConfig, fullText?: string) => {
+  const translateSingle = async (text: string, cacheSuffix: string, config: TranslationRuntimeConfig, fullText?: string) => {
     // Check if already aborted (e.g., by auth error in another concurrent request)
     if (abortControllerRef.current?.signal.aborted) {
       throw new Error("Translation aborted");
@@ -436,7 +462,7 @@ const useTranslationState = () => {
         .join("\n");
 
       try {
-        const result = await retryTranslate(
+        const result = await translateSingle(
           contextWithMarkers,
           cacheSuffix,
           {
@@ -557,7 +583,7 @@ const useTranslationState = () => {
     // Main loop: run batches in parallel with user-configurable concurrency.
     // Context mode uses `contextBatchSize` — each task sends ~contextWindow
     // lines to the LLM in a single heavy request, so we cap hard. Non-context
-    // line-by-line mode uses the separate `batchSize` (see translateContent
+    // line-by-line mode uses the separate `batchSize` (see translateBatch
     // below) which is safe to run higher since each request is a single short
     // prompt. Defaults per provider:
     //   - Cloud LLMs (claude, gemini, openai-compat, ...): 3 — under every
@@ -646,7 +672,7 @@ const useTranslationState = () => {
   };
 
   // Main translation function
-  const translateContent = async (
+  const translateBatch = async (
     contentLines: string[],
     translationMethodArg: string,
     currentTargetLang: string,
@@ -696,7 +722,7 @@ const useTranslationState = () => {
 
       if (config?.chunkSize === undefined) {
         // Line-by-line concurrent translation
-        // Note: abort logic is now handled centrally in retryTranslate via shared abortControllerRef
+        // Note: abort logic is now handled centrally in translateSingle via shared abortControllerRef
         const translatedLines = new Array(contentLines.length);
         let completedCount = 0;
         let aborted = false;
@@ -710,7 +736,7 @@ const useTranslationState = () => {
           limit(async () => {
             if (aborted) return;
             try {
-              translatedLines[index] = await retryTranslate(line, cacheSuffix, runtimeConfig, fullText);
+              translatedLines[index] = await translateSingle(line, cacheSuffix, runtimeConfig, fullText);
             } catch (error) {
               aborted = true;
               throw error;
@@ -739,7 +765,7 @@ const useTranslationState = () => {
       const translatedChunks: string[] = [];
 
       for (let i = 0; i < chunks.length; i++) {
-        const translatedContent = await retryTranslate(chunks[i], cacheSuffix, runtimeConfig, fullText);
+        const translatedContent = await translateSingle(chunks[i], cacheSuffix, runtimeConfig, fullText);
         translatedChunks.push(translationMethodArg === "deeplx" ? (translatedContent || "").replace(/<>/g, "\n") : translatedContent || "");
         updateProgress(i + 1, chunks.length);
         if (i < chunks.length - 1) await delay(config?.delayTime || 200);
@@ -754,7 +780,7 @@ const useTranslationState = () => {
   };
 
   // Translation handlers
-  const handleTranslate = async (performTranslation: PerformTranslation, sourceText: string, documentType?: "subtitle" | "markdown" | "generic") => {
+  const runTranslation = async (performTranslation: PerformTranslation, sourceText: string, documentType?: "subtitle" | "markdown" | "generic") => {
     setTranslatedText("");
     // Reset soft-failure state for this run — the UI Alert is driven by these.
     setTranslateFailedCount(0);
@@ -764,12 +790,13 @@ const useTranslationState = () => {
       return;
     }
 
-    const isValid = await validateTranslate();
-    if (!isValid) return;
-
+    // isTranslating 现在统一在 runTranslation 这一层管,validate 内部不再
+    // 自行开关。Progress modal 在 validate 的 test ping 阶段也保持可见,体验连续。
     setIsTranslating(true);
     resetProgress();
     try {
+      const isValid = await validate();
+      if (!isValid) return;
       await performTranslation(sourceText, undefined, undefined, undefined, documentType);
     } finally {
       setIsTranslating(false);
@@ -793,9 +820,9 @@ const useTranslationState = () => {
     setUseCache,
     removeChars,
     setRemoveChars,
-    retryTranslate,
-    translateContent,
-    handleTranslate,
+    translateSingle,
+    translateBatch,
+    runTranslation,
     sourceLanguage,
     targetLanguage,
     targetLanguages,
@@ -808,18 +835,18 @@ const useTranslationState = () => {
     translateFailedLines,
     isTranslating,
     setIsTranslating,
+    apiSettingsOpen,
+    setApiSettingsOpen,
     progressPercent,
     setProgressPercent,
     progressInfo,
-    extractedText,
-    setExtractedText,
     handleLanguageChange,
     handleSwapLanguages,
     retryCount,
     setRetryCount,
     requestTimeoutSec,
     setRequestTimeoutSec,
-    validateTranslate,
+    validate,
     llmPresets,
     activeLlmPresetId,
     saveLlmPreset,

@@ -12,7 +12,7 @@ import { useCopyToClipboard } from "@/app/hooks/useCopyToClipboard";
  *
  * - `count`: total failed-line count across this translation run
  * - `lines`: the original text of each failed line (user can copy + handle manually)
- * - `onRetry`: re-runs the same handleTranslate; cache covers successful lines,
+ * - `onRetry`: re-runs the same runTranslation; cache covers successful lines,
  *   only failed lines actually re-request the API
  */
 export default function TranslateFailurePanel({ count, lines, onRetry, disabled = false }: { count: number; lines: string[]; onRetry: () => void; disabled?: boolean }) {

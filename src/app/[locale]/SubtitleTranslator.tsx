@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Flex, Card, Button, Typography, Input, Upload, Form, Space, App, Tooltip, Segmented, Spin, Row, Col, Divider, Collapse, theme } from "antd";
 import { CopyOutlined, InboxOutlined, SettingOutlined, FileTextOutlined, ClearOutlined, FormatPainterOutlined, GlobalOutlined, ImportOutlined, SaveOutlined, ControlOutlined } from "@ant-design/icons";
 import { useTranslations } from "next-intl";
@@ -33,11 +33,7 @@ const { Text } = Typography;
 
 const uploadFileTypes = getFileTypePresetConfig("subtitle");
 
-interface SubtitleTranslatorProps {
-  onOpenApiSettings?: () => void;
-}
-
-const SubtitleTranslator = ({ onOpenApiSettings }: SubtitleTranslatorProps) => {
+const SubtitleTranslator = () => {
   const tSubtitle = useTranslations("SubtitleTranslator");
   const t = useTranslations("common");
 
@@ -64,8 +60,8 @@ const SubtitleTranslator = ({ onOpenApiSettings }: SubtitleTranslatorProps) => {
     exportSettings,
     importSettings,
     translationMethod,
-    translateContent,
-    handleTranslate,
+    translateBatch,
+    runTranslation,
     sourceLanguage,
     targetLanguage,
     targetLanguages,
@@ -85,11 +81,9 @@ const SubtitleTranslator = ({ onOpenApiSettings }: SubtitleTranslatorProps) => {
     progressPercent,
     setProgressPercent,
     progressInfo,
-    extractedText,
-    setExtractedText,
     handleLanguageChange,
     handleSwapLanguages,
-    validateTranslate,
+    validate,
     retryCount,
     setRetryCount,
     requestTimeoutSec,
@@ -112,12 +106,19 @@ const SubtitleTranslator = ({ onOpenApiSettings }: SubtitleTranslatorProps) => {
   const [contextAware, setContextAware] = useLocalStorage("subtitle-translator-contextAware", true); // 上下文感知翻译开关
   const [collapseKeys, setCollapseKeys] = useLocalStorage<string[]>("subtitle-translator-collapseKeys", ["SubtitleTranslator"]);
   const [multiLangModalOpen, setMultiLangModalOpen] = useState(false);
+  // 提取出的纯文本预览 — 只在 SubtitleTranslator 和 MDTranslator 用,
+  // 不应该污染 TranslationProvider 的共享 state。
+  const [extractedText, setExtractedText] = useState("");
   const { customFileName, setCustomFileName, generateFileName } = useExportFilename("subtitle-translator");
 
-  useEffect(() => {
+  // 源文本变化时复位 extracted/translated 预览。用 render-time pattern 而非
+  // useEffect+setState (react-hooks/set-state-in-effect 禁止后者)。
+  const [prevSourceText, setPrevSourceText] = useState(sourceText);
+  if (prevSourceText !== sourceText) {
+    setPrevSourceText(sourceText);
     setExtractedText("");
     setTranslatedText("");
-  }, [sourceText, setExtractedText, setTranslatedText]);
+  }
 
   const performTranslation = async (sourceText: string, fileNameSet?: string, fileIndex?: number, totalFiles?: number) => {
     const lines = splitTextIntoLines(sourceText);
@@ -264,7 +265,7 @@ const SubtitleTranslator = ({ onOpenApiSettings }: SubtitleTranslatorProps) => {
     for (const currentTargetLang of targetLanguagesToUse) {
       try {
         // Translate content using the specific target language
-        const rawTranslatedLines = await translateContent(cleanLines, translationMethod, currentTargetLang, fileIndex, totalFiles, contextAware ? "subtitle" : undefined);
+        const rawTranslatedLines = await translateBatch(cleanLines, translationMethod, currentTargetLang, fileIndex, totalFiles, contextAware ? "subtitle" : undefined);
         const translatedLines = isAss ? restoreAssAfterTranslation(rawTranslatedLines, tagMaps) : rawTranslatedLines;
 
         // Generate file name base
@@ -332,20 +333,20 @@ const SubtitleTranslator = ({ onOpenApiSettings }: SubtitleTranslatorProps) => {
   };
 
   const handleMultipleTranslate = async () => {
-    const isValid = await validateTranslate();
-    if (!isValid) {
-      return;
-    }
-
     if (multipleFiles.length === 0) {
       message.error(tSubtitle("noFileUploaded"));
       return;
     }
 
+    // validate 不再自管 isTranslating, 这里用 try/finally 兜底,
+    // 让 progress modal 在 test ping → 文件循环之间保持连续可见。
     setIsTranslating(true);
     setProgressPercent(0);
 
     try {
+      const isValid = await validate();
+      if (!isValid) return;
+
       for (let i = 0; i < multipleFiles.length; i++) {
         const currentFile = multipleFiles[i];
         await new Promise<void>((resolve) => {
@@ -466,7 +467,7 @@ const SubtitleTranslator = ({ onOpenApiSettings }: SubtitleTranslatorProps) => {
                 size="large"
                 icon={<GlobalOutlined spin={isTranslating} />}
                 className="flex-1"
-                onClick={() => (uploadMode === "single" ? handleTranslate(performTranslation, sourceText, contextAware ? "subtitle" : undefined) : handleMultipleTranslate())}
+                onClick={() => (uploadMode === "single" ? runTranslation(performTranslation, sourceText, contextAware ? "subtitle" : undefined) : handleMultipleTranslate())}
                 disabled={isTranslating}
                 loading={isTranslating}>
                 {multiLanguageMode ? `${t("translate")} (${targetLanguages.length})` : t("translate")}
@@ -534,7 +535,7 @@ const SubtitleTranslator = ({ onOpenApiSettings }: SubtitleTranslatorProps) => {
               />
             </Form>
 
-            <ApiStatusBlock onOpenApiSettings={onOpenApiSettings} disabled={isTranslating} />
+            <ApiStatusBlock disabled={isTranslating} />
 
             {LLM_MODELS.includes(translationMethod) && (
               <ContextTranslationBlock
@@ -639,7 +640,7 @@ const SubtitleTranslator = ({ onOpenApiSettings }: SubtitleTranslatorProps) => {
         count={translateFailedCount}
         lines={translateFailedLines}
         disabled={isTranslating}
-        onRetry={() => (uploadMode === "single" ? handleTranslate(performTranslation, sourceText, contextAware ? "subtitle" : undefined) : handleMultipleTranslate())}
+        onRetry={() => (uploadMode === "single" ? runTranslation(performTranslation, sourceText, contextAware ? "subtitle" : undefined) : handleMultipleTranslate())}
       />
 
       {/* Results Section */}

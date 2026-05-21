@@ -216,7 +216,7 @@ const TRANSLATEGEMMA_OVERRIDES: Record<string, { code?: string; name?: string }>
   fil: { code: "fil-PH", name: "Filipino" }, // ours: "Filipino(Tagalog)"
 };
 
-// Defense-in-depth: validateTranslate already blocks `auto`, yue, and bho
+// Defense-in-depth: validate already blocks `auto`, yue, and bho
 // before we get here, but a future code path (direct API consumer, CLI, etc.)
 // could bypass it. Throws with bilingual message for direct visibility.
 const getTranslategemmaLangInfo = (code: string): { code: string; name: string } => {
@@ -257,7 +257,7 @@ ${text.trim()}<end_of_turn>
  * every OpenAI-compat server) instead of running an actual inference. Catches
  * the common "server not running" case (connection refused in <100ms) without
  * waiting for first-request model loading (5-30s on cold start). Used by
- * validateTranslate's pre-flight.
+ * validate's pre-flight.
  *
  * Edge case it doesn't catch: server up but the configured model isn't loaded
  * — that surfaces during the actual translation as a clearer model-specific

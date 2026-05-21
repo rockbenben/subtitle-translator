@@ -15,6 +15,10 @@ export interface TranslationSettings {
   llmPresets?: Array<{ id: string; name: string; config: TranslationConfig }>;
   promptPresets?: Array<{ id: string; name: string; systemPrompt: string; userPrompt: string }>;
   activePromptPresetId?: string;
+  // 翻译行为调优项,跨设备同步时这些数值也要带上；默认使用缓存，不记忆
+  retryCount?: number;
+  requestTimeoutSec?: number;
+  removeChars?: string;
   exportDate?: string;
   version?: string;
 }

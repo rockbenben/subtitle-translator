@@ -25,7 +25,7 @@ export const isValidLanguageValue = (testValue: string): boolean => {
  * Check if a translation method supports the given source and target languages
  */
 
-export const checkLanguageSupport = (translationMethod: TranslationMethod, sourceLanguage: string, targetLanguage: string): { supported: boolean; errorMessage?: string; preserveMethod?: boolean } => {
+export const checkLanguageSupport = (translationMethod: TranslationMethod, sourceLanguage: string, targetLanguage: string): { supported: boolean; errorMessage?: string } => {
   const sourceName = languageNameMap.get(sourceLanguage);
   const targetName = languageNameMap.get(targetLanguage);
 
@@ -36,12 +36,9 @@ export const checkLanguageSupport = (translationMethod: TranslationMethod, sourc
   // Methods that need explicit source (no auto-detect mode in the model). Keep
   // this check ahead of UNSUPPORTED_LANGS so the user sees a fix-the-source
   // hint instead of the misleading "doesn't support Auto" wording.
-  // preserveMethod=true so the caller doesn't switch to the fallback service —
-  // the user picked this method on purpose, they just need to fix the source.
   if (sourceLanguage === "auto" && REQUIRES_EXPLICIT_SOURCE.has(translationMethod)) {
     return {
       supported: false,
-      preserveMethod: true,
       errorMessage: `${translationMethod.toUpperCase()} requires an explicit source language (no auto-detect). Please select a specific source language. / ${translationMethod.toUpperCase()} 不支持自动检测源语言，请明确选择一个源语言。`,
     };
   }
@@ -49,13 +46,13 @@ export const checkLanguageSupport = (translationMethod: TranslationMethod, sourc
   if (!isMethodSupportedForLanguage(translationMethod, sourceLanguage)) {
     return {
       supported: false,
-      errorMessage: `${translationMethod.toUpperCase()} doesn't support ${sourceName}. Switching to free GTX API now.`,
+      errorMessage: `${translationMethod.toUpperCase()} doesn't support ${sourceName}. Please pick another language or translation method.`,
     };
   }
   if (!isMethodSupportedForLanguage(translationMethod, targetLanguage)) {
     return {
       supported: false,
-      errorMessage: `${translationMethod.toUpperCase()} doesn't support ${targetName}. Switching to free GTX API now.`,
+      errorMessage: `${translationMethod.toUpperCase()} doesn't support ${targetName}. Please pick another language or translation method.`,
     };
   }
 

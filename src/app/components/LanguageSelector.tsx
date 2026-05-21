@@ -157,7 +157,22 @@ const LanguageSelector = ({ sourceLanguage, targetLanguage, targetLanguages, mul
       <Flex justify="end" style={{ marginTop: token.marginXS }}>
         <Tooltip title={t("multiLanguageModeTooltip")} placement="bottom">
           <label className="inline-flex items-center gap-1.5 cursor-pointer">
-            <Switch size="small" checked={multiLanguageMode} onChange={setMultiLanguageMode} aria-label={t("multiLanguageMode")} />
+            <Switch
+              size="small"
+              checked={multiLanguageMode}
+              onChange={(checked) => {
+                // 切到多语言模式时把当前 targetLanguage 也带进 targetLanguages,
+                // 避免「target=en + 开多语言 → 实际只翻 zh」的反直觉行为。这里 inline
+                // 处理 (而非 wrap setMultiLanguageMode) 是为了避开 closure 陷阱:
+                // MultiLanguageSettingsModal Apply 路径会同 tick 先 setTargetLanguages
+                // 再 setMultiLanguageMode,若全局 wrap 会读到旧 closure 覆盖用户选择。
+                if (checked && !targetLanguages.includes(targetLanguage)) {
+                  setTargetLanguages([...targetLanguages, targetLanguage]);
+                }
+                setMultiLanguageMode(checked);
+              }}
+              aria-label={t("multiLanguageMode")}
+            />
             <Text type="secondary">{t("multiLanguageMode")}</Text>
           </label>
         </Tooltip>
