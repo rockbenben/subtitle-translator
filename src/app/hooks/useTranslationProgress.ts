@@ -12,7 +12,7 @@ import { useRef, useState } from "react";
  * progress into a clean {percent, current, total} pair.
  */
 export const useTranslationProgress = () => {
-  const [translateInProgress, setTranslateInProgress] = useState(false);
+  const [isTranslating, setIsTranslating] = useState(false);
   const [progressPercent, setProgressPercent] = useState(0);
   const [progressInfo, setProgressInfo] = useState<{ current: number; total: number }>({ current: 0, total: 0 });
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -36,8 +36,8 @@ export const useTranslationProgress = () => {
   };
 
   return {
-    translateInProgress,
-    setTranslateInProgress,
+    isTranslating,
+    setIsTranslating,
     progressPercent,
     setProgressPercent,
     progressInfo,

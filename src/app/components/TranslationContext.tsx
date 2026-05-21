@@ -1,13 +1,13 @@
 "use client";
 
 import React, { createContext, useContext } from "react";
-import useTranslateData from "@/app/hooks/useTranslateData";
+import useTranslationState from "@/app/hooks/useTranslationState";
 
-const TranslationContext = createContext<ReturnType<typeof useTranslateData> | null>(null);
+const TranslationContext = createContext<ReturnType<typeof useTranslationState> | null>(null);
 
 export const TranslationProvider = ({ children }: { children: React.ReactNode }) => {
-  const translateData = useTranslateData();
-  return <TranslationContext.Provider value={translateData}>{children}</TranslationContext.Provider>;
+  const translationState = useTranslationState();
+  return <TranslationContext.Provider value={translationState}>{children}</TranslationContext.Provider>;
 };
 
 export const useTranslationContext = () => {

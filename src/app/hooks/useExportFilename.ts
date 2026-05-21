@@ -19,7 +19,7 @@ interface ExportFilenameConfig {
 /**
  * Hook for managing custom export filename with localStorage persistence.
  *
- * @param toolKey - Unique key for the tool (e.g., 'subtitle', 'md', 'json') to store separate patterns
+ * @param toolKey - Unique key for the tool (e.g., 'subtitle-translator', 'md-translator', 'json-translate') to store separate patterns
  *
  * Supports placeholders:
  * - {name} - original filename without extension
@@ -29,7 +29,7 @@ interface ExportFilenameConfig {
  * - {time} - current time (HHMMss)
  */
 export const useExportFilename = (toolKey: string = "default"): ExportFilenameConfig => {
-  const storageKey = `exportFileName_${toolKey}`;
+  const storageKey = `${toolKey}-exportFileName`;
   const [customFileName, setCustomFileName] = useLocalStorage<string>(storageKey, "{name}_{lang}.{ext}");
 
   const generateFileName = (originalFileName: string, langCode: string, defaultExt?: string): string => {

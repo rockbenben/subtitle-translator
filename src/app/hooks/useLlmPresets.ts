@@ -1,6 +1,6 @@
 "use client";
 
-import { useLocalStorage } from "@/app/hooks/useLocalStorage";
+import { usePresetCollection } from "@/app/hooks/usePresetCollection";
 import { getDefaultConfig, type TranslationConfig } from "@/app/lib/translation";
 
 export type LlmPreset = {
@@ -23,57 +23,48 @@ type UseLlmPresetsDeps = {
  * separately via usePromptPresets.
  */
 export const useLlmPresets = ({ translationConfigs, setTranslationConfigs }: UseLlmPresetsDeps) => {
-  const [llmPresets, setLlmPresets] = useLocalStorage<LlmPreset[]>("llmPresets", []);
-  const [activePresetId, setActivePresetId] = useLocalStorage<string>("activePresetId", "");
+  const {
+    items: llmPresets,
+    setItems: setLlmPresets,
+    activeId: activeLlmPresetId,
+    setActiveId,
+    add,
+    remove: deleteLlmPreset,
+    rename: renameLlmPreset,
+    update,
+  } = usePresetCollection<LlmPreset>("translation-llmPresets", "translation-activeLlmPresetId");
 
   const getLlmConfig = () => translationConfigs["llm"] || getDefaultConfig("llm");
 
   const saveLlmPreset = (name: string) => {
     const config = getLlmConfig();
     if (!config) return undefined;
-    const preset: LlmPreset = {
-      id: String(Date.now()),
-      name,
-      config: { ...config },
-    };
-    setLlmPresets((prev) => [...prev, preset]);
-    setActivePresetId(preset.id);
+    const preset: LlmPreset = { id: String(Date.now()), name, config: { ...config } };
+    add(preset);
     return preset;
   };
 
   const loadLlmPreset = (id: string) => {
     if (!id) {
-      setActivePresetId("");
+      setActiveId("");
       return;
     }
     const preset = llmPresets.find((p) => p.id === id);
     if (!preset) return;
-    setTranslationConfigs((prev) => ({
-      ...prev,
-      llm: { ...preset.config },
-    }));
-    setActivePresetId(id);
-  };
-
-  const deleteLlmPreset = (id: string) => {
-    setLlmPresets((prev) => prev.filter((p) => p.id !== id));
-    if (activePresetId === id) setActivePresetId("");
-  };
-
-  const renameLlmPreset = (id: string, name: string) => {
-    setLlmPresets((prev) => prev.map((p) => (p.id === id ? { ...p, name } : p)));
+    setTranslationConfigs((prev) => ({ ...prev, llm: { ...preset.config } }));
+    setActiveId(id);
   };
 
   const updateLlmPreset = (id: string) => {
     const config = getLlmConfig();
     if (!config) return;
-    setLlmPresets((prev) => prev.map((p) => (p.id === id ? { ...p, config: { ...config } } : p)));
+    update(id, { config: { ...config } });
   };
 
   return {
     llmPresets,
     setLlmPresets,
-    activePresetId,
+    activeLlmPresetId,
     saveLlmPreset,
     loadLlmPreset,
     deleteLlmPreset,
