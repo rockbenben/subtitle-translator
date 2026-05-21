@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
+// CommonJS build script — run via `node scripts/buildWithLang.js <lang>`.
 const fs = require("fs");
 const path = require("path");
 const { execSync } = require("child_process");
