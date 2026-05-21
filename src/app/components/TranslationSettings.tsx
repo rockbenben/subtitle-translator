@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Form, Input, InputNumber, Card, Typography, Button, Space, Tooltip, App, Switch, Select, Modal, Popconfirm, Tag, Alert, theme } from "antd";
 import { SaveOutlined, PlusOutlined, DeleteOutlined } from "@ant-design/icons";
 import {
@@ -498,14 +498,6 @@ const TranslationSettings = () => {
   const { translationMethod, setTranslationMethod, translationConfigs } = useTranslationContext();
   const isLLMModel = LLM_MODELS.includes(translationMethod);
 
-  // Guard against stale localStorage keys (e.g. a renamed service like "aliyun" -> "qwenMt").
-  // getSelectedConfig's internal fallback only covers the translation call path; without this,
-  // the Select would render an unmatched raw value and chips wouldn't include the current service.
-  useEffect(() => {
-    if (!TRANSLATION_PROVIDERS.some((s) => s.value === translationMethod)) {
-      setTranslationMethod("gtxFreeAPI");
-    }
-  }, [translationMethod, setTranslationMethod]);
 
   // Active services = no-key-required + has apiKey + has URL (for URL-primary
   // services like Custom OpenAI-compatible) + currently selected. Currently-selected
@@ -530,31 +522,32 @@ const TranslationSettings = () => {
 
   return (
     <div className="flex flex-col gap-4">
-      <Card size="small">
-        <Space orientation="vertical" size="small" style={{ width: "100%" }}>
-          <Space wrap size="small">
-            <Text>{t("selectService")}:</Text>
-            <Select
-              style={{ minWidth: 240 }}
-              showSearch={{ optionFilterProp: "label" }}
-              value={translationMethod}
-              onChange={setTranslationMethod}
-              options={categorizedOptions}
-              aria-label={t("selectService")}
-            />
-          </Space>
-          {activeServices.length > 0 && (
-            <Space wrap size={[4, 4]}>
-              <Text type="secondary">{t("configuredServices")}:</Text>
-              {activeServices.map((s) => (
-                <CheckableTag key={s.value} checked={s.value === translationMethod} onChange={() => setTranslationMethod(s.value)}>
-                  {s.label}
-                </CheckableTag>
-              ))}
-            </Space>
-          )}
+      {/* Drawer-flush 顶部:Drawer 已经有 header+border,这里再套 Card 会成「盒里盒」。
+          直接平铺 provider Select + 已配置 chips,跟下面 ServiceSettingsForm 的 Card
+          形成「无框→有框」的层级对比,信息密度更清晰。 */}
+      <Space orientation="vertical" size="small" style={{ width: "100%" }}>
+        <Space wrap size="small">
+          <Text>{t("selectService")}:</Text>
+          <Select
+            style={{ minWidth: 240 }}
+            showSearch={{ optionFilterProp: "label" }}
+            value={translationMethod}
+            onChange={setTranslationMethod}
+            options={categorizedOptions}
+            aria-label={t("selectService")}
+          />
         </Space>
-      </Card>
+        {activeServices.length > 0 && (
+          <Space wrap size={[4, 4]}>
+            <Text type="secondary">{t("configuredServices")}:</Text>
+            {activeServices.map((s) => (
+              <CheckableTag key={s.value} checked={s.value === translationMethod} onChange={() => setTranslationMethod(s.value)}>
+                {s.label}
+              </CheckableTag>
+            ))}
+          </Space>
+        )}
+      </Space>
 
       <ServiceSettingsForm key={translationMethod} service={translationMethod} />
 

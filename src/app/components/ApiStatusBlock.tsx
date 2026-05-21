@@ -12,7 +12,6 @@ import { useTranslationContext } from "@/app/components/TranslationContext";
 type StatusState = "free" | "needs-config" | "configured" | "testing" | "connected" | "failed";
 
 interface ApiStatusBlockProps {
-  onOpenApiSettings?: () => void;
   disabled?: boolean;
 }
 
@@ -30,11 +29,11 @@ const deriveBaseStatus = (method: string, config: TranslationConfig | undefined)
   return "configured";
 };
 
-const ApiStatusBlock = ({ onOpenApiSettings, disabled = false }: ApiStatusBlockProps) => {
+const ApiStatusBlock = ({ disabled = false }: ApiStatusBlockProps) => {
   const t = useTranslations("common");
   const { message } = App.useApp();
   const { token } = theme.useToken();
-  const { translationMethod, setTranslationMethod, getSelectedConfig, handleConfigChange, systemPrompt, userPrompt } = useTranslationContext();
+  const { translationMethod, setTranslationMethod, getSelectedConfig, handleConfigChange, systemPrompt, userPrompt, setApiSettingsOpen } = useTranslationContext();
 
   const config = getSelectedConfig();
   const methodLabel = findMethodLabel(translationMethod);
@@ -192,15 +191,13 @@ const ApiStatusBlock = ({ onOpenApiSettings, disabled = false }: ApiStatusBlockP
           disabled={disabled || status === "needs-config" || status === "testing"}>
           {t("testConnection")}
         </Button>
-        {onOpenApiSettings && (
-          <Button
-            type="link"
-            size="small"
-            onClick={onOpenApiSettings}
-            style={{ padding: 0, fontWeight: 500, textDecoration: "underline", textUnderlineOffset: "3px" }}>
-            {t("moreProviderSettings")} →
-          </Button>
-        )}
+        <Button
+          type="link"
+          size="small"
+          onClick={() => setApiSettingsOpen(true)}
+          style={{ padding: 0, fontWeight: 500, textDecoration: "underline", textUnderlineOffset: "3px" }}>
+          {t("moreProviderSettings")} →
+        </Button>
       </Flex>
     </section>
   );
