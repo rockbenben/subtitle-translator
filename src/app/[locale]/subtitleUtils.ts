@@ -2,6 +2,11 @@
 export const VTT_SRT_TIME = /^(?:\d+:)?\d{2}:\d{2}[,.]\d{1,3} --> (?:\d+:)?\d{2}:\d{2}[,.]\d{1,3}/;
 // LRC 格式的时间标记正则表达式
 export const LRC_TIME_REGEX = /^\[\d{2}:\d{2}(\.\d{2,3})?\]/;
+// Same pattern with global flag — for `.match` / `.replace` across a line that
+// may have multiple time tags (e.g. karaoke lines). Pre-compiled at module
+// scope so the bilingual-output loop in SubtitleTranslator doesn't `new
+// RegExp()` per line × per call (was 2× per LRC line on every export).
+export const LRC_TIME_REGEX_GLOBAL = /\[\d{2}:\d{2}(?:\.\d{2,3})?\]/g;
 const LRC_METADATA_REGEX = /^\[(ar|ti|al|by|offset|re|ve):/i;
 
 // 识别字幕文件的类型
