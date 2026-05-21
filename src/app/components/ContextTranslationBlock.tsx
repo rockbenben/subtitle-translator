@@ -15,9 +15,9 @@ const ContextTranslationBlock = ({ enabled, onEnabledChange, disabled = false }:
   const t = useTranslations("common");
   const tSettings = useTranslations("TranslationSettings");
   const { token } = theme.useToken();
-  const { translationMethod, getCurrentConfig, handleConfigChange } = useTranslationContext();
+  const { translationMethod, getSelectedConfig, handleConfigChange } = useTranslationContext();
 
-  const config = getCurrentConfig();
+  const config = getSelectedConfig();
 
   const handleParamChange = (field: "contextWindow" | "contextBatchSize", fallback: number, value: number | null) => {
     handleConfigChange(translationMethod, field, value ?? fallback);
@@ -36,7 +36,7 @@ const ContextTranslationBlock = ({ enabled, onEnabledChange, disabled = false }:
         <Space size="small">
           <BranchesOutlined />
           <Typography.Text strong>{t("contextAwareTranslation")}</Typography.Text>
-          <Tag color="blue">LLM</Tag>
+          <Tag style={{ background: token.colorPrimaryBg, color: token.colorPrimary, borderColor: token.colorPrimaryBorder, margin: 0 }}>LLM</Tag>
         </Space>
         <Switch
           checked={enabled}

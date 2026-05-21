@@ -11,11 +11,11 @@ const { Text } = Typography;
 interface LanguageSelectorProps {
   sourceLanguage: string;
   targetLanguage: string;
-  target_langs: string[];
+  targetLanguages: string[];
   multiLanguageMode: boolean;
   handleLanguageChange: (type: "source" | "target", value: string) => void;
   handleSwapLanguages?: () => void;
-  setTarget_langs: (value: string[]) => void;
+  setTargetLanguages: (value: string[]) => void;
   setMultiLanguageMode: (value: boolean) => void;
 }
 
@@ -23,7 +23,7 @@ interface LanguageSelectorProps {
  * Shared component for source/target language selection with multi-language mode toggle.
  * Used in SubtitleTranslator, MDTranslator, and JSONTranslator.
  */
-const LanguageSelector = ({ sourceLanguage, targetLanguage, target_langs, multiLanguageMode, handleLanguageChange, handleSwapLanguages, setTarget_langs, setMultiLanguageMode }: LanguageSelectorProps) => {
+const LanguageSelector = ({ sourceLanguage, targetLanguage, targetLanguages, multiLanguageMode, handleLanguageChange, handleSwapLanguages, setTargetLanguages, setMultiLanguageMode }: LanguageSelectorProps) => {
   const t = useTranslations("common");
   const { sourceOptions, targetOptions } = useLanguageOptions();
   const [searchValue, setSearchValue] = useState("");
@@ -38,22 +38,22 @@ const LanguageSelector = ({ sourceLanguage, targetLanguage, target_langs, multiL
   // Handle checkbox change
   const handleCheckboxChange = (value: string, checked: boolean) => {
     if (checked) {
-      setTarget_langs([...target_langs, value]);
+      setTargetLanguages([...targetLanguages, value]);
     } else {
-      setTarget_langs(target_langs.filter((v) => v !== value));
+      setTargetLanguages(targetLanguages.filter((v) => v !== value));
     }
   };
 
   // Select all filtered options
   const handleSelectAll = () => {
     const allValues = filteredOptions.map((opt) => opt.value);
-    const newSelection = [...new Set([...target_langs, ...allValues])];
-    setTarget_langs(newSelection);
+    const newSelection = [...new Set([...targetLanguages, ...allValues])];
+    setTargetLanguages(newSelection);
   };
 
   // Clear all selections
   const handleClearAll = () => {
-    setTarget_langs([]);
+    setTargetLanguages([]);
   };
 
   // Custom dropdown content for multi-language mode
@@ -72,7 +72,7 @@ const LanguageSelector = ({ sourceLanguage, targetLanguage, target_langs, multiL
       <div style={{ maxHeight: 240, overflowY: "auto" }}>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 4 }}>
           {filteredOptions.map((opt) => (
-            <Checkbox key={opt.value} checked={target_langs.includes(opt.value)} onChange={(e) => handleCheckboxChange(opt.value, e.target.checked)} className="!m-0">
+            <Checkbox key={opt.value} checked={targetLanguages.includes(opt.value)} onChange={(e) => handleCheckboxChange(opt.value, e.target.checked)} className="!m-0">
               {opt.label}
             </Checkbox>
           ))}
@@ -138,7 +138,7 @@ const LanguageSelector = ({ sourceLanguage, targetLanguage, target_langs, multiL
             ) : (
               <Select
                 open={undefined}
-                value={target_langs.length > 0 ? `${t("selectedLanguages")} ${target_langs.length}` : undefined}
+                value={targetLanguages.length > 0 ? `${t("selectedLanguages")} ${targetLanguages.length}` : undefined}
                 placeholder={t("selectMultiTargetLanguages")}
                 popupRender={dropdownRender}
                 popupStyle={{ minWidth: "min(480px, 90vw)" }}

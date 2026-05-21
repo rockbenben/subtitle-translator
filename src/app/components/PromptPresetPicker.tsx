@@ -7,7 +7,7 @@ import { useTranslations } from "next-intl";
 import { useTranslationContext } from "@/app/components/TranslationContext";
 
 /**
- * Picker for prompt presets (sysPrompt + userPrompt). Mirrors the API config
+ * Picker for prompt presets (systemPrompt + userPrompt). Mirrors the API config
  * preset block in ServiceSettingsForm but operates on the independent
  * promptPresets store. Lives at the top of GlobalPromptsPanel.
  */

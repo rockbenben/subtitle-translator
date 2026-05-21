@@ -15,8 +15,8 @@ const validLanguageCodes = new Set(languages.filter((lang) => lang.value !== "au
 interface MultiLanguageSettingsModalProps {
   open: boolean;
   onClose: () => void;
-  target_langs: string[];
-  setTarget_langs: (langs: string[]) => void;
+  targetLanguages: string[];
+  setTargetLanguages: (langs: string[]) => void;
   setMultiLanguageMode: (mode: boolean) => void;
 }
 
@@ -25,7 +25,7 @@ interface MultiLanguageSettingsModalProps {
  * Input format: language codes separated by comma (English/Chinese) or space.
  * Example: en,zh,ja or en zh ja or en，zh，ja
  */
-const MultiLanguageSettingsModal = ({ open, onClose, target_langs, setTarget_langs, setMultiLanguageMode }: MultiLanguageSettingsModalProps) => {
+const MultiLanguageSettingsModal = ({ open, onClose, targetLanguages, setTargetLanguages, setMultiLanguageMode }: MultiLanguageSettingsModalProps) => {
   const t = useTranslations("common");
   const locale = useLocale();
   const { message } = App.useApp();
@@ -36,10 +36,10 @@ const MultiLanguageSettingsModal = ({ open, onClose, target_langs, setTarget_lan
   const handleAfterOpenChange = useCallback(
     (isOpen: boolean) => {
       if (isOpen) {
-        setInputValue(target_langs.join(", "));
+        setInputValue(targetLanguages.join(", "));
       }
     },
-    [target_langs],
+    [targetLanguages],
   );
 
   const handleApply = () => {
@@ -54,7 +54,7 @@ const MultiLanguageSettingsModal = ({ open, onClose, target_langs, setTarget_lan
     const validLangs = rawLangs.filter((lang) => validLanguageCodes.has(lang));
     const uniqueLangs = [...new Set(validLangs)];
 
-    setTarget_langs(uniqueLangs);
+    setTargetLanguages(uniqueLangs);
     setMultiLanguageMode(true); // Always enable multi-language mode
 
     message.success(t("settingsApplied"));

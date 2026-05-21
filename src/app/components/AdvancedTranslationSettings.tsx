@@ -17,8 +17,8 @@ interface AdvancedTranslationSettingsProps {
   // Retry settings
   retryCount: number;
   setRetryCount: (value: number) => void;
-  retryTimeout: number;
-  setRetryTimeout: (value: number) => void;
+  requestTimeoutSec: number;
+  setRequestTimeoutSec: (value: number) => void;
   // Use cache
   useCache: boolean;
   setUseCache: (value: boolean) => void;
@@ -36,8 +36,8 @@ const AdvancedTranslationSettings: React.FC<AdvancedTranslationSettingsProps> = 
   setRemoveChars,
   retryCount,
   setRetryCount,
-  retryTimeout,
-  setRetryTimeout,
+  requestTimeoutSec,
+  setRequestTimeoutSec,
   useCache,
   setUseCache,
   children,
@@ -79,8 +79,8 @@ const AdvancedTranslationSettings: React.FC<AdvancedTranslationSettingsProps> = 
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item label={t("retryTimeout")} tooltip={t("retryTimeoutTooltip")} className="!mb-0">
-                <InputNumber min={5} max={1200} value={retryTimeout} onChange={(value) => setRetryTimeout(value ?? 30)} suffix="s" className="!w-full" aria-label={t("retryTimeout")} />
+              <Form.Item label={t("requestTimeoutSec")} tooltip={t("requestTimeoutSecTooltip")} className="!mb-0">
+                <InputNumber min={5} max={1200} value={requestTimeoutSec} onChange={(value) => setRequestTimeoutSec(value ?? 30)} suffix="s" className="!w-full" aria-label={t("requestTimeoutSec")} />
               </Form.Item>
             </Col>
           </Row>

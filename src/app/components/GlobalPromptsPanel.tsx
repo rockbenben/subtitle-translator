@@ -21,14 +21,14 @@ const { TextArea } = Input;
 const GlobalPromptsPanel = () => {
   const t = useTranslations("TranslationSettings");
   const tCommon = useTranslations("common");
-  const { sysPrompt, setSysPrompt, userPrompt, setUserPrompt } = useTranslationContext();
+  const { systemPrompt, setSystemPrompt, userPrompt, setUserPrompt } = useTranslationContext();
 
   return (
     <PageCard title={t("globalPrompts")} extra={<Text type="secondary">{t("globalPromptsExtra")}</Text>}>
       <PromptPresetPicker />
       <Form layout="vertical">
         <Form.Item label={t("systemPrompt")} extra={t("systemPromptExtra")} style={{ marginBottom: 12 }}>
-          <TextArea value={sysPrompt} onChange={(e) => setSysPrompt(e.target.value)} autoSize={{ minRows: 2, maxRows: 10 }} aria-label={t("systemPrompt")} />
+          <TextArea value={systemPrompt} onChange={(e) => setSystemPrompt(e.target.value)} autoSize={{ minRows: 2, maxRows: 10 }} aria-label={t("systemPrompt")} />
         </Form.Item>
         <Form.Item
           label={t("userPrompt")}

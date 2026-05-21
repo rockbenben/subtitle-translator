@@ -7,7 +7,7 @@ import { useTranslations } from "next-intl";
 import { useCopyToClipboard } from "@/app/hooks/useCopyToClipboard";
 
 /**
- * Surfaces partial-failure state from useTranslateData: after the main
+ * Surfaces partial-failure state from useTranslationState: after the main
  * pass + 10s auto-retry, any lines still failing are reported here.
  *
  * - `count`: total failed-line count across this translation run
@@ -71,7 +71,19 @@ export default function TranslateFailurePanel({ count, lines, onRetry, disabled 
           style={{ maxHeight: "60vh", overflowY: "auto" }}
           renderItem={(item, idx) => (
             <List.Item>
-              <span style={{ color: token.colorTextTertiary, marginRight: 8 }}>{idx + 1}.</span>
+              <span
+                className="font-mono"
+                style={{
+                  color: token.colorTextTertiary,
+                  marginRight: 12,
+                  fontSize: 12,
+                  letterSpacing: "0.04em",
+                  display: "inline-block",
+                  minWidth: `${String(lines.length).length + 1}ch`,
+                  textAlign: "right",
+                }}>
+                {String(idx + 1).padStart(String(lines.length).length, "0")}
+              </span>
               {item}
             </List.Item>
           )}

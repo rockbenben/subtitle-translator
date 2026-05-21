@@ -1,6 +1,22 @@
 @import "tailwindcss";
 
-/* Sync browser UI (scrollbars, form controls) with theme */
+/* ─────────────────────────────────────────────────────────────
+   Editorial Dark — design tokens
+   Surface, ink, accent. Vermilion (#E54D2E) is the seal-stamp
+   accent — single-source-of-truth here, mirrored in
+   ThemesProvider's antd token overrides.
+   ───────────────────────────────────────────────────────────── */
+:root {
+  --bg-dark: #0e0f12;
+  --bg-light: #fbf8f2;
+  --ink-dark: #f2eee6;
+  --ink-light: #1a1814;
+  --accent: #e54d2e;
+  --accent-soft: rgba(229, 77, 46, 0.1);
+  --rule-dark: rgba(245, 240, 230, 0.1);
+  --rule-light: rgba(26, 24, 20, 0.12);
+}
+
 html.dark {
   color-scheme: dark;
 }
@@ -8,36 +24,198 @@ html.light {
   color-scheme: light;
 }
 
-/* Base page background — applied before AntD CSS-in-JS paints Layout.
-   Without this, refresh shows a brief white flash because <body> falls
-   back to browser default before AntD's Layout bg covers it.
-   Values match AntD's colorBgBase for light/dark themes. */
+/* Pre-paint body bg so the dark canvas is up before AntD CSS-in-JS lands.
+   Avoids the white flash on cold reload that's especially visible with
+   defaultTheme="dark". */
 html,
 body {
-  background-color: #141414; /* dark default (matches defaultTheme="dark") */
+  background-color: var(--bg-dark);
 }
 html.light,
 html.light body {
-  background-color: #ffffff;
+  background-color: var(--bg-light);
 }
 
-/* Base typography */
 body {
-  line-height: 1.5;
+  font-family: var(--font-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+  line-height: 1.55;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Minimum touch target size for nav icon buttons (WCAG 2.5.8) */
+/* ─────────────────────────────────────────────────────────────
+   Atmospheric backdrop — warm vermilion spotlight (upper-left)
+   + cool counter-light (lower-right). Fixed, behind everything.
+   AntD Layout is set to transparent bg so this shows through.
+   ───────────────────────────────────────────────────────────── */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(ellipse 90% 60% at 8% -10%, rgba(229, 77, 46, 0.09), transparent 60%),
+    radial-gradient(ellipse 60% 80% at 105% 110%, rgba(120, 100, 220, 0.05), transparent 65%);
+}
+html.light body::before {
+  background:
+    radial-gradient(ellipse 90% 60% at 8% -10%, rgba(229, 77, 46, 0.06), transparent 55%),
+    radial-gradient(ellipse 60% 80% at 105% 110%, rgba(120, 100, 220, 0.035), transparent 65%);
+}
+
+/* Subtle 2.5% grain — gives surfaces a "printed" feel. */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.025;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/></filter><rect width='200' height='200' filter='url(%23n)' opacity='0.9'/></svg>");
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Typography utilities — display class is the editorial voice.
+   Fraunces (Latin) + Source Han Serif (CJK) fallback chain.
+   ───────────────────────────────────────────────────────────── */
+.font-display {
+  font-family: var(--font-display), "Source Han Serif SC", "Songti SC", STSong, SimSun, serif;
+  font-feature-settings: "ss01", "ss02";
+  letter-spacing: -0.02em;
+}
+
+.font-mono {
+  font-family: var(--font-mono), "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-feature-settings: "ss03", "cv11";
+}
+
+/* ─────────────────────────────────────────────────────────────
+   AntD overrides — chrome polish only, no structural changes.
+   ───────────────────────────────────────────────────────────── */
+
+/* Minimum touch target for nav icon buttons (WCAG 2.5.8). */
 .ant-layout-header .ant-btn-icon-only {
   min-width: 44px;
   min-height: 44px;
 }
 
-/* Focus-visible ring for keyboard accessibility — uses the OS Highlight
-   color so it adapts to the user's system accent / high-contrast mode.
-   Avoids hardcoding a Tailwind/AntD color that won't match custom themes. */
+/* Refined focus ring — vermilion, not OS Highlight, since we now own a brand color. */
 :focus-visible {
-  outline: 2px solid Highlight;
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* PageCard hover — subtle lift + bottom rule that draws in from the left.
+   Replaces antd's default hover shadow with something more editorial. */
+.ant-card.ant-card-hoverable {
+  position: relative;
+  transition:
+    transform 0.28s cubic-bezier(0.65, 0, 0.35, 1),
+    border-color 0.28s ease,
+    box-shadow 0.28s ease;
+  overflow: hidden;
+}
+.ant-card.ant-card-hoverable::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 2px;
+  width: 100%;
+  background: var(--accent);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.32s cubic-bezier(0.65, 0, 0.35, 1);
+}
+.ant-card.ant-card-hoverable:hover {
+  transform: translateY(-2px);
+  border-color: rgba(229, 77, 46, 0.4) !important;
+}
+.ant-card.ant-card-hoverable:hover::after {
+  transform: scaleX(1);
+}
+
+/* Sharp scrollbars — editorial doesn't do rounded scroll thumbs. */
+@media (pointer: fine) {
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--rule-dark);
+    border-radius: 0;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(245, 240, 230, 0.22);
+  }
+  html.light ::-webkit-scrollbar-thumb {
+    background: var(--rule-light);
+  }
+  html.light ::-webkit-scrollbar-thumb:hover {
+    background: rgba(26, 24, 20, 0.28);
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Stagger fade-in for hero elements — used by home.tsx via
+   inline animation-delay. One orchestrated reveal on page load
+   beats scattered micro-interactions.
+   ───────────────────────────────────────────────────────────── */
+@keyframes editorial-rise {
+  from {
+    transform: translateY(10px);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+.editorial-rise {
+  animation: editorial-rise 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes editorial-rule {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+.editorial-rule {
+  transform: scaleX(0);
+  transform-origin: left;
+  animation: editorial-rule 0.9s cubic-bezier(0.65, 0, 0.35, 1) 0.15s forwards;
+}
+
+@keyframes loading-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(0.85);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .editorial-rise,
+  .editorial-rule {
+    animation: none;
+    transform: none;
+  }
+  .ant-card.ant-card-hoverable {
+    transition: none;
+  }
+  [style*="loading-pulse"] {
+    animation: none !important;
+    opacity: 0.7 !important;
+  }
 }

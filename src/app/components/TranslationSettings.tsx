@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Form, Input, InputNumber, Card, Typography, Button, Space, Tooltip, App, Switch, Select, Modal, Popconfirm, Tag, Alert } from "antd";
+import { Form, Input, InputNumber, Card, Typography, Button, Space, Tooltip, App, Switch, Select, Modal, Popconfirm, Tag, Alert, theme } from "antd";
 import { SaveOutlined, PlusOutlined, DeleteOutlined } from "@ant-design/icons";
 import {
-  TRANSLATION_SERVICES,
+  TRANSLATION_PROVIDERS,
   LLM_MODELS,
-  DEFAULT_SYS_PROMPT,
+  DEFAULT_SYSTEM_PROMPT,
   DEFAULT_USER_PROMPT,
   URL_IS_PRIMARY_CRED,
   testTranslation,
@@ -40,16 +40,17 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
   const tCommon = useTranslations("common");
   const t = useTranslations("TranslationSettings");
   const { message } = App.useApp();
+  const { token } = theme.useToken();
   const {
     translationConfigs,
     handleConfigChange,
     resetTranslationConfig,
-    sysPrompt,
-    setSysPrompt,
+    systemPrompt,
+    setSystemPrompt,
     userPrompt,
     setUserPrompt,
     llmPresets,
-    activePresetId,
+    activeLlmPresetId,
     saveLlmPreset,
     loadLlmPreset,
     deleteLlmPreset,
@@ -60,7 +61,7 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
   const [presetModalOpen, setPresetModalOpen] = useState(false);
   const [presetName, setPresetName] = useState("");
 
-  const currentService = TRANSLATION_SERVICES.find((s) => s.value === service);
+  const currentService = TRANSLATION_PROVIDERS.find((s) => s.value === service);
   const isLLMModel = LLM_MODELS.includes(service);
 
   const defaultConfig = getDefaultConfig(service);
@@ -101,7 +102,7 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
   const handleResetToDefault = () => {
     resetTranslationConfig(service);
     if (isLLMModel) {
-      setSysPrompt(DEFAULT_SYS_PROMPT);
+      setSystemPrompt(DEFAULT_SYSTEM_PROMPT);
       setUserPrompt(DEFAULT_USER_PROMPT);
     }
   };
@@ -129,7 +130,7 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
 
     try {
       setTestingService(service);
-      const isSuccess = await testTranslation(service, config as Partial<TranslateTextParams>, isLLMModel ? sysPrompt : undefined, isLLMModel ? userPrompt : undefined);
+      const isSuccess = await testTranslation(service, config as Partial<TranslateTextParams>, isLLMModel ? systemPrompt : undefined, isLLMModel ? userPrompt : undefined);
       if (isSuccess) {
         message.success(`${currentService?.label || service} - ${t("testConfigSuccess")}`);
       } else {
@@ -198,7 +199,7 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
             <Select
               style={{ flex: 1 }}
               placeholder={llmPresetPlaceholder}
-              value={activePresetId || undefined}
+              value={activeLlmPresetId || undefined}
               onChange={(value) => loadLlmPreset(value)}
               allowClear
               onClear={() => loadLlmPreset("")}
@@ -207,11 +208,11 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
             <Tooltip title={t("presetUpdate")}>
               <Button
                 icon={<SaveOutlined />}
-                disabled={!activePresetId}
+                disabled={!activeLlmPresetId}
                 aria-label={t("presetUpdate")}
                 onClick={() => {
-                  if (!activePresetId) return;
-                  updateLlmPreset(activePresetId);
+                  if (!activeLlmPresetId) return;
+                  updateLlmPreset(activeLlmPresetId);
                   message.success(t("presetUpdated"));
                 }}
               />
@@ -229,17 +230,17 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
             <Popconfirm
               title={t("presetDeleteConfirm")}
               onConfirm={() => {
-                if (activePresetId) {
-                  deleteLlmPreset(activePresetId);
+                if (activeLlmPresetId) {
+                  deleteLlmPreset(activeLlmPresetId);
                   message.success(t("presetDeleted"));
                 }
               }}
-              disabled={!activePresetId}>
+              disabled={!activeLlmPresetId}>
               <Tooltip title={t("presetDelete")}>
                 <Button
                   danger
                   icon={<DeleteOutlined />}
-                  disabled={!activePresetId}
+                  disabled={!activeLlmPresetId}
                   aria-label={t("presetDelete")}
                 />
               </Tooltip>
@@ -281,8 +282,17 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
                         return (
                           <Tag
                             key={ep.url}
-                            color={isActive ? "blue" : undefined}
-                            style={{ cursor: "pointer", margin: 0 }}
+                            style={{
+                              cursor: "pointer",
+                              margin: 0,
+                              ...(isActive
+                                ? {
+                                    background: token.colorPrimaryBg,
+                                    color: token.colorPrimary,
+                                    borderColor: token.colorPrimaryBorder,
+                                  }
+                                : {}),
+                            }}
                             onClick={() => handleConfigChange(service, "url", ep.url)}>
                             {ep.label}
                           </Tag>
@@ -489,10 +499,10 @@ const TranslationSettings = () => {
   const isLLMModel = LLM_MODELS.includes(translationMethod);
 
   // Guard against stale localStorage keys (e.g. a renamed service like "aliyun" -> "qwenMt").
-  // getCurrentConfig's internal fallback only covers the translation call path; without this,
+  // getSelectedConfig's internal fallback only covers the translation call path; without this,
   // the Select would render an unmatched raw value and chips wouldn't include the current service.
   useEffect(() => {
-    if (!TRANSLATION_SERVICES.some((s) => s.value === translationMethod)) {
+    if (!TRANSLATION_PROVIDERS.some((s) => s.value === translationMethod)) {
       setTranslationMethod("gtxFreeAPI");
     }
   }, [translationMethod, setTranslationMethod]);
@@ -503,8 +513,8 @@ const TranslationSettings = () => {
   // they haven't configured anything yet.
   const activeServices = useMemo(() => {
     const seen = new Set<string>();
-    const entries: typeof TRANSLATION_SERVICES = [];
-    for (const s of TRANSLATION_SERVICES) {
+    const entries: typeof TRANSLATION_PROVIDERS = [];
+    for (const s of TRANSLATION_PROVIDERS) {
       const cfg = translationConfigs?.[s.value] as { apiKey?: unknown; url?: unknown } | undefined;
       const hasKey = typeof cfg?.apiKey === "string" && cfg.apiKey.trim() !== "";
       const hasUrlCred = URL_IS_PRIMARY_CRED.has(s.value) && typeof cfg?.url === "string" && cfg.url.trim() !== "";

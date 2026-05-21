@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { Select, Input, Button, Tag, Space, Flex, Typography, Tooltip, App, theme } from "antd";
 import { ApiOutlined, ThunderboltOutlined } from "@ant-design/icons";
 import { useTranslations } from "next-intl";
-import { categorizedOptions, findMethodLabel, testTranslation, URL_IS_PRIMARY_CRED, DEFAULT_SYS_PROMPT, DEFAULT_USER_PROMPT, type TranslationConfig } from "@/app/lib/translation";
+import { categorizedOptions, findMethodLabel, testTranslation, URL_IS_PRIMARY_CRED, DEFAULT_SYSTEM_PROMPT, DEFAULT_USER_PROMPT, type TranslationConfig } from "@/app/lib/translation";
 import { useTranslationContext } from "@/app/components/TranslationContext";
 
 // Folds the spec's `needs-url` (method === "llm" with empty url) into `needs-config`
@@ -34,23 +34,35 @@ const ApiStatusBlock = ({ onOpenApiSettings, disabled = false }: ApiStatusBlockP
   const t = useTranslations("common");
   const { message } = App.useApp();
   const { token } = theme.useToken();
-  const { translationMethod, setTranslationMethod, getCurrentConfig, handleConfigChange, sysPrompt, userPrompt } = useTranslationContext();
+  const { translationMethod, setTranslationMethod, getSelectedConfig, handleConfigChange, systemPrompt, userPrompt } = useTranslationContext();
 
-  const config = getCurrentConfig();
+  const config = getSelectedConfig();
   const methodLabel = findMethodLabel(translationMethod);
 
   const [sessionStatus, setSessionStatus] = useState<"idle" | "testing" | "connected" | "failed">("idle");
+  const [testId, setTestId] = useState(0);
+
+  // Mirror testId into a ref so the async handleTest below can read the
+  // latest value after `await` (closure captures snapshot, ref reads live).
+  const testIdRef = useRef(testId);
+  useEffect(() => {
+    testIdRef.current = testId;
+  }, [testId]);
 
   // Invalidate any stale session test result whenever the tested identity
   // changes — handles edits made from this block AND from the API Settings
   // tab (model/url/apiKey both map to translationConfigs[method]).
-  // Ref-based testId prevents a stale testTranslation resolution from
-  // writing its result onto the new context after the user changed it.
-  const testIdRef = useRef(0);
-  useEffect(() => {
-    testIdRef.current++;
+  // Render-time pattern (React docs § "Adjusting state when a prop changes"):
+  // detect against the previous render's snapshot and reset synchronously.
+  // React discards the in-progress render and immediately re-renders with
+  // the cleared state — no useEffect cascading render needed.
+  const identity = `${translationMethod}|${config?.apiKey ?? ""}|${config?.url ?? ""}|${config?.model ?? ""}`;
+  const [prevIdentity, setPrevIdentity] = useState(identity);
+  if (prevIdentity !== identity) {
+    setPrevIdentity(identity);
     setSessionStatus("idle");
-  }, [translationMethod, config?.apiKey, config?.url, config?.model]);
+    setTestId((t) => t + 1);
+  }
 
   const baseStatus = deriveBaseStatus(translationMethod, config);
 
@@ -63,11 +75,12 @@ const ApiStatusBlock = ({ onOpenApiSettings, disabled = false }: ApiStatusBlockP
         : baseStatus;
 
   const handleTest = async () => {
-    const id = ++testIdRef.current;
+    const id = testId + 1;
+    setTestId(id);
     setSessionStatus("testing");
-    const effectiveSys = sysPrompt?.trim() ? sysPrompt : DEFAULT_SYS_PROMPT;
+    const effectiveSystem = systemPrompt?.trim() ? systemPrompt : DEFAULT_SYSTEM_PROMPT;
     const effectiveUser = userPrompt?.trim() ? userPrompt : DEFAULT_USER_PROMPT;
-    const ok = await testTranslation(translationMethod, config, effectiveSys, effectiveUser);
+    const ok = await testTranslation(translationMethod, config, effectiveSystem, effectiveUser);
     if (id !== testIdRef.current) return;
     if (ok) {
       setSessionStatus("connected");
