@@ -39,8 +39,7 @@
     "multiLanguageModeTooltip": "同時に複数の言語に翻訳し、それぞれ独立したファイルとして保存します",
     "translate": "翻訳開始",
     "totalLanguages": "翻訳先言語数：",
-    "resetUpload": "クリア",
-    "resetUploadTooltip": "現在の入力内容とアップロードされたファイルをクリア",
+    "resetUploadTooltip": "現在の入力内容とアップロードしたファイルをクリア",
     "resetUploadSuccess": "クリアしました",
     "extractText": "テキスト抽出",
     "translationResult": "翻訳結果",
@@ -94,8 +93,8 @@
     "settingsApplied": "設定が適用されました",
     "retryCount": "リトライ回数",
     "retryCountTooltip": "翻訳失敗時のリトライ試行回数",
-    "retryTimeout": "タイムアウト",
-    "retryTimeoutTooltip": "リクエストあたりの最大待機時間（秒）。LLMの思考時間は長いため、180秒以上を推奨します。",
+    "requestTimeoutSec": "タイムアウト",
+    "requestTimeoutSecTooltip": "リクエストあたりの最大待機時間（秒）。LLMの思考時間は長いため、180秒以上を推奨します。",
     "customExportFilename": "エクスポートファイル名の形式",
     "customExportFilenameTooltip": "'{'name'}' = 元のファイル名, '{'lang'}' = 言語, '{'ext'}' = 拡張子, '{'date'}' = 日付, '{'time'}' = 時間",
     "partialFailureTitle": "{count}行の翻訳に失敗しました",
@@ -112,12 +111,25 @@
     "apiStatusConnected": "✓ 接続済み",
     "apiStatusFailed": "接続失敗",
     "testConnection": "接続テスト",
-    "moreProviderSettings": "その他のProvider設定"
+    "moreProviderSettings": "その他のProvider設定",
+    "format": "フォーマット",
+    "formatTooltip": "フォーマット：空行および先頭・末尾の空白を除去",
+    "resultToSource": "結果 ➔ 原文",
+    "resultToSourceTooltip": "結果テキストを入力欄に上書き",
+    "readOnlyMode": "読み取り専用モード",
+    "readOnlyModeTooltip": "テキストが長すぎるため、ページのパフォーマンスを確保するため自動的に読み取り専用モードに切り替わりました",
+    "clearInputTooltip": "入力内容とアップロードされたファイルをクリア",
+    "fileExported": "ファイルをエクスポートしました：{fileName}",
+    "exportSuccess": "エクスポート成功：{fileName}",
+    "batchDownloaded": "処理完了、ファイルを自動ダウンロードしました",
+    "sourceTextPlaceholder": "処理するテキストを入力または貼り付けてください...",
+    "smartLineBreak": "スマート改行",
+    "replaceText": "テキスト置換",
+    "generateJson": "JSON生成",
+    "gtxFreeAPIUnavailable": "GTX Free API は現在利用できません。ネットワーク接続を確認してください。",
+    "translategemmaUnavailable": "TranslateGemma ノードが利用できません。ローカルサーバー（LM Studio / llama.cpp / Ollama）が起動し、URL が正しいことを確認してください。"
   },
-  "subtitle": {
-    "title": "Subtitle Translator | 無料のSRT/ASS字幕一括翻訳",
-    "description": "動画字幕の翻訳が面倒？SRT/ASS形式を一括翻訳。タイムライン保持や対訳字幕にも対応。DeepSeekとGoogleエンジン連携で、動画のローカライズを素早く実現！",
-    "clientTitle": "字幕翻訳ツール",
+  "SubtitleTranslator": {
     "clientDescription": "字幕ファイルをアップロードまたは内容を貼り付け、翻訳先言語を選択して素早く翻訳。一括処理に対応し、タイムラインを自動保持。",
     "subtitleFormat": "字幕形式",
     "translatedOnly": "訳文のみ",
@@ -131,13 +143,7 @@
     "noSourceText": "字幕ファイルをアップロードするか、テキストを貼り付けてください",
     "noExtractedText": "字幕内容が抽出されませんでした。ファイル形式を確認してください",
     "textExtracted": "字幕テキストを抽出しました、",
-    "bilingualError": "複雑なスタイルタグが検出されました。対訳モードでは書式が崩れる可能性があるため、「対訳字幕」をオフにすることをお勧めします。",
-    "faq1q": "YouTube からダウンロードした SRT や ASS 字幕の翻訳はできますか？",
-    "faq1a": "SRT、ASS、VTT、LRC 4 形式に対応。ASS の位置・配置タグ（\\\\an8 など）は翻訳後も保持されます。YouTube 字幕は yt-dlp、ニコ動は配信者ダッシュボード、ストリーミング配信の字幕は正規のルートから取得してください。注：ASS の複雑なインラインエフェクト（色、アニメーション、カラオケ）は翻訳時に簡略化されます。",
-    "faq2q": "翻訳後にタイムコードがずれたり文字化け（□□□）する場合は？",
-    "faq2a": "本ツールはテキストのみ翻訳し、タイムコードは一切変更しません。翻訳後のずれは主にソースファイルとターゲット動画のフレームレート不一致（23.976 vs 25 fps）が原因で、Aegisub や Subtitle Edit で調整します。文字化け：jschardet で UTF-8/UTF-16/GBK/Shift-JIS を自動検出し、失敗時は UTF-8 にフォールバック。改善しない場合は Notepad++ や VS Code で UTF-8 保存後アップロードしてください。",
-    "faq3q": "ニコニコ、YouTube の日英二言語字幕や語学学習用字幕を作成できますか？",
-    "faq3a": "「バイリンガル」モードを選択し、訳文位置を原文の上（学習重視）または下（視聴重視）に配置できます。ASS 形式で出力すると原文と訳文に異なる色・フォントサイズ・位置を設定可能で、YouTube コミュニティ字幕や Premiere/DaVinci Resolve に直接埋め込めます。"
+    "bilingualError": "複雑なスタイルタグが検出されました。対訳モードでは書式が崩れる可能性があるため、「対訳字幕」をオフにすることをお勧めします。"
   },
   "TranslationSettings": {
     "docs": "ドキュメント",
@@ -188,7 +194,7 @@
     "presetUpdate": "現在のプリセットに保存",
     "presetUpdated": "現在のプリセットに保存しました",
     "presetDeleteConfirm": "このプリセットを削除しますか？",
-    "presetEmptyHint": "No presets yet — edit and click Save",
+    "presetEmptyHint": "プリセットがありません — 編集して保存をクリック",
     "qwenMtDomains": "ドメインプロンプト（英語のみ）",
     "sendSystemPrompt": "system プロンプトを送信",
     "sendSystemPromptExtra": "chat template が system ロールを拒否する場合のみオフに — 典型的なエラー \"Conversations must start with a user prompt\"（Gemma 系列など）。",
@@ -203,55 +209,45 @@
   "tools": {
     "subtitleTranslator": {
       "title": "字幕翻訳機",
-      "description": "SRT、ASS、VTT、LRC字幕を一括翻訳、50以上の言語に対応"
-    },
-    "jsonTranslate": {
-      "title": "i18n JSON翻訳",
-      "description": "効率的な多言語JSON翻訳ツール"
-    },
-    "mdTranslator": {
-      "title": "Markdown翻訳",
-      "description": "Markdownドキュメントを一括翻訳、書式とコードを保持"
-    },
-    "textSplitter": {
-      "title": "テキスト分割",
-      "description": "長文をスマートに分割、AI入力とSNSに最適"
-    },
-    "jsonValueExtractor": {
-      "title": "JSON値抽出",
-      "description": "JSONフィールド値を一括抽出、フォーマット出力対応"
-    },
-    "jsonNodeEdit": {
-      "title": "JSON一括編集",
-      "description": "JSONノード値を一括編集、接頭辞/接尾辞と置換に対応"
-    },
-    "jsonValueTransformer": {
-      "title": "JSONキー値マッピング",
-      "description": "フィールド値のマッピングと移行、JSONPath位置特定に対応"
-    },
-    "jsonValueSwapper": {
-      "title": "JSONキー値交換",
-      "description": "2つのフィールドの値をワンクリックで交換"
-    },
-    "jsonNodeInserter": {
-      "title": "JSONノード挿入",
-      "description": "指定位置に新規ノードを一括挿入"
-    },
-    "jsonSortClassify": {
-      "title": "JSONソート分類",
-      "description": "配列のソートとグループ化、カスタムルールに対応"
-    },
-    "jsonMatchUpdate": {
-      "title": "JSONマッチング更新",
-      "description": "フィールドマッチングに基づいてデータを一括更新"
-    },
-    "dataParserFlare": {
-      "title": "Flareブックマーク変換",
-      "description": "ブラウザブックマークとFlare形式の相互変換"
-    },
-    "dataParserImgPrompt": {
-      "title": "IMGPromptデータ生成",
-      "description": "IMGPrompt JSONデータを一括生成"
+      "description": "SRT、ASS、VTT、LRC字幕を一括翻訳、50以上の言語に対応",
+      "metaTitle": "字幕翻訳ツール - SRT/ASS/VTT AI 一括翻訳、無料バイリンガル",
+      "metaDescription": "動画字幕の翻訳が面倒？SRT/ASS形式を一括翻訳。タイムライン保持や対訳字幕にも対応。DeepSeekとGoogleエンジン連携で、動画のローカライズを素早く実現！",
+      "faq": [
+        {
+          "q": "YouTube からダウンロードした SRT や ASS 字幕の翻訳はできますか？",
+          "a": "SRT、ASS、VTT、LRC 4 形式に対応。ASS の位置・配置タグ（\\\\an8 など）は翻訳後も保持されます。YouTube 字幕は yt-dlp、ニコ動は配信者ダッシュボード、ストリーミング配信の字幕は正規のルートから取得してください。注：ASS の複雑なインラインエフェクト（色、アニメーション、カラオケ）は翻訳時に簡略化されます。"
+        },
+        {
+          "q": "翻訳後にタイムコードがずれたり文字化け（□□□）する場合は？",
+          "a": "本ツールはテキストのみ翻訳し、タイムコードは一切変更しません。翻訳後のずれは主にソースファイルとターゲット動画のフレームレート不一致（23.976 vs 25 fps）が原因で、Aegisub や Subtitle Edit で調整します。文字化け：jschardet で UTF-8/UTF-16/GBK/Shift-JIS を自動検出し、失敗時は UTF-8 にフォールバック。改善しない場合は Notepad++ や VS Code で UTF-8 保存後アップロードしてください。"
+        },
+        {
+          "q": "ニコニコ、YouTube の日英二言語字幕や語学学習用字幕を作成できますか？",
+          "a": "「バイリンガル」モードを選択し、訳文位置を原文の上（学習重視）または下（視聴重視）に配置できます。ASS 形式で出力すると原文と訳文に異なる色・フォントサイズ・位置を設定可能で、YouTube コミュニティ字幕や Premiere/DaVinci Resolve に直接埋め込めます。"
+        }
+      ],
+      "howto": [
+        {
+          "name": "動画または字幕ファイルから開始",
+          "text": "SRT/ASS/VTT/LRC 字幕をアップロード。YouTube は yt-dlp で抽出、ニコ動は配信者ダッシュボードから、他プラットフォームは正規ルートから取得。jschardet で UTF-8/UTF-16/Shift-JIS/GBK エンコーディングを自動検出。"
+        },
+        {
+          "name": "エンジンと出力モードを選択",
+          "text": "無料テストは Google、品質重視は DeepSeek/DeepL API。公開用は「翻訳のみ」、語学学習用は「バイリンガル」。バイリンガルでは訳文を原文の上（学習）または下（視聴）に配置可能。"
+        },
+        {
+          "name": "翻訳してプラットフォームへエクスポート",
+          "text": "翻訳をクリックし、プレビューで時間軸を確認。YouTube コミュニティ字幕用 SRT、Premiere/DaVinci Resolve 用スタイル付き ASS、Web プレーヤー用 VTT、歌詞用 LRC をダウンロード。"
+        }
+      ],
+      "features": [
+        "SRT、ASS、VTT、LRC 4 形式対応、ASS 位置タグ（\\\\an8 等）を翻訳後も保持",
+        "タイムコード無変更 — テキストのみ翻訳、元の時間情報を完全保持",
+        "UTF-8/UTF-16/Shift-JIS 自動エンコード検出",
+        "バイリンガル訳文位置：上（学習）または下（視聴）",
+        "15+ 翻訳エンジン：Google 無料、DeepSeek、DeepL、OpenAI",
+        "ニコニコ、YouTube、Premiere、DaVinci Resolve、Aegisub 互換"
+      ]
     }
   },
   "navigation": {

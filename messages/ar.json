@@ -39,8 +39,7 @@
     "multiLanguageModeTooltip": "الترجمة إلى لغات متعددة في وقت واحد، يتم حفظها بشكل منفصل",
     "translate": "ترجمة",
     "totalLanguages": "إجمالي اللغات:",
-    "resetUpload": "مسح",
-    "resetUploadTooltip": "مسح الإدخال الحالي والملفات المحملة",
+    "resetUploadTooltip": "مسح المدخلات الحالية والملفات المرفوعة",
     "resetUploadSuccess": "تم المسح",
     "extractText": "استخراج النص",
     "translationResult": "النتيجة",
@@ -94,8 +93,8 @@
     "settingsApplied": "تم تطبيق الإعدادات",
     "retryCount": "عدد المحاولات",
     "retryCountTooltip": "عدد محاولات إعادة التشغيل عند فشل الترجمة",
-    "retryTimeout": "المهلة",
-    "retryTimeoutTooltip": "أقصى مدة انتظار لكل طلب (بالثواني). يستغرق التفكير في نماذج اللغة الكبيرة وقتًا أطول؛ يُنصح بـ 180 ثانية أو أكثر.",
+    "requestTimeoutSec": "المهلة",
+    "requestTimeoutSecTooltip": "أقصى مدة انتظار لكل طلب (بالثواني). يستغرق التفكير في نماذج اللغة الكبيرة وقتًا أطول؛ يُنصح بـ 180 ثانية أو أكثر.",
     "customExportFilename": "نمط اسم ملف التصدير",
     "customExportFilenameTooltip": "'{'name'}' = اسم الملف الأصلي، '{'lang'}' = اللغة، '{'ext'}' = الامتداد، '{'date'}' = التاريخ، '{'time'}' = الوقت",
     "partialFailureTitle": "فشلت {count} سطر في الترجمة",
@@ -112,12 +111,25 @@
     "apiStatusConnected": "✓ متصل",
     "apiStatusFailed": "فشل الاتصال",
     "testConnection": "اختبار الاتصال",
-    "moreProviderSettings": "المزيد من إعدادات Provider"
+    "moreProviderSettings": "المزيد من إعدادات Provider",
+    "format": "تنسيق",
+    "formatTooltip": "تنسيق: إزالة الأسطر الفارغة والمسافات البادئة والتالية",
+    "resultToSource": "النتيجة ➔ المصدر",
+    "resultToSourceTooltip": "استبدال نص الإدخال بالنتيجة",
+    "readOnlyMode": "وضع القراءة فقط",
+    "readOnlyModeTooltip": "النص طويل جداً، تم التبديل تلقائياً إلى وضع القراءة فقط لضمان أداء الصفحة",
+    "clearInputTooltip": "مسح محتوى الإدخال والملفات المحملة",
+    "fileExported": "تم تصدير الملف: {fileName}",
+    "exportSuccess": "تم التصدير بنجاح: {fileName}",
+    "batchDownloaded": "اكتملت المعالجة، تم تنزيل الملف تلقائياً",
+    "sourceTextPlaceholder": "أدخل أو الصق النص المراد معالجته...",
+    "smartLineBreak": "فاصل أسطر ذكي",
+    "replaceText": "استبدال النص",
+    "generateJson": "إنشاء JSON",
+    "gtxFreeAPIUnavailable": "واجهة Google Translate المجانية (GTX) غير متاحة حاليًا. يرجى التحقق من اتصالك بالشبكة.",
+    "translategemmaUnavailable": "عقدة TranslateGemma غير متاحة. يرجى التأكد من تشغيل الخادم المحلي (LM Studio / llama.cpp / Ollama) ومن صحة عنوان URL."
   },
-  "subtitle": {
-    "title": "مترجم الترجمة أونلاين - SRT/VTT للفيديو والأفلام",
-    "description": "ترجمة ملفات SRT و ASS و VTT بشكل مجمع باستخدام AI. إنشاء ترجمات ثنائية اللغة والحفاظ على التزامن الزمني. أداة أساسية لمنشئي المحتوى.",
-    "clientTitle": "مترجم الترجمة",
+  "SubtitleTranslator": {
     "clientDescription": "قم بتحميل الترجمات أو لصق المحتوى. اختر لغة الهدف للترجمة السريعة. يدعم المعالجة المجمعة ويحافظ على الجدول الزمني.",
     "subtitleFormat": "تنسيق الترجمة",
     "translatedOnly": "مترجم",
@@ -131,13 +143,7 @@
     "noSourceText": "يرجى تحميل ملف أو لصق نص",
     "noExtractedText": "لم يتم استخراج أي محتوى، تحقق من تنسيق الملف",
     "textExtracted": "تم استخراج نص الترجمة، ",
-    "bilingualError": "تم اكتشاف علامات نمط معقدة. قد يتسبب الوضع ثنائي اللغة في أخطاء تنسيق. يوصى بإيقاف 'ترجمة ثنائية اللغة'.",
-    "faq1q": "هل يمكن ترجمة ترجمات SRT و ASS المُنزَّلة من YouTube؟",
-    "faq1a": "يدعم SRT و ASS و VTT و LRC. علامات الموقع/المحاذاة في ASS (مثل \\\\an8) محفوظة بعد الترجمة. ترجمات YouTube عبر yt-dlp، و Bilibili عبر لوحة المبدع، ومنصات البث من مصادر مشروعة. ملاحظة: التأثيرات المعقدة داخل ASS (الألوان، الرسوم المتحركة، الكاريوكي) تُبسَّط أثناء الترجمة.",
-    "faq2q": "ماذا أفعل إذا لم تتطابق الأوقات أو ظهرت أحرف غير مقروءة (□□□)؟",
-    "faq2a": "الأداة تترجم النص فقط ولا تعدل رموز الوقت أبداً. عدم التطابق عادة بسبب اختلاف معدل الإطارات (23.976 vs 25 fps) بين المصدر والفيديو الهدف — اضبط بـ Aegisub أو Subtitle Edit. الترميز: jschardet يكتشف UTF-8/UTF-16/GBK/Shift-JIS تلقائياً؛ عند الفشل يعود إلى UTF-8.",
-    "faq3q": "كيف أنشئ ترجمات ثنائية اللغة لـ YouTube أو لتعلم اللغات؟",
-    "faq3a": "اختر وضع 'ثنائي اللغة' مع لغتك المستهدفة. ضع الترجمة فوق (للتعلم) أو تحت (للمشاهدة). صدّر بصيغة ASS للحصول على ترجمات ثنائية ملونة، قابلة للاستخدام مباشرة في YouTube و Premiere و DaVinci Resolve."
+    "bilingualError": "تم اكتشاف علامات نمط معقدة. قد يتسبب الوضع ثنائي اللغة في أخطاء تنسيق. يوصى بإيقاف 'ترجمة ثنائية اللغة'."
   },
   "TranslationSettings": {
     "docs": "وثائق",
@@ -188,7 +194,7 @@
     "presetUpdate": "حفظ في الإعداد المسبق الحالي",
     "presetUpdated": "تم الحفظ في الإعداد المسبق الحالي",
     "presetDeleteConfirm": "هل تريد حذف هذا الإعداد المسبق؟",
-    "presetEmptyHint": "No presets yet — edit and click Save",
+    "presetEmptyHint": "لا توجد إعدادات مسبقة بعد — حرّر وانقر حفظ",
     "qwenMtDomains": "مطالبات المجال (باللغة الإنجليزية فقط)",
     "sendSystemPrompt": "إرسال موجه system",
     "sendSystemPromptExtra": "أوقف التشغيل فقط عندما يرفض قالب الدردشة دور system — الخطأ النموذجي \"Conversations must start with a user prompt\" (مثل عائلة Gemma).",
@@ -203,55 +209,45 @@
   "tools": {
     "subtitleTranslator": {
       "title": "مترجم الترجمة",
-      "description": "ترجمة مجمعة SRT, ASS, VTT, LRC. 50+ لغة."
-    },
-    "jsonTranslate": {
-      "title": "مترجم JSON i18n",
-      "description": "أداة ترجمة JSON متعددة اللغات فعالة"
-    },
-    "mdTranslator": {
-      "title": "مترجم Markdown",
-      "description": "ترجمة Markdown مجمعة، تحافظ على التنسيق والكود"
-    },
-    "textSplitter": {
-      "title": "مقسم النص",
-      "description": "تقسيم ذكي للنص الطويل للذكاء الاصطناعي ووسائل التواصل الاجتماعي"
-    },
-    "jsonValueExtractor": {
-      "title": "مستخرج قيم JSON",
-      "description": "استخراج قيم JSON مجمعة، إخراج منسق"
-    },
-    "jsonNodeEdit": {
-      "title": "تحرير JSON المجمع",
-      "description": "تحرير عقد JSON مجمعة، بادئة/لاحقة/استبدال"
-    },
-    "jsonValueTransformer": {
-      "title": "مخطط قيم JSON",
-      "description": "تعيين وترحيل القيم باستخدام JSONPath"
-    },
-    "jsonValueSwapper": {
-      "title": "مبادلة قيم JSON",
-      "description": "تبديل قيم حقلين بنقرة واحدة"
-    },
-    "jsonNodeInserter": {
-      "title": "مدرج عقد JSON",
-      "description": "إدراج عقد جديدة في الموضع المحدد بشكل مجمع"
-    },
-    "jsonSortClassify": {
-      "title": "فرز وتصنيف JSON",
-      "description": "فرز وتجميع المصفوفات، قواعد مخصصة"
-    },
-    "jsonMatchUpdate": {
-      "title": "تحديث JSON Match",
-      "description": "تحديث مجمع بناءً على مطابقة الحقول"
-    },
-    "dataParserFlare": {
-      "title": "محول Flare",
-      "description": "تحويل إشارات المتصفح وتنسيق Flare"
-    },
-    "dataParserImgPrompt": {
-      "title": "مولد بيانات IMGPrompt",
-      "description": "إنشاء بيانات JSON لـ IMGPrompt بشكل مجمع"
+      "description": "ترجمة مجمعة SRT, ASS, VTT, LRC. 50+ لغة.",
+      "metaTitle": "مترجم الترجمة أونلاين - SRT/VTT للفيديو والأفلام",
+      "metaDescription": "تترجم فيديوهات؟ ترجمة ملفات SRT و ASS و VTT بشكل مجمع باستخدام AI. إنشاء ترجمات ثنائية اللغة والحفاظ على التزامن الزمني. أداة أساسية لمنشئي المحتوى.",
+      "faq": [
+        {
+          "q": "هل يمكن ترجمة ترجمات SRT و ASS المُنزَّلة من YouTube؟",
+          "a": "يدعم SRT و ASS و VTT و LRC. علامات الموقع/المحاذاة في ASS (مثل \\an8) محفوظة بعد الترجمة. ترجمات YouTube عبر yt-dlp، منصات عربية كـ Shahid عبر لوحة المبدع، ومنصات البث من مصادر مشروعة. ملاحظة: التأثيرات المعقدة داخل ASS (الألوان، الرسوم المتحركة، الكاريوكي) تُبسَّط أثناء الترجمة."
+        },
+        {
+          "q": "ماذا أفعل إذا لم تتطابق الأوقات أو ظهرت أحرف غير مقروءة (□□□)؟",
+          "a": "الأداة تترجم النص فقط ولا تعدل رموز الوقت أبداً. عدم التطابق عادة بسبب اختلاف معدل الإطارات (23.976 vs 25 fps) بين المصدر والفيديو الهدف — اضبط بـ Aegisub أو Subtitle Edit. الترميز: jschardet يكتشف UTF-8/UTF-16/GBK/Shift-JIS تلقائياً؛ عند الفشل يعود إلى UTF-8."
+        },
+        {
+          "q": "كيف أنشئ ترجمات ثنائية اللغة لـ YouTube أو لتعلم اللغات؟",
+          "a": "اختر وضع 'ثنائي اللغة' مع لغتك المستهدفة. ضع الترجمة فوق (للتعلم) أو تحت (للمشاهدة). صدّر بصيغة ASS للحصول على ترجمات ثنائية ملونة، قابلة للاستخدام مباشرة في YouTube و Premiere و DaVinci Resolve."
+        }
+      ],
+      "howto": [
+        {
+          "name": "ابدأ من ملف الفيديو أو الترجمة",
+          "text": "حمّل SRT/ASS/VTT/LRC. الاستخراج: YouTube عبر yt-dlp، المنصات الأخرى عبر أدوات مخصصة. الصيغة والترميز UTF-8/UTF-16/GBK يُكتشفان تلقائياً."
+        },
+        {
+          "name": "اختر المحرك ووضع الإخراج",
+          "text": "Google مجاني للاختبارات السريعة، DeepSeek/DeepL API للجودة. 'ترجمة فقط' للنشر، 'ثنائي اللغة' لتعلم اللغات. في الثنائي، الموقع فوق (التعلم) أو تحت (المشاهدة)."
+        },
+        {
+          "name": "ترجم وصدّر إلى منصتك",
+          "text": "انقر ترجمة وتحقق من التوقيت في المعاينة. حمّل SRT لترجمات مجتمع YouTube، ASS بالأنماط لـ Premiere/DaVinci Resolve، VTT لمشغلات الويب، LRC للكلمات."
+        }
+      ],
+      "features": [
+        "يدعم SRT و ASS و VTT و LRC، علامات موقع ASS (\\\\an8 إلخ) محفوظة",
+        "رموز الوقت لا تتغير — يُترجم النص فقط، مع الحفاظ على التوقيت الأصلي",
+        "كشف الترميز التلقائي UTF-8/UTF-16/GBK",
+        "موضع الترجمة الثنائية: فوق (التعلم) أو تحت (المشاهدة)",
+        "أكثر من 15 محرك ترجمة: Google مجاني، DeepSeek، DeepL، OpenAI",
+        "متوافق مع YouTube، Premiere، DaVinci Resolve، Aegisub"
+      ]
     }
   },
   "navigation": {
@@ -267,7 +263,7 @@
     "title": "ToolsByAI - أدوات الترجمة والبيانات بالذكاء الاصطناعي",
     "description": "مجموعة أدوات مجانية للمطورين: ترجمة الترجمة، i18n، Markdown وتحرير JSON. معالجة محلية آمنة، مفتوحة المصدر وتدعم المعالجة المجمعة.",
     "homeTitle": "مجموعة ToolsByAI",
-    "homeDescription": "20+ أداة للترجمة والنص و JSON وتحويل البيانات. تعزيز كفاءة المطورين والمبدعين.",
+    "homeDescription": "20+ أداة للترجمة ومعالجة النصوص و JSON وتحويل البيانات. تعزّز كفاءة المطورين والمبدعين بأدوات مجانية ومفتوحة المصدر تعمل محلياً في المتصفح.",
     "ogTitle": "ToolsByAI - أدوات مطورين ذكية ومجانية المصدر",
     "ogDescription": "20+ أداة للمطورين: الترجمة، معالجة البيانات و JSON. حماية لخصوصيتك مع معالجة محلية بالكامل في المتصفح."
   },

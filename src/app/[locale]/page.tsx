@@ -1,16 +1,13 @@
 import ClientPage from "./client";
-import { getTranslations } from "next-intl/server";
+import { ToolPageShell, generatePageMetadata } from "@/app/lib/toolPageShell";
 
-export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
+export const generateMetadata = generatePageMetadata("subtitleTranslator");
+
+export default async function Page({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
-  const t = await getTranslations({ locale, namespace: "subtitle" });
-
-  return {
-    title: `${t("title")} - Tools by AI`,
-    description: t("description"),
-  };
-}
-
-export default function Page() {
-  return <ClientPage />;
+  return (
+    <ToolPageShell toolKey="subtitleTranslator" locale={locale}>
+      <ClientPage />
+    </ToolPageShell>
+  );
 }

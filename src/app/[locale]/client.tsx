@@ -19,7 +19,7 @@ const TranslationSettings = dynamic(() => import("@/app/components/TranslationSe
 });
 
 const ClientPage = () => {
-  const tSubtitle = useTranslations("subtitle");
+  const tSubtitle = useTranslations("SubtitleTranslator");
   const t = useTranslations("common");
   const locale = useLocale();
   const userGuideUrl = getDocUrl("guide/translation/subtitle-translator/index.html", locale);
@@ -45,8 +45,8 @@ const ClientPage = () => {
 
   return (
     <TranslationProvider>
-      <ToolPage icon={<VideoCameraOutlined />} title={tSubtitle("clientTitle")} description={tSubtitle("clientDescription")} guideUrl={userGuideUrl}>
-        <Tabs activeKey={activeKey} onChange={handleTabChange} items={items} type="card" className="w-full" animated={{ inkBar: true, tabPane: true }} />
+      <ToolPage icon={<VideoCameraOutlined />} toolKey="subtitleTranslator" description={tSubtitle("clientDescription")} guideUrl={userGuideUrl}>
+        <Tabs activeKey={activeKey} onChange={handleTabChange} items={items} type="card" className="w-full" animated={false} />
       </ToolPage>
     </TranslationProvider>
   );

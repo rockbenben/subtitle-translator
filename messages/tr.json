@@ -39,7 +39,6 @@
     "multiLanguageModeTooltip": "Aynı anda birden fazla dile çevirin, ayrı dosyalar olarak kaydedilir",
     "translate": "Çevir",
     "totalLanguages": "Toplam Dil:",
-    "resetUpload": "Temizle",
     "resetUploadTooltip": "Mevcut girişi ve yüklenen dosyaları temizle",
     "resetUploadSuccess": "Temizlendi",
     "extractText": "Metni Çıkar",
@@ -94,8 +93,8 @@
     "settingsApplied": "Ayarlar uygulandı",
     "retryCount": "Yeniden Deneme Sayısı",
     "retryCountTooltip": "Çeviri başarısız olduğunda yeniden deneme sayısı",
-    "retryTimeout": "Zaman Aşımı",
-    "retryTimeoutTooltip": "İstek başına maksimum bekleme süresi (saniye). LLM düşünmesi daha uzun sürer; 180 saniye veya daha fazlası önerilir.",
+    "requestTimeoutSec": "Zaman Aşımı",
+    "requestTimeoutSecTooltip": "İstek başına maksimum bekleme süresi (saniye). LLM düşünmesi daha uzun sürer; 180 saniye veya daha fazlası önerilir.",
     "customExportFilename": "Dışa Aktarma Dosya Adı Kalıbı",
     "customExportFilenameTooltip": "'{'name'}' = orijinal dosya adı, '{'lang'}' = dil, '{'ext'}' = uzantı, '{'date'}' = tarih, '{'time'}' = saat",
     "partialFailureTitle": "{count} satır çevrilemedi",
@@ -112,12 +111,25 @@
     "apiStatusConnected": "✓ Bağlandı",
     "apiStatusFailed": "Bağlantı başarısız",
     "testConnection": "Bağlantıyı test et",
-    "moreProviderSettings": "Daha fazla Provider ayarı"
+    "moreProviderSettings": "Daha fazla Provider ayarı",
+    "format": "Biçimlendir",
+    "formatTooltip": "Biçimlendir: boş satırları ve baş/son boşlukları kaldır",
+    "resultToSource": "Sonuç ➔ Kaynak",
+    "resultToSourceTooltip": "Giriş kutusunun içeriğini sonuç metniyle değiştir",
+    "readOnlyMode": "Salt Okunur Mod",
+    "readOnlyModeTooltip": "Metin çok uzun; sayfa performansını korumak için salt okunur mod otomatik olarak etkinleştirildi",
+    "clearInputTooltip": "Giriş içeriğini ve yüklenen dosyaları temizle",
+    "fileExported": "Dışa aktarılan dosya: {fileName}",
+    "exportSuccess": "Dışa aktarma başarılı: {fileName}",
+    "batchDownloaded": "İşlem tamamlandı, dosyalar otomatik olarak indirildi",
+    "sourceTextPlaceholder": "İşlenecek metni girin veya yapıştırın...",
+    "smartLineBreak": "Akıllı satır sonu",
+    "replaceText": "Metni değiştir",
+    "generateJson": "JSON Oluştur",
+    "gtxFreeAPIUnavailable": "Ücretsiz Google Translate API (GTX) şu anda kullanılamıyor. Lütfen ağ bağlantınızı kontrol edin.",
+    "translategemmaUnavailable": "TranslateGemma düğümü kullanılamıyor. Lütfen yerel sunucunun (LM Studio / llama.cpp / Ollama) çalıştığını ve URL'nin doğru olduğunu doğrulayın."
   },
-  "subtitle": {
-    "title": "Online Altyazı Çevirici - Videolar İçin SRT ve VTT",
-    "description": "SRT, ASS ve VTT altyazılarını yapay zeka ile toplu olarak çevirin. İki dilli mod ve zamanlama koruması sunar. Video içerik üreticileri için mükemmel araç.",
-    "clientTitle": "Altyazı Çevirici",
+  "SubtitleTranslator": {
     "clientDescription": "Altyazı yükleyin veya içerik yapıştırın. Hızlı çeviri için hedef dili seçin. Toplu işlemeyi destekler ve zaman çizelgesini korur.",
     "subtitleFormat": "Altyazı Formatı",
     "translatedOnly": "Çevrilmiş",
@@ -131,13 +143,7 @@
     "noSourceText": "Lütfen dosya yükleyin veya metin yapıştırın",
     "noExtractedText": "İçerik çıkarılamadı, dosya formatını kontrol edin",
     "textExtracted": "Altyazı metni çıkarıldı, ",
-    "bilingualError": "Karmaşık stil etiketleri algılandı. İki dilli mod format hatalarına neden olabilir. 'İki Dilli Altyazı'yı kapatmanız önerilir.",
-    "faq1q": "YouTube'dan indirilen SRT ve ASS altyazıları çevirebilir mi?",
-    "faq1a": "SRT, ASS, VTT, LRC desteği. ASS konum/hizalama etiketleri (\\\\an8 vb.) çeviri sonrası korunur. YouTube altyazıları yt-dlp ile, Bilibili yaratıcı kontrol panelinden, yayın platformlarının altyazıları yasal kaynaklardan. Not: Karmaşık ASS satır içi efektleri (renk, animasyon, karaoke) çeviri sırasında basitleştirilir.",
-    "faq2q": "Çeviriden sonra zaman kodları uyuşmazsa veya okunamayan karakter (□□□) çıkarsa?",
-    "faq2a": "Araç yalnızca metni çevirir, zaman kodlarını değiştirmez. Uyuşmazlık genelde kaynak ve hedef videonun kare hızı farklılığından (23.976 vs 25 fps) kaynaklanır — Aegisub veya Subtitle Edit ile düzeltin. Kodlama: jschardet UTF-8/UTF-16/GBK/Shift-JIS'i otomatik algılar; başarısız olursa UTF-8'e döner.",
-    "faq3q": "YouTube veya dil öğrenimi için iki dilli altyazı nasıl oluşturulur?",
-    "faq3a": "Hedef dille birlikte 'İki Dilli' modunu seçin. Çeviriyi üste (öğrenme için) veya alta (izleme için) yerleştirin. ASS formatında dışa aktararak renkli iki dilli altyazılar elde edin — YouTube, Premiere veya DaVinci Resolve'de doğrudan kullanın."
+    "bilingualError": "Karmaşık stil etiketleri algılandı. İki dilli mod format hatalarına neden olabilir. 'İki Dilli Altyazı'yı kapatmanız önerilir."
   },
   "TranslationSettings": {
     "docs": "Belgeler",
@@ -188,7 +194,7 @@
     "presetUpdate": "Mevcut Ön Ayara Kaydet",
     "presetUpdated": "Mevcut ön ayara kaydedildi",
     "presetDeleteConfirm": "Bu ön ayarı silmek istiyor musunuz?",
-    "presetEmptyHint": "No presets yet — edit and click Save",
+    "presetEmptyHint": "Henüz ön ayar yok — düzenleyin ve Kaydet'e tıklayın",
     "qwenMtDomains": "Etki Alanı İpuçları (yalnızca İngilizce)",
     "sendSystemPrompt": "system istemini gönder",
     "sendSystemPromptExtra": "Yalnızca chat template system rolünü reddettiğinde kapatın — tipik hata \"Conversations must start with a user prompt\" (örn. Gemma ailesi).",
@@ -203,55 +209,45 @@
   "tools": {
     "subtitleTranslator": {
       "title": "Altyazı Çevirici",
-      "description": "Toplu SRT, ASS, VTT, LRC çevirisi. 50+ dil."
-    },
-    "jsonTranslate": {
-      "title": "i18n JSON Çevirici",
-      "description": "Verimli çok dilli JSON çeviri aracı"
-    },
-    "mdTranslator": {
-      "title": "Markdown Çevirici",
-      "description": "Toplu Markdown çevirisi, format ve kodu korur"
-    },
-    "textSplitter": {
-      "title": "Metin Bölücü",
-      "description": "AI ve sosyal medya için akıllı uzun metin bölme"
-    },
-    "jsonValueExtractor": {
-      "title": "JSON Değer Çıkarıcı",
-      "description": "JSON değerlerini toplu çıkar, formatlı çıktı"
-    },
-    "jsonNodeEdit": {
-      "title": "Toplu JSON Düzenleme",
-      "description": "JSON düğümlerini toplu düzenle, önek/sonek/değiştir"
-    },
-    "jsonValueTransformer": {
-      "title": "JSON Değer Eşleyici",
-      "description": "JSONPath ile değer eşleme ve taşıma"
-    },
-    "jsonValueSwapper": {
-      "title": "JSON Değer Değiştirici",
-      "description": "Tek tıkla iki alanın değerlerini değiştir"
-    },
-    "jsonNodeInserter": {
-      "title": "JSON Düğüm Ekleyici",
-      "description": "Belirtilen konuma toplu yeni düğümler ekle"
-    },
-    "jsonSortClassify": {
-      "title": "JSON Sırala & Sınıflandır",
-      "description": "Dizileri sırala ve grupla, özel kurallar"
-    },
-    "jsonMatchUpdate": {
-      "title": "JSON Match Update",
-      "description": "Alan eşleşmesine dayalı toplu güncelleme"
-    },
-    "dataParserFlare": {
-      "title": "Flare Dönüştürücü",
-      "description": "Tarayıcı yer imleri ve Flare formatı dönüşümü"
-    },
-    "dataParserImgPrompt": {
-      "title": "IMGPrompt Veri Oluşturucu",
-      "description": "Toplu IMGPrompt JSON verileri oluştur"
+      "description": "Toplu SRT, ASS, VTT, LRC çevirisi. 50+ dil.",
+      "metaTitle": "Online Altyazı Çevirici - Videolar İçin SRT ve VTT",
+      "metaDescription": "Video mu çeviriyorsunuz? SRT, ASS ve VTT altyazılarını yapay zeka ile toplu olarak çevirin. İki dilli mod ve zamanlama koruması sunar.",
+      "faq": [
+        {
+          "q": "YouTube'dan indirilen SRT ve ASS altyazıları çevirebilir mi?",
+          "a": "SRT, ASS, VTT, LRC desteği. ASS konum/hizalama etiketleri (\\an8 vb.) çeviri sonrası korunur. YouTube altyazıları yt-dlp ile, BluTV veya puhutv yaratıcı kontrol panelinden, yayın platformlarının altyazıları yasal kaynaklardan. Not: Karmaşık ASS satır içi efektleri (renk, animasyon, karaoke) çeviri sırasında basitleştirilir."
+        },
+        {
+          "q": "Çeviriden sonra zaman kodları uyuşmazsa veya okunamayan karakter (□□□) çıkarsa?",
+          "a": "Araç yalnızca metni çevirir, zaman kodlarını değiştirmez. Uyuşmazlık genelde kaynak ve hedef videonun kare hızı farklılığından (23.976 vs 25 fps) kaynaklanır — Aegisub veya Subtitle Edit ile düzeltin. Kodlama: jschardet UTF-8/UTF-16/GBK/Shift-JIS'i otomatik algılar; başarısız olursa UTF-8'e döner."
+        },
+        {
+          "q": "YouTube veya dil öğrenimi için iki dilli altyazı nasıl oluşturulur?",
+          "a": "Hedef dille birlikte 'İki Dilli' modunu seçin. Çeviriyi üste (öğrenme için) veya alta (izleme için) yerleştirin. ASS formatında dışa aktararak renkli iki dilli altyazılar elde edin — YouTube, Premiere veya DaVinci Resolve'de doğrudan kullanın."
+        }
+      ],
+      "howto": [
+        {
+          "name": "Video veya altyazı dosyasından başlayın",
+          "text": "SRT/ASS/VTT/LRC yükleyin. Çıkarma: YouTube yt-dlp ile, diğer platformlar özel araçlarla. Format ve UTF-8/UTF-16/GBK kodlaması otomatik algılanır."
+        },
+        {
+          "name": "Motor ve çıktı modunu seçin",
+          "text": "Hızlı testler için Google ücretsiz, kalite için DeepSeek/DeepL API. Yayınlamak için 'Yalnızca Çeviri', dil öğrenmek için 'İki Dilli'. İki dillide çeviri üstte (öğrenme) veya altta (izleme)."
+        },
+        {
+          "name": "Çevirin ve platformunuza aktarın",
+          "text": "Çevir'e tıklayın ve önizlemede zamanlamayı kontrol edin. YouTube topluluk altyazıları için SRT, Premiere/DaVinci Resolve için stilli ASS, web oynatıcılar için VTT, şarkı sözleri için LRC indirin."
+        }
+      ],
+      "features": [
+        "SRT, ASS, VTT, LRC desteği, ASS konum etiketleri (\\\\an8 vb.) korunur",
+        "Zaman kodları değiştirilmez — sadece metin çevrilir, orijinal zamanlama korunur",
+        "UTF-8/UTF-16/GBK kodlama otomatik algılama",
+        "İki dilli altyazı konumu: üst (öğrenme) veya alt (izleme)",
+        "15+ çeviri motoru: Google ücretsiz, DeepSeek, DeepL, OpenAI",
+        "YouTube, Premiere, DaVinci Resolve, Aegisub ile uyumlu"
+      ]
     }
   },
   "navigation": {

@@ -11,8 +11,9 @@ import { useTextStats } from "@/app/hooks/useTextStats";
 import { useExportFilename } from "@/app/hooks/useExportFilename";
 
 import { splitTextIntoLines, downloadFile, splitBySpaces, getErrorMessage, getFileTypePresetConfig } from "@/app/utils";
-import { VTT_SRT_TIME, LRC_TIME_REGEX, detectSubtitleFormat, getOutputFileExtension, filterSubLines, convertTimeToAss, assHeader, prepareAssForTranslation, restoreAssAfterTranslation } from "./subtitleUtils";
+import { VTT_SRT_TIME, LRC_TIME_REGEX_GLOBAL, detectSubtitleFormat, getOutputFileExtension, filterSubLines, convertTimeToAss, assHeader, prepareAssForTranslation, restoreAssAfterTranslation } from "./subtitleUtils";
 import { LLM_MODELS } from "@/app/lib/translation";
+import { delay } from "@/app/hooks/translation";
 import { useLanguageOptions } from "@/app/components/languages";
 import LanguageSelector from "@/app/components/LanguageSelector";
 import ApiStatusBlock from "@/app/components/ApiStatusBlock";
@@ -24,6 +25,7 @@ import AdvancedTranslationSettings from "@/app/components/AdvancedTranslationSet
 import TranslateFailurePanel from "@/app/components/TranslateFailurePanel";
 
 import MultiLanguageSettingsModal from "@/app/components/MultiLanguageSettingsModal";
+import SourceArea from "@/app/components/SourceArea";
 
 const { TextArea } = Input;
 const { Dragger } = Upload;
@@ -36,7 +38,7 @@ interface SubtitleTranslatorProps {
 }
 
 const SubtitleTranslator = ({ onOpenApiSettings }: SubtitleTranslatorProps) => {
-  const tSubtitle = useTranslations("subtitle");
+  const tSubtitle = useTranslations("SubtitleTranslator");
   const t = useTranslations("common");
 
   const { sourceOptions } = useLanguageOptions();
@@ -66,8 +68,8 @@ const SubtitleTranslator = ({ onOpenApiSettings }: SubtitleTranslatorProps) => {
     handleTranslate,
     sourceLanguage,
     targetLanguage,
-    target_langs,
-    setTarget_langs,
+    targetLanguages,
+    setTargetLanguages,
     useCache,
     setUseCache,
     removeChars,
@@ -78,8 +80,8 @@ const SubtitleTranslator = ({ onOpenApiSettings }: SubtitleTranslatorProps) => {
     setTranslatedText,
     translateFailedCount,
     translateFailedLines,
-    translateInProgress,
-    setTranslateInProgress,
+    isTranslating,
+    setIsTranslating,
     progressPercent,
     setProgressPercent,
     progressInfo,
@@ -87,12 +89,11 @@ const SubtitleTranslator = ({ onOpenApiSettings }: SubtitleTranslatorProps) => {
     setExtractedText,
     handleLanguageChange,
     handleSwapLanguages,
-    delay,
     validateTranslate,
     retryCount,
     setRetryCount,
-    retryTimeout,
-    setRetryTimeout,
+    requestTimeoutSec,
+    setRequestTimeoutSec,
   } = useTranslationContext();
   const { message } = App.useApp();
   const { token } = theme.useToken();
@@ -102,16 +103,16 @@ const SubtitleTranslator = ({ onOpenApiSettings }: SubtitleTranslatorProps) => {
   const resultStats = useTextStats(translatedText);
 
   // Export mode: 'translatedOnly' | 'bilingual' | 'both'
-  const [subtitleExportMode, setSubtitleExportMode] = useLocalStorage<"translatedOnly" | "bilingual" | "both">("subtitleExportMode", "translatedOnly");
-  const [bilingualPosition, setBilingualPosition] = useLocalStorage("subtitleBilingualPosition", "below"); // 'above' or 'below'
+  const [exportMode, setExportMode] = useLocalStorage<"translatedOnly" | "bilingual" | "both">("subtitle-translator-exportMode", "translatedOnly");
+  const [bilingualPosition, setBilingualPosition] = useLocalStorage("subtitle-translator-bilingualPosition", "below"); // 'above' or 'below'
 
   // Derived states for backward compatibility
-  const needsBilingual = subtitleExportMode === "bilingual" || subtitleExportMode === "both";
+  const needsBilingual = exportMode === "bilingual" || exportMode === "both";
   const showBilingualPosition = needsBilingual;
-  const [contextAwareTranslation, setContextAwareTranslation] = useLocalStorage("subtitleContextAwareTranslation", true); // 上下文感知翻译开关
-  const [activeCollapseKeys, setActiveCollapseKeys] = useLocalStorage<string[]>("subtitleTranslatorCollapseKeys", ["subtitle"]);
+  const [contextAware, setContextAware] = useLocalStorage("subtitle-translator-contextAware", true); // 上下文感知翻译开关
+  const [collapseKeys, setCollapseKeys] = useLocalStorage<string[]>("subtitle-translator-collapseKeys", ["SubtitleTranslator"]);
   const [multiLangModalOpen, setMultiLangModalOpen] = useState(false);
-  const { customFileName, setCustomFileName, generateFileName } = useExportFilename("subtitle");
+  const { customFileName, setCustomFileName, generateFileName } = useExportFilename("subtitle-translator");
 
   useEffect(() => {
     setExtractedText("");
@@ -136,7 +137,7 @@ const SubtitleTranslator = ({ onOpenApiSettings }: SubtitleTranslatorProps) => {
     }
 
     // Determine target languages to translate to
-    const targetLanguagesToUse = multiLanguageMode ? target_langs : [targetLanguage];
+    const targetLanguagesToUse = multiLanguageMode ? targetLanguages : [targetLanguage];
 
     // If no target languages selected in multi-language mode, show error
     if (multiLanguageMode && targetLanguagesToUse.length === 0) {
@@ -164,12 +165,12 @@ const SubtitleTranslator = ({ onOpenApiSettings }: SubtitleTranslatorProps) => {
         } else if (fileType === "lrc") {
           const originalLine = lines[index];
           // 提取原始行中的所有时间标记
-          const timeMatches = originalLine.match(new RegExp(LRC_TIME_REGEX.source, "g")) || [];
+          const timeMatches = originalLine.match(LRC_TIME_REGEX_GLOBAL) || [];
           const timePrefix = timeMatches.join("");
 
           if (isBilingual) {
             const translatedLine = translatedLines[i];
-            const originalContent = originalLine.replace(new RegExp(LRC_TIME_REGEX.source, "g"), "").trim();
+            const originalContent = originalLine.replace(LRC_TIME_REGEX_GLOBAL, "").trim();
 
             if (bilingualPosition === "below") {
               // 原文在上，翻译在下
@@ -263,7 +264,7 @@ const SubtitleTranslator = ({ onOpenApiSettings }: SubtitleTranslatorProps) => {
     for (const currentTargetLang of targetLanguagesToUse) {
       try {
         // Translate content using the specific target language
-        const rawTranslatedLines = await translateContent(cleanLines, translationMethod, currentTargetLang, fileIndex, totalFiles, contextAwareTranslation ? "subtitle" : undefined);
+        const rawTranslatedLines = await translateContent(cleanLines, translationMethod, currentTargetLang, fileIndex, totalFiles, contextAware ? "subtitle" : undefined);
         const translatedLines = isAss ? restoreAssAfterTranslation(rawTranslatedLines, tagMaps) : rawTranslatedLines;
 
         // Generate file name base
@@ -273,7 +274,7 @@ const SubtitleTranslator = ({ onOpenApiSettings }: SubtitleTranslatorProps) => {
         const bilingualExt = getOutputFileExtension(fileType, true);
 
         // Handle different export modes
-        if (subtitleExportMode === "both") {
+        if (exportMode === "both") {
           // Generate and download both translated-only and bilingual versions
           const translatedOnlySubtitle = generateSubtitle(false, translatedLines);
           const bilingualSubtitle = generateSubtitle(true, translatedLines);
@@ -325,7 +326,7 @@ const SubtitleTranslator = ({ onOpenApiSettings }: SubtitleTranslatorProps) => {
 
     // Show success message after all languages completed (for single file multi-language mode)
     if (multiLanguageMode && targetLanguagesToUse.length > 1 && multipleFiles.length <= 1) {
-      const fileCount = subtitleExportMode === "both" ? targetLanguagesToUse.length * 2 : targetLanguagesToUse.length;
+      const fileCount = exportMode === "both" ? targetLanguagesToUse.length * 2 : targetLanguagesToUse.length;
       message.success(`${t("translationExported")} (${fileCount} ${t("exportedFile")})`);
     }
   };
@@ -341,7 +342,7 @@ const SubtitleTranslator = ({ onOpenApiSettings }: SubtitleTranslatorProps) => {
       return;
     }
 
-    setTranslateInProgress(true);
+    setIsTranslating(true);
     setProgressPercent(0);
 
     try {
@@ -359,7 +360,7 @@ const SubtitleTranslator = ({ onOpenApiSettings }: SubtitleTranslatorProps) => {
       //setMultipleFiles([]);
       message.success(t("translationExported"), 10);
     } finally {
-      setTranslateInProgress(false);
+      setIsTranslating(false);
     }
   };
 
@@ -415,15 +416,15 @@ const SubtitleTranslator = ({ onOpenApiSettings }: SubtitleTranslatorProps) => {
                 <Button
                   type="text"
                   danger
-                  disabled={translateInProgress}
+                  disabled={isTranslating}
                   onClick={() => {
                     resetUpload();
                     setTranslatedText("");
                     message.success(t("resetUploadSuccess"));
                   }}
                   icon={<ClearOutlined />}
-                  aria-label={t("resetUpload")}>
-                  {t("resetUpload")}
+                  aria-label={t("clearAll")}>
+                  {t("clearAll")}
                 </Button>
               </Tooltip>
             }
@@ -447,25 +448,14 @@ const SubtitleTranslator = ({ onOpenApiSettings }: SubtitleTranslatorProps) => {
             </Dragger>
 
             {uploadMode === "single" && (
-              <>
-                <TextArea
-                  placeholder={t("pasteUploadContent")}
-                  value={sourceStats.isEditable ? sourceText : sourceStats.displayText}
-                  onChange={sourceStats.isEditable ? (e) => setSourceText(e.target.value) : undefined}
-                  rows={8}
-                  className="mt-1"
-                  allowClear
-                  readOnly={!sourceStats.isEditable}
-                  aria-label={t("sourceArea")}
-                />
-                {sourceText && (
-                  <Flex justify="end" className="mt-2">
-                    <Typography.Text type="secondary" className="!text-xs">
-                      {sourceStats.charCount} {t("charLabel")} / {sourceStats.lineCount} {t("lineLabel")}
-                    </Typography.Text>
-                  </Flex>
-                )}
-              </>
+              <SourceArea
+                sourceText={sourceText}
+                setSourceText={setSourceText}
+                stats={sourceStats}
+                placeholder={t("pasteUploadContent")}
+                ariaLabel={t("sourceArea")}
+                className="mt-1"
+              />
             )}
 
             <Divider />
@@ -474,12 +464,12 @@ const SubtitleTranslator = ({ onOpenApiSettings }: SubtitleTranslatorProps) => {
               <Button
                 type="primary"
                 size="large"
-                icon={<GlobalOutlined spin={translateInProgress} />}
+                icon={<GlobalOutlined spin={isTranslating} />}
                 className="flex-1"
-                onClick={() => (uploadMode === "single" ? handleTranslate(performTranslation, sourceText, contextAwareTranslation ? "subtitle" : undefined) : handleMultipleTranslate())}
-                disabled={translateInProgress}
-                loading={translateInProgress}>
-                {multiLanguageMode ? `${t("translate")} (${target_langs.length})` : t("translate")}
+                onClick={() => (uploadMode === "single" ? handleTranslate(performTranslation, sourceText, contextAware ? "subtitle" : undefined) : handleMultipleTranslate())}
+                disabled={isTranslating}
+                loading={isTranslating}>
+                {multiLanguageMode ? `${t("translate")} (${targetLanguages.length})` : t("translate")}
               </Button>
 
               {uploadMode === "single" && sourceText && (
@@ -507,7 +497,7 @@ const SubtitleTranslator = ({ onOpenApiSettings }: SubtitleTranslatorProps) => {
                     type="text"
                     icon={<SaveOutlined />}
                     size="small"
-                    disabled={translateInProgress}
+                    disabled={isTranslating}
                     onClick={async () => {
                       await exportSettings();
                     }}
@@ -519,7 +509,7 @@ const SubtitleTranslator = ({ onOpenApiSettings }: SubtitleTranslatorProps) => {
                     type="text"
                     icon={<ImportOutlined />}
                     size="small"
-                    disabled={translateInProgress}
+                    disabled={isTranslating}
                     onClick={async () => {
                       await importSettings();
                     }}
@@ -527,7 +517,7 @@ const SubtitleTranslator = ({ onOpenApiSettings }: SubtitleTranslatorProps) => {
                   />
                 </Tooltip>
                 <Tooltip title={t("batchEditMultiLangTooltip")}>
-                  <Button type="text" icon={<GlobalOutlined />} size="small" disabled={translateInProgress} onClick={() => setMultiLangModalOpen(true)} aria-label={t("batchEditMultiLangTooltip")} />
+                  <Button type="text" icon={<GlobalOutlined />} size="small" disabled={isTranslating} onClick={() => setMultiLangModalOpen(true)} aria-label={t("batchEditMultiLangTooltip")} />
                 </Tooltip>
               </Space>
             }>
@@ -535,30 +525,30 @@ const SubtitleTranslator = ({ onOpenApiSettings }: SubtitleTranslatorProps) => {
               <LanguageSelector
                 sourceLanguage={sourceLanguage}
                 targetLanguage={targetLanguage}
-                target_langs={target_langs}
+                targetLanguages={targetLanguages}
                 multiLanguageMode={multiLanguageMode}
                 handleLanguageChange={handleLanguageChange}
                 handleSwapLanguages={handleSwapLanguages}
-                setTarget_langs={setTarget_langs}
+                setTargetLanguages={setTargetLanguages}
                 setMultiLanguageMode={setMultiLanguageMode}
               />
             </Form>
 
-            <ApiStatusBlock onOpenApiSettings={onOpenApiSettings} disabled={translateInProgress} />
+            <ApiStatusBlock onOpenApiSettings={onOpenApiSettings} disabled={isTranslating} />
 
             {LLM_MODELS.includes(translationMethod) && (
               <ContextTranslationBlock
-                enabled={contextAwareTranslation}
-                onEnabledChange={setContextAwareTranslation}
-                disabled={translateInProgress}
+                enabled={contextAware}
+                onEnabledChange={setContextAware}
+                disabled={isTranslating}
               />
             )}
 
             <Collapse
               ghost
               size="small"
-              activeKey={activeCollapseKeys}
-              onChange={(keys) => setActiveCollapseKeys(typeof keys === "string" ? [keys] : keys)}
+              activeKey={collapseKeys}
+              onChange={(keys) => setCollapseKeys(typeof keys === "string" ? [keys] : keys)}
               items={[
                 {
                   key: "subtitle",
@@ -582,8 +572,8 @@ const SubtitleTranslator = ({ onOpenApiSettings }: SubtitleTranslatorProps) => {
                       <Segmented
                         block
                         size="small"
-                        value={subtitleExportMode}
-                        onChange={(value) => setSubtitleExportMode(value as "translatedOnly" | "bilingual" | "both")}
+                        value={exportMode}
+                        onChange={(value) => setExportMode(value as "translatedOnly" | "bilingual" | "both")}
                         options={[
                           { label: tSubtitle("translatedOnly"), value: "translatedOnly" },
                           { label: tSubtitle("bilingual"), value: "bilingual" },
@@ -629,8 +619,8 @@ const SubtitleTranslator = ({ onOpenApiSettings }: SubtitleTranslatorProps) => {
                       setRemoveChars={setRemoveChars}
                       retryCount={retryCount}
                       setRetryCount={setRetryCount}
-                      retryTimeout={retryTimeout}
-                      setRetryTimeout={setRetryTimeout}
+                      requestTimeoutSec={requestTimeoutSec}
+                      setRequestTimeoutSec={setRequestTimeoutSec}
                       useCache={useCache}
                       setUseCache={setUseCache}
                       singleFileMode={singleFileMode}
@@ -648,17 +638,18 @@ const SubtitleTranslator = ({ onOpenApiSettings }: SubtitleTranslatorProps) => {
       <TranslateFailurePanel
         count={translateFailedCount}
         lines={translateFailedLines}
-        disabled={translateInProgress}
-        onRetry={() => (uploadMode === "single" ? handleTranslate(performTranslation, sourceText, contextAwareTranslation ? "subtitle" : undefined) : handleMultipleTranslate())}
+        disabled={isTranslating}
+        onRetry={() => (uploadMode === "single" ? handleTranslate(performTranslation, sourceText, contextAware ? "subtitle" : undefined) : handleMultipleTranslate())}
       />
 
       {/* Results Section */}
       {uploadMode === "single" && (translatedText || extractedText) && (
         <div className="mt-6">
           <Row gutter={[24, 24]}>
-            {translatedText && !(multiLanguageMode && target_langs.length > 1) && (
+            {translatedText && !(multiLanguageMode && targetLanguages.length > 1) && (
               <Col xs={24} lg={extractedText ? 12 : 24}>
                 <ResultCard
+                  title={t("translationResult")}
                   content={resultStats.displayText}
                   charCount={resultStats.charCount}
                   lineCount={resultStats.lineCount}
@@ -695,10 +686,10 @@ const SubtitleTranslator = ({ onOpenApiSettings }: SubtitleTranslatorProps) => {
       )}
 
       <TranslationProgressModal
-        open={translateInProgress}
+        open={isTranslating}
         percent={progressPercent}
         multiLanguageMode={multiLanguageMode}
-        targetLanguageCount={target_langs.length}
+        targetLanguageCount={targetLanguages.length}
         currentCount={progressInfo.current}
         totalCount={progressInfo.total}
       />
@@ -706,8 +697,8 @@ const SubtitleTranslator = ({ onOpenApiSettings }: SubtitleTranslatorProps) => {
       <MultiLanguageSettingsModal
         open={multiLangModalOpen}
         onClose={() => setMultiLangModalOpen(false)}
-        target_langs={target_langs}
-        setTarget_langs={setTarget_langs}
+        targetLanguages={targetLanguages}
+        setTargetLanguages={setTargetLanguages}
         setMultiLanguageMode={setMultiLanguageMode}
       />
     </Spin>

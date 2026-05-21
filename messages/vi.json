@@ -39,8 +39,7 @@
     "multiLanguageModeTooltip": "Dịch sang nhiều ngôn ngữ cùng lúc, lưu thành các tệp riêng biệt",
     "translate": "Dịch",
     "totalLanguages": "Tổng số ngôn ngữ:",
-    "resetUpload": "Xóa",
-    "resetUploadTooltip": "Xóa đầu vào hiện tại và tệp đã tải lên",
+    "resetUploadTooltip": "Xóa nội dung hiện tại và các tệp đã tải lên",
     "resetUploadSuccess": "Đã xóa",
     "extractText": "Trích xuất văn bản",
     "translationResult": "Kết quả",
@@ -94,8 +93,8 @@
     "settingsApplied": "Đã áp dụng cài đặt",
     "retryCount": "Số lần thử lại",
     "retryCountTooltip": "Số lần thử lại khi dịch thất bại",
-    "retryTimeout": "Thời gian chờ",
-    "retryTimeoutTooltip": "Thời gian chờ tối đa mỗi yêu cầu (giây). LLM suy nghĩ mất nhiều thời gian hơn; khuyến nghị 180 giây trở lên.",
+    "requestTimeoutSec": "Thời gian chờ",
+    "requestTimeoutSecTooltip": "Thời gian chờ tối đa mỗi yêu cầu (giây). LLM suy nghĩ mất nhiều thời gian hơn; khuyến nghị 180 giây trở lên.",
     "customExportFilename": "Mẫu tên tệp xuất",
     "customExportFilenameTooltip": "'{'name'}' = tên tệp gốc, '{'lang'}' = ngôn ngữ, '{'ext'}' = phần mở rộng, '{'date'}' = ngày, '{'time'}' = thời gian",
     "partialFailureTitle": "{count} dòng dịch thất bại",
@@ -112,12 +111,25 @@
     "apiStatusConnected": "✓ Đã kết nối",
     "apiStatusFailed": "Kết nối thất bại",
     "testConnection": "Kiểm tra kết nối",
-    "moreProviderSettings": "Thêm cài đặt Provider"
+    "moreProviderSettings": "Thêm cài đặt Provider",
+    "format": "Định dạng",
+    "formatTooltip": "Định dạng: xóa dòng trống và khoảng trắng đầu/cuối",
+    "resultToSource": "Kết quả ➔ Nguồn",
+    "resultToSourceTooltip": "Ghi đè văn bản kết quả vào ô nhập liệu",
+    "readOnlyMode": "Chế độ chỉ đọc",
+    "readOnlyModeTooltip": "Văn bản quá dài, đã tự động chuyển sang chế độ chỉ đọc để đảm bảo hiệu suất trang",
+    "clearInputTooltip": "Xóa nội dung đã nhập và tệp đã tải lên",
+    "fileExported": "Đã xuất tệp: {fileName}",
+    "exportSuccess": "Xuất thành công: {fileName}",
+    "batchDownloaded": "Xử lý hoàn tất, tệp đã được tải xuống tự động",
+    "sourceTextPlaceholder": "Nhập hoặc dán văn bản cần xử lý...",
+    "smartLineBreak": "Xuống dòng thông minh",
+    "replaceText": "Thay thế văn bản",
+    "generateJson": "Tạo JSON",
+    "gtxFreeAPIUnavailable": "API Google Translate miễn phí (GTX) hiện không khả dụng. Vui lòng kiểm tra kết nối mạng của bạn.",
+    "translategemmaUnavailable": "Node TranslateGemma không khả dụng. Vui lòng xác minh máy chủ cục bộ (LM Studio / llama.cpp / Ollama) đang chạy và URL chính xác."
   },
-  "subtitle": {
-    "title": "Dịch Phụ Đề Online - SRT/VTT Cho Video & Phim",
-    "description": "Dịch phụ đề SRT, ASS, VTT hàng loạt với AI. Tạo phụ đề song ngữ và giữ nguyên đồng bộ thời gian. Công cụ thiết yếu cho nhà sáng tạo video và fansub.",
-    "clientTitle": "Dịch giả Phụ đề",
+  "SubtitleTranslator": {
     "clientDescription": "Tải lên phụ đề hoặc dán nội dung. Chọn ngôn ngữ đích để dịch nhanh. Hỗ trợ xử lý hàng loạt và giữ nguyên dòng thời gian.",
     "subtitleFormat": "Định dạng phụ đề",
     "translatedOnly": "Đã dịch",
@@ -131,13 +143,7 @@
     "noSourceText": "Vui lòng tải tệp hoặc dán văn bản",
     "noExtractedText": "Không trích xuất được nội dung, kiểm tra định dạng tệp",
     "textExtracted": "Đã trích xuất văn bản phụ đề, ",
-    "bilingualError": "Phát hiện thẻ kiểu phức tạp. Chế độ song ngữ có thể gây lỗi định dạng. Khuyên dùng tắt 'Phụ đề song ngữ'.",
-    "faq1q": "Có thể dịch phụ đề SRT và ASS tải từ YouTube không?",
-    "faq1a": "Hỗ trợ SRT, ASS, VTT, LRC. Thẻ vị trí/căn chỉnh ASS (\\\\an8, v.v.) được bảo toàn sau dịch. Phụ đề YouTube trích xuất qua yt-dlp, Bilibili qua bảng điều khiển sáng tạo, nền tảng streaming từ nguồn hợp pháp. Lưu ý: Hiệu ứng ASS nội tuyến phức tạp (màu, hoạt hình, karaoke) được đơn giản hóa khi dịch.",
-    "faq2q": "Làm gì nếu timecode sai lệch hoặc xuất hiện ký tự lỗi (□□□) sau khi dịch?",
-    "faq2a": "Công cụ chỉ dịch văn bản, không sửa timecode. Lệch thời gian thường do framerate không khớp (23.976 vs 25 fps) giữa nguồn và video đích — chỉnh bằng Aegisub hoặc Subtitle Edit. Mã hóa: jschardet tự phát hiện UTF-8/UTF-16/GBK/Shift-JIS; nếu thất bại, mặc định UTF-8.",
-    "faq3q": "Làm sao tạo phụ đề song ngữ cho YouTube hoặc học ngoại ngữ?",
-    "faq3a": "Chọn chế độ 'Song ngữ' với ngôn ngữ đích. Đặt bản dịch phía trên (học) hoặc phía dưới (xem). Xuất ASS cho phụ đề song ngữ có màu, dùng trực tiếp trên YouTube, Premiere hoặc DaVinci Resolve."
+    "bilingualError": "Phát hiện thẻ kiểu phức tạp. Chế độ song ngữ có thể gây lỗi định dạng. Khuyên dùng tắt 'Phụ đề song ngữ'."
   },
   "TranslationSettings": {
     "docs": "Tài liệu",
@@ -188,7 +194,7 @@
     "presetUpdate": "Lưu vào cài đặt sẵn hiện tại",
     "presetUpdated": "Đã lưu vào cài đặt sẵn hiện tại",
     "presetDeleteConfirm": "Xóa cài đặt sẵn này?",
-    "presetEmptyHint": "No presets yet — edit and click Save",
+    "presetEmptyHint": "Chưa có cài đặt sẵn — chỉnh sửa và nhấn Lưu",
     "qwenMtDomains": "Lời nhắc tên miền (chỉ tiếng Anh)",
     "sendSystemPrompt": "Gửi lời nhắc system",
     "sendSystemPromptExtra": "Chỉ tắt khi chat template từ chối vai trò system — lỗi điển hình \"Conversations must start with a user prompt\" (ví dụ họ Gemma).",
@@ -203,55 +209,45 @@
   "tools": {
     "subtitleTranslator": {
       "title": "Dịch giả Phụ đề",
-      "description": "Dịch hàng loạt SRT, ASS, VTT, LRC. 50+ ngôn ngữ."
-    },
-    "jsonTranslate": {
-      "title": "Dịch giả JSON i18n",
-      "description": "Công cụ dịch JSON đa ngôn ngữ hiệu quả"
-    },
-    "mdTranslator": {
-      "title": "Dịch giả Markdown",
-      "description": "Dịch Markdown hàng loạt, giữ định dạng và mã"
-    },
-    "textSplitter": {
-      "title": "Bộ chia văn bản",
-      "description": "Chia văn bản dài thông minh cho AI và mạng xã hội"
-    },
-    "jsonValueExtractor": {
-      "title": "Trình trích xuất Giá trị JSON",
-      "description": "Trích xuất giá trị JSON hàng loạt, đầu ra có định dạng"
-    },
-    "jsonNodeEdit": {
-      "title": "Chỉnh sửa JSON Hàng loạt",
-      "description": "Chỉnh sửa nút JSON hàng loạt, tiền tố/hậu tố/thay thế"
-    },
-    "jsonValueTransformer": {
-      "title": "Trình ánh xạ Giá trị JSON",
-      "description": "Ánh xạ và di chuyển giá trị với JSONPath"
-    },
-    "jsonValueSwapper": {
-      "title": "Trình hoán đổi Giá trị JSON",
-      "description": "Hoán đổi giá trị hai trường bằng một cú nhấp chuột"
-    },
-    "jsonNodeInserter": {
-      "title": "Trình chèn Nút JSON",
-      "description": "Chèn nút mới tại vị trí được chỉ định hàng loạt"
-    },
-    "jsonSortClassify": {
-      "title": "Sắp xếp & Phân loại JSON",
-      "description": "Sắp xếp và nhóm mảng, quy tắc tùy chỉnh"
-    },
-    "jsonMatchUpdate": {
-      "title": "Cập nhật JSON Match",
-      "description": "Cập nhật hàng loạt dựa trên khớp trường"
-    },
-    "dataParserFlare": {
-      "title": "Trình chuyển đổi Flare",
-      "description": "Chuyển đổi bookmark trình duyệt và định dạng Flare"
-    },
-    "dataParserImgPrompt": {
-      "title": "Trình tạo dữ liệu IMGPrompt",
-      "description": "Tạo dữ liệu JSON IMGPrompt hàng loạt"
+      "description": "Dịch hàng loạt SRT, ASS, VTT, LRC. 50+ ngôn ngữ.",
+      "metaTitle": "Dịch Phụ Đề Online - SRT/VTT Cho Video & Phim",
+      "metaDescription": "Đang dịch video? Dịch phụ đề SRT, ASS, VTT hàng loạt với AI. Tạo phụ đề song ngữ và giữ nguyên đồng bộ thời gian. Công cụ thiết yếu cho nhà sáng tạo video và fansub.",
+      "faq": [
+        {
+          "q": "Có thể dịch phụ đề SRT và ASS tải từ YouTube không?",
+          "a": "Hỗ trợ SRT, ASS, VTT, LRC. Thẻ vị trí/căn chỉnh ASS (\\an8, v.v.) được bảo toàn sau dịch. Phụ đề YouTube trích xuất qua yt-dlp, Galaxy Play hoặc FPT Play qua bảng điều khiển sáng tạo, nền tảng streaming từ nguồn hợp pháp. Lưu ý: Hiệu ứng ASS nội tuyến phức tạp (màu, hoạt hình, karaoke) được đơn giản hóa khi dịch."
+        },
+        {
+          "q": "Làm gì nếu timecode sai lệch hoặc xuất hiện ký tự lỗi (□□□) sau khi dịch?",
+          "a": "Công cụ chỉ dịch văn bản, không sửa timecode. Lệch thời gian thường do framerate không khớp (23.976 vs 25 fps) giữa nguồn và video đích — chỉnh bằng Aegisub hoặc Subtitle Edit. Mã hóa: jschardet tự phát hiện UTF-8/UTF-16/GBK/Shift-JIS; nếu thất bại, mặc định UTF-8."
+        },
+        {
+          "q": "Làm sao tạo phụ đề song ngữ cho YouTube hoặc học ngoại ngữ?",
+          "a": "Chọn chế độ 'Song ngữ' với ngôn ngữ đích. Đặt bản dịch phía trên (học) hoặc phía dưới (xem). Xuất ASS cho phụ đề song ngữ có màu, dùng trực tiếp trên YouTube, Premiere hoặc DaVinci Resolve."
+        }
+      ],
+      "howto": [
+        {
+          "name": "Bắt đầu từ video hoặc tệp phụ đề",
+          "text": "Tải lên SRT/ASS/VTT/LRC. Trích xuất: YouTube qua yt-dlp, nền tảng khác qua công cụ chuyên dụng. Định dạng và mã hóa UTF-8/UTF-16/GBK được phát hiện tự động."
+        },
+        {
+          "name": "Chọn engine và chế độ xuất",
+          "text": "Google miễn phí cho thử nghiệm nhanh, DeepSeek/DeepL API cho chất lượng. 'Chỉ bản dịch' để xuất bản, 'Song ngữ' để học ngôn ngữ. Trong song ngữ, vị trí trên (học) hoặc dưới (xem)."
+        },
+        {
+          "name": "Dịch và xuất lên nền tảng",
+          "text": "Nhấp Dịch và kiểm tra timing trong xem trước. Tải SRT cho phụ đề cộng đồng YouTube, ASS có kiểu cho Premiere/DaVinci Resolve, VTT cho trình phát web, LRC cho lời nhạc."
+        }
+      ],
+      "features": [
+        "Hỗ trợ SRT, ASS, VTT, LRC, thẻ vị trí ASS (\\\\an8 v.v.) được bảo toàn",
+        "Timecode không đổi — chỉ dịch văn bản, thời gian gốc được bảo toàn",
+        "Tự phát hiện mã hóa UTF-8/UTF-16/GBK",
+        "Vị trí phụ đề song ngữ: trên (học) hoặc dưới (xem)",
+        "15+ engine dịch: Google miễn phí, DeepSeek, DeepL, OpenAI",
+        "Tương thích với YouTube, Premiere, DaVinci Resolve, Aegisub"
+      ]
     }
   },
   "navigation": {

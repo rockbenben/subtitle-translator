@@ -39,8 +39,7 @@
     "multiLanguageModeTooltip": "แปลเป็นหลายภาษาพร้อมกัน บันทึกเป็นไฟล์แยก",
     "translate": "แปล",
     "totalLanguages": "จำนวนภาษาทั้งหมด:",
-    "resetUpload": "ล้าง",
-    "resetUploadTooltip": "ล้างอินพุตปัจจุบันและไฟล์ที่อัปโหลด",
+    "resetUploadTooltip": "ล้างเนื้อหาที่ป้อนและไฟล์ที่อัปโหลด",
     "resetUploadSuccess": "ล้างแล้ว",
     "extractText": "แยกข้อความ",
     "translationResult": "ผลลัพธ์",
@@ -94,8 +93,8 @@
     "settingsApplied": "ใช้การตั้งค่าแล้ว",
     "retryCount": "จำนวนครั้งที่ลองใหม่",
     "retryCountTooltip": "จำนวนครั้งที่ลองใหม่เมื่อการแปลล้มเหลว",
-    "retryTimeout": "หมดเวลา",
-    "retryTimeoutTooltip": "เวลารอสูงสุดต่อคำขอ (วินาที). LLM ใช้เวลาคิดนานกว่า; แนะนำ 180 วินาทีขึ้นไป.",
+    "requestTimeoutSec": "หมดเวลา",
+    "requestTimeoutSecTooltip": "เวลารอสูงสุดต่อคำขอ (วินาที). LLM ใช้เวลาคิดนานกว่า; แนะนำ 180 วินาทีขึ้นไป.",
     "customExportFilename": "รูปแบบชื่อไฟล์ส่งออก",
     "customExportFilenameTooltip": "'{'name'}' = ชื่อไฟล์เดิม, '{'lang'}' = ภาษา, '{'ext'}' = นามสกุล, '{'date'}' = วันที่, '{'time'}' = เวลา",
     "partialFailureTitle": "แปลล้มเหลว {count} บรรทัด",
@@ -112,12 +111,25 @@
     "apiStatusConnected": "✓ เชื่อมต่อแล้ว",
     "apiStatusFailed": "เชื่อมต่อล้มเหลว",
     "testConnection": "ทดสอบการเชื่อมต่อ",
-    "moreProviderSettings": "การตั้งค่า Provider เพิ่มเติม"
+    "moreProviderSettings": "การตั้งค่า Provider เพิ่มเติม",
+    "format": "จัดรูปแบบ",
+    "formatTooltip": "จัดรูปแบบ: ลบบรรทัดว่างและช่องว่างหน้า/หลัง",
+    "resultToSource": "ผลลัพธ์ ➔ ต้นฉบับ",
+    "resultToSourceTooltip": "เขียนทับข้อความผลลัพธ์ลงในช่องอินพุต",
+    "readOnlyMode": "โหมดอ่านอย่างเดียว",
+    "readOnlyModeTooltip": "ข้อความยาวเกินไป ระบบเปลี่ยนเป็นโหมดอ่านอย่างเดียวอัตโนมัติเพื่อรักษาประสิทธิภาพหน้า",
+    "clearInputTooltip": "ล้างเนื้อหาที่ป้อนและไฟล์ที่อัปโหลด",
+    "fileExported": "ส่งออกไฟล์แล้ว: {fileName}",
+    "exportSuccess": "ส่งออกสำเร็จ: {fileName}",
+    "batchDownloaded": "ประมวลผลเสร็จสิ้น ไฟล์ถูกดาวน์โหลดอัตโนมัติ",
+    "sourceTextPlaceholder": "ป้อนหรือวางข้อความที่ต้องการประมวลผล...",
+    "smartLineBreak": "ขึ้นบรรทัดใหม่อัจฉริยะ",
+    "replaceText": "แทนที่ข้อความ",
+    "generateJson": "สร้าง JSON",
+    "gtxFreeAPIUnavailable": "API Google Translate ฟรี (GTX) ไม่สามารถใช้งานได้ในขณะนี้ โปรดตรวจสอบการเชื่อมต่อเครือข่ายของคุณ",
+    "translategemmaUnavailable": "โหนด TranslateGemma ไม่พร้อมใช้งาน โปรดตรวจสอบว่าเซิร์ฟเวอร์ภายในเครื่อง (LM Studio / llama.cpp / Ollama) กำลังทำงานและ URL ถูกต้อง"
   },
-  "subtitle": {
-    "title": "แปลซับไตเติลออนไลน์ - SRT/VTT สำหรับวิดีโอ & ภาพยนตร์",
-    "description": "แปลซับไตเติล SRT, ASS, VTT เป็นชุดด้วย AI สร้างซับไตเติลสองภาษาและรักษาการซิงค์เวลา เครื่องมือจำเป็นสำหรับผู้สร้างวิดีโอและ fansub",
-    "clientTitle": "ตัวแปลซับไตเติล",
+  "SubtitleTranslator": {
     "clientDescription": "อัปโหลดซับไตเติลหรือวางเนื้อหา เลือกภาษาเป้าหมายเพื่อแปลอย่างรวดเร็ว รองรับการประมวลผลเป็นชุดและรักษาไทม์ไลน์",
     "subtitleFormat": "รูปแบบซับไตเติล",
     "translatedOnly": "แปลแล้ว",
@@ -131,13 +143,7 @@
     "noSourceText": "กรุณาอัปโหลดไฟล์หรือวางข้อความ",
     "noExtractedText": "ไม่สามารถแยกเนื้อหา ตรวจสอบรูปแบบไฟล์",
     "textExtracted": "แยกข้อความซับไตเติลแล้ว, ",
-    "bilingualError": "ตรวจพบแท็กสไตล์ซับซ้อน โหมดสองภาษาอาจทำให้รูปแบบผิดพลาด แนะนำให้ปิด 'ซับไตเติลสองภาษา'",
-    "faq1q": "แปลซับ SRT และ ASS ที่ดาวน์โหลดจาก YouTube ได้ไหม?",
-    "faq1a": "รองรับ SRT, ASS, VTT, LRC แท็กตำแหน่ง/การจัดวางของ ASS (\\\\an8 ฯลฯ) ยังคงอยู่หลังแปล ซับ YouTube ใช้ yt-dlp, Bilibili ผ่านแดชบอร์ดผู้สร้าง, แพลตฟอร์มสตรีมมิ่งจากแหล่งที่ถูกกฎหมาย หมายเหตุ: เอฟเฟกต์ ASS ในบรรทัดที่ซับซ้อน (สี, แอนิเมชัน, คาราโอเกะ) จะถูกลดความซับซ้อนระหว่างแปล",
-    "faq2q": "ทำอย่างไรถ้าไทม์โค้ดไม่ตรงหรือมีตัวอักษรอ่านไม่ออก (□□□) หลังแปล?",
-    "faq2a": "เครื่องมือแปลเฉพาะข้อความ ไม่แก้ไทม์โค้ด ความไม่ตรงมักเกิดจากเฟรมเรตต่างกัน (23.976 vs 25 fps) ระหว่างต้นฉบับและวิดีโอปลายทาง — แก้ด้วย Aegisub หรือ Subtitle Edit การเข้ารหัส: jschardet ตรวจจับ UTF-8/UTF-16/GBK/Shift-JIS อัตโนมัติ หากล้มเหลว UTF-8 เป็นค่าเริ่มต้น",
-    "faq3q": "จะสร้างซับสองภาษาสำหรับ YouTube หรือเรียนภาษาอย่างไร?",
-    "faq3a": "เลือกโหมด 'สองภาษา' กับภาษาเป้าหมาย วางคำแปลไว้ด้านบน (เรียน) หรือด้านล่าง (ดู) ส่งออกเป็น ASS เพื่อได้ซับสองภาษาสี ใช้กับ YouTube, Premiere หรือ DaVinci Resolve ได้ทันที"
+    "bilingualError": "ตรวจพบแท็กสไตล์ซับซ้อน โหมดสองภาษาอาจทำให้รูปแบบผิดพลาด แนะนำให้ปิด 'ซับไตเติลสองภาษา'"
   },
   "TranslationSettings": {
     "docs": "เอกสาร",
@@ -157,9 +163,9 @@
     "urlAutoCompleted": "เติม URL อัตโนมัติแล้ว",
     "modelExtra": "ชื่อโมเดล LLM ดูเอกสาร API",
     "temperatureExtra": "อุณหภูมิ (0-2): สูง = สุ่มมากขึ้น ต่ำ = แน่นอนมากขึ้น แนะนำ: 0.2-0.8",
-    "systemPrompt": "System Prompt",
+    "systemPrompt": "พรอมต์ระบบ",
     "systemPromptExtra": "System prompt สำหรับแปล LLM ปล่อยว่างสำหรับค่าเริ่มต้น",
-    "userPrompt": "User Prompt",
+    "userPrompt": "พรอมต์ผู้ใช้",
     "userPromptExtra": "Prompt แปลกำหนดเอง ปล่อยว่างสำหรับค่าเริ่มต้น ตัวแปร:",
     "for": "สำหรับ",
     "textToTranslate": "ข้อความที่ต้องแปล",
@@ -172,7 +178,7 @@
     "contextWindow": "บรรทัดบริบท",
     "contextWindowExtra": "บรรทัดต่อชุดในโหมดบริบท ค่าที่สูงขึ้นให้บริบทที่ดีขึ้นแต่อาจเกินขีดจำกัดโทเคนของโมเดล.",
     "delayTime": "หน่วงเวลา",
-    "useRelay": "API Relay",
+    "useRelay": "ใช้ API Relay",
     "useRelayTooltip": "เปิด API relay เมื่อพบข้อผิดพลาด CORS หรือ 403",
     "enableThinking": "เปิดใช้งานโหมดการคิด",
     "enableThinkingTooltip": "เปิดใช้งานโหมดการคิด / การให้เหตุผลสำหรับโมเดลที่รองรับ",
@@ -188,7 +194,7 @@
     "presetUpdate": "บันทึกในพรีเซ็ตปัจจุบัน",
     "presetUpdated": "บันทึกในพรีเซ็ตปัจจุบันแล้ว",
     "presetDeleteConfirm": "ลบพรีเซ็ตนี้หรือไม่?",
-    "presetEmptyHint": "No presets yet — edit and click Save",
+    "presetEmptyHint": "ยังไม่มีพรีเซ็ต — แก้ไขแล้วคลิกบันทึก",
     "qwenMtDomains": "พรอมต์โดเมน (ภาษาอังกฤษเท่านั้น)",
     "sendSystemPrompt": "ส่ง system prompt",
     "sendSystemPromptExtra": "ปิดเฉพาะเมื่อ chat template ปฏิเสธบทบาท system — ข้อผิดพลาดทั่วไป \"Conversations must start with a user prompt\" (เช่น ตระกูล Gemma)",
@@ -203,55 +209,45 @@
   "tools": {
     "subtitleTranslator": {
       "title": "ตัวแปลซับไตเติล",
-      "description": "แปล SRT, ASS, VTT, LRC เป็นชุด 50+ ภาษา"
-    },
-    "jsonTranslate": {
-      "title": "ตัวแปล JSON i18n",
-      "description": "เครื่องมือแปล JSON หลายภาษาที่มีประสิทธิภาพ"
-    },
-    "mdTranslator": {
-      "title": "ตัวแปล Markdown",
-      "description": "แปล Markdown เป็นชุด รักษาการจัดรูปแบบและโค้ด"
-    },
-    "textSplitter": {
-      "title": "ตัวแบ่งข้อความ",
-      "description": "แบ่งข้อความยาวอย่างชาญฉลาดสำหรับ AI และโซเชียลมีเดีย"
-    },
-    "jsonValueExtractor": {
-      "title": "ตัวแยกค่า JSON",
-      "description": "แยกค่า JSON เป็นชุด เอาต์พุตมีการจัดรูปแบบ"
-    },
-    "jsonNodeEdit": {
-      "title": "แก้ไข JSON เป็นชุด",
-      "description": "แก้ไขโหนด JSON เป็นชุด คำนำหน้า/คำต่อท้าย/แทนที่"
-    },
-    "jsonValueTransformer": {
-      "title": "ตัวแมปค่า JSON",
-      "description": "แมปและย้ายค่าด้วย JSONPath"
-    },
-    "jsonValueSwapper": {
-      "title": "ตัวสลับค่า JSON",
-      "description": "สลับค่าสองฟิลด์ได้ในคลิกเดียว"
-    },
-    "jsonNodeInserter": {
-      "title": "ตัวแทรกโหนด JSON",
-      "description": "แทรกโหนดใหม่ที่ตำแหน่งที่ระบุเป็นชุด"
-    },
-    "jsonSortClassify": {
-      "title": "เรียงลำดับ & จัดประเภท JSON",
-      "description": "เรียงลำดับและจัดกลุ่มอาร์เรย์ กฎที่กำหนดเอง"
-    },
-    "jsonMatchUpdate": {
-      "title": "อัปเดต JSON Match",
-      "description": "อัปเดตเป็นชุดตามการจับคู่ฟิลด์"
-    },
-    "dataParserFlare": {
-      "title": "ตัวแปลง Flare",
-      "description": "แปลงบุ๊กมาร์กเบราว์เซอร์และรูปแบบ Flare"
-    },
-    "dataParserImgPrompt": {
-      "title": "ตัวสร้างข้อมูล IMGPrompt",
-      "description": "สร้างข้อมูล JSON IMGPrompt เป็นชุด"
+      "description": "แปล SRT, ASS, VTT, LRC เป็นชุด 50+ ภาษา",
+      "metaTitle": "แปลซับไตเติลออนไลน์ - SRT/VTT สำหรับวิดีโอ & ภาพยนตร์",
+      "metaDescription": "กำลังแปลวิดีโอ? แปลซับไตเติล SRT, ASS, VTT เป็นชุดด้วย AI สร้างซับไตเติลสองภาษาและรักษาการซิงค์เวลา เครื่องมือจำเป็นสำหรับผู้สร้างวิดีโอและ fansub",
+      "faq": [
+        {
+          "q": "แปลซับ SRT และ ASS ที่ดาวน์โหลดจาก YouTube ได้ไหม?",
+          "a": "รองรับ SRT, ASS, VTT, LRC แท็กตำแหน่ง/การจัดวางของ ASS (\\an8 ฯลฯ) ยังคงอยู่หลังแปล ซับ YouTube ใช้ yt-dlp, TrueID หรือ Viu ผ่านแดชบอร์ดผู้สร้าง, แพลตฟอร์มสตรีมมิ่งจากแหล่งที่ถูกกฎหมาย หมายเหตุ: เอฟเฟกต์ ASS ในบรรทัดที่ซับซ้อน (สี, แอนิเมชัน, คาราโอเกะ) จะถูกลดความซับซ้อนระหว่างแปล"
+        },
+        {
+          "q": "ทำอย่างไรถ้าไทม์โค้ดไม่ตรงหรือมีตัวอักษรอ่านไม่ออก (□□□) หลังแปล?",
+          "a": "เครื่องมือแปลเฉพาะข้อความ ไม่แก้ไทม์โค้ด ความไม่ตรงมักเกิดจากเฟรมเรตต่างกัน (23.976 vs 25 fps) ระหว่างต้นฉบับและวิดีโอปลายทาง — แก้ด้วย Aegisub หรือ Subtitle Edit การเข้ารหัส: jschardet ตรวจจับ UTF-8/UTF-16/GBK/Shift-JIS อัตโนมัติ หากล้มเหลว UTF-8 เป็นค่าเริ่มต้น"
+        },
+        {
+          "q": "จะสร้างซับสองภาษาสำหรับ YouTube หรือเรียนภาษาอย่างไร?",
+          "a": "เลือกโหมด 'สองภาษา' กับภาษาเป้าหมาย วางคำแปลไว้ด้านบน (เรียน) หรือด้านล่าง (ดู) ส่งออกเป็น ASS เพื่อได้ซับสองภาษาสี ใช้กับ YouTube, Premiere หรือ DaVinci Resolve ได้ทันที"
+        }
+      ],
+      "howto": [
+        {
+          "name": "เริ่มจากวิดีโอหรือไฟล์ซับ",
+          "text": "อัปโหลด SRT/ASS/VTT/LRC แยก: YouTube ด้วย yt-dlp, แพลตฟอร์มอื่นด้วยเครื่องมือเฉพาะ รูปแบบและการเข้ารหัส UTF-8/UTF-16/GBK ตรวจจับอัตโนมัติ"
+        },
+        {
+          "name": "เลือกเอนจินและโหมดเอาต์พุต",
+          "text": "Google ฟรีสำหรับทดสอบเร็ว, DeepSeek/DeepL API เพื่อคุณภาพ 'เฉพาะคำแปล' สำหรับเผยแพร่, 'สองภาษา' สำหรับเรียนภาษา ในสองภาษา วางคำแปลด้านบน (เรียน) หรือด้านล่าง (ดู)"
+        },
+        {
+          "name": "แปลและส่งออกไปยังแพลตฟอร์ม",
+          "text": "คลิกแปลและตรวจสอบจังหวะในตัวอย่าง ดาวน์โหลด SRT สำหรับซับชุมชน YouTube, ASS มีสไตล์สำหรับ Premiere/DaVinci Resolve, VTT สำหรับเว็บเพลเยอร์, LRC สำหรับเนื้อเพลง"
+        }
+      ],
+      "features": [
+        "รองรับ SRT, ASS, VTT, LRC แท็กตำแหน่ง ASS (\\\\an8 ฯลฯ) คงไว้",
+        "ไทม์โค้ดไม่เปลี่ยน — แปลเฉพาะข้อความ เวลาเดิมคงอยู่",
+        "ตรวจจับการเข้ารหัส UTF-8/UTF-16/GBK อัตโนมัติ",
+        "ตำแหน่งซับสองภาษา: ด้านบน (เรียน) หรือด้านล่าง (ดู)",
+        "15+ เอนจินแปล: Google ฟรี, DeepSeek, DeepL, OpenAI",
+        "ใช้งานร่วมกับ YouTube, Premiere, DaVinci Resolve, Aegisub"
+      ]
     }
   },
   "navigation": {

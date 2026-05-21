@@ -39,7 +39,6 @@
     "multiLanguageModeTooltip": "Traduzir para vários idiomas simultaneamente, salvos separadamente",
     "translate": "Traduzir",
     "totalLanguages": "Total de Idiomas:",
-    "resetUpload": "Limpar",
     "resetUploadTooltip": "Limpar entrada atual e arquivos enviados",
     "resetUploadSuccess": "Limpo",
     "extractText": "Extrair Texto",
@@ -94,8 +93,8 @@
     "settingsApplied": "Configurações aplicadas",
     "retryCount": "Tentativas de repetição",
     "retryCountTooltip": "Número de tentativas quando a tradução falha",
-    "retryTimeout": "Tempo limite",
-    "retryTimeoutTooltip": "Espera máxima por solicitação (segundos). O raciocínio do LLM leva mais tempo; recomenda-se 180 s ou mais.",
+    "requestTimeoutSec": "Tempo limite",
+    "requestTimeoutSecTooltip": "Espera máxima por solicitação (segundos). O raciocínio do LLM leva mais tempo; recomenda-se 180 s ou mais.",
     "customExportFilename": "Padrão de nome de arquivo",
     "customExportFilenameTooltip": "'{'name'}' = nome original, '{'lang'}' = idioma, '{'ext'}' = extensão, '{'date'}' = data, '{'time'}' = hora",
     "partialFailureTitle": "{count} linha(s) falharam",
@@ -112,12 +111,25 @@
     "apiStatusConnected": "✓ Conectado",
     "apiStatusFailed": "Falha na conexão",
     "testConnection": "Testar conexão",
-    "moreProviderSettings": "Mais configurações do Provider"
+    "moreProviderSettings": "Mais configurações do Provider",
+    "format": "Formatar",
+    "formatTooltip": "Formatar: remover linhas vazias e espaços no início/fim",
+    "resultToSource": "Resultado ➔ Original",
+    "resultToSourceTooltip": "Substituir o conteúdo da caixa de entrada pelo texto do resultado",
+    "readOnlyMode": "Modo Somente Leitura",
+    "readOnlyModeTooltip": "Texto muito longo; modo somente leitura ativado automaticamente para manter o desempenho da página",
+    "clearInputTooltip": "Limpar conteúdo de entrada e arquivos enviados",
+    "fileExported": "Arquivo exportado: {fileName}",
+    "exportSuccess": "Exportado com sucesso: {fileName}",
+    "batchDownloaded": "Processamento concluído, arquivos baixados automaticamente",
+    "sourceTextPlaceholder": "Digite ou cole o texto a ser processado...",
+    "smartLineBreak": "Quebra de linha inteligente",
+    "replaceText": "Substituir texto",
+    "generateJson": "Gerar JSON",
+    "gtxFreeAPIUnavailable": "A API gratuita do Google Translate (GTX) está indisponível no momento. Verifique sua conexão de rede.",
+    "translategemmaUnavailable": "Nó TranslateGemma indisponível. Verifique se o servidor local (LM Studio / llama.cpp / Ollama) está em execução e a URL está correta."
   },
-  "subtitle": {
-    "title": "Tradutor de Legendas - SRT/VTT Online para Vídeos",
-    "description": "Traduza legendas SRT, ASS, VTT em lote com IA. Gere legendas bilíngues e mantenha a sincronia temporal. Essencial para criadores de conteúdo e fansubs.",
-    "clientTitle": "Tradutor de Legendas",
+  "SubtitleTranslator": {
     "clientDescription": "Envie legendas ou cole conteúdo. Selecione o idioma de destino para tradução rápida. Suporta processamento em lote e preserva a linha do tempo.",
     "subtitleFormat": "Formato de Legendas",
     "translatedOnly": "Traduzido",
@@ -131,13 +143,7 @@
     "noSourceText": "Por favor, envie arquivo ou cole texto",
     "noExtractedText": "Nenhum conteúdo extraído, verifique o formato do arquivo",
     "textExtracted": "Texto de legenda extraído, ",
-    "bilingualError": "Tags de estilo complexas detectadas. Modo bilíngue pode causar erros de formatação. Recomendado desativar 'Legendas Bilíngues'.",
-    "faq1q": "Posso traduzir legendas SRT e ASS baixadas do YouTube?",
-    "faq1a": "Suporta SRT, ASS, VTT, LRC. Tags de posição/alinhamento ASS (\\\\an8, etc.) são preservadas após tradução. Legendas YouTube via yt-dlp, Bilibili via painel de criador, plataformas streaming de fontes legítimas. Nota: Efeitos ASS inline complexos (cor, animação, karaokê) são simplificados durante a tradução.",
-    "faq2q": "O que fazer se os timecodes não coincidirem ou aparecerem caracteres ilegíveis (□□□)?",
-    "faq2a": "A ferramenta apenas traduz texto sem modificar timecodes. Desajustes vêm de framerates inconsistentes (23,976 vs 25 fps) entre origem e vídeo destino — ajuste com Aegisub ou Subtitle Edit. Codificação: jschardet detecta UTF-8/UTF-16/GBK/Shift-JIS automaticamente; se falhar, UTF-8 por padrão.",
-    "faq3q": "Como criar legendas bilíngues para YouTube ou aprendizado de idiomas?",
-    "faq3a": "Selecione modo 'Bilíngue' com o idioma alvo. Posicione a tradução acima (para aprendizado) ou abaixo (para consumo). Exporte como ASS para legendas bilíngues coloridas, diretamente usáveis no YouTube, Premiere ou DaVinci Resolve."
+    "bilingualError": "Tags de estilo complexas detectadas. Modo bilíngue pode causar erros de formatação. Recomendado desativar 'Legendas Bilíngues'."
   },
   "TranslationSettings": {
     "docs": "Docs",
@@ -188,7 +194,7 @@
     "presetUpdate": "Salvar na predefinição atual",
     "presetUpdated": "Salvo na predefinição atual",
     "presetDeleteConfirm": "Excluir esta predefinição?",
-    "presetEmptyHint": "No presets yet — edit and click Save",
+    "presetEmptyHint": "Sem predefinições — edite e clique em Salvar",
     "qwenMtDomains": "Prompts de Domínio (apenas em inglês)",
     "sendSystemPrompt": "Enviar prompt system",
     "sendSystemPromptExtra": "Desligue apenas quando o chat template rejeitar o papel system — erro típico \"Conversations must start with a user prompt\" (ex. família Gemma).",
@@ -203,55 +209,45 @@
   "tools": {
     "subtitleTranslator": {
       "title": "Tradutor Legendas",
-      "description": "Tradução em lote SRT, ASS, VTT, LRC. 50+ idiomas."
-    },
-    "jsonTranslate": {
-      "title": "Tradutor JSON i18n",
-      "description": "Ferramenta eficiente de tradução JSON multilíngue"
-    },
-    "mdTranslator": {
-      "title": "Tradutor Markdown",
-      "description": "Tradução Markdown em lote, preserva formato e código"
-    },
-    "textSplitter": {
-      "title": "Divisor de Texto",
-      "description": "Divisão inteligente de texto longo para IA e redes sociais"
-    },
-    "jsonValueExtractor": {
-      "title": "Extrator Valor JSON",
-      "description": "Extrair valores JSON em lote, saída formatada"
-    },
-    "jsonNodeEdit": {
-      "title": "Edição JSON em Lote",
-      "description": "Editar nós JSON em lote, prefixo/sufixo/substituir"
-    },
-    "jsonValueTransformer": {
-      "title": "Mapeador Valor JSON",
-      "description": "Mapeamento e migração de valores com JSONPath"
-    },
-    "jsonValueSwapper": {
-      "title": "Trocador Valor JSON",
-      "description": "Trocar valores de dois campos em um clique"
-    },
-    "jsonNodeInserter": {
-      "title": "Inseridor Nó JSON",
-      "description": "Inserir novos nós em posição especificada em lote"
-    },
-    "jsonSortClassify": {
-      "title": "Ordenar & Classificar JSON",
-      "description": "Ordenar e agrupar arrays, regras personalizadas"
-    },
-    "jsonMatchUpdate": {
-      "title": "Atualização Match JSON",
-      "description": "Atualização em lote baseada em correspondência de campos"
-    },
-    "dataParserFlare": {
-      "title": "Conversor Flare",
-      "description": "Conversão favoritos navegador e formato Flare"
-    },
-    "dataParserImgPrompt": {
-      "title": "Gerador Dados IMGPrompt",
-      "description": "Gerar dados JSON IMGPrompt em lote"
+      "description": "Tradução em lote SRT, ASS, VTT, LRC. 50+ idiomas.",
+      "metaTitle": "Tradutor de Legendas - SRT/VTT Online para Vídeos",
+      "metaDescription": "Traduzindo vídeos? Traduza legendas SRT, ASS, VTT em lote com IA. Gere legendas bilíngues mantendo a sincronia. Essencial para criadores de conteúdo!",
+      "faq": [
+        {
+          "q": "Posso traduzir legendas SRT e ASS baixadas do YouTube?",
+          "a": "Suporta SRT, ASS, VTT, LRC. Tags de posição/alinhamento ASS (\\an8, etc.) são preservadas após tradução. Legendas YouTube via yt-dlp, Globoplay ou RTP Play via painel de criador, plataformas streaming de fontes legítimas. Nota: Efeitos ASS inline complexos (cor, animação, karaokê) são simplificados durante a tradução."
+        },
+        {
+          "q": "O que fazer se os timecodes não coincidirem ou aparecerem caracteres ilegíveis (□□□)?",
+          "a": "A ferramenta apenas traduz texto sem modificar timecodes. Desajustes vêm de framerates inconsistentes (23,976 vs 25 fps) entre origem e vídeo destino — ajuste com Aegisub ou Subtitle Edit. Codificação: jschardet detecta UTF-8/UTF-16/GBK/Shift-JIS automaticamente; se falhar, UTF-8 por padrão."
+        },
+        {
+          "q": "Como criar legendas bilíngues para YouTube ou aprendizado de idiomas?",
+          "a": "Selecione modo 'Bilíngue' com o idioma alvo. Posicione a tradução acima (para aprendizado) ou abaixo (para consumo). Exporte como ASS para legendas bilíngues coloridas, diretamente usáveis no YouTube, Premiere ou DaVinci Resolve."
+        }
+      ],
+      "howto": [
+        {
+          "name": "Começar a partir de vídeo ou arquivo de legenda",
+          "text": "Carregue SRT/ASS/VTT/LRC. Extração: YouTube via yt-dlp, outras plataformas com ferramentas dedicadas. Formato e codificação UTF-8/UTF-16/GBK detectados automaticamente."
+        },
+        {
+          "name": "Escolher motor e modo de saída",
+          "text": "Google grátis para testes rápidos, DeepSeek/DeepL API para qualidade. 'Apenas tradução' para publicar, 'Bilíngue' para aprender idiomas. No bilíngue, posição acima (aprender) ou abaixo (assistir)."
+        },
+        {
+          "name": "Traduzir e exportar para sua plataforma",
+          "text": "Clique em Traduzir e verifique o timing na pré-visualização. Baixe SRT para legendas comunitárias do YouTube, ASS estilizado para Premiere/DaVinci Resolve, VTT para players web, LRC para letras."
+        }
+      ],
+      "features": [
+        "Compatível com SRT, ASS, VTT, LRC, tags de posição ASS (\\\\an8 etc.) preservadas",
+        "Timecodes intactos — apenas o texto é traduzido, timing original preservado",
+        "Detecção automática de codificação UTF-8/UTF-16/GBK",
+        "Posição de legenda bilíngue: acima (aprendizado) ou abaixo (visualização)",
+        "15+ motores de tradução: Google grátis, DeepSeek, DeepL, OpenAI",
+        "Compatível com YouTube, Premiere, DaVinci Resolve, Aegisub"
+      ]
     }
   },
   "navigation": {

@@ -39,7 +39,6 @@
     "multiLanguageModeTooltip": "Traduci in più lingue contemporaneamente, salvate separatamente",
     "translate": "Traduci",
     "totalLanguages": "Totale Lingue:",
-    "resetUpload": "Pulisci",
     "resetUploadTooltip": "Pulisci input corrente e file caricati",
     "resetUploadSuccess": "Pulito",
     "extractText": "Estrai Testo",
@@ -94,8 +93,8 @@
     "settingsApplied": "Impostazioni applicate",
     "retryCount": "Tentativi di riprova",
     "retryCountTooltip": "Numero di tentativi quando la traduzione fallisce",
-    "retryTimeout": "Timeout",
-    "retryTimeoutTooltip": "Attesa massima per richiesta (secondi). Il pensiero LLM richiede più tempo; si consigliano 180 s o più.",
+    "requestTimeoutSec": "Timeout",
+    "requestTimeoutSecTooltip": "Attesa massima per richiesta (secondi). Il pensiero LLM richiede più tempo; si consigliano 180 s o più.",
     "customExportFilename": "Modello nome file",
     "customExportFilenameTooltip": "'{'name'}' = nome originale, '{'lang'}' = lingua, '{'ext'}' = estensione, '{'date'}' = data, '{'time'}' = ora",
     "partialFailureTitle": "{count} riga/righe non riuscite",
@@ -112,12 +111,25 @@
     "apiStatusConnected": "✓ Connesso",
     "apiStatusFailed": "Connessione fallita",
     "testConnection": "Testa connessione",
-    "moreProviderSettings": "Altre impostazioni Provider"
+    "moreProviderSettings": "Altre impostazioni Provider",
+    "format": "Formatta",
+    "formatTooltip": "Formatta: rimuovi righe vuote e spazi iniziali/finali",
+    "resultToSource": "Risultato ➔ Originale",
+    "resultToSourceTooltip": "Sostituire il testo nella casella di input con il testo del risultato",
+    "readOnlyMode": "Modalità Sola Lettura",
+    "readOnlyModeTooltip": "Testo troppo lungo; modalità sola lettura attivata automaticamente per garantire le prestazioni della pagina",
+    "clearInputTooltip": "Cancella contenuto di input e file caricati",
+    "fileExported": "File esportato: {fileName}",
+    "exportSuccess": "Esportazione riuscita: {fileName}",
+    "batchDownloaded": "Elaborazione completata, file scaricati automaticamente",
+    "sourceTextPlaceholder": "Inserisci o incolla il testo da elaborare...",
+    "smartLineBreak": "A capo automatico intelligente",
+    "replaceText": "Sostituisci testo",
+    "generateJson": "Genera JSON",
+    "gtxFreeAPIUnavailable": "L'API Google Translate gratuita (GTX) non è attualmente disponibile. Controlla la connessione di rete.",
+    "translategemmaUnavailable": "Nodo TranslateGemma non disponibile. Verifica che il server locale (LM Studio / llama.cpp / Ollama) sia in esecuzione e che l'URL sia corretto."
   },
-  "subtitle": {
-    "title": "Traduttore Sottotitoli Online - SRT/VTT per Film e Video",
-    "description": "Traduci sottotitoli SRT, ASS, VTT in batch con IA. Supporta modalità bilingue e mantiene la sincronizzazione temporale. Perfetto per creatori di video e fansub.",
-    "clientTitle": "Traduttore Sottotitoli",
+  "SubtitleTranslator": {
     "clientDescription": "Carica sottotitoli o incolla contenuto. Seleziona lingua destinazione per traduzione rapida. Supporta elaborazione batch e preserva timeline.",
     "subtitleFormat": "Formato Sottotitoli",
     "translatedOnly": "Tradotto",
@@ -131,13 +143,7 @@
     "noSourceText": "Per favore carica file o incolla testo",
     "noExtractedText": "Nessun contenuto estratto, verifica formato file",
     "textExtracted": "Testo sottotitoli estratto, ",
-    "bilingualError": "Tag stile complessi rilevati. Modalità bilingue può causare errori di formattazione. Consigliato disattivare 'Sottotitoli Bilingue'.",
-    "faq1q": "È possibile tradurre sottotitoli SRT e ASS scaricati da YouTube?",
-    "faq1a": "Supporta SRT, ASS, VTT, LRC. I tag di posizione/allineamento ASS (\\\\an8, ecc.) vengono preservati dopo la traduzione. Sottotitoli YouTube via yt-dlp, Bilibili via dashboard creatore, piattaforme streaming da fonti legittime. Nota: Effetti ASS inline complessi (colore, animazione, karaoke) vengono semplificati durante la traduzione.",
-    "faq2q": "Cosa fare se i timecode non coincidono o appaiono caratteri illeggibili (□□□)?",
-    "faq2a": "Lo strumento traduce solo il testo senza modificare i timecode. Discrepanze temporali vengono da framerate incoerenti (23,976 vs 25 fps) tra sorgente e video target — correggi con Aegisub o Subtitle Edit. Codifica: jschardet rileva automaticamente UTF-8/UTF-16/GBK/Shift-JIS; se fallisce, default UTF-8.",
-    "faq3q": "Come creare sottotitoli bilingue per YouTube o apprendimento linguistico?",
-    "faq3a": "Seleziona modalità 'Bilingue' con la lingua target. Posiziona la traduzione sopra (per apprendimento) o sotto (per fruizione). Esporta come ASS per sottotitoli bilingue colorati — direttamente utilizzabile in YouTube, Premiere o DaVinci Resolve."
+    "bilingualError": "Tag stile complessi rilevati. Modalità bilingue può causare errori di formattazione. Consigliato disattivare 'Sottotitoli Bilingue'."
   },
   "TranslationSettings": {
     "docs": "Docs",
@@ -188,7 +194,7 @@
     "presetUpdate": "Salva nel preset corrente",
     "presetUpdated": "Salvato nel preset corrente",
     "presetDeleteConfirm": "Eliminare questo preset?",
-    "presetEmptyHint": "No presets yet — edit and click Save",
+    "presetEmptyHint": "Nessun preset ancora — modifica e clicca Salva",
     "qwenMtDomains": "Prompt di dominio (solo in inglese)",
     "sendSystemPrompt": "Invia prompt system",
     "sendSystemPromptExtra": "Disattivare solo quando il chat template rifiuta il ruolo system — errore tipico \"Conversations must start with a user prompt\" (es. famiglia Gemma).",
@@ -203,55 +209,45 @@
   "tools": {
     "subtitleTranslator": {
       "title": "Traduttore Sottotitoli",
-      "description": "Traduzione in batch SRT, ASS, VTT, LRC. 50+ lingue."
-    },
-    "jsonTranslate": {
-      "title": "Traduttore JSON i18n",
-      "description": "Strumento efficiente di traduzione JSON multilingua"
-    },
-    "mdTranslator": {
-      "title": "Traduttore Markdown",
-      "description": "Traduzione Markdown in batch, preserva formato e codice"
-    },
-    "textSplitter": {
-      "title": "Divisore Testo",
-      "description": "Divisione intelligente testo lungo per IA e social media"
-    },
-    "jsonValueExtractor": {
-      "title": "Estrattore Valore JSON",
-      "description": "Estrai valori JSON in batch, output formattato"
-    },
-    "jsonNodeEdit": {
-      "title": "Modifica JSON in Batch",
-      "description": "Modifica nodi JSON in batch, prefisso/suffisso/sostituisci"
-    },
-    "jsonValueTransformer": {
-      "title": "Mappatore Valore JSON",
-      "description": "Mappatura e migrazione valori con JSONPath"
-    },
-    "jsonValueSwapper": {
-      "title": "Scambiatore Valore JSON",
-      "description": "Scambia valori di due campi in un clic"
-    },
-    "jsonNodeInserter": {
-      "title": "Inseritore Nodo JSON",
-      "description": "Inserisci nuovi nodi in posizione specificata in batch"
-    },
-    "jsonSortClassify": {
-      "title": "Ordina & Classifica JSON",
-      "description": "Ordina e raggruppa array, regole personalizzate"
-    },
-    "jsonMatchUpdate": {
-      "title": "Aggiornamento Match JSON",
-      "description": "Aggiornamento in batch basato su corrispondenza campi"
-    },
-    "dataParserFlare": {
-      "title": "Convertitore Flare",
-      "description": "Conversione preferiti browser e formato Flare"
-    },
-    "dataParserImgPrompt": {
-      "title": "Generatore Dati IMGPrompt",
-      "description": "Genera dati JSON IMGPrompt in batch"
+      "description": "Traduzione in batch SRT, ASS, VTT, LRC. 50+ lingue.",
+      "metaTitle": "Traduttore Sottotitoli Online - SRT/VTT per Film e Video",
+      "metaDescription": "Stai traducendo video? Traduci sottotitoli SRT, ASS, VTT in batch con IA. Supporta modalità bilingue e mantiene la sincronizzazione temporale.",
+      "faq": [
+        {
+          "q": "È possibile tradurre sottotitoli SRT e ASS scaricati da YouTube?",
+          "a": "Supporta SRT, ASS, VTT, LRC. I tag di posizione/allineamento ASS (\\an8, ecc.) vengono preservati dopo la traduzione. Sottotitoli YouTube via yt-dlp, RaiPlay o Mediaset Infinity via dashboard creatore, piattaforme streaming da fonti legittime. Nota: Effetti ASS inline complessi (colore, animazione, karaoke) vengono semplificati durante la traduzione."
+        },
+        {
+          "q": "Cosa fare se i timecode non coincidono o appaiono caratteri illeggibili (□□□)?",
+          "a": "Lo strumento traduce solo il testo senza modificare i timecode. Discrepanze temporali vengono da framerate incoerenti (23,976 vs 25 fps) tra sorgente e video target — correggi con Aegisub o Subtitle Edit. Codifica: jschardet rileva automaticamente UTF-8/UTF-16/GBK/Shift-JIS; se fallisce, default UTF-8."
+        },
+        {
+          "q": "Come creare sottotitoli bilingue per YouTube o apprendimento linguistico?",
+          "a": "Seleziona modalità 'Bilingue' con la lingua target. Posiziona la traduzione sopra (per apprendimento) o sotto (per fruizione). Esporta come ASS per sottotitoli bilingue colorati — direttamente utilizzabile in YouTube, Premiere o DaVinci Resolve."
+        }
+      ],
+      "howto": [
+        {
+          "name": "Iniziare da video o file di sottotitoli",
+          "text": "Carica SRT/ASS/VTT/LRC. Estrazione: YouTube via yt-dlp, altre piattaforme via strumenti dedicati. Formato e codifica UTF-8/UTF-16/GBK rilevati automaticamente."
+        },
+        {
+          "name": "Scegliere motore e modalità di output",
+          "text": "Google gratuito per test rapidi, DeepSeek/DeepL API per qualità. 'Solo traduzione' per pubblicazione, 'Bilingue' per apprendimento linguistico. In bilingue, posizione sopra (apprendimento) o sotto (visione)."
+        },
+        {
+          "name": "Tradurre ed esportare sulla piattaforma",
+          "text": "Clicca Traduci e verifica il timing nell'anteprima. Scarica SRT per sottotitoli comunitari YouTube, ASS stilizzato per Premiere/DaVinci Resolve, VTT per lettori web, LRC per testi."
+        }
+      ],
+      "features": [
+        "Supporta SRT, ASS, VTT, LRC, tag di posizione ASS (\\\\an8 ecc.) preservati",
+        "Timecode intatti — solo il testo viene tradotto, timing originale preservato",
+        "Rilevamento automatico codifica UTF-8/UTF-16/GBK",
+        "Posizione sottotitoli bilingue: sopra (apprendimento) o sotto (visualizzazione)",
+        "15+ motori di traduzione: Google gratuito, DeepSeek, DeepL, OpenAI",
+        "Compatibile con YouTube, Premiere, DaVinci Resolve, Aegisub"
+      ]
     }
   },
   "navigation": {

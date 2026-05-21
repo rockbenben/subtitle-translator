@@ -39,7 +39,6 @@
     "multiLanguageModeTooltip": "Gleichzeitig in mehrere Sprachen übersetzen, als separate Dateien gespeichert",
     "translate": "Übersetzen",
     "totalLanguages": "Anzahl Zielsprachen:",
-    "resetUpload": "Leeren",
     "resetUploadTooltip": "Aktuelle Eingabe und hochgeladene Dateien löschen",
     "resetUploadSuccess": "Geleert",
     "extractText": "Text extrahieren",
@@ -49,6 +48,9 @@
     "exportFile": "Exportieren",
     "exportAllFile": "Alle exportieren",
     "exportedFile": "Exportiert",
+    "fileExported": "Datei exportiert: {fileName}",
+    "exportSuccess": "Export erfolgreich: {fileName}",
+    "batchDownloaded": "Verarbeitung abgeschlossen, Datei wurde automatisch heruntergeladen",
     "extractedText": "Extrahierter Text",
     "translating": "Übersetze...",
     "multiTranslating": "Übersetze, Zielsprachen gesamt:",
@@ -62,6 +64,7 @@
     "llmUnavailable": "LLM-Knoten vorübergehend nicht verfügbar, bitte Konfiguration in 'API-Einstellungen' prüfen",
     "noFileUploaded": "Bitte laden Sie zuerst eine Datei hoch",
     "translationExported": "Übersetzung abgeschlossen, Dateien exportiert",
+    "sourceTextPlaceholder": "Text zum Verarbeiten eingeben oder einfügen...",
     "noSourceText": "Bitte Text eingeben oder einfügen",
     "textExtracted": "Text extrahiert, ",
     "sourceArea": "Eingabebereich",
@@ -71,6 +74,16 @@
     "updateCount": "Aktualisierte Einträge",
     "startProcess": "Verarbeitung starten",
     "result": "Ergebnis",
+    "format": "Formatieren",
+    "formatTooltip": "Formatieren: Leerzeilen entfernen und führende/nachfolgende Leerzeichen bereinigen",
+    "resultToSource": "Ergebnis ➔ Quelle",
+    "resultToSourceTooltip": "Eingabefeld mit dem Ergebnistext überschreiben",
+    "readOnlyMode": "Nur-Lese-Modus",
+    "readOnlyModeTooltip": "Text zu lang; automatisch in den Nur-Lese-Modus gewechselt, um die Seitenleistung zu erhalten",
+    "clearInputTooltip": "Eingabe und hochgeladene Dateien löschen",
+    "smartLineBreak": "Intelligenter Zeilenumbruch",
+    "replaceText": "Text ersetzen",
+    "generateJson": "JSON generieren",
     "multiValueHint": "Mehrere Werte durch Leerzeichen trennen",
     "exportSettingTooltip": "Konfiguration in Datei exportieren",
     "importSettingTooltip": "Konfiguration aus Datei importieren",
@@ -94,8 +107,8 @@
     "settingsApplied": "Einstellungen angewendet",
     "retryCount": "Wiederholungsversuche",
     "retryCountTooltip": "Anzahl der Wiederholungen bei Übersetzungsfehlern",
-    "retryTimeout": "Zeitüberschreitung",
-    "retryTimeoutTooltip": "Maximale Wartezeit pro Anfrage (in Sekunden). Das Denken von LLMs dauert länger; 180 Sekunden oder mehr werden empfohlen.",
+    "requestTimeoutSec": "Zeitüberschreitung",
+    "requestTimeoutSecTooltip": "Maximale Wartezeit pro Anfrage (in Sekunden). Das Denken von LLMs dauert länger; 180 Sekunden oder mehr werden empfohlen.",
     "customExportFilename": "Dateinamenmuster",
     "customExportFilenameTooltip": "'{'name'}' = Originalname, '{'lang'}' = Sprache, '{'ext'}' = Endung, '{'date'}' = Datum, '{'time'}' = Zeit",
     "partialFailureTitle": "{count} Zeile(n) fehlgeschlagen",
@@ -112,12 +125,11 @@
     "apiStatusConnected": "✓ Verbunden",
     "apiStatusFailed": "Verbindung fehlgeschlagen",
     "testConnection": "Verbindung testen",
-    "moreProviderSettings": "Weitere Provider-Einstellungen"
+    "moreProviderSettings": "Weitere Provider-Einstellungen",
+    "gtxFreeAPIUnavailable": "Die kostenlose Google Translate API (GTX) ist derzeit nicht verfügbar. Bitte überprüfen Sie Ihre Netzwerkverbindung.",
+    "translategemmaUnavailable": "TranslateGemma-Knoten nicht verfügbar. Bitte stellen Sie sicher, dass der lokale Server (LM Studio / llama.cpp / Ollama) läuft und die URL korrekt ist."
   },
-  "subtitle": {
-    "title": "Subtitle Translator | SRT/ASS/VTT Untertitel-Tool",
-    "description": "Untertitel effizient übersetzen. Unterstützt SRT, VTT & ASS mit DeepSeek & ChatGPT. Timeline bleibt erhalten. Kostenlos & batch-fähig.",
-    "clientTitle": "Untertitel-Übersetzer",
+  "SubtitleTranslator": {
     "clientDescription": "Untertiteldatei hochladen oder Inhalt einfügen, Zielsprache wählen für schnelle Übersetzung. Unterstützt Stapelverarbeitung und behält Zeitachse bei.",
     "subtitleFormat": "Untertitelformat",
     "translatedOnly": "Übersetzt",
@@ -131,13 +143,7 @@
     "noSourceText": "Bitte Untertiteldatei hochladen oder Text einfügen",
     "noExtractedText": "Kein Untertitelinhalt extrahiert, bitte Dateiformat prüfen",
     "textExtracted": "Untertiteltext extrahiert, ",
-    "bilingualError": "Komplexe Stil-Tags erkannt. Zweisprachiger Modus kann zu Formatierungsfehlern führen. Empfohlen: 'Zweisprachige Untertitel' deaktivieren.",
-    "faq1q": "Kann ich SRT- und ASS-Untertitel von YouTube übersetzen?",
-    "faq1a": "Unterstützt SRT, ASS, VTT, LRC. ASS-Position/Ausrichtungs-Tags (\\\\an8 etc.) werden nach der Übersetzung beibehalten. YouTube-Untertitel via yt-dlp, Bilibili via Creator-Dashboard, Streaming-Plattformen aus legitimen Quellen. Hinweis: Komplexe ASS-Inline-Effekte (Farbe, Animation, Karaoke) werden bei der Übersetzung vereinfacht.",
-    "faq2q": "Was tun bei Timecode-Abweichungen oder Zeichensalat (□□□) nach der Übersetzung?",
-    "faq2a": "Das Tool übersetzt nur Text und ändert Timecodes nie. Timing-Abweichungen kommen von Framerate-Unterschieden (23,976 vs 25 fps) zwischen Quelle und Zielvideo — mit Aegisub oder Subtitle Edit korrigieren. Kodierung: jschardet erkennt UTF-8/UTF-16/GBK/Shift-JIS automatisch; bei Fehlschlag Standardeinstellung UTF-8. Bei Problemen Quelldatei als UTF-8 neu speichern.",
-    "faq3q": "Wie erstelle ich zweisprachige Untertitel für YouTube oder zum Sprachenlernen?",
-    "faq3a": "Wählen Sie den 'Zweisprachig'-Modus mit Ihrer Zielsprache. Position der Übersetzung wählbar: oben (Lernfokus) oder unten (Konsumfokus). Export als ASS für farbige zweisprachige Untertitel, direkt für YouTube, Premiere oder DaVinci Resolve einsetzbar."
+    "bilingualError": "Komplexe Stil-Tags erkannt. Zweisprachiger Modus kann zu Formatierungsfehlern führen. Empfohlen: 'Zweisprachige Untertitel' deaktivieren."
   },
   "TranslationSettings": {
     "docs": "Dokumentation",
@@ -188,7 +194,7 @@
     "presetUpdate": "In aktueller Voreinstellung speichern",
     "presetUpdated": "In aktueller Voreinstellung gespeichert",
     "presetDeleteConfirm": "Diese Voreinstellung löschen?",
-    "presetEmptyHint": "No presets yet — edit and click Save",
+    "presetEmptyHint": "Noch keine Voreinstellungen — bearbeiten und Speichern klicken",
     "qwenMtDomains": "Domänen-Prompts (nur Englisch)",
     "sendSystemPrompt": "System-Prompt senden",
     "sendSystemPromptExtra": "Nur deaktivieren, wenn die Chat-Vorlage die System-Rolle ablehnt — typischer Fehler \"Conversations must start with a user prompt\" (z. B. Gemma-Familie).",
@@ -203,55 +209,45 @@
   "tools": {
     "subtitleTranslator": {
       "title": "Untertitel-Übersetzer",
-      "description": "Batch-Übersetzung für SRT, ASS, VTT, LRC. 50+ Sprachen."
-    },
-    "jsonTranslate": {
-      "title": "i18n JSON-Übersetzer",
-      "description": "Effizientes mehrsprachiges JSON-Übersetzungstool"
-    },
-    "mdTranslator": {
-      "title": "Markdown-Übersetzer",
-      "description": "Markdown-Batch-Übersetzung, Format und Code behalten"
-    },
-    "textSplitter": {
-      "title": "Text-Splitter",
-      "description": "Smarte Langtext-Teilung für KI und Social Media"
-    },
-    "jsonValueExtractor": {
-      "title": "JSON Wert-Extraktor",
-      "description": "JSON-Werte im Batch extrahieren, formatierte Ausgabe"
-    },
-    "jsonNodeEdit": {
-      "title": "JSON Batch Edit",
-      "description": "JSON-Knoten im Batch bearbeiten, Präfix/Suffix/Ersetzen"
-    },
-    "jsonValueTransformer": {
-      "title": "JSON Wert-Mapper",
-      "description": "Feldwert-Mapping und Migration mit JSONPath"
-    },
-    "jsonValueSwapper": {
-      "title": "JSON Wert-Tauscher",
-      "description": "Werte zweier Felder per Klick tauschen"
-    },
-    "jsonNodeInserter": {
-      "title": "JSON Knoten-Inserter",
-      "description": "Neue Knoten an Position im Batch einfügen"
-    },
-    "jsonSortClassify": {
-      "title": "JSON Sort & Classify",
-      "description": "Arrays sortieren und gruppieren, benutzerdefinierte Regeln"
-    },
-    "jsonMatchUpdate": {
-      "title": "JSON Match Update",
-      "description": "Daten basierend auf Feldabgleich im Batch aktualisieren"
-    },
-    "dataParserFlare": {
-      "title": "Flare Lesezeichen-Konverter",
-      "description": "Browser-Lesezeichen und Flare-Format konvertieren"
-    },
-    "dataParserImgPrompt": {
-      "title": "IMGPrompt Datengenerator",
-      "description": "IMGPrompt JSON-Daten im Batch generieren"
+      "description": "Batch-Übersetzung für SRT, ASS, VTT, LRC. 50+ Sprachen.",
+      "metaTitle": "Untertitel-Übersetzer | SRT/ASS/VTT KI, gratis zweisprachig",
+      "metaDescription": "Videos übersetzen? Untertitel effizient übersetzen. Unterstützt SRT, VTT & ASS mit DeepSeek & ChatGPT. Timeline bleibt erhalten. Kostenlos & batch-fähig.",
+      "faq": [
+        {
+          "q": "Kann ich SRT- und ASS-Untertitel von YouTube übersetzen?",
+          "a": "Unterstützt SRT, ASS, VTT, LRC. ASS-Position/Ausrichtungs-Tags (\\an8 etc.) werden nach der Übersetzung beibehalten. YouTube-Untertitel via yt-dlp, ARD/ZDF Mediathek, Streaming-Plattformen aus legitimen Quellen. Hinweis: Komplexe ASS-Inline-Effekte (Farbe, Animation, Karaoke) werden bei der Übersetzung vereinfacht."
+        },
+        {
+          "q": "Was tun bei Timecode-Abweichungen oder Zeichensalat (□□□) nach der Übersetzung?",
+          "a": "Das Tool übersetzt nur Text und ändert Timecodes nie. Timing-Abweichungen kommen von Framerate-Unterschieden (23,976 vs 25 fps) zwischen Quelle und Zielvideo — mit Aegisub oder Subtitle Edit korrigieren. Kodierung: jschardet erkennt UTF-8/UTF-16/GBK/Shift-JIS automatisch; bei Fehlschlag Standardeinstellung UTF-8. Bei Problemen Quelldatei als UTF-8 neu speichern."
+        },
+        {
+          "q": "Wie erstelle ich zweisprachige Untertitel für YouTube oder zum Sprachenlernen?",
+          "a": "Wählen Sie den 'Zweisprachig'-Modus mit Ihrer Zielsprache. Position der Übersetzung wählbar: oben (Lernfokus) oder unten (Konsumfokus). Export als ASS für farbige zweisprachige Untertitel, direkt für YouTube, Premiere oder DaVinci Resolve einsetzbar."
+        }
+      ],
+      "howto": [
+        {
+          "name": "Mit Video- oder Untertiteldatei beginnen",
+          "text": "SRT/ASS/VTT/LRC hochladen. Extraktion: YouTube über yt-dlp, andere Plattformen über spezielle Tools. Format und UTF-8/UTF-16/GBK-Kodierung automatisch erkannt."
+        },
+        {
+          "name": "Engine und Ausgabemodus wählen",
+          "text": "Google kostenlos für Schnelltests, DeepSeek/DeepL API für Qualität. 'Nur Übersetzung' zum Veröffentlichen, 'Zweisprachig' zum Sprachenlernen. Bei zweisprachig: Übersetzung oben (Lernen) oder unten (Anschauen)."
+        },
+        {
+          "name": "Übersetzen und auf Ihrer Plattform exportieren",
+          "text": "Auf Übersetzen klicken und Timing in der Vorschau prüfen. SRT für YouTube Community-Untertitel, ASS mit Stilen für Premiere/DaVinci Resolve, VTT für Web-Player, LRC für Songtexte."
+        }
+      ],
+      "features": [
+        "Unterstützt SRT, ASS, VTT, LRC, ASS-Positions-Tags (\\\\an8 etc.) werden beibehalten",
+        "Timecodes unverändert — nur Text wird übersetzt, Original-Timing erhalten",
+        "Automatische UTF-8/UTF-16/GBK-Kodierungserkennung",
+        "Zweisprachige Untertitelposition: oben (Lernen) oder unten (Anschauen)",
+        "15+ Übersetzungs-Engines: Google kostenlos, DeepSeek, DeepL, OpenAI",
+        "Kompatibel mit YouTube, Premiere, DaVinci Resolve, Aegisub"
+      ]
     }
   },
   "navigation": {
@@ -266,7 +262,7 @@
   "Metadata": {
     "title": "ToolsByAI | Kostenlose KI-Dev- & Übersetzungstools",
     "description": "20+ Open-Source-Tools: Untertitel-Übersetzung, i18n, JSON & Markdown. Mit DeepSeek & ChatGPT. Lokal, sicher & effizient für Entwickler.",
-    "homeTitle": "ToolsByAI Toolset",
+    "homeTitle": "ToolsByAI Werkzeugkasten",
     "homeDescription": "20+ Tools für Übersetzung, Text, JSON und Datenkonvertierung. Effizienzsteigerung für Entwickler und Creator.",
     "ogTitle": "ToolsByAI | Kostenlose KI-Dev- & Übersetzungstools",
     "ogDescription": "20+ Open-Source-Tools: Untertitel-Übersetzung, i18n, JSON & Markdown. Mit DeepSeek & ChatGPT. Lokal, sicher & effizient für Entwickler."

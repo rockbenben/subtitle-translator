@@ -3,7 +3,7 @@
     "userGuide": "使用说明",
     "privacyNotice": "您的 API 密钥及数据仅存储在本地浏览器，确保隐私安全。如有问题或建议，欢迎通过社群或反馈页面联系我们。",
     "dragAndDropText": "点击或将文件拖拽至此上传",
-    "supportedFormats": "支持格式：",
+    "supportedFormats": "支持的格式：",
     "configuration": "配置选项",
     "operation": "操作",
     "optional": "可选",
@@ -25,7 +25,7 @@
     "charLabel": "字符",
     "lineLabel": "行",
     "advancedSettings": "高级设置",
-    "singleFileModeTooltip": "仅保留一个文件，新上传的文件会替换当前文件",
+    "singleFileModeTooltip": "每次只处理一个文件，上传新文件时自动替换",
     "singleFileMode": "单文件模式",
     "hideResultsTooltip": "隐藏结果预览，避免大量内容导致页面卡顿",
     "hideResults": "隐藏结果预览",
@@ -39,13 +39,18 @@
     "multiLanguageModeTooltip": "同时翻译为多种语言，分别保存为独立文件",
     "translate": "开始翻译",
     "totalLanguages": "目标语言数：",
-    "resetUpload": "清空",
     "resetUploadTooltip": "清空当前输入内容和已上传文件",
     "resetUploadSuccess": "已清空",
     "extractText": "提取纯文本",
     "translationResult": "翻译结果",
     "copy": "复制",
     "remove": "删除",
+    "format": "格式化",
+    "formatTooltip": "格式化：移除空行及首尾空格",
+    "resultToSource": "结果 ➔ 原文",
+    "resultToSourceTooltip": "将结果文本覆盖到输入框",
+    "readOnlyMode": "只读模式",
+    "readOnlyModeTooltip": "文本过长，为保证页面性能已自动切换为只读模式",
     "exportFile": "导出",
     "exportAllFile": "导出所有文件",
     "exportedFile": "已导出",
@@ -94,8 +99,8 @@
     "settingsApplied": "设置已应用",
     "retryCount": "重试次数",
     "retryCountTooltip": "翻译失败时的重试次数",
-    "retryTimeout": "超时时间",
-    "retryTimeoutTooltip": "单次请求的最大等待时间（秒）。LLM 思考耗时较长，建议 180 秒以上",
+    "requestTimeoutSec": "超时时间",
+    "requestTimeoutSecTooltip": "单次请求的最大等待时间（秒）。LLM 思考耗时较长，建议 180 秒以上",
     "customExportFilename": "导出文件名格式",
     "customExportFilenameTooltip": "'{'name'}' = 原始文件名, '{'lang'}' = 语言, '{'ext'}' = 扩展名, '{'date'}' = 日期, '{'time'}' = 时间",
     "partialFailureTitle": "翻译失败 {count} 行",
@@ -112,12 +117,19 @@
     "apiStatusConnected": "✓ 已连接",
     "apiStatusFailed": "连接失败",
     "testConnection": "测试连接",
-    "moreProviderSettings": "更多 Provider 设置"
+    "moreProviderSettings": "更多 Provider 设置",
+    "clearInputTooltip": "清空输入内容和上传的文件",
+    "fileExported": "已导出文件：{fileName}",
+    "exportSuccess": "导出成功：{fileName}",
+    "batchDownloaded": "处理完成，文件已自动下载",
+    "sourceTextPlaceholder": "请输入或粘贴待处理文本...",
+    "smartLineBreak": "智能换行",
+    "replaceText": "替换文本",
+    "generateJson": "生成 JSON",
+    "gtxFreeAPIUnavailable": "GTX Free 接口当前不可用，请检查您的网络连接",
+    "translategemmaUnavailable": "TranslateGemma 节点不可用，请确认本地服务器（LM Studio / llama.cpp / Ollama）已启动且 URL 正确"
   },
-  "subtitle": {
-    "title": "Subtitle Translator | 免费在线 SRT/ASS/VTT 批量字幕翻译",
-    "description": "视频字幕翻译太耗时？这款工具支持 SRT、ASS 等格式批量翻译，接入 DeepSeek 与 Google 引擎。自动保留时间轴，支持双语字幕生成，让视频本地化更简单高效！",
-    "clientTitle": "字幕翻译工具",
+  "SubtitleTranslator": {
     "clientDescription": "上传字幕文件或粘贴内容，选择目标语言即可快速翻译。支持批量处理，自动保留时间轴。",
     "subtitleFormat": "字幕格式",
     "translatedOnly": "仅译文",
@@ -131,13 +143,7 @@
     "noSourceText": "请上传字幕文件或粘贴文本",
     "noExtractedText": "未提取到字幕内容，请检查文件格式",
     "textExtracted": "已提取字幕文本，",
-    "bilingualError": "检测到复杂样式标签，双语模式可能导致格式错乱，建议关闭「双语字幕」。",
-    "faq1q": "能翻译 YouTube 下载的 SRT 和 ASS 字幕文件吗？",
-    "faq1a": "支持 SRT、ASS、VTT、LRC 四种字幕格式，对白文本翻译后 ASS 位置样式标签（如 \\\\an8）会被保留。YouTube 视频字幕可用 yt-dlp 导出再上传翻译；B 站视频字幕可通过创作中心下载；流媒体平台的字幕需从合法来源获取。注：复杂的 ASS 内联特效标签（颜色、动画、卡拉 OK）在翻译过程中会被简化。",
-    "faq2q": "翻译后字幕时间轴对不上或出现乱码（□□□）怎么办？",
-    "faq2a": "工具只翻译文本，时间轴完整保留不做任何修改。如翻译后时间对不上，通常是源文件帧率与目标视频不一致（23.976 vs 25 fps）所致，需用 Aegisub 或 Subtitle Edit 调整。乱码问题：工具通过 jschardet 自动识别 UTF-8/UTF-16/GBK/Shift-JIS 等编码，识别失败会回退到 UTF-8，此时请先用 Notepad++ 或 VS Code 另存为 UTF-8 再上传。",
-    "faq3q": "怎么做 B 站、YouTube 的中英双语字幕？能用于语言学习吗？",
-    "faq3a": "选择「双语」导出模式，译文位置可选在原文上方（学英语推荐）或下方（看外语剧推荐）。导出 ASS 格式可为原文和译文设置不同颜色、字体大小和位置，直接上传至 B 站字幕系统或 YouTube 社区字幕，Premiere/DaVinci Resolve 也可直接嵌入。"
+    "bilingualError": "检测到复杂样式标签，双语模式可能导致格式错乱，建议关闭「双语字幕」。"
   },
   "TranslationSettings": {
     "docs": "文档",
@@ -203,55 +209,45 @@
   "tools": {
     "subtitleTranslator": {
       "title": "字幕翻译器",
-      "description": "批量翻译 SRT、ASS、VTT、LRC 字幕，支持 50+ 语言"
-    },
-    "jsonTranslate": {
-      "title": "i18n JSON 翻译",
-      "description": "高效的多语言 JSON 翻译工具"
-    },
-    "mdTranslator": {
-      "title": "Markdown 翻译",
-      "description": "批量翻译 Markdown 文档，保留格式和代码"
-    },
-    "textSplitter": {
-      "title": "文本分割",
-      "description": "智能分割长文本，适用于 AI 输入和社交媒体"
-    },
-    "jsonValueExtractor": {
-      "title": "JSON 值提取",
-      "description": "批量提取 JSON 字段值，支持格式化输出"
-    },
-    "jsonNodeEdit": {
-      "title": "JSON 批量编辑",
-      "description": "批量编辑 JSON 节点值，支持前后缀和替换"
-    },
-    "jsonValueTransformer": {
-      "title": "JSON 键值映射",
-      "description": "字段值映射和迁移，支持 JSONPath 定位"
-    },
-    "jsonValueSwapper": {
-      "title": "JSON 键值互换",
-      "description": "一键交换两个字段的值"
-    },
-    "jsonNodeInserter": {
-      "title": "JSON 节点插入",
-      "description": "在指定位置批量插入新节点"
-    },
-    "jsonSortClassify": {
-      "title": "JSON 排序分类",
-      "description": "数组排序和分组，支持自定义规则"
-    },
-    "jsonMatchUpdate": {
-      "title": "JSON 匹配更新",
-      "description": "根据字段匹配批量更新数据"
-    },
-    "dataParserFlare": {
-      "title": "Flare 书签转换",
-      "description": "浏览器书签与 Flare 格式互转"
-    },
-    "dataParserImgPrompt": {
-      "title": "IMGPrompt 数据生成",
-      "description": "批量生成 IMGPrompt JSON 数据"
+      "description": "批量翻译 SRT、ASS、VTT、LRC 字幕，支持 50+ 语言",
+      "metaTitle": "字幕翻译工具 - SRT/ASS/VTT 批量 AI 翻译，免费双语字幕",
+      "metaDescription": "视频字幕翻译太耗时？这款工具支持 SRT、ASS 等格式批量翻译，接入 DeepSeek 与 Google 引擎。自动保留时间轴，支持双语字幕生成，让视频本地化更简单高效！",
+      "faq": [
+        {
+          "q": "能翻译 YouTube 下载的 SRT 和 ASS 字幕文件吗？",
+          "a": "支持 SRT、ASS、VTT、LRC 四种字幕格式，对白文本翻译后 ASS 位置样式标签（如 \\\\an8）会被保留。YouTube 视频字幕可用 yt-dlp 导出再上传翻译；B 站视频字幕可通过创作中心下载；流媒体平台的字幕需从合法来源获取。注：复杂的 ASS 内联特效标签（颜色、动画、卡拉 OK）在翻译过程中会被简化。"
+        },
+        {
+          "q": "翻译后字幕时间轴对不上或出现乱码（□□□）怎么办？",
+          "a": "工具只翻译文本，时间轴完整保留不做任何修改。如翻译后时间对不上，通常是源文件帧率与目标视频不一致（23.976 vs 25 fps）所致，需用 Aegisub 或 Subtitle Edit 调整。乱码问题：工具通过 jschardet 自动识别 UTF-8/UTF-16/GBK/Shift-JIS 等编码，识别失败会回退到 UTF-8，此时请先用 Notepad++ 或 VS Code 另存为 UTF-8 再上传。"
+        },
+        {
+          "q": "怎么做 B 站、YouTube 的中英双语字幕？能用于语言学习吗？",
+          "a": "选择「双语」导出模式，译文位置可选在原文上方（学英语推荐）或下方（看外语剧推荐）。导出 ASS 格式可为原文和译文设置不同颜色、字体大小和位置，直接上传至 B 站字幕系统或 YouTube 社区字幕，Premiere/DaVinci Resolve 也可直接嵌入。"
+        }
+      ],
+      "howto": [
+        {
+          "name": "从视频或字幕文件开始",
+          "text": "上传 SRT/ASS/VTT/LRC 字幕文件。YouTube 视频字幕用 yt-dlp 导出，B 站视频可在创作中心下载自己的字幕，其他平台字幕从合法来源获取。工具通过 jschardet 自动识别 UTF-8/UTF-16/GBK/Shift-JIS 等编码。"
+        },
+        {
+          "name": "选择引擎并配置输出",
+          "text": "免费测试用 Google，追求质量用 DeepSeek 或 DeepL API。选「仅译文」用于发布，选「双语」用于语言学习。双语时可设置译文在原文上方（学习模式）或下方（观看模式）。"
+        },
+        {
+          "name": "翻译并导出到目标平台",
+          "text": "点击翻译预览时间轴对齐。下载 SRT 上传到 B 站、YouTube 社区字幕；下载 ASS 保留特效和颜色用于 Premiere/DaVinci Resolve；VTT 用于网页播放器；LRC 用于歌词。"
+        }
+      ],
+      "features": [
+        "支持 SRT、ASS、VTT、LRC 四种字幕格式，ASS 位置标签（\\\\an8 等）翻译后保留",
+        "时间轴零修改（仅翻译文本，时间码原样保留）",
+        "UTF-8/UTF-16/GBK 编码自动检测",
+        "双语字幕译文位置可选（上方学习 / 下方观看）",
+        "15+ 翻译引擎：Google 免费、DeepSeek、DeepL、OpenAI",
+        "兼容 B 站、YouTube、Premiere、DaVinci Resolve、Aegisub"
+      ]
     }
   },
   "navigation": {

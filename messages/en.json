@@ -39,7 +39,6 @@
     "multiLanguageModeTooltip": "Translate to multiple languages simultaneously, saved as separate files",
     "translate": "Translate",
     "totalLanguages": "Total Languages:",
-    "resetUpload": "Clear",
     "resetUploadTooltip": "Clear current input and uploaded files",
     "resetUploadSuccess": "Cleared",
     "extractText": "Extract Text",
@@ -49,6 +48,9 @@
     "exportFile": "Export",
     "exportAllFile": "Export All",
     "exportedFile": "Exported",
+    "fileExported": "File exported: {fileName}",
+    "exportSuccess": "Export successful: {fileName}",
+    "batchDownloaded": "Processing complete, file downloaded automatically",
     "extractedText": "Extracted Text",
     "translating": "Translating",
     "multiTranslating": "Translating, total target languages:",
@@ -62,6 +64,7 @@
     "llmUnavailable": "LLM node unavailable, please check configuration in 'API Settings'",
     "noFileUploaded": "Please upload a file to process first",
     "translationExported": "Translation complete, files exported",
+    "sourceTextPlaceholder": "Enter or paste text to process...",
     "noSourceText": "Please enter or paste text content",
     "textExtracted": "Text extracted,",
     "sourceArea": "Input Area",
@@ -71,6 +74,16 @@
     "updateCount": "Updated entries",
     "startProcess": "Start Processing",
     "result": "Result",
+    "format": "Format",
+    "formatTooltip": "Format: remove blank lines and trim leading/trailing spaces",
+    "resultToSource": "Result ➔ Source",
+    "resultToSourceTooltip": "Overwrite input area with result text",
+    "readOnlyMode": "Read-Only Mode",
+    "readOnlyModeTooltip": "Text is too long; automatically switched to read-only mode to maintain page performance",
+    "clearInputTooltip": "Clear input content and uploaded files",
+    "smartLineBreak": "Smart Line Break",
+    "replaceText": "Replace Text",
+    "generateJson": "Generate JSON",
     "multiValueHint": "Separate multiple values with spaces",
     "exportSettingTooltip": "Export configuration to file",
     "importSettingTooltip": "Import configuration from file",
@@ -94,8 +107,8 @@
     "settingsApplied": "Settings applied",
     "retryCount": "Retry Count",
     "retryCountTooltip": "Number of retry attempts when translation fails",
-    "retryTimeout": "Timeout",
-    "retryTimeoutTooltip": "Maximum wait per request (seconds). LLM thinking takes longer; 180s or more recommended.",
+    "requestTimeoutSec": "Timeout",
+    "requestTimeoutSecTooltip": "Maximum wait per request (seconds). LLM thinking takes longer; 180s or more recommended.",
     "customExportFilename": "Export Filename Pattern",
     "customExportFilenameTooltip": "'{'name'}' = original filename, '{'lang'}' = language, '{'ext'}' = extension, '{'date'}' = date, '{'time'}' = time",
     "partialFailureTitle": "{count} line(s) failed",
@@ -112,12 +125,11 @@
     "apiStatusConnected": "✓ Connected",
     "apiStatusFailed": "Connection Failed",
     "testConnection": "Test Connection",
-    "moreProviderSettings": "More Provider Settings"
+    "moreProviderSettings": "More Provider Settings",
+    "gtxFreeAPIUnavailable": "The free Google Translate API (GTX) is currently unavailable. Please check your network connection.",
+    "translategemmaUnavailable": "TranslateGemma node unavailable. Please verify the local server (LM Studio / llama.cpp / Ollama) is running and the URL is correct."
   },
-  "subtitle": {
-    "title": "Subtitle Translator | Free Online SRT/ASS/VTT Batch Tool",
-    "description": "Translating videos? Batch translate SRT/ASS subtitles with AI. Auto-timeline sync & bilingual support. Integrates DeepSeek & Google. Accurate & fast. Try free!",
-    "clientTitle": "Subtitle Translator",
+  "SubtitleTranslator": {
     "clientDescription": "Upload subtitles or paste content. Select target language for fast translation. Supports batch processing and retains timelines.",
     "subtitleFormat": "Subtitle Format",
     "translatedOnly": "Translated",
@@ -131,13 +143,7 @@
     "noSourceText": "Please upload subtitle file or paste text",
     "noExtractedText": "No subtitle content extracted, please check file format",
     "textExtracted": "Subtitle text extracted,",
-    "bilingualError": "Complex style tags detected. Bilingual mode may cause formatting issues. Recommended to disable 'Bilingual Subtitles'.",
-    "faq1q": "Can I translate SRT and ASS subtitles downloaded from YouTube?",
-    "faq1a": "Supports SRT, ASS, VTT, LRC subtitle formats. Position/alignment tags like \\\\an8 in ASS are preserved after translation. YouTube subtitles can be exported via yt-dlp, Bilibili subtitles via the creator dashboard, streaming platform subtitles should come from legitimate sources. Note: Complex inline ASS effects (color, animation, karaoke) are simplified during translation.",
-    "faq2q": "How do I fix subtitle timing mismatch or encoding (□□□) issues after translation?",
-    "faq2a": "The tool only translates text and never modifies timecodes. Timing mismatches after translation usually stem from framerate inconsistencies (23.976 vs 25 fps) in the source — fix with Aegisub or Subtitle Edit. For encoding, jschardet auto-detects UTF-8/UTF-16/GBK/Shift-JIS; if detection fails it defaults to UTF-8, so re-save source as UTF-8 via Notepad++ or VS Code before uploading.",
-    "faq3q": "How do I create bilingual subtitles for YouTube, Bilibili, or language learning?",
-    "faq3a": "Select 'Bilingual' mode with your target language. Position translation above (for learning — focus on translation) or below (for consumption — primary is original). Export as ASS for colored dual-language subtitles, then upload to YouTube community subs, Bilibili subtitle system, or embed in Premiere/DaVinci Resolve."
+    "bilingualError": "Complex style tags detected. Bilingual mode may cause formatting issues. Recommended to disable 'Bilingual Subtitles'."
   },
   "TranslationSettings": {
     "docs": "Docs",
@@ -203,55 +209,45 @@
   "tools": {
     "subtitleTranslator": {
       "title": "Subtitle Translator",
-      "description": "Batch translate SRT, ASS, VTT, LRC subtitles. 50+ languages."
-    },
-    "jsonTranslate": {
-      "title": "i18n JSON Translator",
-      "description": "Efficient multi-language JSON translation tool"
-    },
-    "mdTranslator": {
-      "title": "Markdown Translator",
-      "description": "Batch translate Markdown, preserving format and code"
-    },
-    "textSplitter": {
-      "title": "Text Splitter",
-      "description": "Smart long text splitter for AI and social media"
-    },
-    "jsonValueExtractor": {
-      "title": "JSON Value Extractor",
-      "description": "Batch extract JSON fields with formatting"
-    },
-    "jsonNodeEdit": {
-      "title": "JSON Batch Edit",
-      "description": "Batch edit JSON nodes with prefix/suffix/replace"
-    },
-    "jsonValueTransformer": {
-      "title": "JSON Value Mapper",
-      "description": "Field value mapping and migration with JSONPath"
-    },
-    "jsonValueSwapper": {
-      "title": "JSON Value Swapper",
-      "description": "One-click swap of two field values"
-    },
-    "jsonNodeInserter": {
-      "title": "JSON Node Inserter",
-      "description": "Batch insert new nodes at specified position"
-    },
-    "jsonSortClassify": {
-      "title": "JSON Sort & Classify",
-      "description": "Sort and group arrays with custom rules"
-    },
-    "jsonMatchUpdate": {
-      "title": "JSON Match Update",
-      "description": "Batch update data by matching fields"
-    },
-    "dataParserFlare": {
-      "title": "Flare Bookmark Converter",
-      "description": "Convert bookmarks to/from Flare format"
-    },
-    "dataParserImgPrompt": {
-      "title": "IMGPrompt Data Gen",
-      "description": "Batch generate IMGPrompt JSON data"
+      "description": "Batch translate SRT, ASS, VTT, LRC subtitles. 50+ languages.",
+      "metaTitle": "Subtitle Translator | Free Online SRT/ASS/VTT Batch Tool",
+      "metaDescription": "Translating videos? Batch translate SRT/ASS subtitles with AI. Auto-timeline sync & bilingual support. Integrates DeepSeek & Google. Accurate & fast. Try free!",
+      "faq": [
+        {
+          "q": "Can I translate SRT and ASS subtitles downloaded from YouTube?",
+          "a": "Supports SRT, ASS, VTT, LRC subtitle formats. Position/alignment tags like \\an8 in ASS are preserved after translation. YouTube subtitles can be exported via yt-dlp, Twitch VODs via creator dashboard, streaming platforms (Netflix/Prime/Disney+) require legitimate sources. Note: Complex inline ASS effects (color, animation, karaoke) are simplified during translation."
+        },
+        {
+          "q": "How do I fix subtitle timing mismatch or encoding (□□□) issues after translation?",
+          "a": "The tool only translates text and never modifies timecodes. Timing mismatches after translation usually stem from framerate inconsistencies (23.976 vs 25 fps) in the source — fix with Aegisub or Subtitle Edit. For encoding, jschardet auto-detects UTF-8/UTF-16/GBK/Shift-JIS; if detection fails it defaults to UTF-8, so re-save source as UTF-8 via Notepad++ or VS Code before uploading."
+        },
+        {
+          "q": "How do I create bilingual subtitles for YouTube or language learning?",
+          "a": "Select 'Bilingual' mode with your target language. Position translation above (for learning — focus on translation) or below (for consumption — primary is original). Export as ASS for colored dual-language subtitles, embed in Premiere/DaVinci Resolve, or upload to YouTube community subs, Vimeo, or any player supporting ASS format."
+        }
+      ],
+      "howto": [
+        {
+          "name": "Start from video or subtitle file",
+          "text": "Upload SRT/ASS/VTT/LRC subtitle file. Export YouTube subtitles via yt-dlp, Twitch VODs via creator dashboard, or use legitimate sources for streaming platforms."
+        },
+        {
+          "name": "Choose engine and output mode",
+          "text": "Use Google for free quick tests, or DeepSeek/DeepL API for quality. Select 'Translated only' for publishing, 'Bilingual' for language learning. For bilingual, position translation above (learning mode) or below (viewing mode) the original."
+        },
+        {
+          "name": "Translate and export to your platform",
+          "text": "Click Translate and verify timing alignment in preview. Download SRT for YouTube community subtitles, ASS for styled subtitles in Premiere/DaVinci Resolve, VTT for web players, LRC for lyrics."
+        }
+      ],
+      "features": [
+        "Supports SRT, ASS, VTT, LRC subtitle formats, preserving ASS position tags (\\\\an8 etc.) after translation",
+        "Timecodes untouched — tool only translates text, original timing preserved",
+        "UTF-8/UTF-16/GBK encoding auto-detection",
+        "Bilingual subtitle position: above (learning) or below (viewing)",
+        "15+ translation engines: Google free, DeepSeek, DeepL, OpenAI",
+        "Compatible with YouTube, Twitch, Vimeo, Premiere, DaVinci Resolve, Aegisub"
+      ]
     }
   },
   "navigation": {

@@ -39,8 +39,7 @@
     "multiLanguageModeTooltip": "Terjemahkan ke beberapa bahasa sekaligus, disimpan secara terpisah",
     "translate": "Terjemahkan",
     "totalLanguages": "Total Bahasa:",
-    "resetUpload": "Bersihkan",
-    "resetUploadTooltip": "Bersihkan input saat ini dan file yang diunggah",
+    "resetUploadTooltip": "Bersihkan input dan file yang diunggah saat ini",
     "resetUploadSuccess": "Dibersihkan",
     "extractText": "Ekstrak Teks",
     "translationResult": "Hasil",
@@ -94,8 +93,8 @@
     "settingsApplied": "Pengaturan diterapkan",
     "retryCount": "Jumlah Percobaan Ulang",
     "retryCountTooltip": "Jumlah percobaan ulang saat terjemahan gagal",
-    "retryTimeout": "Batas Waktu",
-    "retryTimeoutTooltip": "Waktu tunggu maksimum per permintaan (detik). Pemikiran LLM membutuhkan waktu lebih lama; direkomendasikan 180 detik atau lebih.",
+    "requestTimeoutSec": "Batas Waktu",
+    "requestTimeoutSecTooltip": "Waktu tunggu maksimum per permintaan (detik). Pemikiran LLM membutuhkan waktu lebih lama; direkomendasikan 180 detik atau lebih.",
     "customExportFilename": "Pola Nama File Ekspor",
     "customExportFilenameTooltip": "'{'name'}' = nama file asli, '{'lang'}' = bahasa, '{'ext'}' = ekstensi, '{'date'}' = tanggal, '{'time'}' = waktu",
     "partialFailureTitle": "{count} baris gagal diterjemahkan",
@@ -112,12 +111,25 @@
     "apiStatusConnected": "✓ Terhubung",
     "apiStatusFailed": "Koneksi gagal",
     "testConnection": "Uji koneksi",
-    "moreProviderSettings": "Pengaturan Provider lain"
+    "moreProviderSettings": "Pengaturan Provider lain",
+    "format": "Format",
+    "formatTooltip": "Format: hapus baris kosong dan spasi di awal/akhir",
+    "resultToSource": "Hasil ➔ Sumber",
+    "resultToSourceTooltip": "Timpa kotak input dengan teks hasil",
+    "readOnlyMode": "Mode Hanya-Baca",
+    "readOnlyModeTooltip": "Teks terlalu panjang, otomatis beralih ke mode hanya-baca untuk menjaga performa halaman",
+    "clearInputTooltip": "Bersihkan konten input dan file yang diunggah",
+    "fileExported": "File diekspor: {fileName}",
+    "exportSuccess": "Ekspor berhasil: {fileName}",
+    "batchDownloaded": "Pemrosesan selesai, file diunduh otomatis",
+    "sourceTextPlaceholder": "Masukkan atau tempel teks yang akan diproses...",
+    "smartLineBreak": "Jeda Baris Cerdas",
+    "replaceText": "Ganti Teks",
+    "generateJson": "Hasilkan JSON",
+    "gtxFreeAPIUnavailable": "API Google Translate gratis (GTX) saat ini tidak tersedia. Silakan periksa koneksi jaringan Anda.",
+    "translategemmaUnavailable": "Node TranslateGemma tidak tersedia. Harap pastikan server lokal (LM Studio / llama.cpp / Ollama) berjalan dan URL benar."
   },
-  "subtitle": {
-    "title": "Penerjemah Subtitle Online - SRT/VTT untuk Video & Film",
-    "description": "Terjemahkan subtitle SRT, ASS, VTT secara batch dengan AI. Buat subtitle dwibahasa dan pertahankan sinkronisasi waktu. Alat wajib untuk kreator video.",
-    "clientTitle": "Penerjemah Subtitle",
+  "SubtitleTranslator": {
     "clientDescription": "Unggah subtitle atau tempel konten. Pilih bahasa target untuk terjemahan cepat. Mendukung pemrosesan batch dan mempertahankan timeline.",
     "subtitleFormat": "Format Subtitle",
     "translatedOnly": "Terjemahan",
@@ -131,13 +143,7 @@
     "noSourceText": "Silakan unggah file atau tempel teks",
     "noExtractedText": "Tidak ada konten yang diekstrak, periksa format file",
     "textExtracted": "Teks subtitle diekstrak, ",
-    "bilingualError": "Tag gaya kompleks terdeteksi. Mode dwibahasa dapat menyebabkan kesalahan format. Disarankan untuk mematikan 'Subtitle Dwibahasa'.",
-    "faq1q": "Bisakah menerjemahkan subtitle SRT dan ASS dari YouTube?",
-    "faq1a": "Mendukung SRT, ASS, VTT, LRC. Tag posisi/perataan ASS (\\\\an8 dll.) dipertahankan setelah terjemahan. Subtitle YouTube via yt-dlp, Bilibili via dasbor kreator, platform streaming dari sumber yang sah. Catatan: Efek ASS inline kompleks (warna, animasi, karaoke) disederhanakan saat terjemahan.",
-    "faq2q": "Bagaimana mengatasi timecode tidak sinkron atau karakter rusak (□□□) setelah terjemahan?",
-    "faq2a": "Alat hanya menerjemahkan teks, tidak pernah mengubah timecode. Ketidaksesuaian biasanya karena framerate berbeda (23.976 vs 25 fps) antara sumber dan video target — perbaiki dengan Aegisub atau Subtitle Edit. Pengkodean: jschardet mendeteksi UTF-8/UTF-16/GBK/Shift-JIS otomatis; jika gagal, default ke UTF-8.",
-    "faq3q": "Bagaimana membuat subtitle dwibahasa untuk YouTube atau pembelajaran bahasa?",
-    "faq3a": "Pilih mode 'Dwibahasa' dengan bahasa target. Tempatkan terjemahan di atas (untuk pembelajaran) atau bawah (untuk menonton). Ekspor sebagai ASS untuk subtitle dwibahasa berwarna — langsung dapat digunakan di YouTube, Premiere, atau DaVinci Resolve."
+    "bilingualError": "Tag gaya kompleks terdeteksi. Mode dwibahasa dapat menyebabkan kesalahan format. Disarankan untuk mematikan 'Subtitle Dwibahasa'."
   },
   "TranslationSettings": {
     "docs": "Dokumen",
@@ -188,7 +194,7 @@
     "presetUpdate": "Simpan ke Preset Saat Ini",
     "presetUpdated": "Disimpan ke preset saat ini",
     "presetDeleteConfirm": "Hapus preset ini?",
-    "presetEmptyHint": "No presets yet — edit and click Save",
+    "presetEmptyHint": "Belum ada preset — edit lalu klik Simpan",
     "qwenMtDomains": "Prompt Domain (hanya bahasa Inggris)",
     "sendSystemPrompt": "Kirim prompt system",
     "sendSystemPromptExtra": "Matikan hanya ketika chat template menolak peran system — kesalahan tipikal \"Conversations must start with a user prompt\" (mis. keluarga Gemma).",
@@ -203,55 +209,45 @@
   "tools": {
     "subtitleTranslator": {
       "title": "Penerjemah Subtitle",
-      "description": "Terjemahan batch SRT, ASS, VTT, LRC. 50+ bahasa."
-    },
-    "jsonTranslate": {
-      "title": "Penerjemah JSON i18n",
-      "description": "Alat terjemahan JSON multi-bahasa yang efisien"
-    },
-    "mdTranslator": {
-      "title": "Penerjemah Markdown",
-      "description": "Terjemahan Markdown batch, pertahankan format dan kode"
-    },
-    "textSplitter": {
-      "title": "Pemisah Teks",
-      "description": "Pemisahan teks panjang cerdas untuk AI dan media sosial"
-    },
-    "jsonValueExtractor": {
-      "title": "Pengekstrak Nilai JSON",
-      "description": "Ekstrak nilai JSON batch, output terformat"
-    },
-    "jsonNodeEdit": {
-      "title": "Pengeditan JSON Batch",
-      "description": "Edit node JSON batch, awalan/akhiran/ganti"
-    },
-    "jsonValueTransformer": {
-      "title": "Pemeta Nilai JSON",
-      "description": "Pemetaan dan migrasi nilai dengan JSONPath"
-    },
-    "jsonValueSwapper": {
-      "title": "Penukar Nilai JSON",
-      "description": "Tukar nilai dua bidang dengan satu klik"
-    },
-    "jsonNodeInserter": {
-      "title": "Penyisip Node JSON",
-      "description": "Sisipkan node baru di posisi yang ditentukan secara batch"
-    },
-    "jsonSortClassify": {
-      "title": "Urutkan & Klasifikasikan JSON",
-      "description": "Urutkan dan kelompokkan array, aturan kustom"
-    },
-    "jsonMatchUpdate": {
-      "title": "Pembaruan JSON Match",
-      "description": "Pembaruan batch berdasarkan pencocokan bidang"
-    },
-    "dataParserFlare": {
-      "title": "Konverter Flare",
-      "description": "Konversi bookmark browser dan format Flare"
-    },
-    "dataParserImgPrompt": {
-      "title": "Generator Data IMGPrompt",
-      "description": "Hasilkan data JSON IMGPrompt secara batch"
+      "description": "Terjemahan batch SRT, ASS, VTT, LRC. 50+ bahasa.",
+      "metaTitle": "Penerjemah Subtitle Online - SRT/VTT untuk Video & Film",
+      "metaDescription": "Menerjemahkan video? Terjemahkan SRT, ASS, VTT secara batch dengan AI. Buat subtitle dwibahasa dan pertahankan sinkronisasi waktu. Wajib untuk kreator!",
+      "faq": [
+        {
+          "q": "Bisakah menerjemahkan subtitle SRT dan ASS dari YouTube?",
+          "a": "Mendukung SRT, ASS, VTT, LRC. Tag posisi/perataan ASS (\\an8 dll.) dipertahankan setelah terjemahan. Subtitle YouTube via yt-dlp, Vidio atau GoPlay via dasbor kreator, platform streaming dari sumber yang sah. Catatan: Efek ASS inline kompleks (warna, animasi, karaoke) disederhanakan saat terjemahan."
+        },
+        {
+          "q": "Bagaimana mengatasi timecode tidak sinkron atau karakter rusak (□□□) setelah terjemahan?",
+          "a": "Alat hanya menerjemahkan teks, tidak pernah mengubah timecode. Ketidaksesuaian biasanya karena framerate berbeda (23.976 vs 25 fps) antara sumber dan video target — perbaiki dengan Aegisub atau Subtitle Edit. Pengkodean: jschardet mendeteksi UTF-8/UTF-16/GBK/Shift-JIS otomatis; jika gagal, default ke UTF-8."
+        },
+        {
+          "q": "Bagaimana membuat subtitle dwibahasa untuk YouTube atau pembelajaran bahasa?",
+          "a": "Pilih mode 'Dwibahasa' dengan bahasa target. Tempatkan terjemahan di atas (untuk pembelajaran) atau bawah (untuk menonton). Ekspor sebagai ASS untuk subtitle dwibahasa berwarna — langsung dapat digunakan di YouTube, Premiere, atau DaVinci Resolve."
+        }
+      ],
+      "howto": [
+        {
+          "name": "Mulai dari video atau file subtitle",
+          "text": "Unggah SRT/ASS/VTT/LRC. Ekstraksi: YouTube via yt-dlp, platform lain via alat khusus. Format dan pengkodean UTF-8/UTF-16/GBK terdeteksi otomatis."
+        },
+        {
+          "name": "Pilih mesin dan mode output",
+          "text": "Google gratis untuk tes cepat, DeepSeek/DeepL API untuk kualitas. 'Hanya terjemahan' untuk publikasi, 'Dwibahasa' untuk pembelajaran bahasa. Di dwibahasa, posisi atas (belajar) atau bawah (menonton)."
+        },
+        {
+          "name": "Terjemahkan dan ekspor ke platform Anda",
+          "text": "Klik Terjemahkan dan verifikasi timing di pratinjau. Unduh SRT untuk subtitle komunitas YouTube, ASS bergaya untuk Premiere/DaVinci Resolve, VTT untuk pemutar web, LRC untuk lirik."
+        }
+      ],
+      "features": [
+        "Mendukung SRT, ASS, VTT, LRC, tag posisi ASS (\\\\an8 dll.) dipertahankan",
+        "Timecode tidak diubah — hanya teks diterjemahkan, waktu asli dipertahankan",
+        "Deteksi pengkodean otomatis UTF-8/UTF-16/GBK",
+        "Posisi subtitle dwibahasa: atas (belajar) atau bawah (menonton)",
+        "15+ mesin terjemahan: Google gratis, DeepSeek, DeepL, OpenAI",
+        "Kompatibel dengan YouTube, Premiere, DaVinci Resolve, Aegisub"
+      ]
     }
   },
   "navigation": {
