@@ -1,18 +1,18 @@
 // Translation services - LLM APIs (OpenAI, DeepSeek, Gemini, etc.)
 
 import type { ReasoningEffort, TranslateTextParams, TranslationService } from "../types";
-import { DEFAULT_SYS_PROMPT, DEFAULT_USER_PROMPT } from "../config";
+import { DEFAULT_SYSTEM_PROMPT, DEFAULT_USER_PROMPT } from "../config";
 import { defaultConfigs, OPENAI_COMPAT_KEYS, OPENAI_COMPAT_PROVIDERS, type OpenAICompatProviderKey, type OpenAICompatProviderSpec } from "../registry";
 import { getAIModelPrompt } from "../utils";
 
 import { fetchJSON, normalizeNumber, normalizePrompt, relayUrl, requireApiKey, requireUrl, completeOpenAICompatUrl, PROXY_ENDPOINTS, getOpenAICompatContent, getClaudeContent } from "./shared";
 
 // Prepare prompts common to all LLM services
-const preparePrompts = (params: { text: string; targetLanguage: string; sourceLanguage: string; sysPrompt?: string; userPrompt?: string; fullText?: string }) => {
-  const effectiveSysPrompt = normalizePrompt(params.sysPrompt, DEFAULT_SYS_PROMPT);
+const preparePrompts = (params: { text: string; targetLanguage: string; sourceLanguage: string; systemPrompt?: string; userPrompt?: string; fullText?: string }) => {
+  const effectiveSystemPrompt = normalizePrompt(params.systemPrompt, DEFAULT_SYSTEM_PROMPT);
   const effectiveUserPrompt = normalizePrompt(params.userPrompt, DEFAULT_USER_PROMPT);
   const prompt = getAIModelPrompt(params.text, effectiveUserPrompt, params.targetLanguage, params.sourceLanguage, params.fullText);
-  return { effectiveSysPrompt, prompt };
+  return { effectiveSystemPrompt, prompt };
 };
 
 // Common OpenAI-compatible request helper (named-parameter config object)
@@ -29,7 +29,7 @@ type OpenAICompatRequestConfig = {
 const openAICompatRequest = async (cfg: OpenAICompatRequestConfig): Promise<string> => {
   const { params, serviceName, endpoint, defaultModel, defaultTemperature, extraHeaders, extraBody } = cfg;
   const { apiKey, model, temperature } = params;
-  const { effectiveSysPrompt, prompt } = preparePrompts(params);
+  const { effectiveSystemPrompt, prompt } = preparePrompts(params);
   const key = requireApiKey(serviceName, apiKey);
 
   const data = await fetchJSON(endpoint, {
@@ -41,7 +41,7 @@ const openAICompatRequest = async (cfg: OpenAICompatRequestConfig): Promise<stri
     },
     body: JSON.stringify({
       messages: [
-        { role: "system", content: effectiveSysPrompt },
+        { role: "system", content: effectiveSystemPrompt },
         { role: "user", content: prompt },
       ],
       model: model || defaultModel,
@@ -146,7 +146,7 @@ export const openAICompatServices: Record<OpenAICompatProviderKey, TranslationSe
 
 export const gemini: TranslationService = async (params) => {
   const { apiKey, model, temperature } = params;
-  const { effectiveSysPrompt, prompt } = preparePrompts(params);
+  const { effectiveSystemPrompt, prompt } = preparePrompts(params);
   const key = requireApiKey("Gemini", apiKey);
 
   const data = (await fetchJSON(`https://generativelanguage.googleapis.com/v1beta/models/${model || defaultConfigs.gemini.model!}:generateContent?key=${key}`, {
@@ -154,7 +154,7 @@ export const gemini: TranslationService = async (params) => {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       contents: [{ parts: [{ text: prompt }] }],
-      systemInstruction: { parts: [{ text: effectiveSysPrompt }] },
+      systemInstruction: { parts: [{ text: effectiveSystemPrompt }] },
       generationConfig: { temperature: normalizeNumber(temperature, defaultConfigs.gemini.temperature) },
     }),
     signal: params.signal,
@@ -169,7 +169,7 @@ export const gemini: TranslationService = async (params) => {
 
 export const azureopenai: TranslationService = async (params) => {
   const { apiKey, url, model, apiVersion, temperature } = params;
-  const { effectiveSysPrompt, prompt } = preparePrompts(params);
+  const { effectiveSystemPrompt, prompt } = preparePrompts(params);
   const endpoint = requireUrl("Azure OpenAI", url);
   const deployment = model || defaultConfigs.azureopenai.model!;
   const version = apiVersion || defaultConfigs.azureopenai.apiVersion!;
@@ -185,7 +185,7 @@ export const azureopenai: TranslationService = async (params) => {
     },
     body: JSON.stringify({
       messages: [
-        { role: "system", content: effectiveSysPrompt },
+        { role: "system", content: effectiveSystemPrompt },
         { role: "user", content: prompt },
       ],
       temperature: normalizeNumber(temperature, defaultConfigs.azureopenai.temperature),
@@ -214,14 +214,14 @@ const buildNvidiaThinkingParams = (model: string, enableThinking: boolean, reaso
 
 export const nvidia: TranslationService = async (params) => {
   const { apiKey, url, model, temperature, enableThinking, reasoningEffort } = params;
-  const { effectiveSysPrompt, prompt } = preparePrompts(params);
+  const { effectiveSystemPrompt, prompt } = preparePrompts(params);
 
   const effectiveModel = model || defaultConfigs.nvidia.model!;
   const thinkingParams = buildNvidiaThinkingParams(effectiveModel, enableThinking ?? false, reasoningEffort || "medium");
 
   const requestBody: Record<string, unknown> = {
     messages: [
-      { role: "system", content: effectiveSysPrompt },
+      { role: "system", content: effectiveSystemPrompt },
       { role: "user", content: prompt },
     ],
     model: effectiveModel,
@@ -253,7 +253,7 @@ export const nvidia: TranslationService = async (params) => {
 
 export const llm: TranslationService = async (params) => {
   const { apiKey, url, model, temperature, sendSystemPrompt } = params;
-  const { effectiveSysPrompt, prompt } = preparePrompts(params);
+  const { effectiveSystemPrompt, prompt } = preparePrompts(params);
 
   const serviceName = "Custom (OpenAI-compatible)";
   // Belt-and-suspenders: UI auto-completes on blur, but settings imported from
@@ -275,7 +275,7 @@ export const llm: TranslationService = async (params) => {
     sendSystemPrompt === false
       ? [{ role: "user", content: prompt }]
       : [
-          { role: "system", content: effectiveSysPrompt },
+          { role: "system", content: effectiveSystemPrompt },
           { role: "user", content: prompt },
         ];
 
@@ -303,7 +303,7 @@ export const llm: TranslationService = async (params) => {
 
 export const claude: TranslationService = async (params) => {
   const { apiKey, model, temperature, enableThinking, useRelay } = params;
-  const { effectiveSysPrompt, prompt } = preparePrompts(params);
+  const { effectiveSystemPrompt, prompt } = preparePrompts(params);
 
   const key = requireApiKey("Claude", apiKey);
   const effectiveModel = model || defaultConfigs.claude.model!;
@@ -314,7 +314,7 @@ export const claude: TranslationService = async (params) => {
   // must grow. Plain (non-thinking) requests stay at the original 8096 cap.
   const requestBody: Record<string, unknown> = {
     model: effectiveModel,
-    system: effectiveSysPrompt,
+    system: effectiveSystemPrompt,
     messages: [{ role: "user", content: prompt }],
     max_tokens: isThinking ? 16384 : 8096,
   };

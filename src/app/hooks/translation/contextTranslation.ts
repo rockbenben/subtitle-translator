@@ -1,6 +1,10 @@
 // Context-aware translation helpers for LLM-based subtitle translation
 
-// Pre-compiled regex for marker cleanup (avoids creating RegExp objects per call)
+// Pre-compiled regex for marker cleanup (avoids creating RegExp objects per call).
+// `TRANSLTranslate_\d+` looks like a typo but isn't — some LLMs occasionally
+// emit closing tags as `[/TRANSLTranslate_5]` instead of `[/TRANSLATE_5]`
+// (the model's tokenizer re-case-shifts mid-token). Match the malformed form
+// so extraction recovers instead of leaving the line empty for retry.
 const MARKER_CLEANUP_RE = /\[\/?(TRANSLATE(_\d+)?|TRANSLTranslate_\d+|CONTEXT)\]/gi;
 
 /**
@@ -11,18 +15,34 @@ export const cleanTranslatedContent = (content: string): string => {
 };
 
 /**
+ * Single pre-compiled regex matches every `[TRANSLATE_N]…[/TRANSLATE_N]` (and
+ * the `TRANSLTranslate` typo variant — see MARKER_CLEANUP_RE) in one pass.
+ * Previously this used `new RegExp(...)` inside a loop of `expectedCount`
+ * iterations: a 1000-line subtitle at batchSize=50 allocated 1000 RegExp
+ * objects across the run. Now one shared instance handles all batches.
+ *
+ * Capture groups:
+ *   $1 — line number (matched against expectedCount to bucket into results)
+ *   $2 — translated content
+ */
+const NUMBERED_TRANSLATE_RE = /\[TRANSLATE_(\d+)\]([\s\S]*?)\[\/(?:TRANSLATE|TRANSLTranslate)_\d+\]/gi;
+
+/**
  * Extract translated lines with numbered markers from AI response
  */
 export const extractTranslatedLinesWithNumbers = (response: string, expectedCount: number): string[] => {
   // Initialize with empty strings to ensure consistent return type
   const results = new Array<string>(expectedCount).fill("");
 
-  // Match numbered markers - single regex handles both correct and error formats
-  for (let i = 0; i < expectedCount; i++) {
-    const regex = new RegExp(`\\[TRANSLATE_${i}\\]([\\s\\S]*?)\\[/(?:TRANSLATE|TRANSLTranslate)_${i}\\]`, "i");
-    const match = response.match(regex);
-    if (match) {
-      results[i] = cleanTranslatedContent(match[1].trim());
+  // Single-pass scan: walk every `[TRANSLATE_N]...[/TRANSLATE_N]` match and
+  // bucket by the captured N. Out-of-range numbers (LLM hallucinated extras)
+  // are silently dropped — caller's retry logic handles still-empty slots.
+  NUMBERED_TRANSLATE_RE.lastIndex = 0;
+  let match: RegExpExecArray | null;
+  while ((match = NUMBERED_TRANSLATE_RE.exec(response)) !== null) {
+    const idx = Number(match[1]);
+    if (idx >= 0 && idx < expectedCount && !results[idx]) {
+      results[idx] = cleanTranslatedContent(match[2].trim());
     }
   }
 

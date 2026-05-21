@@ -23,7 +23,7 @@ export interface RetryConfig {
 
 export interface UserRetryConfig {
   retryCount?: number;
-  retryTimeout?: number; // in seconds
+  requestTimeoutSec?: number; // per-request timeout, in seconds
 }
 
 // Extract status and message from error once, reuse across checks
@@ -62,7 +62,7 @@ const isRetryableError = (error: unknown): boolean => {
 
 /**
  * Get optimized retry configuration based on translation method
- * Note: Request timeout is handled separately via AbortController in useTranslateData
+ * Note: Request timeout is handled separately via AbortController in useTranslationState
  * These minTimeout/maxTimeout are for RETRY INTERVALS, not request timeout
  * @param translationMethod - The translation API method
  * @param userConfig - Optional user-defined retry count

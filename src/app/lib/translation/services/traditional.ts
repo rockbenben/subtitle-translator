@@ -44,7 +44,13 @@ export const gtxFreeAPI: TranslationService = async (params) => {
   }
 
   const data = await response.json();
-  return data[0].map((part: unknown[]) => part[0]).join("");
+  // GTX wraps translations in data[0] as Array<[translated, original, ...]>.
+  // Empty input or auth wall returns a non-array root — fall back to "" instead
+  // of throwing TypeError on .map.
+  const segments = Array.isArray(data?.[0]) ? data[0] : [];
+  return segments
+    .map((part: unknown) => (Array.isArray(part) && typeof part[0] === "string" ? part[0] : ""))
+    .join("");
 };
 
 export const google: TranslationService = async (params) => {

@@ -1,11 +1,11 @@
 // Single source of truth for every translation provider.
 //
 // PROVIDERS below is the ONE place you edit to add / change a service.
-// TRANSLATION_SERVICES (UI list), LLM_MODELS, defaultConfigs, categorizedOptions,
+// TRANSLATION_PROVIDERS (UI list), LLM_MODELS, defaultConfigs, categorizedOptions,
 // OPENAI_COMPAT_PROVIDERS (factory input), findMethodLabel, getDefaultConfig,
 // and the TranslationMethod union type are all derived views over PROVIDERS.
 
-import type { TranslationConfig, TranslationServiceInfo } from "./types";
+import type { TranslationConfig, TranslationProvider } from "./types";
 
 export type ServiceCategory = "machine-translation" | "llm" | "aggregator";
 
@@ -50,7 +50,7 @@ export type CustomProviderSpec = BaseProvider & {
 
 export type ProviderSpec = OpenAICompatProviderSpec | CustomProviderSpec;
 
-// Declared in UI display order. TRANSLATION_SERVICES iterates this directly,
+// Declared in UI display order. TRANSLATION_PROVIDERS iterates this directly,
 // so changing order here changes the Select/chip order.
 export const PROVIDERS = {
   // ===== Machine Translation =====
@@ -443,7 +443,7 @@ export const URL_IS_PRIMARY_CRED: ReadonlySet<string> = new Set(["llm", "transla
 
 // User-facing service list, declaration-order. The cast widens `as const` literal
 // types so optional `docs` / `apiKeyUrl` are uniformly accessible across entries.
-export const TRANSLATION_SERVICES: TranslationServiceInfo[] = Object.entries(PROVIDERS)
+export const TRANSLATION_PROVIDERS: TranslationProvider[] = Object.entries(PROVIDERS)
   .filter(([k]) => !INTERNAL_PROVIDERS.has(k))
   .map(([value, p]) => {
     const spec = p as ProviderSpec;
@@ -510,7 +510,7 @@ const CATEGORY_LABELS: Record<ServiceCategory, string> = {
 
 export const categorizedOptions = (["machine-translation", "llm", "aggregator"] as const).map((cat) => ({
   label: CATEGORY_LABELS[cat],
-  options: TRANSLATION_SERVICES.filter((s) => PROVIDERS[s.value as ProviderKey]?.category === cat).map(({ value, label }) => ({ value, label })),
+  options: TRANSLATION_PROVIDERS.filter((s) => PROVIDERS[s.value as ProviderKey]?.category === cat).map(({ value, label }) => ({ value, label })),
 }));
 
 // Lookups

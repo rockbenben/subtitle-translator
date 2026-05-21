@@ -1,6 +1,6 @@
 // Translation service types
 
-export interface TranslationServiceInfo {
+export interface TranslationProvider {
   value: string;
   label: string;
   docs?: string;
@@ -25,7 +25,7 @@ export interface TranslateTextParams {
   model?: string;
   apiVersion?: string;
   temperature?: number;
-  sysPrompt?: string;
+  systemPrompt?: string;
   userPrompt?: string;
   sendSystemPrompt?: boolean; // When false, omit the system message (Custom OpenAI-compat — Gemma-style chat templates rejecting system role)
   useRelay?: boolean;
@@ -52,7 +52,7 @@ export interface TranslationConfig {
   batchSize?: number;
   contextBatchSize?: number;
   contextWindow?: number;
-  sysPrompt?: string;
+  systemPrompt?: string;
   userPrompt?: string;
   sendSystemPrompt?: boolean;
   useRelay?: boolean;

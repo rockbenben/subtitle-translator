@@ -5,15 +5,15 @@ import type { TranslationConfig } from "@/app/lib/translation";
 
 export interface TranslationSettings {
   translationConfigs: Record<string, TranslationConfig>;
-  sysPrompt: string;
+  systemPrompt: string;
   userPrompt: string;
   translationMethod: string;
   sourceLanguage: string;
   targetLanguage: string;
-  target_langs: string[];
+  targetLanguages: string[];
   multiLanguageMode: boolean;
-  llmPresets?: Array<{ id: string; name: string; config: TranslationConfig; sysPrompt?: string; userPrompt?: string }>;
-  promptPresets?: Array<{ id: string; name: string; sysPrompt: string; userPrompt: string }>;
+  llmPresets?: Array<{ id: string; name: string; config: TranslationConfig }>;
+  promptPresets?: Array<{ id: string; name: string; systemPrompt: string; userPrompt: string }>;
   activePromptPresetId?: string;
   exportDate?: string;
   version?: string;

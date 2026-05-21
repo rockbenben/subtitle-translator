@@ -22,7 +22,7 @@ export { completeOpenAICompatUrl } from "./services/shared";
 /**
  * Test translation with a given method and config
  */
-export const testTranslation = async (translationMethod: TranslationMethod, config: Partial<TranslateTextParams>, sysPrompt?: string, userPrompt?: string): Promise<boolean> => {
+export const testTranslation = async (translationMethod: TranslationMethod, config: Partial<TranslateTextParams>, systemPrompt?: string, userPrompt?: string): Promise<boolean> => {
   try {
     const params: TranslateTextParams = {
       text: "Hello, world!",
@@ -32,7 +32,7 @@ export const testTranslation = async (translationMethod: TranslationMethod, conf
       translationMethod,
       useCache: false,
       ...config,
-      ...(sysPrompt && { sysPrompt }),
+      ...(systemPrompt && { systemPrompt }),
       ...(userPrompt && { userPrompt }),
     };
 
@@ -91,10 +91,16 @@ const translateText = async (params: TranslateTextParams): Promise<string> => {
     throw new Error(`No translation result received for method: ${translationMethod}`);
   }
 
-  // Clean and cache result
+  // Clean and cache result. Cache write is fire-and-forget: it's best-effort
+  // (failures are swallowed inside indexedDBStorage.set with a console.error)
+  // and awaiting it just adds 5-50ms per line to translation completion.
+  // For a 1000-line subtitle at batchSize=20, dropping the await saves
+  // ~50-500ms total without changing observable behavior — the next read of
+  // the same key happens at least 1s later (retry interval) so the write
+  // has plenty of time to settle.
   const cleanedText = cleanTranslatedText(translatedText);
   if (useCache) {
-    await setCachedTranslation(cacheKey, cleanedText);
+    void setCachedTranslation(cacheKey, cleanedText);
   }
 
   return cleanedText;

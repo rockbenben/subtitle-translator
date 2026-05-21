@@ -1,7 +1,7 @@
 // Translation cache utilities
 
 import SparkMD5 from "spark-md5";
-import { DEFAULT_SYS_PROMPT, DEFAULT_USER_PROMPT } from "./config";
+import { DEFAULT_SYSTEM_PROMPT, DEFAULT_USER_PROMPT } from "./config";
 import { LLM_MODELS } from "./registry";
 import type { TranslationConfig } from "./types";
 import { normalizePrompt } from "./services/shared";
@@ -13,9 +13,9 @@ export type CacheSuffixInput = {
   sourceLanguage: string;
   targetLanguage: string;
   translationMethod: string;
-  /** Provider config from getCurrentConfig(); cache.ts picks which fields invalidate per method. */
+  /** Provider config from getSelectedConfig(); cache.ts picks which fields invalidate per method. */
   config?: TranslationConfig;
-  sysPrompt?: string;
+  systemPrompt?: string;
   /**
    * The prompt TEMPLATE (with `${text}` / `${fullText}` placeholders), not the
    * rendered request body. Hashing the template keeps the cache key stable
@@ -30,22 +30,22 @@ export type CacheSuffixInput = {
  * config affects output (LLM-style and Qwen-MT), hashes the relevant fields
  * into the suffix so config changes invalidate stale entries automatically.
  */
-export const generateCacheSuffix = ({ sourceLanguage, targetLanguage, translationMethod, config, sysPrompt, userPrompt }: CacheSuffixInput): string => {
+export const generateCacheSuffix = ({ sourceLanguage, targetLanguage, translationMethod, config, systemPrompt, userPrompt }: CacheSuffixInput): string => {
   const base = `${targetLanguage}_${sourceLanguage}_${translationMethod}`;
 
   if (LLM_MODELS.includes(translationMethod)) {
     const payload = {
       model: config?.model || "",
       temperature: config?.temperature ?? 1.0,
-      sysPrompt: normalizePrompt(sysPrompt, DEFAULT_SYS_PROMPT),
+      systemPrompt: normalizePrompt(systemPrompt, DEFAULT_SYSTEM_PROMPT),
       userPrompt: normalizePrompt(userPrompt, DEFAULT_USER_PROMPT),
       // enableThinking=undefined and =false hash identically (preserves caches
       // from before the field existed); reasoningEffort only matters when on.
       ...(config?.enableThinking && { enableThinking: true, reasoningEffort: config?.reasoningEffort || "medium" }),
       // Custom OpenAI-compat toggle: when false, no system message is sent
-      // (Gemma-family workaround). Hashing as a separate field keeps sysPrompt
+      // (Gemma-family workaround). Hashing as a separate field keeps systemPrompt
       // semantically "what the user configured", so future normalizePrompt
-      // tweaks can't collide "user cleared sysPrompt" with "toggle off".
+      // tweaks can't collide "user cleared systemPrompt" with "toggle off".
       // undefined and true hash identically — preserves caches from before
       // the toggle existed.
       ...(config?.sendSystemPrompt === false && { sendSystemPrompt: false }),

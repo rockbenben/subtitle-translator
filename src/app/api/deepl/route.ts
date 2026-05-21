@@ -25,14 +25,14 @@ export async function POST(req: NextRequest) {
     const body = (await req.json()) as TranslationRequest;
     const { text, source_lang, target_lang: rawTargetLang, authKey, tag_handling } = body;
 
-    // 验证请求参数
-    if (!text || !rawTargetLang) {
-      return NextResponse.json({ error: "Missing required parameters: text and target_lang are required" }, { status: 400 });
+    // 验证请求参数（类型 + 存在性）
+    if (typeof text !== "string" || !text || typeof rawTargetLang !== "string" || !rawTargetLang) {
+      return NextResponse.json({ error: "Missing or invalid parameters: text and target_lang must be non-empty strings" }, { status: 400 });
     }
 
     // 验证 API 密钥
-    if (!authKey) {
-      return NextResponse.json({ error: "Missing required parameter: authKey is required" }, { status: 400 });
+    if (typeof authKey !== "string" || !authKey) {
+      return NextResponse.json({ error: "Missing or invalid parameter: authKey must be a non-empty string" }, { status: 400 });
     }
 
     // 目标语言：处理弃用的语言代码

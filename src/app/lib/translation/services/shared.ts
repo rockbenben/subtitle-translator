@@ -101,7 +101,7 @@ const ERROR_HINTS: Record<number, string> = {
 };
 const getHint = (code: number): string => ERROR_HINTS[code] ?? (code >= 500 && code < 600 ? " (Server error, please retry later / 服务器错误，请稍后重试)" : "");
 
-export const getErrorMessage = (data: unknown, status: number): string => {
+export const formatHttpError = (data: unknown, status: number): string => {
   const obj = data as Record<string, unknown> | null;
   const errorObj = obj?.error as Record<string, unknown> | string | undefined;
 
@@ -125,14 +125,14 @@ export const getErrorMessage = (data: unknown, status: number): string => {
 
 /**
  * fetch + JSON parse + ok-check in one call. On non-ok, throws an Error built
- * by getErrorMessage (defensively catches JSON parse failures on the error
+ * by formatHttpError (defensively catches JSON parse failures on the error
  * path so a non-JSON error body still produces a clean status-based message).
  */
 export const fetchJSON = async (url: string, init?: RequestInit): Promise<unknown> => {
   const response = await fetch(url, init);
   if (!response.ok) {
     const data = await response.json().catch(() => null);
-    throw new Error(getErrorMessage(data, response.status));
+    throw new Error(formatHttpError(data, response.status));
   }
   return response.json();
 };

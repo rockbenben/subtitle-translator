@@ -17,8 +17,11 @@ export async function POST(req: NextRequest) {
     const body = (await req.json()) as NvidiaRequest;
     const { apiKey, messages, model, temperature, top_p, chat_template_kwargs, reasoning_effort } = body;
 
-    if (!messages || !Array.isArray(messages)) {
-      return NextResponse.json({ error: "Missing required parameter: messages" }, { status: 400 });
+    if (!Array.isArray(messages) || messages.length === 0) {
+      return NextResponse.json({ error: "Missing or invalid parameter: messages must be a non-empty array" }, { status: 400 });
+    }
+    if (typeof model !== "string" || !model) {
+      return NextResponse.json({ error: "Missing or invalid parameter: model must be a non-empty string" }, { status: 400 });
     }
 
     const headers: Record<string, string> = {
@@ -69,7 +72,13 @@ export async function POST(req: NextRequest) {
     }
 
     if (data.choices?.[0]?.message?.content) {
-      const isMinimax = model.toLowerCase().includes("minimax-m2");
+      // MiniMax models force-output `<think>...</think>` regardless of
+      // reasoning toggle — strip across the whole family (M2, M2.7, M3, …)
+      // rather than pinning to one version. Other providers only emit think
+      // tags when the user explicitly enables thinking, so we leave their
+      // output alone to respect intent.
+      // model is guaranteed string after the validation gate above
+      const isMinimax = model.toLowerCase().includes("minimax");
 
       if (isMinimax) {
         let content = data.choices[0].message.content;

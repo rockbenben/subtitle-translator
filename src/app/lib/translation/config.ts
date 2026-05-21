@@ -2,7 +2,7 @@
 
 import type { TranslationConfig } from "./types";
 
-export const DEFAULT_SYS_PROMPT = "You are a professional translator. Respond only with the content, either translated or rewritten. Do not add explanations, comments, or any extra text.";
+export const DEFAULT_SYSTEM_PROMPT = "You are a professional translator. Respond only with the content, either translated or rewritten. Do not add explanations, comments, or any extra text.";
 export const DEFAULT_USER_PROMPT = "Please respect the original meaning, maintain the original format, and rewrite the following content in ${targetLanguage}.\n\n${content}";
 
 // Fields to preserve when resetting config to defaults (user credentials should not be lost).
@@ -24,18 +24,6 @@ export const resetConfigWithCredentials = (currentConfig: TranslationConfig | un
     }
   }
   return { ...defaultConfig, ...preserved };
-};
-
-/**
- * Legacy structure validator — kept for any external consumer that might still
- * reference it. All in-repo callers migrated to `migrateConfig` below.
- */
-export const isConfigStructureValid = (config: Record<string, unknown>, defaultConfig: Record<string, unknown>): boolean => {
-  const configKeys = Object.keys(config);
-  const defaultKeys = Object.keys(defaultConfig);
-  if (configKeys.length !== defaultKeys.length) return false;
-  const keySet = new Set(configKeys);
-  return defaultKeys.every((key) => keySet.has(key));
 };
 
 /**
