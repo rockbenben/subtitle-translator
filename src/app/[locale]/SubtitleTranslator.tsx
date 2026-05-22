@@ -10,7 +10,7 @@ import { useLocalStorage } from "@/app/hooks/useLocalStorage";
 import { useTextStats } from "@/app/hooks/useTextStats";
 import { useExportFilename } from "@/app/hooks/useExportFilename";
 
-import { splitTextIntoLines, downloadFile, splitBySpaces, getErrorMessage, getFileTypePresetConfig } from "@/app/utils";
+import { splitTextIntoLines, downloadFile, splitBySpaces, getErrorMessage, isAbortError, isCascadedAbort, isNetworkError, getFileTypePresetConfig } from "@/app/utils";
 import { VTT_SRT_TIME, LRC_TIME_REGEX_GLOBAL, detectSubtitleFormat, getOutputFileExtension, filterSubLines, convertTimeToAss, assHeader, prepareAssForTranslation, restoreAssAfterTranslation } from "./subtitleUtils";
 import { LLM_MODELS } from "@/app/lib/translation";
 import { delay } from "@/app/hooks/translation";
@@ -317,9 +317,21 @@ const SubtitleTranslator = () => {
       } catch (error: unknown) {
         console.error(error);
 
-        const errorMessage = getErrorMessage(error);
+        // Cascaded abort = peer auth error already aborted the controller;
+        // the real auth error surfaces via the matching peer rejection. Skip
+        // the noisy secondary toast.
+        if (isCascadedAbort(error)) continue;
+
+        const friendly = isNetworkError(error) ? t("networkUnavailable") : isAbortError(error) ? t("translationTimeout") : null;
         const langLabel = sourceOptions.find((o) => o.value === currentTargetLang)?.label || currentTargetLang;
-        const content = needsBilingual ? `${errorMessage} ${tSubtitle("bilingualError")}` : `${errorMessage} ${langLabel} ${t("translationError")}`;
+        // Friendly messages already convey "translation failed" — drop the
+        // redundant `${t("translationError")}` suffix, keep langLabel in
+        // parentheses for multi-language context.
+        const content = friendly
+          ? `${friendly} (${langLabel})`
+          : needsBilingual
+            ? `${getErrorMessage(error)} ${tSubtitle("bilingualError")}`
+            : `${getErrorMessage(error)} ${langLabel} ${t("translationError")}`;
 
         message.error(content, 60);
       }

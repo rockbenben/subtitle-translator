@@ -1,6 +1,7 @@
 // Translation retry configuration and utilities
 
 import { LLM_MODELS } from "@/app/lib/translation";
+import { isAbortError, isCascadedAbort } from "@/app/utils";
 
 // MT-categorized services that actually delegate to an LLM runtime under the
 // hood (Qwen-MT → Qwen, translategemma → Gemma 3). They share LLM-style
@@ -55,6 +56,16 @@ const NON_RETRYABLE_MESSAGES = ["enable 'api relay'", "请在 api 设置中开�
  */
 const isRetryableError = (error: unknown): boolean => {
   if (isAuthError(error)) return false;
+  // Aborts are non-recoverable by retry:
+  //   - AbortError: per-request timeout fired (createTimeoutController's
+  //     setTimeout → controller.abort). Next attempt has its own fresh
+  //     timeout but will hit the same upstream slowness — at 180s × 3
+  //     attempts that's 9 minutes of dead waiting before the user sees
+  //     anything. Fast-fail instead.
+  //   - "Translation aborted": shared abortControllerRef tripped (auth error
+  //     in a peer). pRetry's pre-attempt guard would re-throw the same
+  //     message — pointless retry loop.
+  if (isAbortError(error) || isCascadedAbort(error)) return false;
   const { status, message } = getErrorInfo(error);
   if (NON_RETRYABLE_MESSAGES.some((m) => message.includes(m))) return false;
   return !status || status >= 500 || status === 429;

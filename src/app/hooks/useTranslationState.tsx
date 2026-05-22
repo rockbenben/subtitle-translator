@@ -721,25 +721,33 @@ const useTranslationState = () => {
       }
 
       if (config?.chunkSize === undefined) {
-        // Line-by-line concurrent translation
-        // Note: abort logic is now handled centrally in translateSingle via shared abortControllerRef
+        // Line-by-line concurrent translation. Soft-fail mirrors LLM context
+        // mode (translateWithContext below): a single line's failure fills the
+        // slot with the original text and tracks it for the TranslateFailurePanel,
+        // letting peers finish. Auth errors (and post-abort cascades) still
+        // propagate so Promise.all rejects and the translator catch can route.
         const translatedLines = new Array(contentLines.length);
+        const failedLinesList: string[] = [];
         let completedCount = 0;
-        let aborted = false;
 
-        // Throttle progress updates for large batches to reduce re-renders,
-        // but update every item when the total is small so the bar isn't stuck at 0%.
         const progressStep = Math.max(1, Math.floor(contentLines.length / 100));
         updateProgress(0.5, contentLines.length);
 
         const promises = contentLines.map((line, index) =>
           limit(async () => {
-            if (aborted) return;
+            if (abortControllerRef.current?.signal.aborted) return;
             try {
               translatedLines[index] = await translateSingle(line, cacheSuffix, runtimeConfig, fullText);
             } catch (error) {
-              aborted = true;
-              throw error;
+              // Auth error already tripped abortControllerRef inside translateSingle.
+              // After-abort throws ("Translation aborted") come from peers' pre-attempt
+              // guard. Both must propagate so Promise.all kills the batch — translator
+              // catch surfaces the real auth error / handles cascade silently.
+              if (isAuthError(error) || abortControllerRef.current?.signal.aborted) throw error;
+              // Otherwise (network blip, 5xx, etc., after pRetry exhausted):
+              // soft-fail this line, keep peers running.
+              translatedLines[index] = line;
+              if (line && line.trim()) failedLinesList.push(line);
             }
             completedCount++;
             if (completedCount % progressStep === 0 || completedCount === contentLines.length) {
@@ -753,6 +761,13 @@ const useTranslationState = () => {
 
         await Promise.all(promises);
         updateProgress(contentLines.length, contentLines.length);
+
+        // Surface failures via the same channel as context-mode (TranslateFailurePanel).
+        if (failedLinesList.length > 0) {
+          setTranslateFailedCount((prev) => prev + failedLinesList.length);
+          setTranslateFailedLines((prev) => [...prev, ...failedLinesList]);
+        }
+
         return translatedLines;
       }
 
