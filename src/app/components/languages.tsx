@@ -25,11 +25,14 @@ export const useLanguageOptions = () => {
 
 const normalizeText = (text = "") => text.trim().toLowerCase();
 
-export const filterLanguageOption = ({ input, option }: { input: string; option?: { label: string; name: string; value: string } }) => {
+// Permissive option shape: when options are grouped (optGroups), antd passes
+// DefaultOptionType which has no `name` field. Treat each match field as
+// optional and defensively coerce to string.
+export const filterLanguageOption = ({ input, option }: { input: string; option?: { label?: unknown; name?: unknown; value?: unknown } }) => {
   const normalizedInput = normalizeText(input);
-  const normalizedLabel = normalizeText(option?.label);
-  const normalizedName = normalizeText(option?.name);
-  const normalizedValue = normalizeText(option?.value);
+  const normalizedLabel = normalizeText(typeof option?.label === "string" ? option.label : "");
+  const normalizedName = normalizeText(typeof option?.name === "string" ? option.name : "");
+  const normalizedValue = normalizeText(typeof option?.value === "string" ? option.value : "");
 
   // 如果 label、name 或 value (language code) 包含输入的内容，则返回 true
   return normalizedLabel.includes(normalizedInput) || normalizedName.includes(normalizedInput) || normalizedValue.includes(normalizedInput);

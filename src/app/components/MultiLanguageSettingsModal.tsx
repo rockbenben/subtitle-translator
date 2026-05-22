@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { Modal, Input, Button, Space, App, Typography } from "antd";
+import { Modal, Input, Button, Flex, Space, App, Typography } from "antd";
 import { useTranslations, useLocale } from "next-intl";
-import { languages } from "@/app/lib/translation";
+import { languages, LANGUAGE_PRESETS } from "@/app/lib/translation";
 import { getDocUrl } from "@/app/utils/localeUtils";
 
 const { TextArea } = Input;
@@ -86,6 +86,28 @@ const MultiLanguageSettingsModal = ({ open, onClose, targetLanguages, setTargetL
           </Link>
         </Text>
       </div>
+
+      {/* Quick-pick presets — append to existing input so users can stack. */}
+      <Flex gap={4} wrap className="mb-2">
+        {LANGUAGE_PRESETS.map((p) => (
+          <Button
+            key={p.key}
+            size="small"
+            onClick={() => {
+              // Merge into the textarea: parse current → union with preset → write back.
+              const existing = inputValue
+                .replace(/,/g, ",")
+                .split(/[\s,]+/)
+                .map((s) => s.trim().toLowerCase())
+                .filter(Boolean);
+              const merged = [...new Set([...existing, ...p.codes])];
+              setInputValue(merged.join(", "));
+            }}>
+            {t(p.labelKey)}
+          </Button>
+        ))}
+      </Flex>
+
       <TextArea
         value={inputValue}
         onChange={(e) => setInputValue(e.target.value)}
