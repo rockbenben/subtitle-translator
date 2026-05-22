@@ -34,6 +34,16 @@ const getAzureRegion = (region: string | undefined): string => {
   return value;
 };
 
+// Azure Translator uses non-standard codes for some languages. Our master list
+// (languages-data.ts) uses BCP-47 / ISO-639 conventions; remap before sending.
+//   ckb (Central Kurdish / Sorani) → Azure uses `ku`
+// See https://learn.microsoft.com/zh-cn/azure/ai-services/translator/language-support
+// for the canonical Azure code table.
+const AZURE_LANG_MAP: Record<string, string> = {
+  ckb: "ku",
+};
+const toAzureCode = (lang: string): string => AZURE_LANG_MAP[lang] ?? lang;
+
 export const gtxFreeAPI: TranslationService = async (params) => {
   const { text, targetLanguage, sourceLanguage } = params;
   const apiEndpoint = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sourceLanguage}&tl=${targetLanguage}&dt=t&q=${encodeURIComponent(text)}`;
@@ -110,7 +120,9 @@ export const deeplx: TranslationService = async (params) => {
 
 export const azure: TranslationService = async (params) => {
   const { text, targetLanguage, sourceLanguage, apiKey, region } = params;
-  const apiEndpoint = `https://api.cognitive.microsofttranslator.com/translate?api-version=3.0&to=${targetLanguage}${sourceLanguage !== "auto" ? `&from=${sourceLanguage}` : ""}`;
+  const azureTarget = toAzureCode(targetLanguage);
+  const azureSource = sourceLanguage !== "auto" ? toAzureCode(sourceLanguage) : null;
+  const apiEndpoint = `https://api.cognitive.microsofttranslator.com/translate?api-version=3.0&to=${azureTarget}${azureSource ? `&from=${azureSource}` : ""}`;
 
   const key = requireApiKey("Azure Translate", apiKey);
   const resolvedRegion = getAzureRegion(region);
