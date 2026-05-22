@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { useTranslationContext } from "@/app/components/TranslationContext";
 import PageCard from "@/app/components/styled/PageCard";
 import PromptPresetPicker from "@/app/components/PromptPresetPicker";
+import { useIsMobile } from "@/app/hooks/useIsMobile";
 
 const { Text } = Typography;
 const { TextArea } = Input;
@@ -21,10 +22,20 @@ const { TextArea } = Input;
 const GlobalPromptsPanel = () => {
   const t = useTranslations("TranslationSettings");
   const tCommon = useTranslations("common");
+  const isMobile = useIsMobile();
   const { systemPrompt, setSystemPrompt, userPrompt, setUserPrompt } = useTranslationContext();
 
+  // Mobile: the secondary hint moves below the title (Card title/extra share
+  // one flex row on Antd — long titles + hint overlap at ~290px). Body padding
+  // shrinks to claw back input width inside the nested Drawer + Card stack.
+  const hint = <Text type="secondary">{t("globalPromptsExtra")}</Text>;
+
   return (
-    <PageCard title={t("globalPrompts")} extra={<Text type="secondary">{t("globalPromptsExtra")}</Text>}>
+    <PageCard
+      title={t("globalPrompts")}
+      extra={isMobile ? null : hint}
+      styles={isMobile ? { body: { padding: 12 } } : undefined}>
+      {isMobile && <div style={{ marginBottom: 12 }}>{hint}</div>}
       <PromptPresetPicker />
       <Form layout="vertical">
         <Form.Item label={t("systemPrompt")} extra={t("systemPromptExtra")} style={{ marginBottom: 12 }}>

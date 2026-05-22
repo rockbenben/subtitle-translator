@@ -4,35 +4,24 @@ import { useState, useRef, useEffect } from "react";
 import { Select, Input, Button, Tag, Space, Flex, Typography, Tooltip, App, theme } from "antd";
 import { ApiOutlined, ThunderboltOutlined } from "@ant-design/icons";
 import { useTranslations } from "next-intl";
-import { categorizedOptions, findMethodLabel, testTranslation, URL_IS_PRIMARY_CRED, DEFAULT_SYSTEM_PROMPT, DEFAULT_USER_PROMPT, type TranslationConfig } from "@/app/lib/translation";
+import { categorizedOptions, findMethodLabel, getConfigStatus, testTranslation, URL_IS_PRIMARY_CRED, DEFAULT_SYSTEM_PROMPT, DEFAULT_USER_PROMPT } from "@/app/lib/translation";
 import { useTranslationContext } from "@/app/components/TranslationContext";
+import { useIsMobile } from "@/app/hooks/useIsMobile";
 
-// Folds the spec's `needs-url` (method === "llm" with empty url) into `needs-config`
-// since both share the same Tag copy and section background. See spec § 4.4.
+// Visual states the tag/section can show. The first three come from
+// getConfigStatus (registry single-source-of-truth); the last three are
+// session-only outcomes from "Test connection".
 type StatusState = "free" | "needs-config" | "configured" | "testing" | "connected" | "failed";
 
 interface ApiStatusBlockProps {
   disabled?: boolean;
 }
 
-const deriveBaseStatus = (method: string, config: TranslationConfig | undefined): StatusState => {
-  if (!config) return "free";
-  // URL_IS_PRIMARY_CRED services (llm, translategemma) are URL-driven: empty URL
-  // → needs-config, populated → configured. Skip the apiKey-based logic so
-  // translategemma (no apiKey field at all) doesn't fall through to "free".
-  if (URL_IS_PRIMARY_CRED.has(method)) {
-    if (!config.url || config.url === "") return "needs-config";
-    return "configured";
-  }
-  if (config.apiKey === undefined) return "free";
-  if (config.apiKey === "") return "needs-config";
-  return "configured";
-};
-
 const ApiStatusBlock = ({ disabled = false }: ApiStatusBlockProps) => {
   const t = useTranslations("common");
   const { message } = App.useApp();
   const { token } = theme.useToken();
+  const isMobile = useIsMobile();
   const { translationMethod, setTranslationMethod, getSelectedConfig, handleConfigChange, systemPrompt, userPrompt, setApiSettingsOpen } = useTranslationContext();
 
   const config = getSelectedConfig();
@@ -63,7 +52,7 @@ const ApiStatusBlock = ({ disabled = false }: ApiStatusBlockProps) => {
     setTestId((t) => t + 1);
   }
 
-  const baseStatus = deriveBaseStatus(translationMethod, config);
+  const baseStatus = getConfigStatus(translationMethod, config);
 
   const status: StatusState = sessionStatus === "testing"
     ? "testing"
@@ -157,30 +146,58 @@ const ApiStatusBlock = ({ disabled = false }: ApiStatusBlockProps) => {
         </Space>
       </Flex>
 
-      <Space.Compact className="w-full">
-        <Select
-          showSearch
-          value={translationMethod}
-          onChange={handleMethodChange}
-          options={categorizedOptions}
-          style={{ flex: 1, minWidth: 0 }}
-          disabled={disabled}
-          aria-label={t("translationAPI")}
-        />
-        {showApiKey && (
-          <Tooltip title={`${t("enter")} ${methodLabel} API Key`}>
+      {/* Mobile: stack Select on top, apiKey input below — 145px-each compact
+          row truncates "Custom (OpenAI-compatible)" / "Tencent Hunyuan (混元)"
+          beyond recognition. Desktop keeps the dense single-row layout. */}
+      {isMobile ? (
+        <Flex vertical gap={token.marginXS}>
+          <Select
+            showSearch
+            value={translationMethod}
+            onChange={handleMethodChange}
+            options={categorizedOptions}
+            style={{ width: "100%" }}
+            disabled={disabled}
+            aria-label={t("translationAPI")}
+          />
+          {showApiKey && (
             <Input.Password
               autoComplete="off"
-              placeholder="API Key"
+              placeholder={`${methodLabel} API Key`}
               value={config.apiKey as string | undefined}
               onChange={(e) => handleApiKeyChange(e.target.value)}
-              style={{ flex: 1, minWidth: 0 }}
+              style={{ width: "100%" }}
               disabled={disabled}
               aria-label={`${methodLabel} API Key`}
             />
-          </Tooltip>
-        )}
-      </Space.Compact>
+          )}
+        </Flex>
+      ) : (
+        <Space.Compact className="w-full">
+          <Select
+            showSearch
+            value={translationMethod}
+            onChange={handleMethodChange}
+            options={categorizedOptions}
+            style={{ flex: 1, minWidth: 0 }}
+            disabled={disabled}
+            aria-label={t("translationAPI")}
+          />
+          {showApiKey && (
+            <Tooltip title={`${t("enter")} ${methodLabel} API Key`}>
+              <Input.Password
+                autoComplete="off"
+                placeholder="API Key"
+                value={config.apiKey as string | undefined}
+                onChange={(e) => handleApiKeyChange(e.target.value)}
+                style={{ flex: 1, minWidth: 0 }}
+                disabled={disabled}
+                aria-label={`${methodLabel} API Key`}
+              />
+            </Tooltip>
+          )}
+        </Space.Compact>
+      )}
 
       <Flex justify="space-between" align="center" style={{ marginTop: token.marginXS }}>
         <Button

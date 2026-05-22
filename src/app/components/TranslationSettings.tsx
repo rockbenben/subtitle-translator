@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { Form, Input, InputNumber, Card, Typography, Button, Space, Tooltip, App, Switch, Select, Modal, Popconfirm, Tag, Alert, theme } from "antd";
+import { Fragment, useMemo, useState } from "react";
+import { Form, Input, InputNumber, Card, Typography, Button, Space, Flex, Tooltip, App, Switch, Select, Modal, Popconfirm, Tag, Alert, theme } from "antd";
 import { SaveOutlined, PlusOutlined, DeleteOutlined } from "@ant-design/icons";
 import {
   TRANSLATION_PROVIDERS,
@@ -9,6 +9,7 @@ import {
   DEFAULT_SYSTEM_PROMPT,
   DEFAULT_USER_PROMPT,
   URL_IS_PRIMARY_CRED,
+  getConfigStatus,
   testTranslation,
   clearTranslationCache,
   getDefaultConfig,
@@ -23,13 +24,11 @@ import { useTranslationContext } from "@/app/components/TranslationContext";
 import { useTranslations } from "next-intl";
 import Section from "@/app/components/styled/Section";
 import GlobalPromptsPanel from "@/app/components/GlobalPromptsPanel";
+import { useIsMobile } from "@/app/hooks/useIsMobile";
 
 const { Text, Link } = Typography;
 const { TextArea } = Input;
 const { CheckableTag } = Tag;
-
-// Services usable without user credentials — always surfaced in the configured-chips row
-const NO_KEY_REQUIRED = new Set(["gtxFreeAPI"]);
 
 // Services whose URL field accepts an OpenAI-compatible /chat/completions endpoint;
 // safe to auto-complete on blur. azureopenai is excluded (URL is a base, code
@@ -41,6 +40,7 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
   const t = useTranslations("TranslationSettings");
   const { message } = App.useApp();
   const { token } = theme.useToken();
+  const isMobile = useIsMobile();
   const {
     translationConfigs,
     handleConfigChange,
@@ -164,89 +164,119 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
     }
   };
 
+  const cardTitle = (
+    <Flex wrap align="center" gap={8}>
+      <span>{currentService?.label}</span>
+      {currentService?.docs && (
+        <Link type="secondary" href={currentService.docs} target="_blank">
+          {`API ${t("docs")}`}
+        </Link>
+      )}
+    </Flex>
+  );
+
+  // Action buttons live in Card.extra on desktop and in a body row on mobile —
+  // antd Card's title/extra share one flex row, and three buttons + a title
+  // overflow the ~290px content area inside the Drawer at phone widths.
+  const actionButtons = (
+    <Space wrap>
+      <Tooltip title={t("resetCacheTooltip")}>
+        <Button onClick={resetTranslationCache}>{t("resetCache")}</Button>
+      </Tooltip>
+      <Tooltip title={t("testConfigTooltip")}>
+        <Button type="primary" loading={testingService === service} onClick={handleTestConfig}>
+          {t("testConfig")}
+        </Button>
+      </Tooltip>
+      <Button onClick={handleResetToDefault}>{t("resetConfig")}</Button>
+    </Space>
+  );
+
+  // LLM preset bar: Select + 3 icon buttons. Desktop = single compact row;
+  // mobile = Select on its own row (so preset names stay readable) + buttons
+  // below in a Compact row.
+  const llmPresetSelect = (
+    <Select
+      style={isMobile ? { width: "100%" } : { flex: 1 }}
+      placeholder={llmPresetPlaceholder}
+      value={activeLlmPresetId || undefined}
+      onChange={(value) => loadLlmPreset(value)}
+      allowClear
+      onClear={() => loadLlmPreset("")}
+      options={llmPresets.map((p) => ({ label: p.name, value: p.id }))}
+    />
+  );
+  const llmPresetButtons = (
+    <Fragment>
+      <Tooltip title={t("presetUpdate")}>
+        <Button
+          icon={<SaveOutlined />}
+          disabled={!activeLlmPresetId}
+          aria-label={t("presetUpdate")}
+          onClick={() => {
+            if (!activeLlmPresetId) return;
+            updateLlmPreset(activeLlmPresetId);
+            message.success(t("presetUpdated"));
+          }}
+        />
+      </Tooltip>
+      <Tooltip title={t("presetSave")}>
+        <Button
+          icon={<PlusOutlined />}
+          aria-label={t("presetSave")}
+          onClick={() => {
+            setPresetName("");
+            setPresetModalOpen(true);
+          }}
+        />
+      </Tooltip>
+      <Popconfirm
+        title={t("presetDeleteConfirm")}
+        onConfirm={() => {
+          if (activeLlmPresetId) {
+            deleteLlmPreset(activeLlmPresetId);
+            message.success(t("presetDeleted"));
+          }
+        }}
+        disabled={!activeLlmPresetId}>
+        <Tooltip title={t("presetDelete")}>
+          <Button danger icon={<DeleteOutlined />} disabled={!activeLlmPresetId} aria-label={t("presetDelete")} />
+        </Tooltip>
+      </Popconfirm>
+    </Fragment>
+  );
+
   return (
     <Card
-      title={
-        <Space>
-          {currentService?.label}
-          {currentService?.docs && (
-            <Link type="secondary" href={currentService.docs} target="_blank">
-              {`API ${t("docs")}`}
-            </Link>
-          )}
-        </Space>
-      }
-      extra={
-        <Space wrap>
-          <Tooltip title={t("resetCacheTooltip")}>
-            <Button onClick={resetTranslationCache}>{t("resetCache")}</Button>
-          </Tooltip>
-          <Tooltip title={t("testConfigTooltip")}>
-            <Button type="primary" loading={testingService === service} onClick={handleTestConfig}>
-              {t("testConfig")}
-            </Button>
-          </Tooltip>
-          <Button onClick={handleResetToDefault}>{t("resetConfig")}</Button>
-        </Space>
-      }>
+      title={cardTitle}
+      extra={isMobile ? null : actionButtons}
+      // Tighter body padding on mobile reclaims ~24px for input width — the
+      // outer Drawer + Card + nested Section already double-pad otherwise.
+      styles={isMobile ? { body: { padding: 12 } } : undefined}>
+      {isMobile && <div style={{ marginBottom: 12 }}>{actionButtons}</div>}
       {/* Custom (OpenAI-compatible) discoverability hint — many users miss that
           this provider accepts ANY OpenAI-compatible endpoint, not just Ollama */}
       {service === "llm" && <Alert type="info" showIcon title={t("customApiHelp")} style={{ marginBottom: 16 }} />}
       {/* llm provider-only preset picker — sits above the grouped sections */}
       {service === "llm" && (
         <div style={{ marginBottom: 0 }}>
-          <Space.Compact style={{ width: "100%" }}>
-            <Select
-              style={{ flex: 1 }}
-              placeholder={llmPresetPlaceholder}
-              value={activeLlmPresetId || undefined}
-              onChange={(value) => loadLlmPreset(value)}
-              allowClear
-              onClear={() => loadLlmPreset("")}
-              options={llmPresets.map((p) => ({ label: p.name, value: p.id }))}
-            />
-            <Tooltip title={t("presetUpdate")}>
-              <Button
-                icon={<SaveOutlined />}
-                disabled={!activeLlmPresetId}
-                aria-label={t("presetUpdate")}
-                onClick={() => {
-                  if (!activeLlmPresetId) return;
-                  updateLlmPreset(activeLlmPresetId);
-                  message.success(t("presetUpdated"));
-                }}
-              />
-            </Tooltip>
-            <Tooltip title={t("presetSave")}>
-              <Button
-                icon={<PlusOutlined />}
-                aria-label={t("presetSave")}
-                onClick={() => {
-                  setPresetName("");
-                  setPresetModalOpen(true);
-                }}
-              />
-            </Tooltip>
-            <Popconfirm
-              title={t("presetDeleteConfirm")}
-              onConfirm={() => {
-                if (activeLlmPresetId) {
-                  deleteLlmPreset(activeLlmPresetId);
-                  message.success(t("presetDeleted"));
-                }
-              }}
-              disabled={!activeLlmPresetId}>
-              <Tooltip title={t("presetDelete")}>
-                <Button
-                  danger
-                  icon={<DeleteOutlined />}
-                  disabled={!activeLlmPresetId}
-                  aria-label={t("presetDelete")}
-                />
-              </Tooltip>
-            </Popconfirm>
-          </Space.Compact>
-          <Modal title={t("presetSave")} open={presetModalOpen} onOk={handleSavePreset} onCancel={() => setPresetModalOpen(false)}>
+          {isMobile ? (
+            <Flex vertical gap={token.marginXS}>
+              {llmPresetSelect}
+              <Space.Compact style={{ width: "100%" }}>{llmPresetButtons}</Space.Compact>
+            </Flex>
+          ) : (
+            <Space.Compact style={{ width: "100%" }}>
+              {llmPresetSelect}
+              {llmPresetButtons}
+            </Space.Compact>
+          )}
+          <Modal
+            title={t("presetSave")}
+            open={presetModalOpen}
+            onOk={handleSavePreset}
+            onCancel={() => setPresetModalOpen(false)}
+            width={isMobile ? "90vw" : undefined}>
             <Input placeholder={t("presetNamePlaceholder")} value={presetName} onChange={(e) => setPresetName(e.target.value)} onPressEnter={handleSavePreset} autoFocus />
           </Modal>
         </div>
@@ -325,14 +355,14 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
             {config?.apiKey !== undefined && (
               <Form.Item
                 label={
-                  <Space>
-                    {`${currentService?.label} API Key`}
+                  <Flex wrap align="center" gap={8}>
+                    <span>{`${currentService?.label} API Key`}</span>
                     {currentService?.apiKeyUrl && (
                       <Link href={currentService.apiKeyUrl} target="_blank">
                         {tCommon("getApiKey") || "Get API Key"}
                       </Link>
                     )}
-                  </Space>
+                  </Flex>
                 }
                 required={!URL_IS_PRIMARY_CRED.has(service)}>
                 <Input.Password
@@ -495,30 +525,33 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
 
 const TranslationSettings = () => {
   const t = useTranslations("TranslationSettings");
+  const isMobile = useIsMobile();
   const { translationMethod, setTranslationMethod, translationConfigs } = useTranslationContext();
   const isLLMModel = LLM_MODELS.includes(translationMethod);
 
+  // Chips row = every service whose getConfigStatus is non-"needs-config",
+  // plus the currently-selected one. getConfigStatus is the same predicate the
+  // status block uses, so both surfaces agree (deeplx shows up free out of the
+  // box, azureopenai stays hidden until URL+apiKey are both filled, etc).
+  const activeServices = useMemo(
+    () =>
+      TRANSLATION_PROVIDERS.filter((s) => {
+        const status = getConfigStatus(s.value, translationConfigs?.[s.value]);
+        return status !== "needs-config" || s.value === translationMethod;
+      }),
+    [translationConfigs, translationMethod],
+  );
 
-  // Active services = no-key-required + has apiKey + has URL (for URL-primary
-  // services like Custom OpenAI-compatible) + currently selected. Currently-selected
-  // is always included so the user can always "see" and click back to it even if
-  // they haven't configured anything yet.
-  const activeServices = useMemo(() => {
-    const seen = new Set<string>();
-    const entries: typeof TRANSLATION_PROVIDERS = [];
-    for (const s of TRANSLATION_PROVIDERS) {
-      const cfg = translationConfigs?.[s.value] as { apiKey?: unknown; url?: unknown } | undefined;
-      const hasKey = typeof cfg?.apiKey === "string" && cfg.apiKey.trim() !== "";
-      const hasUrlCred = URL_IS_PRIMARY_CRED.has(s.value) && typeof cfg?.url === "string" && cfg.url.trim() !== "";
-      const noKeyNeeded = NO_KEY_REQUIRED.has(s.value);
-      const isCurrent = s.value === translationMethod;
-      if ((hasKey || hasUrlCred || noKeyNeeded || isCurrent) && !seen.has(s.value)) {
-        seen.add(s.value);
-        entries.push(s);
-      }
-    }
-    return entries;
-  }, [translationConfigs, translationMethod]);
+  const providerSelect = (
+    <Select
+      style={isMobile ? { width: "100%" } : { minWidth: 240 }}
+      showSearch={{ optionFilterProp: "label" }}
+      value={translationMethod}
+      onChange={setTranslationMethod}
+      options={categorizedOptions}
+      aria-label={t("selectService")}
+    />
+  );
 
   return (
     <div className="flex flex-col gap-4">
@@ -526,17 +559,17 @@ const TranslationSettings = () => {
           直接平铺 provider Select + 已配置 chips,跟下面 ServiceSettingsForm 的 Card
           形成「无框→有框」的层级对比,信息密度更清晰。 */}
       <Space orientation="vertical" size="small" style={{ width: "100%" }}>
-        <Space wrap size="small">
-          <Text>{t("selectService")}:</Text>
-          <Select
-            style={{ minWidth: 240 }}
-            showSearch={{ optionFilterProp: "label" }}
-            value={translationMethod}
-            onChange={setTranslationMethod}
-            options={categorizedOptions}
-            aria-label={t("selectService")}
-          />
-        </Space>
+        {isMobile ? (
+          <Flex vertical gap={4} style={{ width: "100%" }}>
+            <Text>{t("selectService")}:</Text>
+            {providerSelect}
+          </Flex>
+        ) : (
+          <Space wrap size="small">
+            <Text>{t("selectService")}:</Text>
+            {providerSelect}
+          </Space>
+        )}
         {activeServices.length > 0 && (
           <Space wrap size={[4, 4]}>
             <Text type="secondary">{t("configuredServices")}:</Text>
