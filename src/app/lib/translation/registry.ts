@@ -122,10 +122,16 @@ export const PROVIDERS = {
     // (`do_sample=False`); the model wasn't trained for sampling and
     // non-zero values degrade output. Service hardcodes temperature=0
     // so LM Studio's UI default (typically 0.7-1.0) doesn't bleed in.
-    defaults: { url: "http://127.0.0.1:1234/v1/chat/completions", model: "translategemma-4b-it", batchSize: 10, delayTime: 200 },
+    //
+    // `defaults.url` stays empty intentionally — same as Custom (OpenAI-compat).
+    // Users self-host on heterogeneous runtimes (LM Studio :1234, Ollama :11434,
+    // llama.cpp :8080); shipping any one as the default would mislead users on
+    // the other two. Empty default → status starts as "needs-config" and forces
+    // an explicit endpoint pick from the chips below.
+    defaults: { url: "", model: "translategemma-4b-it", batchSize: 10, delayTime: 200 },
     endpoints: [
       // Same local-server order as Custom (OpenAI-compatible) — LM Studio first
-      // (matches `defaults.url` + placeholder), then Ollama / llama.cpp.
+      // (matches the input's example placeholder), then Ollama / llama.cpp.
       { label: "LM Studio", url: "http://127.0.0.1:1234/v1/chat/completions" },
       { label: "Ollama", url: "http://127.0.0.1:11434/v1/chat/completions" },
       { label: "llama.cpp", url: "http://127.0.0.1:8080/v1/chat/completions" },
@@ -170,7 +176,7 @@ export const PROVIDERS = {
     label: "Gemini",
     docs: "https://ai.google.dev/gemini-api/docs/text-generation",
     apiKeyUrl: "https://aistudio.google.com/app/api-keys",
-    defaults: { apiKey: "", model: "gemini-3-flash", temperature: 0.7, batchSize: 20, contextBatchSize: 3, contextWindow: 100 },
+    defaults: { apiKey: "", model: "gemini-3.5-flash", temperature: 0.7, batchSize: 20, contextBatchSize: 3, contextWindow: 100 },
   },
   qwen: {
     kind: "openai-compat",
@@ -440,6 +446,67 @@ export const LLM_MODELS: string[] = Object.entries(PROVIDERS)
  * Add new services here when they fit this profile (URL required, apiKey optional).
  */
 export const URL_IS_PRIMARY_CRED: ReadonlySet<string> = new Set(["llm", "translategemma"]);
+
+/**
+ * Services that work with zero user configuration because they fall back to a
+ * public/shared endpoint when no credentials are supplied:
+ *   - gtxFreeAPI: hits Google's free translate.googleapis.com directly
+ *   - deeplx: empty URL falls back to our public THIRD_PARTY_ENDPOINTS.deeplx
+ *
+ * Effect:
+ *   - Status block shows the "free" tag
+ *   - "Configured services" chips row always lists them, even with empty config
+ *
+ * Do NOT add services here unless an empty config is genuinely functional
+ * end-to-end without any user setup.
+ */
+export const NO_CRED_REQUIRED: ReadonlySet<string> = new Set(["gtxFreeAPI", "deeplx"]);
+
+/**
+ * Services that require a non-empty URL **in addition to** apiKey. Compare with
+ * URL_IS_PRIMARY_CRED (URL only, apiKey optional). Currently just Azure OpenAI,
+ * where URL is the per-tenant resource endpoint and apiKey authenticates.
+ *
+ * Affects:
+ *   - Validation: empty URL blocks translation
+ *   - Status: empty URL (with apiKey filled) → "needs-config", not "configured"
+ */
+export const URL_ALSO_REQUIRED: ReadonlySet<string> = new Set(["azureopenai"]);
+
+export type ConfigStatus = "free" | "needs-config" | "configured";
+
+/**
+ * Single source of truth: derive a normalized config status from a service's
+ * current config. Used by ApiStatusBlock (tag color) AND the "configured
+ * services" chips row in TranslationSettings — keep them in lockstep.
+ *
+ *   - "free": runs without credentials (NO_CRED_REQUIRED set, or rare future
+ *      services where the spec has no apiKey field at all)
+ *   - "needs-config": at least one required field (apiKey / url / region) is
+ *      empty — UI surfaces this with a warning chip
+ *   - "configured": all required fields populated
+ */
+export const getConfigStatus = (method: string, config: TranslationConfig | undefined): ConfigStatus => {
+  if (!config) return "free";
+  if (NO_CRED_REQUIRED.has(method)) return "free";
+
+  // URL-only services (Custom OpenAI-compat, TranslateGemma): URL is the credential.
+  if (URL_IS_PRIMARY_CRED.has(method)) {
+    return typeof config.url === "string" && config.url.trim() ? "configured" : "needs-config";
+  }
+
+  // apiKey-based services. apiKey is required when the field exists; some
+  // services additionally require URL (URL_ALSO_REQUIRED) or region (Azure).
+  const apiKeyOk = config.apiKey === undefined || (typeof config.apiKey === "string" && config.apiKey.trim() !== "");
+  const urlOk = !URL_ALSO_REQUIRED.has(method) || (typeof config.url === "string" && config.url.trim() !== "");
+  const regionOk = config.region === undefined || (typeof config.region === "string" && config.region.trim() !== "");
+
+  if (!apiKeyOk || !urlOk || !regionOk) return "needs-config";
+  // apiKey === undefined here means a no-credential service we forgot to flag
+  // in NO_CRED_REQUIRED — keep the safer "free" default rather than lying
+  // about "configured" status. webgoogletranslate (internal) lands here.
+  return config.apiKey === undefined ? "free" : "configured";
+};
 
 // User-facing service list, declaration-order. The cast widens `as const` literal
 // types so optional `docs` / `apiKeyUrl` are uniformly accessible across entries.
