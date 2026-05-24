@@ -73,7 +73,7 @@ export const filterLines = (text: string, filters: string | string[], maxLen?: n
 };
 
 // 移除相邻重复行（比较时会 trim）
-export const removeAdjacentDuplicateLines = (lines: string[]): string[] => {
+export const dedupeAdjacentLines = (lines: string[]): string[] => {
   if (lines.length === 0) return lines;
   const out: string[] = [];
   for (let i = 0; i < lines.length; i++) {
