@@ -5,7 +5,7 @@
 // OPENAI_COMPAT_PROVIDERS (factory input), findMethodLabel, getDefaultConfig,
 // and the TranslationMethod union type are all derived views over PROVIDERS.
 
-import type { TranslationConfig, TranslationProvider } from "./types";
+import type { ReasoningEffort, TranslationConfig, TranslationProvider } from "./types";
 
 export type ServiceCategory = "machine-translation" | "llm" | "aggregator";
 
@@ -24,6 +24,25 @@ type BaseProvider = {
    * that default — so the active tag highlights correctly.
    */
   endpoints?: Array<{ label: string; url: string }>;
+  /**
+   * Curated quick-pick model dropdown surfaced on the model input
+   * (TranslationSettings → AutoComplete). Users can still type any value —
+   * the list is a convenience, not a whitelist. Provider's `defaults.model`
+   * (custom kind) or `defaultModel` (openai-compat kind) should appear here
+   * so the active model highlights in the dropdown.
+   *
+   * Why curated: LLM SKUs churn fast (monthly cadence for some vendors), and
+   * the previous text-only input forced every user to manually track the
+   * vendor's current naming. Listing 2-3 popular SKUs per provider lets
+   * users one-click switch tier (flagship / cheap / reasoning).
+   *
+   * `thinking: true` on an entry marks SKUs that support thinking-mode (per
+   * vendor docs). UI uses this flag to gate the "Enable thinking" toggle;
+   * services use it to inject the vendor-specific thinking params (see
+   * isThinkingModel helper). Per-entry flag is self-documenting and scales
+   * without provider-level regex.
+   */
+  models?: ReadonlyArray<{ label: string; value: string; thinking?: boolean }>;
 };
 
 /** OpenAI-compatible providers driven by the shared chat-completions factory. */
@@ -38,8 +57,6 @@ export type OpenAICompatProviderSpec = BaseProvider & {
   allowCustomUrl?: boolean;
   /** When true, UI renders a "useRelay" toggle that routes through the Cloudflare Worker. */
   allowRelay?: boolean;
-  /** Models on this provider that support thinking-mode. UI shows the toggle only when the current model matches; service injects thinking params only when matched + enabled. */
-  thinkingModelPattern?: RegExp;
 };
 
 /** Providers with hand-written implementations (Claude, Gemini, Azure OpenAI, Nvidia, Custom LLM, all MT). */
@@ -101,6 +118,13 @@ export const PROVIDERS = {
       { label: "International", url: "https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions" },
       { label: "US", url: "https://dashscope-us.aliyuncs.com/compatible-mode/v1/chat/completions" },
     ],
+    // qwen-mt-turbo deprecated 不收录;qwen-mt-lite-us 是美区分部署版本,
+    // 仅在 international endpoint 才可用,不放主清单避免误选。
+    models: [
+      { label: "Qwen-MT Flash", value: "qwen-mt-flash" },
+      { label: "Qwen-MT Plus", value: "qwen-mt-plus" },
+      { label: "Qwen-MT Lite", value: "qwen-mt-lite" },
+    ],
   },
   translategemma: {
     kind: "custom",
@@ -136,6 +160,11 @@ export const PROVIDERS = {
       { label: "Ollama", url: "http://127.0.0.1:11434/v1/chat/completions" },
       { label: "llama.cpp", url: "http://127.0.0.1:8080/v1/chat/completions" },
     ],
+    models: [
+      { label: "TranslateGemma 4B", value: "translategemma-4b-it" },
+      { label: "TranslateGemma 12B", value: "translategemma-12b-it" },
+      { label: "TranslateGemma 27B", value: "translategemma-27b-it" },
+    ],
   },
 
   // ===== LLM APIs (mixed OpenAI-compat + custom; ordered by usage) =====
@@ -149,7 +178,12 @@ export const PROVIDERS = {
     docs: "https://api-docs.deepseek.com/",
     apiKeyUrl: "https://platform.deepseek.com/api_keys",
     allowRelay: true,
-    thinkingModelPattern: /^deepseek-v4-pro$/i,
+    // DeepSeek V4 系列两个 SKU 都支持 thinking / non-thinking 两种模式
+    // (docs.deepseek.com: "supporting both modes")。
+    models: [
+      { label: "DeepSeek V4 Flash", value: "deepseek-v4-flash", thinking: true },
+      { label: "DeepSeek V4 Pro", value: "deepseek-v4-pro", thinking: true },
+    ],
   },
   openai: {
     kind: "openai-compat",
@@ -158,17 +192,32 @@ export const PROVIDERS = {
     endpoint: "https://api.openai.com/v1/chat/completions",
     defaultModel: "gpt-5.4-mini",
     defaultTemperature: 1,
-    docs: "https://platform.openai.com/docs/api-reference/chat",
+    docs: "https://developers.openai.com/api/docs/guides/text",
     apiKeyUrl: "https://platform.openai.com/api-keys",
     allowRelay: true,
+    // https://developers.openai.com/api/docs/models
+    // GPT-5 系列全部支持 reasoning ── developers.openai.com 各 model 页明示
+    // "Reasoning token support" + reasoning.effort: none/low/medium/high/xhigh
+    models: [
+      { label: "GPT-5.5", value: "gpt-5.5", thinking: true },
+      { label: "GPT-5.4", value: "gpt-5.4", thinking: true },
+      { label: "GPT-5.4 Mini", value: "gpt-5.4-mini", thinking: true },
+    ],
   },
   claude: {
     kind: "custom",
     category: "llm",
     label: "Claude",
-    docs: "https://docs.anthropic.com/en/api/messages",
+    docs: "https://platform.claude.com/docs/en/intro",
     apiKeyUrl: "https://console.anthropic.com/settings/keys",
-    defaults: { apiKey: "", model: "claude-sonnet-4-6", temperature: 0.7, batchSize: 20, contextBatchSize: 3, contextWindow: 100, enableThinking: false, useRelay: false },
+    defaults: { apiKey: "", model: "claude-sonnet-4-6", temperature: 0.7, batchSize: 20, contextBatchSize: 3, contextWindow: 100, thinkingEffort: {}, useRelay: false },
+    // Claude 4 系列全部支持 thinking ── Opus 4.7 是 adaptive thinking,
+    // Sonnet 4.6 + Haiku 4.5 是 extended thinking(per docs.anthropic.com)。
+    models: [
+      { label: "Claude Opus 4.7", value: "claude-opus-4-7", thinking: true },
+      { label: "Claude Sonnet 4.6", value: "claude-sonnet-4-6", thinking: true },
+      { label: "Claude Haiku 4.5", value: "claude-haiku-4-5-20251001", thinking: true },
+    ],
   },
   gemini: {
     kind: "custom",
@@ -176,7 +225,16 @@ export const PROVIDERS = {
     label: "Gemini",
     docs: "https://ai.google.dev/gemini-api/docs/text-generation",
     apiKeyUrl: "https://aistudio.google.com/app/api-keys",
-    defaults: { apiKey: "", model: "gemini-3.5-flash", temperature: 0.7, batchSize: 20, contextBatchSize: 3, contextWindow: 100 },
+    defaults: { apiKey: "", model: "gemini-3.5-flash", temperature: 0.7, batchSize: 20, contextBatchSize: 3, contextWindow: 100, thinkingEffort: {} },
+    // 仅收录 Gemini 3.x 系列(2.5 已过时,且参数协议不同需要 budget mapping 增加
+    // service 复杂度,精简掉)。Gemini 3 thinking 通过
+    // `generationConfig.thinkingConfig.thinkingLevel` (minimal/low/medium/high)
+    // 控制(ai.google.dev/gemini-api/docs/thinking),默认开启,off 时传 "minimal"。
+    models: [
+      { label: "Gemini 3.1 Pro (Preview)", value: "gemini-3.1-pro-preview", thinking: true },
+      { label: "Gemini 3.5 Flash", value: "gemini-3.5-flash", thinking: true },
+      { label: "Gemini 3.1 Flash Lite", value: "gemini-3.1-flash-lite", thinking: true },
+    ],
   },
   qwen: {
     kind: "openai-compat",
@@ -194,13 +252,19 @@ export const PROVIDERS = {
       { label: "International", url: "https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions" },
       { label: "US", url: "https://dashscope-us.aliyuncs.com/compatible-mode/v1/chat/completions" },
     ],
+    // https://bailian.console.aliyun.com/cn-beijing?spm=5176.29597918.J_F4r-7Zs_PtjrjEY48APSA.d_primary.338d133cOoVKn9&tab=model#/model-market/all?providers=qwen
+    models: [
+      { label: "Qwen3.7 Max", value: "qwen3.7-max", thinking: true },
+      { label: "Qwen3.6 Plus", value: "qwen3.6-plus", thinking: true },
+      { label: "Qwen3.6 Flash", value: "qwen3.6-flash", thinking: true },
+    ],
   },
   moonshot: {
     kind: "openai-compat",
     category: "llm",
     label: "Moonshot (Kimi)",
     endpoint: "https://api.moonshot.cn/v1/chat/completions",
-    defaultModel: "kimi-k2.5",
+    defaultModel: "kimi-k2.6",
     defaultTemperature: 0.7,
     docs: "https://platform.moonshot.cn/docs",
     apiKeyUrl: "https://platform.moonshot.cn/console/api-keys",
@@ -210,13 +274,21 @@ export const PROVIDERS = {
       { label: "Mainland (CN)", url: "https://api.moonshot.cn/v1/chat/completions" },
       { label: "International", url: "https://api.moonshot.ai/v1/chat/completions" },
     ],
+    // K2.6 通过扁平 `thinking: {type}` 字段切换思考模式。K2.6 同时是 param-locked
+    // 模型(temperature 等不可修改),service 层会在 model 匹配时 strip 这些字段。
+    // K2.5 不支持参数切换 thinking;kimi-k2-thinking 系列 2026-05 deprecating,
+    // 不收录避免引导用户选即将失效的 SKU。
+    models: [
+      { label: "Kimi K2.6", value: "kimi-k2.6", thinking: true },
+      { label: "Kimi K2.5", value: "kimi-k2.5" },
+    ],
   },
   doubao: {
     kind: "openai-compat",
     category: "llm",
     label: "Doubao (火山方舟)",
     endpoint: "https://ark.cn-beijing.volces.com/api/v3/chat/completions",
-    defaultModel: "doubao-seed-2-0-lite-260215",
+    defaultModel: "doubao-seed-2-0-lite-260428",
     defaultTemperature: 0.7,
     docs: "https://www.volcengine.com/docs/82379",
     apiKeyUrl: "https://console.volcengine.com/ark/region:ark+cn-beijing/apiKey",
@@ -226,21 +298,42 @@ export const PROVIDERS = {
       { label: "Standard", url: "https://ark.cn-beijing.volces.com/api/v3/chat/completions" },
       { label: "Coding Plan", url: "https://ark.cn-beijing.volces.com/api/coding/v3/chat/completions" },
     ],
+    // https://www.volcengine.com/docs/82379/1330310
+    models: [
+      { label: "Doubao Seed 2.0 Pro", value: "doubao-seed-2-0-pro-260215", thinking: true },
+      { label: "Doubao Seed 2.0 Lite", value: "doubao-seed-2-0-lite-260428", thinking: true },
+      { label: "Doubao Seed 2.0 Mini", value: "doubao-seed-2-0-mini-260428", thinking: true },
+    ],
   },
   zhipu: {
     kind: "openai-compat",
     category: "llm",
     label: "Zhipu GLM",
     endpoint: "https://open.bigmodel.cn/api/paas/v4/chat/completions",
-    defaultModel: "glm-4.6",
+    defaultModel: "glm-4.7",
     defaultTemperature: 0.7,
-    docs: "https://docs.bigmodel.cn/",
-    apiKeyUrl: "https://open.bigmodel.cn/usercenter/apikeys",
+    docs: "https://docs.bigmodel.cn/cn/guide/start/introduction",
+    apiKeyUrl: "https://bigmodel.cn/usercenter/proj-mgmt/apikeys",
     allowCustomUrl: true,
     allowRelay: true,
     endpoints: [
       { label: "Mainland (CN)", url: "https://open.bigmodel.cn/api/paas/v4/chat/completions" },
       { label: "International (Z.ai)", url: "https://api.z.ai/api/paas/v4/chat/completions" },
+    ],
+    // docs.bigmodel.cn/cn/guide/start/model-overview "文本模型" 表格完整列表
+    // (排除标记"即将下线"的 glm-4.5-flash),按文档原顺序。
+    models: [
+      { label: "GLM-5.1", value: "glm-5.1", thinking: true },
+      { label: "GLM-5", value: "glm-5", thinking: true },
+      { label: "GLM-4.7", value: "glm-4.7", thinking: true },
+      { label: "GLM-4.7 FlashX", value: "glm-4.7-flashx" },
+      { label: "GLM-4.6", value: "glm-4.6", thinking: true },
+      { label: "GLM-4.5 Air", value: "glm-4.5-air" },
+      { label: "GLM-4.5 AirX", value: "glm-4.5-airx" },
+      { label: "GLM-4 Long", value: "glm-4-long" },
+      { label: "GLM-4 FlashX", value: "glm-4-flashx-250414" },
+      { label: "GLM-4.7 Flash", value: "glm-4.7-flash" },
+      { label: "GLM-4 Flash", value: "glm-4-flash-250414" },
     ],
   },
   minimax: {
@@ -257,6 +350,30 @@ export const PROVIDERS = {
       { label: "Mainland (CN)", url: "https://api.minimaxi.com/v1/chat/completions" },
       { label: "International", url: "https://api.minimax.io/v1/chat/completions" },
     ],
+    models: [
+      { label: "MiniMax M2.7", value: "MiniMax-M2.7", thinking: true },
+      { label: "MiniMax M2.7 High-Speed", value: "MiniMax-M2.7-highspeed" },
+      { label: "MiniMax M2.5", value: "MiniMax-M2.5" },
+      { label: "MiniMax M2.1", value: "MiniMax-M2.1" },
+    ],
+  },
+  qianfan: {
+    kind: "openai-compat",
+    category: "llm",
+    label: "Baidu ERNIE (百度千帆)",
+    endpoint: "https://qianfan.baidubce.com/v2/chat/completions",
+    defaultModel: "ernie-5.1",
+    defaultTemperature: 0.7,
+    docs: "https://cloud.baidu.com/doc/qianfan/s/wmh4sv6ya",
+    apiKeyUrl: "https://console.bce.baidu.com/iam/#/iam/apikey/list",
+    models: [
+      { label: "ERNIE 5.1", value: "ernie-5.1" },
+      { label: "ERNIE 5.0", value: "ernie-5.0" },
+      // ERNIE 5.0-Thinking 是 thinking-intrinsic 模型(SKU 即 thinking 模式),无 toggle 参数
+      { label: "ERNIE 5.0 Thinking", value: "ernie-5.0-thinking-latest" },
+      { label: "ERNIE 4.5 Turbo 128K", value: "ernie-4.5-turbo-128k-preview" },
+      { label: "ERNIE 4.5 Turbo 32K", value: "ernie-4.5-turbo-32k" },
+    ],
   },
   hunyuan: {
     kind: "openai-compat",
@@ -267,38 +384,55 @@ export const PROVIDERS = {
     defaultTemperature: 0.7,
     docs: "https://cloud.tencent.com/document/product/1729/111007",
     apiKeyUrl: "https://console.cloud.tencent.com/hunyuan/api-key",
-  },
-  qianfan: {
-    kind: "openai-compat",
-    category: "llm",
-    label: "Baidu ERNIE (百度千帆)",
-    endpoint: "https://qianfan.baidubce.com/v2/chat/completions",
-    defaultModel: "ernie-5.0",
-    defaultTemperature: 0.7,
-    docs: "https://cloud.baidu.com/doc/qianfan/s/wmh4sv6ya",
-    apiKeyUrl: "https://console.bce.baidu.com/iam/#/iam/apikey/list",
+    models: [
+      { label: "Hunyuan TurboS", value: "hunyuan-turbos-latest", thinking: true },
+      // 2.0-Thinking SKU 即 thinking 模式,无 toggle 参数
+      { label: "Hunyuan 2.0 Thinking", value: "hunyuan-2.0-thinking-20251109" },
+      { label: "Hunyuan 2.0 Instruct", value: "hunyuan-2.0-instruct-20251111" },
+      { label: "Hunyuan T1", value: "hunyuan-t1-latest", thinking: true },
+      { label: "Hunyuan A13B", value: "hunyuan-a13b", thinking: true },
+      { label: "Hunyuan Lite", value: "hunyuan-lite" },
+    ],
   },
   mistral: {
     kind: "openai-compat",
     category: "llm",
     label: "Mistral",
     endpoint: "https://api.mistral.ai/v1/chat/completions",
-    defaultModel: "mistral-large-latest",
+    defaultModel: "mistral-medium-3-5",
     defaultTemperature: 0.7,
     docs: "https://docs.mistral.ai/api/",
     apiKeyUrl: "https://console.mistral.ai/api-keys",
     allowRelay: true,
+    // 来自 https://docs.mistral.ai/models/overview
+    models: [
+      { label: "Mistral Medium 3.5", value: "mistral-medium-3-5" },
+      { label: "Mistral Small 4", value: "mistral-small-4" },
+      { label: "Mistral Large 3", value: "mistral-large-3" },
+      { label: "Ministral 3 14B", value: "ministral-3-14b" },
+      // Magistral 是 thinking-intrinsic(model 选择即 thinking 模式),无 toggle 参数
+      { label: "Magistral Medium 1.2", value: "magistral-medium-1-2" },
+    ],
   },
   grok: {
     kind: "openai-compat",
     category: "llm",
     label: "xAI (Grok)",
     endpoint: "https://api.x.ai/v1/chat/completions",
-    defaultModel: "grok-4-1-fast-non-reasoning",
+    defaultModel: "grok-4.3",
     defaultTemperature: 0.7,
     docs: "https://docs.x.ai/docs/models",
     apiKeyUrl: "https://console.x.ai/",
     allowRelay: true,
+    // Grok 4.3 chat/completions 支持 reasoning_effort 但仅 low/high 两档
+    // (docs.x.ai/docs/api-reference);grok-4.20-reasoning / multi-agent 是
+    // thinking-intrinsic SKU,无 toggle 参数。service 层 medium → low 映射。
+    models: [
+      { label: "Grok 4.3", value: "grok-4.3", thinking: true },
+      { label: "Grok 4.20 Reasoning", value: "grok-4.20-0309-reasoning" },
+      { label: "Grok 4.20 Non-Reasoning", value: "grok-4.20-0309-non-reasoning" },
+      { label: "Grok 4.20 Multi-Agent", value: "grok-4.20-multi-agent-0309" },
+    ],
   },
   perplexity: {
     kind: "openai-compat",
@@ -310,16 +444,33 @@ export const PROVIDERS = {
     docs: "https://docs.perplexity.ai/api-reference/chat-completions-post",
     apiKeyUrl: "https://www.perplexity.ai/account/api/keys",
     allowRelay: true,
+    // https://docs.perplexity.ai/docs/sonar/models
+    // Sonar Reasoning Pro / Deep Research 是 thinking-intrinsic 模型,无 toggle 参数,
+    // 用户选这些 SKU 即等于选 thinking 模式。
+    models: [
+      { label: "Sonar", value: "sonar" },
+      { label: "Sonar Pro", value: "sonar-pro" },
+      { label: "Sonar Reasoning Pro", value: "sonar-reasoning-pro" },
+      { label: "Sonar Deep Research", value: "sonar-deep-research" },
+    ],
   },
   cohere: {
     kind: "openai-compat",
     category: "llm",
     label: "Cohere",
     endpoint: "https://api.cohere.ai/compatibility/v1/chat/completions",
-    defaultModel: "command-a-translate-08-2025",
+    defaultModel: "command-a-plus-05-2026",
     defaultTemperature: 0.7,
     docs: "https://docs.cohere.com/docs/compatibility-api",
     apiKeyUrl: "https://dashboard.cohere.com/api-keys",
+    // Command A Reasoning 是 thinking-intrinsic 模型(SKU 即 thinking 模式),无 toggle。
+    // https://docs.cohere.com/docs/models
+    models: [
+      { label: "Command A Plus", value: "command-a-plus-05-2026" },
+      { label: "Command A", value: "command-a-03-2025" },
+      { label: "Command A Reasoning", value: "command-a-reasoning-08-2025" },
+      { label: "Command A Translate", value: "command-a-translate-08-2025" },
+    ],
   },
 
   // ===== Aggregators & Self-hosted (no relay — already cross-provider / CORS-friendly / user-controlled) =====
@@ -333,6 +484,23 @@ export const PROVIDERS = {
     docs: "https://openrouter.ai/models?q=free",
     apiKeyUrl: "https://openrouter.ai/settings/keys",
     extraHeaders: { "HTTP-Referer": "https://aishort.top", "X-Title": "AIShort" },
+    // https://openrouter.ai/models?order=top-weekly 2个free+9个主流
+    // OpenRouter 统一 reasoning_effort 参数会自动转发底层 provider(Claude→budget_tokens,
+    // OpenAI→reasoning_effort,Gemini→thinkingLevel,DeepSeek→thinking 等),所以
+    // 底层 model 支持 thinking 的 slug 都标 thinking: true 即可。
+    models: [
+      { label: "Nemotron 3 Super 120B (free)", value: "nvidia/nemotron-3-super-120b-a12b:free" },
+      { label: "Laguna M.1 (free)", value: "poolside/laguna-m.1:free" },
+      { label: "DeepSeek V4 Flash", value: "deepseek/deepseek-v4-flash", thinking: true },
+      { label: "Hy3 preview", value: "tencent/hy3-preview", thinking: true },
+      { label: "Claude Sonnet 4.6", value: "anthropic/claude-sonnet-4.6", thinking: true },
+      { label: "Claude Opus 4.7", value: "anthropic/claude-opus-4.7", thinking: true },
+      { label: "Gemini 3.5 Flash", value: "google/gemini-3.5-flash", thinking: true },
+      { label: "GPT-5.4 Mini", value: "openai/gpt-5.4-mini", thinking: true },
+      { label: "Grok 4.3", value: "x-ai/grok-4.3" },
+      { label: "Kimi K2.6", value: "moonshotai/kimi-k2.6", thinking: true },
+      { label: "MiniMax M2.7", value: "minimax/minimax-m2.7" },
+    ],
   },
   groq: {
     kind: "openai-compat",
@@ -343,16 +511,38 @@ export const PROVIDERS = {
     defaultTemperature: 0.7,
     docs: "https://console.groq.com/docs/text-chat",
     apiKeyUrl: "https://console.groq.com/keys",
+    // 来自 console.groq.com/docs/models 当前 production 列表。preview 阶段的 (如 qwen/qwen3-32b) 不收录避免引导用户选随时可能下线的 SKU。
+    // gpt-oss 系列支持 reasoning_effort(top-level enum),其他 model 不支持。
+    models: [
+      { label: "GPT-OSS 20B", value: "openai/gpt-oss-20b", thinking: true },
+      { label: "GPT-OSS 120B", value: "openai/gpt-oss-120b", thinking: true },
+      { label: "Llama 3.3 70B Versatile", value: "llama-3.3-70b-versatile" },
+      { label: "Llama 3.1 8B Instant", value: "llama-3.1-8b-instant" },
+      { label: "Groq Compound", value: "groq/compound" },
+      { label: "Groq Compound Mini", value: "groq/compound-mini" },
+    ],
   },
   siliconflow: {
     kind: "openai-compat",
     category: "aggregator",
     label: "SiliconFlow",
     endpoint: "https://api.siliconflow.cn/v1/chat/completions",
-    defaultModel: "deepseek-ai/DeepSeek-V3.2",
+    defaultModel: "deepseek-ai/DeepSeek-V4-Flash",
     defaultTemperature: 0.7,
     docs: "https://docs.siliconflow.cn/api-reference/chat-completions/chat-completions",
     apiKeyUrl: "https://cloud.siliconflow.cn/me/account/ak",
+    // 来自 siliconflow.com/pricing 当前文本生成模型表
+    // 登录后查看 https://cloud.siliconflow.cn/me/models?types=chat
+    // DeepSeek V4 和 Kimi K2.6 通过 SiliconFlow 走 OpenAI-compat 协议
+    // (同原生 DeepSeek/Moonshot 的 thinking + reasoning_effort 参数)。
+    models: [
+      { label: "DeepSeek V4 Flash", value: "deepseek-ai/DeepSeek-V4-Flash", thinking: true },
+      { label: "DeepSeek V4 Pro", value: "deepseek-ai/DeepSeek-V4-Pro", thinking: true },
+      { label: "Kimi K2.6", value: "moonshotai/Kimi-K2.6", thinking: true },
+      { label: "MiniMax M2.5", value: "minimax/MiniMax-M2.5" },
+      { label: "GLM-5.1", value: "zai-org/GLM-5.1" },
+      { label: "GLM-4.7", value: "zai-org/GLM-4.7" },
+    ],
   },
   nvidia: {
     kind: "custom",
@@ -360,14 +550,37 @@ export const PROVIDERS = {
     label: "Nvidia NIM",
     docs: "https://build.nvidia.com/explore/discover",
     apiKeyUrl: "https://build.nvidia.com/",
-    defaults: { url: "", apiKey: "", model: "deepseek-ai/deepseek-v4-flash", temperature: 0.7, batchSize: 20, contextBatchSize: 3, contextWindow: 100, enableThinking: false },
+    defaults: { url: "", apiKey: "", model: "deepseek-ai/deepseek-v4-flash", temperature: 0.7, batchSize: 20, contextBatchSize: 3, contextWindow: 100, thinkingEffort: {} },
+    // https://build.nvidia.com/models?filters=nimType%3Anim_type_preview
+    // DeepSeek V4 系列在 NVIDIA NIM 上 thinking 协议跟原生 DeepSeek 不同 ──
+    // 用 chat_template_kwargs.thinking + reasoning_effort 嵌套(其他 model
+    // 不支持 thinking 注入,user 想要 thinking 应该用原生 DeepSeek provider)。
+    models: [
+      { label: "DeepSeek V4 Flash", value: "deepseek-ai/deepseek-v4-flash", thinking: true },
+      { label: "DeepSeek V4 Pro", value: "deepseek-ai/deepseek-v4-pro", thinking: true },
+      { label: "GLM-5.1", value: "z-ai/glm-5.1" },
+      { label: "Gemma 4 31B IT", value: "google/gemma-4-31b-it" },
+      { label: "Nemotron Super 120B", value: "nvidia/nemotron-3-super-120b-a12b" },
+      { label: "Llama 3.1 70B Instruct", value: "meta/llama-3.1-70b-instruct" },
+      { label: "Llama 3.1 8B Instruct", value: "meta/llama-3.1-8b-instruct" },
+      { label: "Qwen3 Coder 480B", value: "qwen/qwen3-coder-480b-a35b-instruct" },
+    ],
   },
   azureopenai: {
     kind: "custom",
     category: "aggregator",
     label: "Azure OpenAI",
-    docs: "https://learn.microsoft.com/azure/ai-foundry/foundry-models/concepts/models-sold-directly-by-azure",
-    defaults: { url: "", apiKey: "", model: "gpt-5-mini", apiVersion: "2025-11-18", temperature: 0.7, batchSize: 20, contextBatchSize: 3, contextWindow: 100 },
+    docs: "https://learn.microsoft.com/zh-cn/azure/foundry/foundry-models/concepts/models-sold-directly-by-azure",
+    defaults: { url: "", apiKey: "", model: "gpt-5.4-mini", apiVersion: "2025-11-18", temperature: 0.7, batchSize: 20, contextBatchSize: 3, contextWindow: 100, thinkingEffort: {} },
+    // GPT-5 系列全部支持 reasoning(OpenAI 原生 + Azure 镜像同行为)。
+    // gpt-chat-latest 是 5.5 Instant 别名(per Azure docs),同样支持。
+    models: [
+      { label: "GPT-chat-latest", value: "gpt-chat-latest", thinking: true },
+      { label: "GPT-5.5", value: "gpt-5.5", thinking: true },
+      { label: "GPT-5.4", value: "gpt-5.4", thinking: true },
+      { label: "GPT-5.4 Mini", value: "gpt-5.4-mini", thinking: true },
+      { label: "GPT-5.4 Nano", value: "gpt-5.4-nano", thinking: true },
+    ],
   },
   llm: {
     kind: "custom",
@@ -428,7 +641,15 @@ export const OPENAI_COMPAT_KEYS = Object.entries(PROVIDERS)
   .filter(([, p]) => p.kind === "openai-compat")
   .map(([k]) => k) as OpenAICompatProviderKey[];
 
-export const OPENAI_COMPAT_PROVIDERS = Object.fromEntries(Object.entries(PROVIDERS).filter(([, p]) => p.kind === "openai-compat")) as Record<OpenAICompatProviderKey, OpenAICompatProviderSpec>;
+// `as unknown as Record<...>` double-cast: Object.fromEntries returns a
+// generic shape that TS no longer considers "sufficiently overlapping" with
+// the strict Record<OpenAICompatProviderKey, ...> target (widening triggered
+// by the optional `thinking` field on model entries). The filter is correct
+// at runtime; the double-cast bypasses the static narrowing check.
+export const OPENAI_COMPAT_PROVIDERS = Object.fromEntries(Object.entries(PROVIDERS).filter(([, p]) => p.kind === "openai-compat")) as unknown as Record<
+  OpenAICompatProviderKey,
+  OpenAICompatProviderSpec
+>;
 
 // Services that behave as LLMs in the UI (prompt fields visible, context window, etc.).
 export const LLM_MODELS: string[] = Object.entries(PROVIDERS)
@@ -538,19 +759,60 @@ const buildOpenAICompatDefault = (spec: OpenAICompatProviderSpec): TranslationCo
   };
   if (spec.allowCustomUrl) base.url = "";
   if (spec.allowRelay) base.useRelay = false;
+  // Seed an empty thinkingEffort record when any model on this provider is
+  // tagged thinking. Without this, migrateConfig strips the field on next
+  // render (defaults-key-only merge), making the UI toggle silently reset.
+  if ((spec.models ?? []).some((m) => m.thinking === true)) base.thinkingEffort = {};
   return base;
 };
 
 /**
- * Pattern of models on `service` that support thinking-mode, or undefined if the
- * service has no model-conditional thinking support. UI uses this to gate the
- * thinking toggle on the current model; services use it to decide whether to
- * inject thinking params upstream.
+ * True when the given model on `service` is tagged with `thinking: true` in
+ * its registry entry. UI uses this to gate the "Enable thinking" toggle;
+ * services (Gemini, Moonshot K2.6 — the two server-default-ON providers) use
+ * it to distinguish "tagged but toggle off" (send explicit disable) from
+ * "untagged SKU" (omit thinking param entirely). Other services rely on the
+ * orchestrator's single-point gate via `deriveThinkingParams`.
+ *
+ * Models not in the registry's `models` list (user-typed custom SKUs) return
+ * false — there's no way to enable thinking on those through the UI.
  */
-export const getThinkingModelPattern = (service: string): RegExp | undefined => {
+export const isThinkingModel = (service: string, model: string): boolean => {
   const p = PROVIDERS[service as ProviderKey] as ProviderSpec | undefined;
-  return p?.kind === "openai-compat" ? p.thinkingModelPattern : undefined;
+  return (p?.models ?? []).some((m) => m.value === model && m.thinking === true);
 };
+
+/**
+ * Derive the per-call `reasoningEffort` from a TranslationConfig's per-model
+ * thinking record. Single source of truth for the gate:
+ *   1. config.model exists
+ *   2. user has an entry in config.thinkingEffort[model] (= picked an effort)
+ *   3. model is tagged `thinking: true` in registry
+ *
+ * Returns `undefined` (= thinking off) unless all three hold. Used by the
+ * orchestrator (per-translate-call), the cache-key generator (per-cache-lookup),
+ * and the Test button (per-test-config) — keep them in lockstep via this helper,
+ * not parallel logic.
+ */
+export const deriveThinkingParams = (method: string, config: TranslationConfig | undefined): ReasoningEffort | undefined => {
+  const model = config?.model;
+  if (!model) return undefined;
+  const effort = config?.thinkingEffort?.[model];
+  if (!effort) return undefined;
+  if (!isThinkingModel(method, model)) return undefined;
+  return effort;
+};
+
+/**
+ * Vendors whose thinking switch is binary at the wire level — Low/Medium/High
+ * all collapse to the same payload (Doubao/Zhipu: `{thinking:{type:"enabled"}}`;
+ * Moonshot: same; MiniMax: `enable_thinking:true`; Hunyuan: `enable_enhancement:true`).
+ * UI renders these as Off/On instead of Off/Low/Medium/High to avoid hinting
+ * at granularity that doesn't exist. Selecting On stores a canonical "medium"
+ * — the value is irrelevant to wire output, but a defined effort is what
+ * triggers the thinking branch in deriveThinkingParams + builders.
+ */
+export const BINARY_EFFORT_VENDORS: ReadonlySet<string> = new Set(["doubao", "zhipu", "moonshot", "minimax", "hunyuan"]);
 
 /**
  * Quick-pick endpoints for providers that surface multiple URL options (regional
@@ -561,6 +823,16 @@ export const getThinkingModelPattern = (service: string): RegExp | undefined => 
  */
 export const getProviderEndpoints = (service: string): Array<{ label: string; url: string }> | undefined => {
   return (PROVIDERS[service as ProviderKey] as ProviderSpec | undefined)?.endpoints;
+};
+
+/**
+ * Curated common-model dropdown for the model input. Returns an empty array
+ * (not undefined) when the provider hasn't declared any — keeps the UI
+ * `<AutoComplete options={...}>` call shape unconditional and lets the model
+ * field gracefully degrade to a plain text input behavior.
+ */
+export const getProviderModels = (service: string): ReadonlyArray<{ label: string; value: string }> => {
+  return (PROVIDERS[service as ProviderKey] as ProviderSpec | undefined)?.models ?? [];
 };
 
 export const defaultConfigs = Object.fromEntries(Object.entries(PROVIDERS).map(([k, p]) => [k, p.kind === "openai-compat" ? buildOpenAICompatDefault(p) : p.defaults])) as Record<

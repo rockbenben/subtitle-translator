@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { Select, Input, Button, Tag, Space, Flex, Typography, Tooltip, App, theme } from "antd";
 import { ApiOutlined, ThunderboltOutlined } from "@ant-design/icons";
 import { useTranslations } from "next-intl";
-import { categorizedOptions, findMethodLabel, getConfigStatus, testTranslation, URL_IS_PRIMARY_CRED, DEFAULT_SYSTEM_PROMPT, DEFAULT_USER_PROMPT } from "@/app/lib/translation";
+import { categorizedOptions, deriveThinkingParams, findMethodLabel, getConfigStatus, testTranslation, URL_IS_PRIMARY_CRED, DEFAULT_SYSTEM_PROMPT, DEFAULT_USER_PROMPT, type TranslateTextParams } from "@/app/lib/translation";
 import { useTranslationContext } from "@/app/components/TranslationContext";
 import { useIsMobile } from "@/app/hooks/useIsMobile";
 
@@ -68,7 +68,13 @@ const ApiStatusBlock = ({ disabled = false }: ApiStatusBlockProps) => {
     setSessionStatus("testing");
     const effectiveSystem = systemPrompt?.trim() ? systemPrompt : DEFAULT_SYSTEM_PROMPT;
     const effectiveUser = userPrompt?.trim() ? userPrompt : DEFAULT_USER_PROMPT;
-    const ok = await testTranslation(translationMethod, config, effectiveSystem, effectiveUser);
+    // Mirror orchestrator's gate so this status-block Test exercises the same
+    // wire payload as actual translation (effort level — undefined = off).
+    const testParams: Partial<TranslateTextParams> = {
+      ...(config as Partial<TranslateTextParams>),
+      reasoningEffort: deriveThinkingParams(translationMethod, config),
+    };
+    const ok = await testTranslation(translationMethod, testParams, effectiveSystem, effectiveUser);
     if (id !== testIdRef.current) return;
     if (ok) {
       setSessionStatus("connected");

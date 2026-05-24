@@ -29,8 +29,12 @@ export interface TranslateTextParams {
   userPrompt?: string;
   sendSystemPrompt?: boolean; // When false, omit the system message (Custom OpenAI-compat — Gemma-style chat templates rejecting system role)
   useRelay?: boolean;
-  enableThinking?: boolean; // Optional: enable thinking mode for supported models (kimi, deepseek, glm, gpt-oss)
-  reasoningEffort?: ReasoningEffort; // Optional: effort level when thinking is on (deepseek-v4)
+  // Thinking-mode effort level — presence encodes "thinking on". Undefined =
+  // thinking off (services either omit the param or, for server-default-ON
+  // vendors like Moonshot K2.6 / Gemini, send explicit "disabled"/"minimal").
+  // Orchestrator guarantees this is only set when (a) user picked an effort
+  // AND (b) the model is tagged thinking in registry — see deriveThinkingParams.
+  reasoningEffort?: ReasoningEffort;
   domains?: string; // Optional: domains setting for Qwen-MT
   fullText?: string; // Optional: complete text for ${fullText} variable
   signal?: AbortSignal; // Optional: for request cancellation
@@ -56,7 +60,16 @@ export interface TranslationConfig {
   userPrompt?: string;
   sendSystemPrompt?: boolean;
   useRelay?: boolean;
-  enableThinking?: boolean;
-  reasoningEffort?: ReasoningEffort;
+  /**
+   * Per-model thinking effort. Key is the model SKU, value is the chosen
+   * effort level. Presence of an entry = thinking enabled at that effort;
+   * absence of an entry = thinking off (UI doesn't persist OFF state, per
+   * "如果没开启,则不记录" convention).
+   *
+   * Per-call params (TranslateTextParams) expose a single flat `reasoningEffort`
+   * (presence = thinking on); orchestrator derives it from this record at
+   * translate-time via deriveThinkingParams.
+   */
+  thinkingEffort?: Record<string, ReasoningEffort>;
   domains?: string;
 }

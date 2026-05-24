@@ -1,23 +1,27 @@
 "use client";
 
 import { Fragment, useMemo, useState } from "react";
-import { Form, Input, InputNumber, Card, Typography, Button, Space, Flex, Tooltip, App, Switch, Select, Modal, Popconfirm, Tag, Alert, theme } from "antd";
+import { Form, Input, InputNumber, AutoComplete, Card, Typography, Button, Space, Flex, Tooltip, App, Switch, Select, Modal, Popconfirm, Tag, Alert, theme } from "antd";
 import { SaveOutlined, PlusOutlined, DeleteOutlined } from "@ant-design/icons";
 import {
   TRANSLATION_PROVIDERS,
   LLM_MODELS,
   DEFAULT_SYSTEM_PROMPT,
   DEFAULT_USER_PROMPT,
+  BINARY_EFFORT_VENDORS,
   URL_IS_PRIMARY_CRED,
+  deriveThinkingParams,
   getConfigStatus,
   testTranslation,
   clearTranslationCache,
   getDefaultConfig,
-  getThinkingModelPattern,
+  isThinkingModel,
   getProviderEndpoints,
+  getProviderModels,
   migrateConfig,
   categorizedOptions,
   completeOpenAICompatUrl,
+  type ReasoningEffort,
   type TranslateTextParams,
 } from "@/app/lib/translation";
 import { useTranslationContext } from "@/app/components/TranslationContext";
@@ -67,14 +71,20 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
   const defaultConfig = getDefaultConfig(service);
   const config = migrateConfig(translationConfigs?.[service], defaultConfig);
 
-  // Thinking toggle visibility:
-  //   - Service has `enableThinking` in its config (claude, nvidia): always show.
-  //   - Service has model-conditional thinking via `thinkingModelPattern` (deepseek):
-  //     show only when the current model matches; the toggle's value is read from
-  //     config.enableThinking (undefined => off).
-  const thinkingPattern = getThinkingModelPattern(service);
-  const currentModel = (config?.model as string | undefined) ?? "";
-  const showThinkingToggle = config?.enableThinking !== undefined || (!!thinkingPattern && thinkingPattern.test(currentModel));
+  // Thinking-effort visibility: per-model gate via `models[].thinking: true`
+  // in registry. State stored per-model in `config.thinkingEffort[sku]` where
+  // the value IS the effort literal — entry presence = enabled at that effort,
+  // absence = off (we don't persist OFF state, per "如果没开启不记录"). The
+  // Select's "off" option removes the entry; any effort writes it directly.
+  // Binary-effort vendors (Doubao/Zhipu/Moonshot/MiniMax/Hunyuan) collapse
+  // Low/Medium/High to the same wire payload — UI shows Off/On for them to
+  // avoid hinting at granularity that doesn't exist. "On" stores "medium" as
+  // a canonical value; the wire builder only checks effort presence anyway.
+  const currentModel = config?.model ?? "";
+  const showThinkingControl = isThinkingModel(service, currentModel);
+  const isBinaryEffort = BINARY_EFFORT_VENDORS.has(service);
+  const thinkingEffortRecord = config?.thinkingEffort ?? {};
+  const currentModelEffort = thinkingEffortRecord[currentModel];
 
   const llmPresetIsEmpty = llmPresets.length === 0;
   const llmPresetPlaceholder = llmPresetIsEmpty ? t("presetEmptyHint") : t("presetSelect");
@@ -130,7 +140,13 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
 
     try {
       setTestingService(service);
-      const isSuccess = await testTranslation(service, config as Partial<TranslateTextParams>, isLLMModel ? systemPrompt : undefined, isLLMModel ? userPrompt : undefined);
+      // Mirror orchestrator's gate so the Test button exercises the same wire
+      // payload as actual translation (effort level — undefined = thinking off).
+      const testParams: Partial<TranslateTextParams> = {
+        ...(config as Partial<TranslateTextParams>),
+        reasoningEffort: deriveThinkingParams(service, config),
+      };
+      const isSuccess = await testTranslation(service, testParams, isLLMModel ? systemPrompt : undefined, isLLMModel ? userPrompt : undefined);
       if (isSuccess) {
         message.success(`${currentService?.label || service} - ${t("testConfigSuccess")}`);
       } else {
@@ -271,12 +287,7 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
               {llmPresetButtons}
             </Space.Compact>
           )}
-          <Modal
-            title={t("presetSave")}
-            open={presetModalOpen}
-            onOk={handleSavePreset}
-            onCancel={() => setPresetModalOpen(false)}
-            width={isMobile ? "90vw" : undefined}>
+          <Modal title={t("presetSave")} open={presetModalOpen} onOk={handleSavePreset} onCancel={() => setPresetModalOpen(false)} width={isMobile ? "90vw" : undefined}>
             <Input placeholder={t("presetNamePlaceholder")} value={presetName} onChange={(e) => setPresetName(e.target.value)} onPressEnter={handleSavePreset} autoFocus />
           </Modal>
         </div>
@@ -292,7 +303,27 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
             {config?.url !== undefined && (
               <Form.Item
                 label={`${t("url")}`}
-                extra={URL_IS_PRIMARY_CRED.has(service) ? t("urlExtra") : service === "azureopenai" ? undefined : t("deeplxUrlExtra")}
+                // URL_IS_PRIMARY_CRED (llm/translategemma): self-hosted, URL is
+                // the credential — show generic "supports localhost + remote".
+                // azureopenai: URL is the per-tenant resource, no fallback —
+                // no helper text (the field itself implies "required").
+                // deeplx: empty URL falls back to OUR community deeplx instance,
+                // so the "public server" wording is accurate here.
+                // Everyone else with a URL field (deepl/nvidia via our proxy,
+                // qwen/moonshot/doubao/zhipu/minimax/qwenMt direct to vendor):
+                // empty URL falls back to the vendor's official endpoint (or
+                // our edge proxy to it). The neutral "default endpoint" wording
+                // matches both flavors without misleading users that we run
+                // those upstreams.
+                extra={
+                  URL_IS_PRIMARY_CRED.has(service)
+                    ? t("urlExtra")
+                    : service === "azureopenai"
+                      ? undefined
+                      : service === "deeplx"
+                        ? t("deeplxUrlExtra")
+                        : t("urlOptionalExtra")
+                }
                 required={URL_IS_PRIMARY_CRED.has(service) || service === "azureopenai"}>
                 {(() => {
                   const endpoints = getProviderEndpoints(service);
@@ -385,7 +416,7 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
               </Form.Item>
             )}
             {config?.apiVersion !== undefined && (
-              <Form.Item label={`LLM API Version`} extra={`${tCommon("example")}: 2024-07-18`} style={{ marginBottom: config?.useRelay !== undefined ? 24 : 0 }}>
+              <Form.Item label={`LLM API Version`} extra={`${tCommon("example")}: 2025-11-18`} style={{ marginBottom: config?.useRelay !== undefined ? 24 : 0 }}>
                 <Input value={config.apiVersion as string | undefined} onChange={(e) => handleConfigChange(service, "apiVersion", e.target.value)} aria-label="LLM API Version" />
               </Form.Item>
             )}
@@ -399,22 +430,80 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
       )}
 
       {/* ========== Model group ========== */}
-      {(config?.model !== undefined || config?.temperature !== undefined || showThinkingToggle || config?.domains !== undefined || config?.sendSystemPrompt !== undefined) && (
+      {(config?.model !== undefined || config?.temperature !== undefined || showThinkingControl || config?.domains !== undefined || config?.sendSystemPrompt !== undefined) && (
         <Section variant="neutral" style={{ marginTop: 16 }} noGap>
           <Text strong style={{ display: "block", marginBottom: 8 }}>
             {t("modelGroup")}
           </Text>
           <Form layout="vertical">
-            {config?.model !== undefined && (
-              <Form.Item label={`LLM ${tCommon("model")}`} extra={t("modelExtra")}>
-                <Input
-                  placeholder={service === "llm" ? `${tCommon("example")}: llama3.2, gpt-3.5-turbo, meta-llama/Llama-3.3-70B-Instruct-Turbo` : undefined}
-                  value={config.model as string | undefined}
-                  onChange={(e) => handleConfigChange(service, "model", e.target.value)}
-                  aria-label={`LLM ${tCommon("model")}`}
-                />
-              </Form.Item>
-            )}
+            {config?.model !== undefined &&
+              (() => {
+                // AutoComplete = text input + curated dropdown. Empty `models`
+                // (provider without curated list) makes it behave like a plain
+                // Input — user types any SKU freely.
+                const models = getProviderModels(service) as Array<{ label: string; value: string }>;
+                const knownValues = new Set(models.map((m) => m.value));
+                const defaultModel = (getDefaultConfig(service)?.model as string | undefined) ?? "";
+                return (
+                  <Form.Item label={`LLM ${tCommon("model")}`} extra={t("modelExtra")}>
+                    <AutoComplete
+                      options={models}
+                      value={config.model as string | undefined}
+                      onChange={(value) => handleConfigChange(service, "model", value)}
+                      allowClear
+                      placeholder={service === "llm" ? `${tCommon("example")}: llama3.2, gpt-3.5-turbo, meta-llama/Llama-3.3-70B-Instruct-Turbo` : undefined}
+                      showSearch={{
+                        filterOption: (input, option) => {
+                          if (!input) return true;
+                          // When the input is an exact match for an existing model
+                          // SKU, the user has *already selected* it — they're
+                          // opening the dropdown to browse alternatives, not to
+                          // narrow down. Show all options instead of just that one.
+                          if (knownValues.has(input)) return true;
+                          const i = input.toLowerCase();
+                          // Search both value (SKU) and label (friendly name) —
+                          // users may type "DeepSeek" or "deepseek-v4" or "Pro".
+                          return String(option?.value ?? "").toLowerCase().includes(i) || String(option?.label ?? "").toLowerCase().includes(i);
+                        },
+                      }}
+                      // Dual-line option render: friendly name (with `default`
+                      // tag for the spec's defaultModel) on top, SKU below in
+                      // dim small text. Closes the visual gap between the
+                      // dropdown label ("Claude Sonnet 4.6") and what lands in
+                      // the input field ("claude-sonnet-4-6") — users see the
+                      // correspondence at a glance.
+                      optionRender={(oriOption) => {
+                        const value = String(oriOption.value ?? "");
+                        const label = String(oriOption.label ?? value);
+                        const isDefault = value === defaultModel;
+                        return (
+                          <div style={{ paddingBlock: 2 }}>
+                            <Flex align="center" gap={6}>
+                              <span style={{ fontWeight: isDefault ? 600 : 400 }}>{label}</span>
+                              {isDefault && (
+                                <Tag
+                                  style={{
+                                    margin: 0,
+                                    fontSize: 10,
+                                    lineHeight: "16px",
+                                    padding: "0 4px",
+                                    color: token.colorPrimary,
+                                    background: token.colorPrimaryBg,
+                                    borderColor: token.colorPrimaryBorder,
+                                  }}>
+                                  default
+                                </Tag>
+                              )}
+                            </Flex>
+                            {value !== label && <div style={{ fontSize: 12, opacity: 0.55, marginTop: 2 }}>{value}</div>}
+                          </div>
+                        );
+                      }}
+                      aria-label={`LLM ${tCommon("model")}`}
+                    />
+                  </Form.Item>
+                );
+              })()}
             {config?.temperature !== undefined && (
               <Form.Item label="Temperature" extra={t("temperatureExtra")}>
                 <InputNumber
@@ -428,21 +517,30 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
                 />
               </Form.Item>
             )}
-            {showThinkingToggle && (
-              <Form.Item label={t("enableThinking")} extra={t("enableThinkingTooltip")}>
-                <Switch checked={(config?.enableThinking as boolean | undefined) ?? false} onChange={(checked) => handleConfigChange(service, "enableThinking", checked)} aria-label={t("enableThinking")} />
-              </Form.Item>
-            )}
-            {showThinkingToggle && (config?.enableThinking as boolean | undefined) && (
+            {showThinkingControl && (
               <Form.Item label={t("reasoningEffort")} extra={t("reasoningEffortExtra")}>
-                <Select
-                  value={config?.reasoningEffort ?? "medium"}
-                  onChange={(value) => handleConfigChange(service, "reasoningEffort", value)}
-                  options={[
-                    { value: "low", label: "Low" },
-                    { value: "medium", label: "Medium" },
-                    { value: "high", label: "High" },
-                  ]}
+                <Select<"off" | "on" | ReasoningEffort>
+                  value={isBinaryEffort ? (currentModelEffort ? "on" : "off") : (currentModelEffort ?? "off")}
+                  onChange={(value) => {
+                    const next = { ...thinkingEffortRecord };
+                    if (value === "off") delete next[currentModel];
+                    else if (value === "on") next[currentModel] = "medium";
+                    else next[currentModel] = value;
+                    handleConfigChange(service, "thinkingEffort", next);
+                  }}
+                  options={
+                    isBinaryEffort
+                      ? [
+                          { value: "off", label: "Off" },
+                          { value: "on", label: "On" },
+                        ]
+                      : [
+                          { value: "off", label: "Off" },
+                          { value: "low", label: "Low" },
+                          { value: "medium", label: "Medium" },
+                          { value: "high", label: "High" },
+                        ]
+                  }
                   aria-label={t("reasoningEffort")}
                 />
               </Form.Item>
@@ -462,11 +560,7 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
             )}
             {config?.sendSystemPrompt !== undefined && (
               <Form.Item label={t("sendSystemPrompt")} extra={t("sendSystemPromptExtra")} style={{ marginBottom: 0 }}>
-                <Switch
-                  checked={config?.sendSystemPrompt !== false}
-                  onChange={(checked) => handleConfigChange(service, "sendSystemPrompt", checked)}
-                  aria-label={t("sendSystemPrompt")}
-                />
+                <Switch checked={config?.sendSystemPrompt !== false} onChange={(checked) => handleConfigChange(service, "sendSystemPrompt", checked)} aria-label={t("sendSystemPrompt")} />
               </Form.Item>
             )}
           </Form>
@@ -486,21 +580,51 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
           <Form layout="vertical">
             {config?.chunkSize !== undefined && (
               <Form.Item label={t("chunkSize")} extra={t("chunkSizeExtra")}>
-                <InputNumber min={1} className="!w-full" value={config.chunkSize as number | undefined} onChange={(value) => handleConfigChange(service, "chunkSize", value ?? 1)} aria-label={t("chunkSize")} />
+                <InputNumber
+                  min={1}
+                  className="!w-full"
+                  value={config.chunkSize as number | undefined}
+                  onChange={(value) => handleConfigChange(service, "chunkSize", value ?? 1)}
+                  aria-label={t("chunkSize")}
+                />
               </Form.Item>
             )}
             {config?.delayTime !== undefined && (
               <Form.Item label={`${t("delayTime")} (ms)`}>
-                <InputNumber min={1} className="!w-full" value={config.delayTime as number | undefined} onChange={(value) => handleConfigChange(service, "delayTime", value ?? 1)} aria-label={t("delayTime")} />
+                <InputNumber
+                  min={1}
+                  className="!w-full"
+                  value={config.delayTime as number | undefined}
+                  onChange={(value) => handleConfigChange(service, "delayTime", value ?? 1)}
+                  aria-label={t("delayTime")}
+                />
               </Form.Item>
             )}
             {config?.batchSize !== undefined && (
               <Form.Item label={t("batchSize")} extra={t("batchSizeExtra")}>
-                <InputNumber min={1} className="!w-full" value={config?.batchSize as number | undefined} onChange={(value) => handleConfigChange(service, "batchSize", value ?? 1)} aria-label={t("batchSize")} />
+                <InputNumber
+                  min={1}
+                  className="!w-full"
+                  value={config?.batchSize as number | undefined}
+                  onChange={(value) => handleConfigChange(service, "batchSize", value ?? 1)}
+                  aria-label={t("batchSize")}
+                />
+              </Form.Item>
+            )}
+            {isLLMModel && config?.contextWindow !== undefined && (
+              <Form.Item label={t("contextWindow")} extra={t("contextWindowExtra")}>
+                <InputNumber
+                  min={1}
+                  max={500}
+                  className="!w-full"
+                  value={config?.contextWindow as number | undefined}
+                  onChange={(value) => handleConfigChange(service, "contextWindow", value ?? 1)}
+                  aria-label={t("contextWindow")}
+                />
               </Form.Item>
             )}
             {isLLMModel && config?.contextBatchSize !== undefined && (
-              <Form.Item label={t("contextBatchSize")} extra={t("contextBatchSizeExtra")}>
+              <Form.Item label={t("contextBatchSize")} extra={t("contextBatchSizeExtra")} style={{ marginBottom: 0 }}>
                 <InputNumber
                   min={1}
                   max={50}
@@ -509,11 +633,6 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
                   onChange={(value) => handleConfigChange(service, "contextBatchSize", value ?? 1)}
                   aria-label={t("contextBatchSize")}
                 />
-              </Form.Item>
-            )}
-            {isLLMModel && config?.contextWindow !== undefined && (
-              <Form.Item label={t("contextWindow")} extra={t("contextWindowExtra")} style={{ marginBottom: 0 }}>
-                <InputNumber min={1} max={500} className="!w-full" value={config?.contextWindow as number | undefined} onChange={(value) => handleConfigChange(service, "contextWindow", value ?? 1)} aria-label={t("contextWindow")} />
               </Form.Item>
             )}
           </Form>

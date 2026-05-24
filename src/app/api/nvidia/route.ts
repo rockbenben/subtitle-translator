@@ -7,7 +7,6 @@ interface NvidiaRequest {
   temperature?: number;
   top_p?: number;
   chat_template_kwargs?: Record<string, unknown>;
-  reasoning_effort?: string;
 }
 
 const NVIDIA_API_URL = "https://integrate.api.nvidia.com/v1/chat/completions";
@@ -15,7 +14,7 @@ const NVIDIA_API_URL = "https://integrate.api.nvidia.com/v1/chat/completions";
 export async function POST(req: NextRequest) {
   try {
     const body = (await req.json()) as NvidiaRequest;
-    const { apiKey, messages, model, temperature, top_p, chat_template_kwargs, reasoning_effort } = body;
+    const { apiKey, messages, model, temperature, top_p, chat_template_kwargs } = body;
 
     if (!Array.isArray(messages) || messages.length === 0) {
       return NextResponse.json({ error: "Missing or invalid parameter: messages must be a non-empty array" }, { status: 400 });
@@ -40,7 +39,6 @@ export async function POST(req: NextRequest) {
     if (temperature !== undefined) requestBody.temperature = temperature;
     if (top_p !== undefined) requestBody.top_p = top_p;
     if (chat_template_kwargs !== undefined) requestBody.chat_template_kwargs = chat_template_kwargs;
-    if (reasoning_effort !== undefined) requestBody.reasoning_effort = reasoning_effort;
 
     const response = await fetch(NVIDIA_API_URL, {
       method: "POST",

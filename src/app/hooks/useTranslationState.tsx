@@ -13,8 +13,8 @@ import {
   testTranslation,
   useTranslation,
   defaultConfigs,
+  deriveThinkingParams,
   getDefaultConfig,
-  getThinkingModelPattern,
   migrateConfig,
   resetConfigWithCredentials,
   LLM_MODELS,
@@ -174,7 +174,10 @@ const useTranslationState = () => {
   };
 
   // Config management
-  const handleConfigChange = (method: string, field: string, value: string | number | boolean) => {
+  // Value covers all TranslationConfig leaf types: primitives for scalar fields
+  // (apiKey/temperature/useRelay/...) and Record<string, string> for thinkingEffort
+  // (per-model effort level — entry presence = thinking on).
+  const handleConfigChange = (method: string, field: string, value: string | number | boolean | Record<string, string>) => {
     setTranslationConfigs((prev) => {
       const existingConfig = prev[method];
       const defaultConfig = getDefaultConfig(method);
@@ -182,17 +185,9 @@ const useTranslationState = () => {
       const baseConfig = migrateConfig(existingConfig, defaultConfig);
       const next = { ...baseConfig, [field]: value } as TranslationConfig;
 
-      // When the model field changes on a service with model-conditional thinking
-      // (e.g. DeepSeek: only deepseek-v4-pro supports thinking), strip stale
-      // enableThinking + reasoningEffort so they don't ghost-activate after
-      // switching back later.
-      if (field === "model") {
-        const pattern = getThinkingModelPattern(method);
-        if (pattern && !pattern.test(String(value))) {
-          if (next.enableThinking !== undefined) delete next.enableThinking;
-          if (next.reasoningEffort !== undefined) delete next.reasoningEffort;
-        }
-      }
+      // No need to strip thinking state on model switch — thinking is now
+      // per-model (config.thinkingEffort record keyed by SKU), so each model's
+      // state is independently preserved when switching back.
 
       return { ...prev, [method]: next };
     });
@@ -367,8 +362,10 @@ const useTranslationState = () => {
       };
     };
 
-    // Build translate params - pick defined optional fields from config
-    const optionalFields = ["useCache", "apiKey", "region", "url", "model", "apiVersion", "temperature", "systemPrompt", "userPrompt", "sendSystemPrompt", "useRelay", "enableThinking", "reasoningEffort", "domains"] as const;
+    // Build translate params - pick defined optional fields from config.
+    // reasoningEffort is derived per-call from the thinkingEffort record
+    // (presence of entry for current model = effort, absence = thinking off).
+    const optionalFields = ["useCache", "apiKey", "region", "url", "model", "apiVersion", "temperature", "systemPrompt", "userPrompt", "sendSystemPrompt", "useRelay", "domains"] as const;
     const extras: Record<string, unknown> = {};
     const configRecord = config as unknown as Record<string, unknown>;
     for (const key of optionalFields) {
@@ -376,6 +373,13 @@ const useTranslationState = () => {
         extras[key] = configRecord[key];
       }
     }
+    // Single-point gate: deriveThinkingParams checks (a) thinkingEffort entry
+    // exists AND (b) model is tagged in registry. Services key off
+    // params.reasoningEffort presence (Moonshot K2.6 + Gemini also re-check
+    // isThinkingModel internally — they're server-default-ON and need to send
+    // explicit "disabled" / "minimal" when tagged-but-effort-undefined).
+    const effort = deriveThinkingParams(config.translationMethod, config);
+    if (effort) extras.reasoningEffort = effort;
     if (fullText !== undefined) extras.fullText = fullText;
 
     const translateParams: TranslateTextParams = {

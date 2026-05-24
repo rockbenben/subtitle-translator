@@ -2,7 +2,7 @@
 
 import SparkMD5 from "spark-md5";
 import { DEFAULT_SYSTEM_PROMPT, DEFAULT_USER_PROMPT } from "./config";
-import { LLM_MODELS } from "./registry";
+import { LLM_MODELS, deriveThinkingParams } from "./registry";
 import type { TranslationConfig } from "./types";
 import { normalizePrompt } from "./services/shared";
 import { translationCache } from "@/app/lib/storage/indexedDBStorage";
@@ -39,9 +39,11 @@ export const generateCacheSuffix = ({ sourceLanguage, targetLanguage, translatio
       temperature: config?.temperature ?? 1.0,
       systemPrompt: normalizePrompt(systemPrompt, DEFAULT_SYSTEM_PROMPT),
       userPrompt: normalizePrompt(userPrompt, DEFAULT_USER_PROMPT),
-      // enableThinking=undefined and =false hash identically (preserves caches
-      // from before the field existed); reasoningEffort only matters when on.
-      ...(config?.enableThinking && { enableThinking: true, reasoningEffort: config?.reasoningEffort || "medium" }),
+      // Effort goes into the hash only when deriveThinkingParams says it'll
+      // actually be sent (tagged model + user picked an effort). Stale entries
+      // for untagged SKUs don't bloat the cache key. JSON.stringify drops the
+      // key when value is undefined, so cache-on vs cache-off shapes diverge.
+      reasoningEffort: deriveThinkingParams(translationMethod, config),
       // Custom OpenAI-compat toggle: when false, no system message is sent
       // (Gemma-family workaround). Hashing as a separate field keeps systemPrompt
       // semantically "what the user configured", so future normalizePrompt
