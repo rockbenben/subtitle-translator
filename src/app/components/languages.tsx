@@ -34,6 +34,5 @@ export const filterLanguageOption = ({ input, option }: { input: string; option?
   const normalizedName = normalizeText(typeof option?.name === "string" ? option.name : "");
   const normalizedValue = normalizeText(typeof option?.value === "string" ? option.value : "");
 
-  // 如果 label、name 或 value (language code) 包含输入的内容，则返回 true
   return normalizedLabel.includes(normalizedInput) || normalizedName.includes(normalizedInput) || normalizedValue.includes(normalizedInput);
 };

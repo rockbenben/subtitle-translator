@@ -54,7 +54,6 @@ const useFileUpload = () => {
   };
 
   const resetUpload = () => {
-    //setFile(null);
     setFileList([]);
     setMultipleFiles([]);
     setSourceText("");
@@ -95,20 +94,19 @@ const useFileUpload = () => {
       });
     }
 
-    // Return false to prevent default upload behavior
+    // antd Upload uses `false` return to suppress its default XHR upload —
+    // we just collect the file into state and process locally.
     return false;
   };
 
   const handleUploadRemove: UploadProps["onRemove"] = (file: UploadFile) => {
-    // 从 fileList 中移除
     const updatedFileList = fileList.filter((f) => f.uid !== file.uid);
     setFileList(updatedFileList);
 
-    // 从 multipleFiles 中移除
     setMultipleFiles((prevFiles) => {
       const updatedMultipleFiles = prevFiles.filter((f) => !isDuplicateFile(f, file));
 
-      // 如果只剩下一个文件，则切换到单文件模式，且读取文件内容
+      // Down to one file → flip back to single mode + load its content.
       if (updatedMultipleFiles.length === 1 && uploadMode === "multiple") {
         setUploadMode("single");
         readFile(updatedMultipleFiles[0], (text) => {

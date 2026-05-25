@@ -87,12 +87,12 @@ const ApiStatusBlock = ({ disabled = false }: ApiStatusBlockProps) => {
 
   const handleMethodChange = (v: string) => {
     setTranslationMethod(v);
-    // useEffect above will reset sessionStatus on the ensuing render; nothing to do here.
+    // render-time identity check above resets sessionStatus on the ensuing render.
   };
 
   const handleApiKeyChange = (v: string) => {
     handleConfigChange(translationMethod, "apiKey", v);
-    // useEffect above will reset sessionStatus on the ensuing render.
+    // render-time identity check above resets sessionStatus on the ensuing render.
   };
 
   const tagColor: Record<StatusState, string> = {

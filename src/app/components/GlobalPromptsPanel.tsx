@@ -11,13 +11,10 @@ const { Text } = Typography;
 const { TextArea } = Input;
 
 /**
- * Standalone panel for the LLM system/user prompts. Promoted out of the
- * API Settings tab into its own top-level Tab (per Theme 5 redesign).
- * Prompts are shared across every LLM provider, so dedicating a tab to
- * them is clearer than nesting under per-provider settings.
- *
- * Hosts the prompt-preset picker (PromptPresetPicker) at the top, letting
- * users save / switch named prompt sets independently of API config presets.
+ * Standalone panel for the LLM system/user prompts. Shared across all LLM
+ * providers, so it lives at the bottom of TranslationSettings rather than
+ * nested per-provider. Hosts PromptPresetPicker for named prompt sets,
+ * independent of per-provider API config presets.
  */
 const GlobalPromptsPanel = () => {
   const t = useTranslations("TranslationSettings");

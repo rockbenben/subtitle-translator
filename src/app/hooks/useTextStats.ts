@@ -30,13 +30,11 @@ export const useTextStats = (text: string, maxChars: number = MAX_CHAR_LENGTH) =
   const displayText = isTooLong ? truncate(text) : text;
 
   const stats = useMemo(() => {
-    // Use the deferred text for heavy line counting calculations
     const targetText = deferredText;
     const totalChars = targetText.length;
     let totalLines = 0;
 
     if (totalChars > 0) {
-      // Optimized line counting using indexOf (significantly faster than char-by-char iteration)
       let index = -1;
       while ((index = targetText.indexOf("\n", index + 1)) !== -1) {
         totalLines++;
