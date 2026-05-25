@@ -92,12 +92,13 @@ const useTranslationState = () => {
   // Per-request timeout in seconds (fetch signal setTimeout).
   const [requestTimeoutSec, setRequestTimeoutSec] = useLocalStorage<number>("translation-requestTimeoutSec", DEFAULT_RETRY_TIMEOUT);
   const [translatedText, setTranslatedText] = useState<string>("");
-  // Soft-failure telemetry: count and original text of lines that failed
-  // even after the 10s auto-retry pass. UI uses these to show an Alert
-  // with a retry button; re-clicking Translate hits the IndexedDB cache
-  // for successful lines, only re-requesting the failed ones.
-  const [translateFailedCount, setTranslateFailedCount] = useState<number>(0);
-  const [translateFailedLines, setTranslateFailedLines] = useState<string[]>([]);
+  // Line-level soft-failure: lines still failing after retries exhaust.
+  // UI shows Alert with retry button; cache hits skip re-translation.
+  const [failedCount, setFailedCount] = useState<number>(0);
+  const [failedLines, setFailedLines] = useState<string[]>([]);
+  // Lang-level failures: in multi-language batch mode, codes of langs that
+  // errored out entirely. Replaces noisy per-lang toasts. See md-translator #7.
+  const [failedLangs, setFailedLangs] = useState<string[]>([]);
 
   const effectiveSystemPrompt = systemPrompt.trim() ? systemPrompt : DEFAULT_SYSTEM_PROMPT;
   const effectiveUserPrompt = userPrompt.trim() ? userPrompt : DEFAULT_USER_PROMPT;
@@ -665,8 +666,8 @@ const useTranslationState = () => {
       }
     }
     if (failedLinesList.length > 0) {
-      setTranslateFailedCount((prev) => prev + failedLinesList.length);
-      setTranslateFailedLines((prev) => [...prev, ...failedLinesList]);
+      setFailedCount((prev) => prev + failedLinesList.length);
+      setFailedLines((prev) => [...prev, ...failedLinesList]);
     }
 
     return translatedLines;
@@ -765,8 +766,8 @@ const useTranslationState = () => {
 
         // Surface failures via the same channel as context-mode (TranslateFailurePanel).
         if (failedLinesList.length > 0) {
-          setTranslateFailedCount((prev) => prev + failedLinesList.length);
-          setTranslateFailedLines((prev) => [...prev, ...failedLinesList]);
+          setFailedCount((prev) => prev + failedLinesList.length);
+          setFailedLines((prev) => [...prev, ...failedLinesList]);
         }
 
         return translatedLines;
@@ -799,8 +800,9 @@ const useTranslationState = () => {
   const runTranslation = async (performTranslation: PerformTranslation, sourceText: string, documentType?: "subtitle" | "markdown" | "generic") => {
     setTranslatedText("");
     // Reset soft-failure state for this run — the UI Alert is driven by these.
-    setTranslateFailedCount(0);
-    setTranslateFailedLines([]);
+    setFailedCount(0);
+    setFailedLines([]);
+    setFailedLangs([]);
     if (!sourceText.trim()) {
       message.error("No source text provided.");
       return;
@@ -847,8 +849,10 @@ const useTranslationState = () => {
     setMultiLanguageMode,
     translatedText,
     setTranslatedText,
-    translateFailedCount,
-    translateFailedLines,
+    failedCount,
+    failedLines,
+    failedLangs,
+    setFailedLangs,
     isTranslating,
     setIsTranslating,
     apiSettingsOpen,

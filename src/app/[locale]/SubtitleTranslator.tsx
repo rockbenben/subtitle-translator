@@ -87,8 +87,10 @@ const SubtitleTranslator = () => {
     setMultiLanguageMode,
     translatedText,
     setTranslatedText,
-    translateFailedCount,
-    translateFailedLines,
+    failedCount,
+    failedLines,
+    failedLangs,
+    setFailedLangs,
     isTranslating,
     setIsTranslating,
     progressPercent,
@@ -145,7 +147,7 @@ const SubtitleTranslator = () => {
   const [extractedText, setExtractedText] = useState("");
   // 批量翻译时统计失败文件数;handleMultipleTranslate 开始时重置,结束时读取以决定汇总消息。
   // 单文件模式(runTranslation 路径)下也会被写,但不会被读,无副作用。
-  const batchFailedCountRef = useRef(0);
+  const failedFilesRef = useRef(0);
   // 记录最近一次写入 translatedText 时使用的扩展名,导出按钮按它生成文件名;
   // 避免用户翻译后改 exportMode/bilingualFormat,再点导出时扩展名跟内容错位
   const [translatedTextExt, setTranslatedTextExt] = useState<string | null>(null);
@@ -175,7 +177,7 @@ const SubtitleTranslator = () => {
     const fileType = detectSubtitleFormat(lines);
     if (fileType === "error") {
       message.error(tSubtitle("unsupportedSub"));
-      batchFailedCountRef.current++;
+      failedFilesRef.current++;
       return;
     }
 
@@ -185,17 +187,15 @@ const SubtitleTranslator = () => {
     // Early return if no content to translate
     if (contentLines.length === 0) {
       message.warning(tSubtitle("noExtractedText"));
-      batchFailedCountRef.current++;
+      failedFilesRef.current++;
       return;
     }
 
-    // Determine target languages to translate to
     const targetLangs = multiLanguageMode ? targetLanguages : [targetLanguage];
 
-    // If no target languages selected in multi-language mode, show error
     if (multiLanguageMode && targetLangs.length === 0) {
       message.error(t("noTargetLanguage"));
-      batchFailedCountRef.current++;
+      failedFilesRef.current++;
       return;
     }
 
@@ -308,10 +308,9 @@ const SubtitleTranslator = () => {
     const isAss = fileType === "ass";
     const { cleanLines, tagMaps } = isAss ? prepareAssForTranslation(contentLines) : { cleanLines: contentLines, tagMaps: [] };
 
-    // 跟踪当前文件是否有任何 lang 翻译失败;末尾合并到 batchFailedCountRef
+    // 跟踪当前文件是否有任何 lang 翻译失败;末尾合并到 failedFilesRef
     let hasFailedLang = false;
 
-    // For each target language, perform translation
     for (const currentTargetLang of targetLangs) {
       try {
         // Translate content using the specific target language
@@ -382,6 +381,8 @@ const SubtitleTranslator = () => {
         if (isCascadedAbort(error)) continue;
 
         hasFailedLang = true;
+        // De-duped: multi-file batch can fire catch for the same lang per file.
+        setFailedLangs((prev) => (prev.includes(currentTargetLang) ? prev : [...prev, currentTargetLang]));
         const friendly = isNetworkError(error) ? t("networkUnavailable") : isAbortError(error) ? t("translationTimeout") : null;
         const langLabel = sourceOptions.find((o) => o.value === currentTargetLang)?.label || currentTargetLang;
         // Friendly messages already convey "translation failed" — drop the
@@ -397,7 +398,7 @@ const SubtitleTranslator = () => {
       }
     }
 
-    if (hasFailedLang) batchFailedCountRef.current++;
+    if (hasFailedLang) failedFilesRef.current++;
 
     // Show success message after all languages completed (for single file multi-language mode);
     // 有任何 lang 失败时跳过此消息(per-lang error toast 已显示,避免红+绿对冲)
@@ -417,7 +418,9 @@ const SubtitleTranslator = () => {
     // 让 progress modal 在 test ping → 文件循环之间保持连续可见。
     setIsTranslating(true);
     setProgressPercent(0);
-    batchFailedCountRef.current = 0;
+    failedFilesRef.current = 0;
+    // Batch path doesn't go through runTranslation — reset lang-failure manually.
+    setFailedLangs([]);
 
     try {
       const isValid = await validate();
@@ -436,7 +439,7 @@ const SubtitleTranslator = () => {
 
       // 部分/全失败时不报"已导出"(per-file error toast 已经告知细节),只在有成功时显示汇总
       const total = multipleFiles.length;
-      const failed = batchFailedCountRef.current;
+      const failed = failedFilesRef.current;
       const succeeded = total - failed;
       if (failed === 0) {
         message.success(t("translationExported"), 10);
@@ -746,8 +749,9 @@ const SubtitleTranslator = () => {
 
       {/* Partial-failure panel: auto-retried once, still-failed lines kept originals */}
       <TranslateFailurePanel
-        count={translateFailedCount}
-        lines={translateFailedLines}
+        count={failedCount}
+        lines={failedLines}
+        failedLangs={failedLangs}
         disabled={isTranslating}
         onRetry={() => (uploadMode === "single" ? runTranslation(performTranslation, sourceText, contextAware ? "subtitle" : undefined) : handleMultipleTranslate())}
       />
