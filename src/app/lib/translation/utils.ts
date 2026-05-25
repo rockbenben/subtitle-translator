@@ -1,5 +1,3 @@
-// Translation utility functions
-
 import { languages, isMethodSupportedForLanguage, REQUIRES_EXPLICIT_SOURCE } from "./languages-data";
 import type { TranslationMethod } from "./types";
 
@@ -7,23 +5,13 @@ import type { TranslationMethod } from "./types";
 const languageNameMap = new Map(languages.map((lang) => [lang.value, lang.name]));
 const validLanguageCodes = new Set(languages.map((lang) => lang.value));
 
-/**
- * Get language name from language code (O(1) Map lookup)
- */
 export const getLanguageName = (value: string): string => {
   return languageNameMap.get(value) ?? value;
 };
 
-/**
- * Check if a value is a valid language code
- */
 export const isValidLanguageValue = (testValue: string): boolean => {
   return validLanguageCodes.has(testValue);
 };
-
-/**
- * Check if a translation method supports the given source and target languages
- */
 
 export const checkLanguageSupport = (translationMethod: TranslationMethod, sourceLanguage: string, targetLanguage: string): { supported: boolean; errorMessage?: string } => {
   const sourceName = languageNameMap.get(sourceLanguage);

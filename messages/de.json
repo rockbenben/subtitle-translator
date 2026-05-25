@@ -190,6 +190,8 @@
     "batchSizeExtra": "Gleichzeitige Anfragen im Modus ohne Kontext. Zu hoch löst API-Ratenbegrenzungen aus",
     "contextBatchSize": "Gleichzeitigkeit im Kontextmodus",
     "contextBatchSizeExtra": "Gleichzeitige Stapel im Kontextmodus. «Kontextzeilen» zuerst anpassen — sicherer für Geschwindigkeit. Eine Erhöhung birgt Ratenbegrenzungen",
+    "maxTokens": "Maximale Tokens",
+    "maxTokensExtra": "Begrenzung der Modell-Ausgabe-Tokens. 0 = keine Begrenzung (Anbieter-Standard). Für lokale Modelle (Ollama/llama.cpp) mit Wiederholungsschleifen 2048-4096 empfohlen. Erreichen der Grenze löst sichtbaren Fehler aus (keine halbe Übersetzung im Cache); bei abgeschnittener legitimer Übersetzung diesen Wert erhöhen.",
     "contextWindow": "Kontextzeilen",
     "contextWindowExtra": "Zeilen pro Stapel. Höher = weniger Anfragen und mehr Geschwindigkeit, aber kann das Token-Limit des Modells überschreiten",
     "delayTime": "Verzögerungszeit",

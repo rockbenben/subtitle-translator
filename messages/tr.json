@@ -190,6 +190,8 @@
     "batchSizeExtra": "Bağlam dışı modda eşzamanlı istekler. Çok yüksek değer API hız sınırlarını tetikler",
     "contextBatchSize": "Bağlam Modu Eşzamanlılığı",
     "contextBatchSizeExtra": "Bağlam modunda eşzamanlı yığınlar. Önce «bağlam satırları»'nı ayarlayın —— hız için daha güvenli. Bunu artırmak sınır riski taşır",
+    "maxTokens": "Maksimum Token",
+    "maxTokensExtra": "Model çıktı token sınırı. 0 = sınırsız (sağlayıcı varsayılanı). Tekrar döngüsüne giren yerel modeller (Ollama/llama.cpp) için 2048-4096 ayarlayın. Sınıra ulaşmak görünür hata üretir (yarım çeviri önbelleğe alınmaz); meşru uzun çeviri kesilirse bu değeri artırın.",
     "contextWindow": "Bağlam satırları",
     "contextWindowExtra": "Yığın başına satır. Yüksek = daha az istek ve daha hızlı, ancak modelin token sınırını aşabilir",
     "delayTime": "Gecikme",

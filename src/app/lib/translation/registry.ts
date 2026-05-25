@@ -595,7 +595,12 @@ export const PROVIDERS = {
     // some codegemma variants) can switch this off so only the user message is sent
     // — avoids jinja "Conversations must start with a user prompt".
     // (TranslateGemma is its own dedicated service — see `translategemma` provider.)
-    defaults: { url: "", apiKey: "", model: "", temperature: 0.7, sendSystemPrompt: true, batchSize: 10, contextBatchSize: 1, contextWindow: 100 },
+    //
+    // maxTokens: safety net for local-model repeat-loop. Cross-layer — to expose
+    // on another service, also wire it in services/llm.ts (UI + cache key alone
+    // gives a half-functional knob). Cloud services skip this on purpose: no
+    // repeat-loop risk + their own server-side caps.
+    defaults: { url: "", apiKey: "", model: "", temperature: 0.7, maxTokens: 0, sendSystemPrompt: true, batchSize: 10, contextBatchSize: 1, contextWindow: 100 },
     endpoints: [
       // Local servers first (LM Studio → Ollama → llama.cpp by general
       // popularity), cloud aggregators after. Order matches translategemma's
@@ -757,6 +762,12 @@ const buildOpenAICompatDefault = (spec: OpenAICompatProviderSpec): TranslationCo
     contextBatchSize: 3,
     contextWindow: 100,
   };
+  // Note: no maxTokens here. Cloud LLMs already have server-side caps and
+  // their models are RLHF-tuned out of repeat loops, so exposing an extra
+  // knob just creates "I set 500 and my translations got truncated" support
+  // tickets. The transparent passthrough in openAICompatRequest still respects
+  // maxTokens when present (power users can import via JSON config), so
+  // wiring stays consistent — only the surfaced UI default is gated.
   if (spec.allowCustomUrl) base.url = "";
   if (spec.allowRelay) base.useRelay = false;
   // Seed an empty thinkingEffort record when any model on this provider is

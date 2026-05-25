@@ -190,6 +190,8 @@
     "batchSizeExtra": "Concurrent requests in non-context mode. Too high triggers API rate limits",
     "contextBatchSize": "Context Mode Concurrency",
     "contextBatchSizeExtra": "Concurrent batches in context mode. Tune 'context lines' first — safer for speed. Raising this risks rate limits",
+    "maxTokens": "Max Tokens",
+    "maxTokensExtra": "Cap on model output tokens. 0 = no cap (vendor default). Set 2048-4096 for local models (Ollama/llama.cpp) to fail-fast on repeat-loop hallucinations. Hitting the cap raises a loud error (no silent half-translation cached); if a legitimate long translation gets cut, raise this value.",
     "contextWindow": "Context Lines",
     "contextWindowExtra": "Lines per batch. Higher means fewer requests and more speed, but may exceed the model's token limit",
     "delayTime": "Delay Time",

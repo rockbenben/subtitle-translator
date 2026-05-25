@@ -190,6 +190,8 @@
     "batchSizeExtra": "Permintaan simultan dalam mode tanpa konteks. Terlalu tinggi memicu batas laju API",
     "contextBatchSize": "Konkurensi Mode Konteks",
     "contextBatchSizeExtra": "Batch simultan dalam mode konteks. Sesuaikan «baris konteks» dulu —— lebih aman untuk kecepatan. Menambah ini berisiko batas",
+    "maxTokens": "Token Maksimum",
+    "maxTokensExtra": "Batas token output model. 0 = tanpa batas (default vendor). Atur 2048-4096 untuk model lokal (Ollama/llama.cpp) yang terjebak loop repetisi. Mencapai batas memicu error yang terlihat (tidak ada terjemahan setengah jadi di cache); jika terjemahan panjang yang sah terpotong, naikkan nilai ini.",
     "contextWindow": "Baris konteks",
     "contextWindowExtra": "Baris per batch. Lebih tinggi = lebih sedikit permintaan dan lebih cepat, tetapi dapat melebihi batas token model",
     "delayTime": "Penundaan",

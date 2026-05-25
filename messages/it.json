@@ -190,6 +190,8 @@
     "batchSizeExtra": "Richieste simultanee in modalità senza contesto. Troppo alto attiva i limiti dell'API",
     "contextBatchSize": "Concorrenza Modalità Contesto",
     "contextBatchSizeExtra": "Batch simultanei in modalità contesto. Regola prima «righe di contesto» — più sicuro per la velocità. Aumentare questo rischia limiti",
+    "maxTokens": "Token Massimi",
+    "maxTokensExtra": "Limite di token in uscita del modello. 0 = senza limite (predefinito del fornitore). Impostare 2048-4096 per modelli locali (Ollama/llama.cpp) con loop di ripetizione. Raggiungere il limite genera un errore visibile (nessuna traduzione parziale in cache); se una traduzione lunga legittima viene troncata, aumenta questo valore.",
     "contextWindow": "Righe di contesto",
     "contextWindowExtra": "Righe per batch. Più alto = meno richieste e più velocità, ma può superare il limite di token del modello",
     "delayTime": "Ritardo",

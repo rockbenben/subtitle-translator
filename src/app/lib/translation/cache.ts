@@ -1,5 +1,3 @@
-// Translation cache utilities
-
 import SparkMD5 from "spark-md5";
 import { DEFAULT_SYSTEM_PROMPT, DEFAULT_USER_PROMPT } from "./config";
 import { LLM_MODELS, deriveThinkingParams } from "./registry";
@@ -44,6 +42,10 @@ export const generateCacheSuffix = ({ sourceLanguage, targetLanguage, translatio
       // for untagged SKUs don't bloat the cache key. JSON.stringify drops the
       // key when value is undefined, so cache-on vs cache-off shapes diverge.
       reasoningEffort: deriveThinkingParams(translationMethod, config),
+      // maxTokens: truncated output is a different translation than uncapped;
+      // hash it when set. undefined and 0 hash identically (both = no cap)
+      // — preserves caches from before this knob existed.
+      ...(config?.maxTokens && config.maxTokens > 0 && { maxTokens: config.maxTokens }),
       // Custom OpenAI-compat toggle: when false, no system message is sent
       // (Gemma-family workaround). Hashing as a separate field keeps systemPrompt
       // semantically "what the user configured", so future normalizePrompt

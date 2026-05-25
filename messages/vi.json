@@ -190,6 +190,8 @@
     "batchSizeExtra": "Yêu cầu đồng thời trong chế độ không ngữ cảnh. Quá cao sẽ kích hoạt giới hạn API",
     "contextBatchSize": "Đồng thời Chế độ Ngữ cảnh",
     "contextBatchSizeExtra": "Lô đồng thời trong chế độ ngữ cảnh. Điều chỉnh «dòng ngữ cảnh» trước —— an toàn hơn cho tốc độ. Tăng cái này có rủi ro giới hạn",
+    "maxTokens": "Số Token Tối Đa",
+    "maxTokensExtra": "Giới hạn token đầu ra của model. 0 = không giới hạn (mặc định nhà cung cấp). Đặt 2048-4096 cho model nội bộ (Ollama/llama.cpp) khi gặp vòng lặp lặp lại. Chạm giới hạn sẽ báo lỗi rõ ràng (không có nửa bản dịch trong cache); nếu bản dịch dài hợp lệ bị cắt, hãy tăng giá trị này.",
     "contextWindow": "Số dòng ngữ cảnh",
     "contextWindowExtra": "Dòng mỗi lô. Cao hơn = ít yêu cầu hơn và nhanh hơn, nhưng có thể vượt giới hạn token của mô hình",
     "delayTime": "Độ trễ",

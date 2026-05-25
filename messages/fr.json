@@ -190,6 +190,8 @@
     "batchSizeExtra": "Requêtes simultanées en mode sans contexte. Trop élevé déclenche les limites de l'API",
     "contextBatchSize": "Concurrence du Mode Contexte",
     "contextBatchSizeExtra": "Lots simultanés en mode contexte. Ajustez « lignes de contexte » d'abord — plus sûr pour la vitesse. Augmenter ceci risque des limites",
+    "maxTokens": "Tokens Maximum",
+    "maxTokensExtra": "Limite de tokens de sortie du modèle. 0 = sans limite (par défaut du fournisseur). Définir 2048-4096 pour les modèles locaux (Ollama/llama.cpp) victimes de boucles de répétition. Atteindre la limite déclenche une erreur visible (aucune demi-traduction en cache) ; si une traduction longue légitime est coupée, augmentez cette valeur.",
     "contextWindow": "Lignes de contexte",
     "contextWindowExtra": "Lignes par lot. Plus élevé = moins de requêtes et plus de vitesse, mais peut dépasser la limite de tokens du modèle",
     "delayTime": "Délai",

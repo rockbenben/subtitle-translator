@@ -190,6 +190,8 @@
     "batchSizeExtra": "비컨텍스트 모드의 동시 요청 수. 너무 높으면 API 속도 제한이 발생합니다",
     "contextBatchSize": "문맥 모드 동시성",
     "contextBatchSizeExtra": "컨텍스트 모드의 동시 배치 수. 먼저 「컨텍스트 행 수」를 조정하세요 —— 속도 면에서 안전. 이 값을 늘리면 속도 제한 위험",
+    "maxTokens": "최대 토큰 수",
+    "maxTokensExtra": "모델 단일 응답 토큰 수 제한. 0 = 무제한 (벤더 기본값). 로컬 모델 (Ollama/llama.cpp)은 2048-4096 권장, 반복 루프 방지. 상한 도달 시 명시적으로 실패 (반쪽 번역이 캐시되지 않음); 정상 번역이 잘리면 이 값을 늘리세요.",
     "contextWindow": "컨텍스트 행수",
     "contextWindowExtra": "배치당 행 수. 높을수록 요청이 적어지고 속도가 빨라지지만 모델의 토큰 한도를 초과할 수 있음",
     "delayTime": "지연 시간",

@@ -43,6 +43,9 @@ import pRetry from "p-retry";
 import { useTranslations } from "next-intl";
 
 const DEFAULT_API = "gtxFreeAPI";
+// Caps context window padding around a batch — without this, a large
+// contextWindow would request hundreds of neighbor lines per batch and blow
+// past the model's context limit on long inputs.
 const MAX_CONTEXT_PADDING = 50;
 
 type TranslationConfigs = Record<string, TranslationConfig>;
@@ -365,7 +368,7 @@ const useTranslationState = () => {
     // Build translate params - pick defined optional fields from config.
     // reasoningEffort is derived per-call from the thinkingEffort record
     // (presence of entry for current model = effort, absence = thinking off).
-    const optionalFields = ["useCache", "apiKey", "region", "url", "model", "apiVersion", "temperature", "systemPrompt", "userPrompt", "sendSystemPrompt", "useRelay", "domains"] as const;
+    const optionalFields = ["useCache", "apiKey", "region", "url", "model", "apiVersion", "temperature", "maxTokens", "systemPrompt", "userPrompt", "sendSystemPrompt", "useRelay", "domains"] as const;
     const extras: Record<string, unknown> = {};
     const configRecord = config as unknown as Record<string, unknown>;
     for (const key of optionalFields) {
@@ -446,8 +449,6 @@ const useTranslationState = () => {
     const translatedLines = new Array(contentLines.length);
     const MAX_CONTEXT_RETRIES = 2; // Maximum times to reduce context window
 
-    // Inner function to translate a batch with a specific context window size
-    // Translate a single batch with context markers, returns true if all lines translated
     const translateSingleBatch = async (batchStart: number, batchEnd: number, contextWindow: number): Promise<boolean> => {
       const contextPadding = Math.min(MAX_CONTEXT_PADDING, Math.max(1, Math.floor(contextWindow / 2)));
       const contextStart = Math.max(0, batchStart - contextPadding);
@@ -501,13 +502,9 @@ const useTranslationState = () => {
       const success = await translateSingleBatch(batchStart, batchEnd, contextWindow);
       if (success) return true;
 
-      // Reduce context window and retry ONLY the contiguous gaps (up to MAX_CONTEXT_RETRIES times)
-      // Old behavior stepped through fixed-size sub-ranges and re-translated the whole sub-range
-      // if any line in it was still missing — wasting tokens on already-successful neighbors and
-      // risking LLM non-determinism overwriting them with slightly different translations.
-      // New behavior finds the still-empty indices, clusters them into contiguous [s, e) ranges
-      // (capped at RETRY_MAX_CLUSTER_SIZE), and retranslates only those — fewer tokens, stable
-      // results for the lines that already succeeded.
+      // Halve context window + retry only the still-empty index clusters (not
+      // the whole sub-range) — saves tokens and prevents LLM non-determinism
+      // from overwriting already-successful lines with slightly different output.
       let currentWindow = contextWindow;
       for (let attempt = 0; attempt < MAX_CONTEXT_RETRIES && currentWindow > 5; attempt++) {
         currentWindow = Math.max(5, Math.floor(currentWindow / 2));

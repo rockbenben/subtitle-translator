@@ -1,5 +1,3 @@
-// Translation service types
-
 export interface TranslationProvider {
   value: string;
   label: string;
@@ -25,6 +23,12 @@ export interface TranslateTextParams {
   model?: string;
   apiVersion?: string;
   temperature?: number;
+  // Cap on model output tokens. Undefined / 0 = no cap (vendor default).
+  // Primary use case: local Ollama small models that hallucinate into repeating
+  // loops — capping max_tokens at a sane value (e.g. 2048) lets the loop
+  // self-terminate at the cap, surface as a (likely truncated) response, and
+  // hand control back to retry/error flow instead of hanging until requestTimeoutSec.
+  maxTokens?: number;
   systemPrompt?: string;
   userPrompt?: string;
   sendSystemPrompt?: boolean; // When false, omit the system message (Custom OpenAI-compat — Gemma-style chat templates rejecting system role)
@@ -51,6 +55,8 @@ export interface TranslationConfig {
   model?: string;
   apiVersion?: string;
   temperature?: number;
+  /** See TranslateTextParams.maxTokens. Undefined / 0 = no cap. */
+  maxTokens?: number;
   chunkSize?: number;
   delayTime?: number;
   batchSize?: number;

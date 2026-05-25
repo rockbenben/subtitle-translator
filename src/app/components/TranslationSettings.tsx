@@ -430,7 +430,7 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
       )}
 
       {/* ========== Model group ========== */}
-      {(config?.model !== undefined || config?.temperature !== undefined || showThinkingControl || config?.domains !== undefined || config?.sendSystemPrompt !== undefined) && (
+      {(config?.model !== undefined || config?.temperature !== undefined || (isLLMModel && config?.maxTokens !== undefined) || showThinkingControl || config?.domains !== undefined || config?.sendSystemPrompt !== undefined) && (
         <Section variant="neutral" style={{ marginTop: 16 }} noGap>
           <Text strong style={{ display: "block", marginBottom: 8 }}>
             {t("modelGroup")}
@@ -517,6 +517,20 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
                 />
               </Form.Item>
             )}
+            {/* isLLMModel guard: don't render the knob on MT services if a default
+                ever leaks maxTokens (MT wire layer ignores it). See registry.ts. */}
+            {isLLMModel && config?.maxTokens !== undefined && (
+              <Form.Item label={t("maxTokens")} extra={t("maxTokensExtra")}>
+                <InputNumber
+                  min={0}
+                  max={128000}
+                  className="!w-full"
+                  value={config?.maxTokens as number | undefined}
+                  onChange={(value) => handleConfigChange(service, "maxTokens", value ?? 0)}
+                  aria-label={t("maxTokens")}
+                />
+              </Form.Item>
+            )}
             {showThinkingControl && (
               <Form.Item label={t("reasoningEffort")} extra={t("reasoningEffortExtra")}>
                 <Select<"off" | "on" | ReasoningEffort>
@@ -568,11 +582,16 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
       )}
 
       {/* ========== Call parameters group ========== */}
+      {/* Field order follows the user's decision flow: chunk → concurrency → throttle.
+          batchSize (non-context) sits next to contextBatchSize (context) so users can
+          compare; contextWindow precedes contextBatchSize since you'd size the window
+          before deciding how many such batches to fire in parallel. delayTime trails
+          as the "if you're getting rate-limited, slow it down" knob. */}
       {(config?.chunkSize !== undefined ||
-        config?.delayTime !== undefined ||
         config?.batchSize !== undefined ||
+        (isLLMModel && config?.contextWindow !== undefined) ||
         (isLLMModel && config?.contextBatchSize !== undefined) ||
-        (isLLMModel && config?.contextWindow !== undefined)) && (
+        config?.delayTime !== undefined) && (
         <Section variant="neutral" style={{ marginTop: 16 }} noGap>
           <Text strong style={{ display: "block", marginBottom: 8 }}>
             {t("callParamsGroup")}
@@ -586,17 +605,6 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
                   value={config.chunkSize as number | undefined}
                   onChange={(value) => handleConfigChange(service, "chunkSize", value ?? 1)}
                   aria-label={t("chunkSize")}
-                />
-              </Form.Item>
-            )}
-            {config?.delayTime !== undefined && (
-              <Form.Item label={`${t("delayTime")} (ms)`}>
-                <InputNumber
-                  min={1}
-                  className="!w-full"
-                  value={config.delayTime as number | undefined}
-                  onChange={(value) => handleConfigChange(service, "delayTime", value ?? 1)}
-                  aria-label={t("delayTime")}
                 />
               </Form.Item>
             )}
@@ -624,7 +632,7 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
               </Form.Item>
             )}
             {isLLMModel && config?.contextBatchSize !== undefined && (
-              <Form.Item label={t("contextBatchSize")} extra={t("contextBatchSizeExtra")} style={{ marginBottom: 0 }}>
+              <Form.Item label={t("contextBatchSize")} extra={t("contextBatchSizeExtra")}>
                 <InputNumber
                   min={1}
                   max={50}
@@ -632,6 +640,17 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
                   value={config?.contextBatchSize as number | undefined}
                   onChange={(value) => handleConfigChange(service, "contextBatchSize", value ?? 1)}
                   aria-label={t("contextBatchSize")}
+                />
+              </Form.Item>
+            )}
+            {config?.delayTime !== undefined && (
+              <Form.Item label={`${t("delayTime")} (ms)`} style={{ marginBottom: 0 }}>
+                <InputNumber
+                  min={1}
+                  className="!w-full"
+                  value={config.delayTime as number | undefined}
+                  onChange={(value) => handleConfigChange(service, "delayTime", value ?? 1)}
+                  aria-label={t("delayTime")}
                 />
               </Form.Item>
             )}

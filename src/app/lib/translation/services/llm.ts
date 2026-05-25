@@ -47,6 +47,7 @@ const openAICompatRequest = async (cfg: OpenAICompatRequestConfig): Promise<stri
       model: model || defaultModel,
       temperature: normalizeNumber(temperature, defaultTemperature),
       stream: false,
+      // No max_tokens — cloud models don't repeat-loop. Only `llm` Custom exposes it.
       ...extraBody,
     }),
     signal: params.signal,
@@ -279,9 +280,16 @@ export const gemini: TranslationService = async (params) => {
       generationConfig,
     }),
     signal: params.signal,
-  })) as { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }> };
+  })) as { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } ; finishReason?: string }> };
 
-  const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+  const candidate = data.candidates?.[0];
+  // Gemini's equivalent of finish_reason==="length". Server default
+  // maxOutputTokens (~8192) can overflow on long inputs. Same "max_tokens
+  // reached" marker → non-retryable in retry.ts.
+  if (candidate?.finishReason === "MAX_TOKENS") {
+    throw new Error("Gemini response truncated — max_tokens reached. Split input into smaller chunks.");
+  }
+  const text = candidate?.content?.parts?.[0]?.text;
   if (typeof text !== "string") {
     throw new Error("Invalid response format from Gemini API");
   }
@@ -301,6 +309,7 @@ export const azureopenai: TranslationService = async (params) => {
   // Azure deployment names mirror OpenAI model IDs; GPT-5 family supports
   // `reasoning_effort` per docs.microsoft.com/azure/.../foundry-models-sold-by-azure.
   // Orchestrator gates effort on (thinking-tagged ∧ user picked an effort).
+  // No max_tokens passthrough — same rationale as openAICompatRequest above.
   const requestBody: Record<string, unknown> = {
     messages: [
       { role: "system", content: effectiveSystemPrompt },
@@ -373,7 +382,7 @@ export const nvidia: TranslationService = async (params) => {
 };
 
 export const llm: TranslationService = async (params) => {
-  const { apiKey, url, model, temperature, sendSystemPrompt } = params;
+  const { apiKey, url, model, temperature, sendSystemPrompt, maxTokens } = params;
   const { effectiveSystemPrompt, prompt } = preparePrompts(params);
 
   const serviceName = "Custom (OpenAI-compatible)";
@@ -386,12 +395,9 @@ export const llm: TranslationService = async (params) => {
     headers.Authorization = `Bearer ${apiKey}`;
   }
 
-  // sendSystemPrompt=false omits the system message entirely. Required for chat
-  // templates that reject the system role (e.g. Gemma family raises jinja
-  // "Conversations must start with a user prompt"). The user prompt template
-  // still contains "Please respect the original meaning... rewrite in
-  // ${targetLanguage}" so translation guidance survives. undefined defaults to
-  // include — existing imports/presets without this field keep original behavior.
+  // sendSystemPrompt=false: omit system message for chat templates that reject
+  // the system role (Gemma family). Translation guidance survives in the user
+  // prompt. undefined defaults to include (preserves pre-toggle configs).
   const messages =
     sendSystemPrompt === false
       ? [{ role: "user", content: prompt }]
@@ -400,10 +406,8 @@ export const llm: TranslationService = async (params) => {
           { role: "user", content: prompt },
         ];
 
-  // Model is optional here — single-model endpoints (vLLM, llama.cpp server,
-  // thin user-built proxies) ignore or forbid the field. Only include it when
-  // the user provides a value; let the server return a precise error if it
-  // genuinely requires one (more accurate than a client-side guess).
+  // Model optional: single-model endpoints (vLLM / llama.cpp) ignore or reject
+  // the field. Send only when user-supplied; let server error if required.
   const requestBody: Record<string, unknown> = {
     messages,
     temperature: normalizeNumber(temperature, defaultConfigs.llm.temperature),
@@ -411,6 +415,10 @@ export const llm: TranslationService = async (params) => {
   const effectiveModel = model?.trim();
   if (effectiveModel) {
     requestBody.model = effectiveModel;
+  }
+  // Opt-in cap, safety net for runaway local-model generation.
+  if (maxTokens && maxTokens > 0) {
+    requestBody.max_tokens = maxTokens;
   }
 
   const data = await fetchJSON(apiEndpoint, {

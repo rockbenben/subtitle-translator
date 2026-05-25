@@ -190,6 +190,8 @@
     "batchSizeExtra": "非上下文模式的并发请求数。过高会触发 API 限流",
     "contextBatchSize": "上下文并发数",
     "contextBatchSizeExtra": "上下文模式的并发批次数。先调「上下文行数」加速更稳，本项易限流",
+    "maxTokens": "最大输出 tokens",
+    "maxTokensExtra": "限制模型单次响应的 token 数。0 = 不限制(用厂商默认)。本地模型(Ollama/llama.cpp)建议设 2048-4096,避免死循环占用太久。触顶会显式失败(不会写半截译文),正常翻译被截则调大此值。",
     "contextWindow": "上下文行数",
     "contextWindowExtra": "每批包含的行数。值越大请求越少、加速越明显，但可能超 token 上限",
     "delayTime": "延迟时间",

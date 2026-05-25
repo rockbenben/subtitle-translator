@@ -1,5 +1,3 @@
-// Shared helpers for translation service implementations
-
 // Use local API for: dev mode OR Docker (USE_LOCAL_API=true)
 // Use remote API for: static export (production without USE_LOCAL_API)
 export const useLocalApi = process.env.NODE_ENV === "development" || process.env.NEXT_PUBLIC_USE_LOCAL_API === "true";
@@ -138,17 +136,31 @@ export const fetchJSON = async (url: string, init?: RequestInit): Promise<unknow
 };
 
 export const getOpenAICompatContent = (data: unknown, serviceName: string): string => {
-  const content = (data as { choices?: Array<{ message?: { content?: string } }> } | null)?.choices?.[0]?.message?.content;
+  const choice = (data as { choices?: Array<{ message?: { content?: string }; finish_reason?: string }> } | null)?.choices?.[0];
+  const content = choice?.message?.content;
   if (typeof content !== "string") {
     throw new Error(`Invalid response format from ${serviceName} API`);
+  }
+  // finish_reason==="length" = truncated at max_tokens. content is a half
+  // translation; returning it would silently poison the cache. Throw with
+  // "max_tokens reached" marker → retry.ts treats it as non-retryable.
+  if (choice?.finish_reason === "length") {
+    throw new Error(`${serviceName} response truncated — max_tokens reached. Raise maxTokens or split input.`);
   }
   return content.trim();
 };
 
 export const getClaudeContent = (data: unknown, hasThinkingBlock: boolean): string => {
-  const contentArray = (data as { content?: Array<{ type?: string; text?: string }> } | null)?.content;
+  const response = data as { content?: Array<{ type?: string; text?: string }>; stop_reason?: string } | null;
+  const contentArray = response?.content;
   if (!Array.isArray(contentArray) || contentArray.length === 0) {
     throw new Error("Invalid response format from Claude API");
+  }
+  // Anthropic's equivalent of finish_reason==="length". Claude's max_tokens is
+  // hardcoded in the service (Anthropic API requires it); long inputs can still
+  // overflow. Same "max_tokens reached" marker → non-retryable in retry.ts.
+  if (response?.stop_reason === "max_tokens") {
+    throw new Error("Claude response truncated — max_tokens reached. Split input into smaller chunks.");
   }
   if (hasThinkingBlock) {
     const textBlock = contentArray.find((block) => block.type === "text");

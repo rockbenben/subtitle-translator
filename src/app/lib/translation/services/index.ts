@@ -1,5 +1,3 @@
-// Translation services index
-
 import type { TranslationMethod, TranslationService } from "../types";
 import * as traditional from "./traditional";
 import * as llm from "./llm";

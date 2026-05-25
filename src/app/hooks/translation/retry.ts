@@ -48,8 +48,12 @@ export const isAuthError = (error: unknown): boolean => {
  * at 0% for 30-60s of doomed retries. These are thrown by service layers (e.g.
  * the DeepSeek CORS → "enable API Relay" rewrite) when the next attempt will
  * fail the same way.
+ *
+ * "max_tokens reached" is the marker getOpenAICompatContent throws when a
+ * response has finish_reason==="length" — same input + same max_tokens
+ * truncates at the same boundary every time, so retries are pure waste.
  */
-const NON_RETRYABLE_MESSAGES = ["enable 'api relay'", "请在 api 设置中开启"];
+const NON_RETRYABLE_MESSAGES = ["enable 'api relay'", "请在 api 设置中开启", "max_tokens reached"];
 
 /**
  * Check if error is retryable (server errors or rate limits)

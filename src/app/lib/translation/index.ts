@@ -1,5 +1,5 @@
-// Main translation module
-// Re-exports all translation functionality from modular files
+// Translation barrel: re-exports submodules + top-level testTranslation /
+// translateText / useTranslation orchestration.
 
 "use client";
 
@@ -91,13 +91,9 @@ const translateText = async (params: TranslateTextParams): Promise<string> => {
     throw new Error(`No translation result received for method: ${translationMethod}`);
   }
 
-  // Clean and cache result. Cache write is fire-and-forget: it's best-effort
-  // (failures are swallowed inside indexedDBStorage.set with a console.error)
-  // and awaiting it just adds 5-50ms per line to translation completion.
-  // For a 1000-line subtitle at batchSize=20, dropping the await saves
-  // ~50-500ms total without changing observable behavior — the next read of
-  // the same key happens at least 1s later (retry interval) so the write
-  // has plenty of time to settle.
+  // Fire-and-forget cache write — failures swallowed in indexedDBStorage.set,
+  // and the next read of this key is ≥1s later (retry interval) so the write
+  // has plenty of time to settle. Awaiting would add 5-50ms per line for nothing.
   const cleanedText = cleanTranslatedText(translatedText);
   if (useCache) {
     void setCachedTranslation(cacheKey, cleanedText);
