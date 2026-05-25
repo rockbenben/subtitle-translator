@@ -440,9 +440,17 @@ export const claude: TranslationService = async (params) => {
   // Anthropic requires budget_tokens < max_tokens. When thinking is on we
   // reserve 10K for reasoning + ~6K for the visible response, so max_tokens
   // must grow. Plain (non-thinking) requests stay at the original 8096 cap.
+  //
+  // `system` as a block array (not a plain string) is the form that accepts
+  // `cache_control` — required since Claude is the ONLY provider where prompt
+  // caching is off by default. Anthropic silently no-ops the marker when the
+  // prompt is below the cacheable threshold (~1024 tokens for Sonnet/Haiku,
+  // 2048 for Opus), so short default prompts cost nothing extra; long custom
+  // prompts (glossaries, style guides) get ~90% input discount on cache hits.
+  // Doc: docs.anthropic.com/en/docs/build-with-claude/prompt-caching
   const requestBody: Record<string, unknown> = {
     model: effectiveModel,
-    system: effectiveSystemPrompt,
+    system: [{ type: "text", text: effectiveSystemPrompt, cache_control: { type: "ephemeral" } }],
     messages: [{ role: "user", content: prompt }],
     max_tokens: reasoningEffort ? 16384 : 8096,
   };
