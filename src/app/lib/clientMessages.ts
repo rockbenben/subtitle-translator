@@ -16,7 +16,7 @@
  * the declaration matches actual widget usage (see widget-namespace-parity
  * test).
  */
-export const SHARED_NAMESPACES = ["Metadata", "navigation", "tools", "feedback", "common", "languages", "CopyToClipboard"] as const;
+export const SHARED_NAMESPACES = ["Metadata", "navigation", "tools", "feedback", "common", "languages", "CopyToClipboard", "NotFound"] as const;
 
 /**
  * Build the client-bundled messages object: pick SHARED_NAMESPACES from the

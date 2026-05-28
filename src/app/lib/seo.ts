@@ -6,6 +6,7 @@ import {
   SITE_URL,
   SITE_NAME,
   SITE_LOGO,
+  SITE_VERSION,
   OG_IMAGE,
   AUTHOR,
   getOGLocale,
@@ -25,10 +26,13 @@ export * from "./toolRegistry";
  * Includes OG, Twitter cards, absolute canonical, and hreflang alternates.
  */
 export function buildToolPageMetadata({ locale, title, description, path }: { locale: string; title: string; description: string; path: string }): Metadata {
-  const fullTitle = `${title} - ${SITE_NAME}`;
+  // No site-name suffix — metaTitle is already SEO-optimized in messages/*.json,
+  // appending " - Tools By AI" used to push some titles past Google's ~60-char
+  // SERP cutoff (e.g. mdTranslator). siteName still goes into Open Graph,
+  // which is the right surface for brand context.
   const fullUrl = `${SITE_URL}/${locale}/${path}`;
   return {
-    title: fullTitle,
+    title,
     description,
     alternates: {
       canonical: fullUrl,
@@ -38,36 +42,43 @@ export function buildToolPageMetadata({ locale, title, description, path }: { lo
       },
     },
     openGraph: {
-      title: fullTitle,
+      title,
       description,
       url: fullUrl,
       siteName: SITE_NAME,
-      images: [{ url: OG_IMAGE, width: 1200, height: 630, alt: fullTitle }],
+      images: [{ url: OG_IMAGE, width: 1200, height: 630, alt: title }],
       locale: getOGLocale(locale),
       alternateLocale: routing.locales.filter((l) => l !== locale).map(getOGLocale),
       type: "website",
     },
     twitter: {
       card: "summary_large_image",
-      title: fullTitle,
+      title,
       description,
       images: [OG_IMAGE],
     },
   };
 }
 
-/** Render FAQPage JSON-LD structured data */
-export function FaqSchema({ faq, locale }: { faq: { q: string; a: string }[]; locale: string }) {
-  const jsonLd = {
+/** Render FAQPage JSON-LD structured data.
+ *  Pass `pageUrl` (the same `url` given to WebAppSchema) so the FAQ can `about`-link
+ *  to the WebApplication's @id — helps AI engines parse "this FAQ is about that
+ *  app" instead of treating it as orphan content. */
+export function FaqSchema({ faq, locale, pageUrl }: { faq: { q: string; a: string }[]; locale: string; pageUrl?: string }) {
+  const jsonLd: Record<string, unknown> = {
     "@context": "https://schema.org",
     "@type": "FAQPage",
     inLanguage: getBcp47Locale(locale),
+    dateModified: BUILD_DATE,
     mainEntity: faq.map(({ q, a }) => ({
       "@type": "Question",
       name: q,
       acceptedAnswer: { "@type": "Answer", text: a },
     })),
   };
+  if (pageUrl) {
+    jsonLd.about = { "@id": `${SITE_URL}${pageUrl}#webapp` };
+  }
   return React.createElement("script", {
     type: "application/ld+json",
     dangerouslySetInnerHTML: { __html: JSON.stringify(jsonLd) },
@@ -82,13 +93,17 @@ export function FaqSchema({ faq, locale }: { faq: { q: string; a: string }[]; lo
  */
 const BUILD_DATE = new Date().toISOString();
 
-/** Render WebApplication JSON-LD for tool pages (GEO-optimized) */
+/** Render WebApplication JSON-LD for tool pages (GEO-optimized).
+ *  `alternateName`: 1-3 真实别名（不要 keyword stuffing），帮 AI 引擎在不同
+ *  语言/检索意图下识别这个工具。如英文 query 搜 "subtitle translator" 时让 AI
+ *  能关联到 zh 页的"字幕翻译器"。空数组/undefined 不会输出该字段。 */
 export function WebAppSchema({
   name,
   description,
   url,
   locale,
   featureList,
+  alternateName,
   applicationCategory = "DeveloperApplication",
 }: {
   name: string;
@@ -96,6 +111,7 @@ export function WebAppSchema({
   url: string;
   locale: string;
   featureList?: string[];
+  alternateName?: string[];
   applicationCategory?: ApplicationCategory;
 }) {
   const fullUrl = `${SITE_URL}${url}`;
@@ -109,6 +125,7 @@ export function WebAppSchema({
     applicationCategory,
     operatingSystem: "Any",
     browserRequirements: "Requires JavaScript. Requires HTML5.",
+    softwareVersion: SITE_VERSION,
     inLanguage: getBcp47Locale(locale),
     isAccessibleForFree: true,
     dateModified: BUILD_DATE,
@@ -117,6 +134,11 @@ export function WebAppSchema({
     author: { "@type": "Person", name: AUTHOR.name, url: AUTHOR.url },
     publisher: { "@id": `${SITE_URL}/#organization` },
   };
+  if (alternateName && alternateName.length > 0) {
+    // De-dup + filter empties + drop entries equal to primary `name`
+    const cleaned = Array.from(new Set(alternateName.filter((n) => n && n !== name)));
+    if (cleaned.length > 0) jsonLd.alternateName = cleaned;
+  }
   if (featureList && featureList.length > 0) {
     jsonLd.featureList = featureList;
   }
@@ -126,19 +148,27 @@ export function WebAppSchema({
   });
 }
 
-/** Render HowTo JSON-LD — high-value signal for AI "how to" queries */
-export function HowToSchema({ name, description, steps, locale }: { name: string; description: string; steps: { name: string; text: string }[]; locale: string }) {
+/**
+ * Render ItemList JSON-LD for the homepage — lets AI engines understand
+ * "what's in this site" as a structured collection rather than scraping
+ * cards from HTML. One row per tool, in declaration order.
+ *
+ * Pass `items` from the home page's `useTranslations` resolved titles +
+ * registered paths. `description` per item is optional but recommended for
+ * richer entity context.
+ */
+export function ItemListSchema({ items, locale }: { items: { name: string; description?: string; url: string }[]; locale: string }) {
   const jsonLd = {
     "@context": "https://schema.org",
-    "@type": "HowTo",
+    "@type": "ItemList",
     inLanguage: getBcp47Locale(locale),
-    name,
-    description,
-    step: steps.map((s, i) => ({
-      "@type": "HowToStep",
+    numberOfItems: items.length,
+    itemListElement: items.map((item, i) => ({
+      "@type": "ListItem",
       position: i + 1,
-      name: s.name,
-      text: s.text,
+      url: `${SITE_URL}${item.url}`,
+      name: item.name,
+      ...(item.description ? { description: item.description } : {}),
     })),
   };
   return React.createElement("script", {
@@ -148,8 +178,8 @@ export function HowToSchema({ name, description, steps, locale }: { name: string
 }
 
 /** Render BreadcrumbList JSON-LD for site navigation signal */
-export function BreadcrumbSchema({ items }: { items: { name: string; url: string }[] }) {
-  const jsonLd = {
+export function BreadcrumbSchema({ items, locale }: { items: { name: string; url: string }[]; locale?: string }) {
+  const jsonLd: Record<string, unknown> = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: items.map((item, i) => ({
@@ -159,6 +189,9 @@ export function BreadcrumbSchema({ items }: { items: { name: string; url: string
       item: `${SITE_URL}${item.url}`,
     })),
   };
+  if (locale) {
+    jsonLd.inLanguage = getBcp47Locale(locale);
+  }
   return React.createElement("script", {
     type: "application/ld+json",
     dangerouslySetInnerHTML: { __html: JSON.stringify(jsonLd) },
@@ -177,7 +210,7 @@ export function GlobalSchemas({ locale }: { locale: string }) {
     name: SITE_NAME,
     url: SITE_URL,
     logo: { "@type": "ImageObject", url: SITE_LOGO },
-    sameAs: [AUTHOR.url, "https://github.com/rockbenben/web-tools-by-ai"],
+    sameAs: [AUTHOR.url],
     founder: { "@type": "Person", name: AUTHOR.name, url: AUTHOR.url },
   };
   const website = {

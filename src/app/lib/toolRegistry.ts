@@ -7,12 +7,17 @@
  * GlobalSchemas, ToolPageShell) live in seo.ts / toolPageShell.tsx and
  * re-import from here.
  */
+import pkg from "../../../package.json";
 
 export const SITE_URL = "https://tools.newzone.top";
 export const SITE_NAME = "Tools By AI";
 export const SITE_LOGO = `${SITE_URL}/logo.png`;
 export const OG_IMAGE = "/og-image.png";
 export const AUTHOR = { name: "rockbenben", url: "https://github.com/rockbenben" };
+// Bumped via package.json `version` field. Surfaced as Schema.org
+// SoftwareApplication.softwareVersion on every tool page — freshness signal
+// for AI engines that cite "latest version of X tool".
+export const SITE_VERSION: string = pkg.version;
 
 /**
  * Map internal locale codes to OpenGraph locale format (language_TERRITORY).
@@ -110,6 +115,45 @@ export type ToolKey = keyof typeof TOOL_REGISTRY;
 
 /** Convenient ordered list of all tool keys (declaration order = display order). */
 export const TOOL_KEYS = Object.keys(TOOL_REGISTRY) as ToolKey[];
+
+/**
+ * Curated 2-3 related tools per tool, surfaced under each tool page as
+ * cross-links. Pure toolKey references — no i18n needed; the rendering
+ * component reads the localized title from messages.tools[key].title.
+ *
+ * Semantic clusters used:
+ *   • Translation trio (subtitle / md / json-translate) cross-link each other
+ *   • Text-family tools (splitter / toolbox / novel / chinese-conversion) form a square
+ *   • JSON tools route to nearest-utility siblings + the JSON i18n translator
+ *   • Data-parser tools cluster with each other + jsonValueExtractor / dataBatch
+ *
+ * Goal: 2-3 outbound links per page so AI engines see an entity graph and
+ * users discover adjacent tools.
+ */
+export const RELATED_TOOLS: Record<ToolKey, ToolKey[]> = {
+  subtitleTranslator:   ["mdTranslator", "jsonTranslate", "textSplitter"],
+  mdTranslator:         ["subtitleTranslator", "jsonTranslate", "textSplitter"],
+  jsonTranslate:        ["mdTranslator", "subtitleTranslator", "jsonValueExtractor"],
+  textSplitter:         ["textToolbox", "novelProcessor", "mdTranslator"],
+  chineseConversion:    ["novelProcessor", "textToolbox", "textSplitter"],
+  novelProcessor:       ["textSplitter", "textToolbox", "chineseConversion"],
+  textToolbox:          ["textSplitter", "novelProcessor", "chineseConversion"],
+  dataBatch:            ["textToolbox", "jsonValueExtractor", "jsonTranslate"],
+  jsonValueExtractor:   ["jsonValueTransformer", "jsonNodeEdit", "jsonSortClassify"],
+  jsonNodeEdit:         ["jsonNodeInserter", "jsonValueTransformer", "jsonValueSwapper"],
+  jsonValueTransformer: ["jsonValueExtractor", "jsonValueSwapper", "jsonMatchUpdate"],
+  jsonValueSwapper:     ["jsonValueTransformer", "jsonNodeEdit", "jsonMatchUpdate"],
+  jsonNodeInserter:     ["jsonNodeEdit", "jsonValueSwapper", "jsonSortClassify"],
+  jsonSortClassify:     ["jsonValueExtractor", "jsonMatchUpdate", "jsonNodeEdit"],
+  jsonMatchUpdate:      ["jsonValueTransformer", "jsonValueSwapper", "jsonValueExtractor"],
+  dataParserFlare:      ["dataParserImgPrompt", "jsonValueExtractor", "dataBatch"],
+  dataParserImgPrompt:  ["dataParserFlare", "jsonTranslate", "dataBatch"],
+};
+
+/** Return the curated related-tool keys for a tool. Order is meaningful (declaration order = display order). */
+export function relatedToolsOf(toolKey: ToolKey): ToolKey[] {
+  return RELATED_TOOLS[toolKey] ?? [];
+}
 
 export function pathOf(toolKey: ToolKey): string {
   return TOOL_REGISTRY[toolKey].path;
