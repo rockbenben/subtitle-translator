@@ -48,7 +48,7 @@
     "resultToSource": "结果 ➔ 原文",
     "resultToSourceTooltip": "将结果文本覆盖到输入框",
     "readOnlyMode": "只读模式",
-    "readOnlyModeTooltip": "文本过长，为保证页面性能已自动切换为只读模式",
+    "readOnlyModeTooltip": "文本过长，编辑框暂为只读、仅显示部分预览；完整内容不受影响，处理与导出仍按全文进行",
     "exportFile": "导出",
     "exportAllFile": "导出所有文件",
     "exportedFile": "已导出",
@@ -143,7 +143,8 @@
     "langPresetIndian": "印度系",
     "selectedCount": "已选 {count} 种",
     "recentLanguages": "最近使用",
-    "langGroupAmericasOceania": "美洲及大洋洲"
+    "langGroupAmericasOceania": "美洲及大洋洲",
+    "relatedTools": "相关工具"
   },
   "SubtitleTranslator": {
     "clientDescription": "上传字幕文件或粘贴内容，选择目标语言即可快速翻译。支持批量处理，自动保留时间轴。",
@@ -227,21 +228,45 @@
   "tools": {
     "subtitleTranslator": {
       "title": "字幕翻译器",
-      "description": "批量翻译 SRT、ASS、VTT、LRC 字幕，支持 50+ 语言",
-      "metaTitle": "字幕翻译工具 - SRT/ASS/VTT 批量 AI 翻译，免费双语字幕",
-      "metaDescription": "视频字幕翻译太耗时？这款工具支持 SRT、ASS 等格式批量翻译，接入 DeepSeek 与 Google 引擎。自动保留时间轴，支持双语字幕生成，让视频本地化更简单高效！",
+      "description": "批量翻译 SRT、ASS、VTT、LRC 字幕，支持 120+ 语言",
+      "metaTitle": "字幕翻译器 - SRT/ASS/VTT/LRC 批量 AI 翻译与双语字幕生成",
+      "metaDescription": "AI 字幕翻译，SRT/ASS/VTT/LRC 批量互转，接入 DeepSeek、Claude、GPT 等 25+ 引擎，保留时间轴一键导出双语字幕。",
       "faq": [
         {
-          "q": "能翻译 YouTube 下载的 SRT 和 ASS 字幕文件吗？",
-          "a": "支持 SRT、ASS、VTT、LRC 四种字幕格式，对白文本翻译后 ASS 位置样式标签（如 \\\\an8）会被保留。YouTube 视频字幕可用 yt-dlp 导出再上传翻译；B 站视频字幕可通过创作中心下载；流媒体平台的字幕需从合法来源获取。注：复杂的 ASS 内联特效标签（颜色、动画、卡拉 OK）在翻译过程中会被简化。"
+          "q": "支持哪些字幕格式？SRT、ASS、VTT、LRC 都能翻译吗？",
+          "a": "支持 SRT、ASS、VTT、LRC 四种格式。SRT/VTT 适配 YouTube、B 站、HTML5 播放器（YouTube 用 yt-dlp 导出、B 站在创作中心下载）；ASS 适配 Aegisub 和动漫字幕组，行首位置标签（如 \\\\an8）翻译后自动还原；LRC 适配音乐歌词文件。文件编码（UTF-8/UTF-16/GBK/Shift-JIS）通过 jschardet 自动识别。复杂的 ASS 内联特效标签（颜色、动画、卡拉 OK）会被简化。"
+        },
+        {
+          "q": "字幕翻译用机器翻译还是 AI 翻译？哪个质量好、哪个便宜？",
+          "a": "便宜选机器翻译，高质量选 AI 大模型。机器翻译（MT）便宜或免费但对白语感平庸：Google 免费版零成本（长文本会被截断）、DeepL 欧洲语言顶尖、Qwen-MT 和 Azure Translate 同属此类。AI 大模型（LLM）按 token 计费但译文明显更自然——性价比首选 DeepSeek（整季剧集大批量首选）；口语化质量首选 Claude Sonnet 或 GPT-5；超长字幕用 Gemini 3 Pro 的 1M token 上下文。引擎配置在 [JSON 翻译](../json-translate)、[Markdown 翻译](../md-translator) 间共享。"
+        },
+        {
+          "q": "怎么做 B 站、YouTube 的中英双语字幕？能用于语言学习吗？",
+          "a": "选择「双语」导出模式，译文位置可选在原文上方（学英语推荐）或下方（看外语剧推荐）。导出 ASS 格式可为原文和译文设置不同颜色、字体大小和位置，直接上传至 B 站字幕系统或 YouTube 社区字幕，Premiere/DaVinci Resolve 也可直接嵌入。"
+        },
+        {
+          "q": "一次能批量翻译几个字幕文件？整季剧集怎么处理？",
+          "a": "支持批量上传整季字幕同时翻译，文件数无硬上限（实际受翻译引擎并发限制和 API 配额影响）。每个文件独立翻译并独立缓存（IndexedDB），中途刷新页面已译文件不丢失。剧集若有统一术语（人名、地名、专有名词），建议在「系统提示词」里写一份术语表，所有文件共享同一份上下文，保证全季译名一致。"
+        },
+        {
+          "q": "字幕里的人名、品牌名、专有名词怎么保持原文不被乱译？",
+          "a": "在「系统提示词」里写一份术语保留表，AI 大模型引擎都会遵循。例如：「保持原文：iPhone、OpenAI、Premiere、人名 John Smith」。剧集翻译尤其推荐——整季对白共享同一份术语词典，避免「黑客帝国」第 1 集叫这个、第 8 集变那个。机器翻译（Google、DeepL、Qwen-MT）不支持 prompt 自定义，需要人工后处理。"
+        },
+        {
+          "q": "怎么把 SRT 转成 VTT 或 ASS？需要单独的字幕格式转换器吗？",
+          "a": "不需要。在翻译流程中选择目标语言和导出格式即可一键互转：SRT ↔ VTT、SRT/VTT → ASS、双语 ASS/SRT 均支持。VTT 转 SRT 时自动处理 <c.classname> 内联标签和 <00:00:06.040> 卡拉 OK 时间戳；转 ASS 会保留 \\\\an8 等位置标签并套用默认样式。注意：源语言和目标语言相同时会被自动禁止，目前格式转换需要绑定一次实际翻译。"
+        },
+        {
+          "q": "能不能把字幕转成纯文本剧本？或者只导出部分台词？",
+          "a": "「提取纯文本」按钮可一键提取去掉时间码和序号的对白文本（自动复制到剪贴板），适合做语言学习材料、播客脚本回填、AI 喂料二次处理或转给配音演员。如需更精细的行级编辑（按关键词筛选、批量替换术语、加前后缀、去重排序），导出后用 [文本工具箱](../text-toolbox) 的正则匹配和行操作功能配合更顺手；超长字幕想按时间或字数拆段，配合 [文本分割](../text-splitter) 处理。"
         },
         {
           "q": "翻译后字幕时间轴对不上或出现乱码（□□□）怎么办？",
           "a": "工具只翻译文本，时间轴完整保留不做任何修改。如翻译后时间对不上，通常是源文件帧率与目标视频不一致（23.976 vs 25 fps）所致，需用 Aegisub 或 Subtitle Edit 调整。乱码问题：工具通过 jschardet 自动识别 UTF-8/UTF-16/GBK/Shift-JIS 等编码，识别失败会回退到 UTF-8，此时请先用 Notepad++ 或 VS Code 另存为 UTF-8 再上传。"
         },
         {
-          "q": "怎么做 B 站、YouTube 的中英双语字幕？能用于语言学习吗？",
-          "a": "选择「双语」导出模式，译文位置可选在原文上方（学英语推荐）或下方（看外语剧推荐）。导出 ASS 格式可为原文和译文设置不同颜色、字体大小和位置，直接上传至 B 站字幕系统或 YouTube 社区字幕，Premiere/DaVinci Resolve 也可直接嵌入。"
+          "q": "字幕翻译会上传到服务器吗？隐私安全吗？",
+          "a": "完全前端处理：字幕文件读取、解析、翻译请求都在浏览器内完成，原文不经过我们的服务器存储。LLM 引擎的请求直接从你的浏览器发往你配置的 API 端点（OpenAI、DeepSeek 等），API Key 仅保存在本地 localStorage。翻译缓存使用浏览器 IndexedDB，关闭页面也保留，下次翻译同样内容直接命中缓存。开源代码可在 GitHub 审查（rockbenben/subtitle-translator）。"
         }
       ],
       "howto": [
@@ -263,7 +288,7 @@
         "时间轴零修改（仅翻译文本，时间码原样保留）",
         "UTF-8/UTF-16/GBK 编码自动检测",
         "双语字幕译文位置可选（上方学习 / 下方观看）",
-        "15+ 翻译引擎：Google 免费、DeepSeek、DeepL、OpenAI",
+        "25+ 翻译引擎：Google 免费、DeepSeek、Claude、GPT、Gemini、DeepL、Qwen-MT",
         "兼容 B 站、YouTube、Premiere、DaVinci Resolve、Aegisub"
       ]
     }
@@ -279,11 +304,11 @@
   },
   "Metadata": {
     "title": "ToolsByAI | 免费开源的 AI 翻译与数据处理工具集",
-    "description": "寻找高效开发工具？ToolsByAI 汇集字幕翻译、i18n 处理等 20+ 款免费开源应用。接入 DeepSeek 等主流模型，支持批量处理且数据隐私安全，立即开启 AI 提效之旅！",
+    "description": "ToolsByAI 集合 17 款免费工具：字幕、Markdown、JSON i18n 翻译，文本/JSON 批处理。25+ AI 引擎，全前端处理。",
     "homeTitle": "ToolsByAI 工具集",
     "homeDescription": "20+ 实用工具，涵盖多语言翻译、文本处理、JSON 编辑和数据转换，助力开发者和创作者提升效率。",
     "ogTitle": "ToolsByAI | 免费开源的 AI 翻译与数据处理工具集",
-    "ogDescription": "寻找高效开发工具？ToolsByAI 汇集字幕翻译、i18n 处理等 20+ 款免费开源应用。接入 DeepSeek 等主流模型，支持批量处理且数据隐私安全，立即开启 AI 提效之旅！"
+    "ogDescription": "ToolsByAI 集合 17 款免费工具：字幕、Markdown、JSON i18n 翻译，文本/JSON 批处理。25+ AI 引擎，全前端处理。"
   },
   "languages": {
     "auto": "自动检测",
@@ -424,6 +449,12 @@
     "reaction2": "有点酷",
     "reaction3": "啥玩意",
     "reaction4": "看不懂",
-    "placeholder": "请留言，无需登录（填写邮箱可获回复提醒）"
+    "placeholder": "请留言，无需登录（填写邮箱可获回复提醒）",
+    "metaDescription": "意见反馈页：报告使用问题、提交功能建议、参与工具改进。基于 Waline 评论系统，匿名也可发言。"
+  },
+  "NotFound": {
+    "title": "页面未找到",
+    "description": "你访问的页面不存在或已移动。",
+    "goHome": "返回首页"
   }
 }

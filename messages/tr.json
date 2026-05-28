@@ -117,7 +117,7 @@
     "resultToSource": "Sonuç ➔ Kaynak",
     "resultToSourceTooltip": "Giriş kutusunun içeriğini sonuç metniyle değiştir",
     "readOnlyMode": "Salt Okunur Mod",
-    "readOnlyModeTooltip": "Metin çok uzun; sayfa performansını korumak için salt okunur mod otomatik olarak etkinleştirildi",
+    "readOnlyModeTooltip": "Metin çok uzun: düzenleyici geçici olarak salt okunur ve yalnızca kısmi bir önizleme gösteriyor. Tüm içeriğiniz etkilenmez; işleme ve dışa aktarma hâlâ metnin tamamını kullanır.",
     "clearInputTooltip": "Giriş içeriğini ve yüklenen dosyaları temizle",
     "fileExported": "Dışa aktarılan dosya: {fileName}",
     "exportSuccess": "Dışa aktarma başarılı: {fileName}",
@@ -143,7 +143,8 @@
     "langPresetIndian": "Hint alt kıtası",
     "selectedCount": "{count} seçildi",
     "recentLanguages": "Son kullanılanlar",
-    "langGroupAmericasOceania": "Amerika & Okyanusya"
+    "langGroupAmericasOceania": "Amerika & Okyanusya",
+    "relatedTools": "İlgili Araçlar"
   },
   "SubtitleTranslator": {
     "clientDescription": "Altyazı yükleyin veya içerik yapıştırın. Hızlı çeviri için hedef dili seçin. Toplu işlemeyi destekler ve zaman çizelgesini korur.",
@@ -227,21 +228,45 @@
   "tools": {
     "subtitleTranslator": {
       "title": "Altyazı Çevirici",
-      "description": "Toplu SRT, ASS, VTT, LRC çevirisi. 50+ dil.",
-      "metaTitle": "Online Altyazı Çevirici - Videolar İçin SRT ve VTT",
-      "metaDescription": "Video mu çeviriyorsunuz? SRT, ASS ve VTT altyazılarını yapay zeka ile toplu olarak çevirin. İki dilli mod ve zamanlama koruması sunar.",
+      "description": "Toplu SRT, ASS, VTT, LRC çevirisi. 120+ dil.",
+      "metaTitle": "Ücretsiz Altyazı Çevirici | Toplu SRT/VTT/ASS + İki Dilli",
+      "metaDescription": "SRT, ASS, VTT, LRC için AI altyazı çevirmeni. 25+ motor: DeepSeek, Claude, GPT, DeepL, Google. 120+ dil, zaman kodları korunur, çift dilli çıktı.",
       "faq": [
         {
-          "q": "YouTube'dan indirilen SRT ve ASS altyazıları çevirebilir mi?",
-          "a": "SRT, ASS, VTT, LRC desteği. ASS konum/hizalama etiketleri (\\an8 vb.) çeviri sonrası korunur. YouTube altyazıları yt-dlp ile, BluTV veya puhutv yaratıcı kontrol panelinden, yayın platformlarının altyazıları yasal kaynaklardan. Not: Karmaşık ASS satır içi efektleri (renk, animasyon, karaoke) çeviri sırasında basitleştirilir."
+          "q": "Hangi altyazı formatları destekleniyor? SRT, ASS, VTT ve LRC çevrilebilir mi?",
+          "a": "Dört format destekleniyor: SRT, ASS, VTT ve LRC. SRT/VTT YouTube, HTML5 oynatıcılar ve içerik üretici panelleri için (YouTube altyazılarını yt-dlp ile dışa aktarın); ASS Aegisub ve anime fansubları için, satır başındaki konum etiketleri (\\\\an8) çeviri sonrası geri yüklenir; LRC müzik şarkı sözleri için. Dosya kodlaması (UTF-8 / UTF-16 / GBK / Shift-JIS) jschardet ile otomatik algılanır. Karmaşık satır içi ASS efekt etiketleri (renk, animasyon, karaoke) çeviri sırasında sadeleştirilir."
+        },
+        {
+          "q": "Altyazılar: makine çevirisi mi yoksa AI/LLM çevirisi mi kullanmalı? Hangisi en kaliteli, hangisi en ucuz?",
+          "a": "Ucuz için makine çevirisi, kalite için AI/LLM. Makine çevirisi (MT) ucuz veya ücretsiz ama diyalog düz okunur: Google ücretsiz sürümü hiçbir maliyet yok (uzun girdiler kesilir); DeepL Avrupa dilleri arasında zirve; Qwen-MT ve Azure Translate benzer. Büyük AI dil modelleri (LLM) token başına ücretlendirilir ama belirgin biçimde daha doğal okunur — DeepSeek tam sezon partileri için en iyi değer; Claude Sonnet veya GPT-5 en doğal diyalogları verir; Gemini 3 Pro'nun 1M token bağlamı kitap boyutundaki altyazılarla baş edebilir."
+        },
+        {
+          "q": "YouTube veya dil öğrenimi için iki dilli altyazı nasıl oluşturulur?",
+          "a": "Hedef dille birlikte 'İki Dilli' modunu seçin. Çeviriyi üste (öğrenme için) veya alta (izleme için) yerleştirin. ASS formatında dışa aktararak renkli iki dilli altyazılar elde edin — YouTube, Premiere veya DaVinci Resolve'de doğrudan kullanın."
+        },
+        {
+          "q": "Bir seferde kaç altyazı dosyası toplu çevrilebilir? Bir sezonun tamamı için ne yapmalı?",
+          "a": "Tüm bir sezonun altyazılarını eş zamanlı çeviri için toplu yükleyebilirsiniz; sabit dosya sayısı limiti yoktur (gerçek sınır çeviri motorunun eşzamanlılığına ve API kotanıza bağlıdır). Her dosya bağımsız olarak çevrilir ve önbelleğe alınır (IndexedDB), bu nedenle sayfayı yenilemek çevrilmiş dosyaları kaybetmez. Bölümler arası ortak terminoloji (karakter adları, yer adları) için System Prompt içine bir sözlük koyun — tüm dosyalar aynı bağlamı paylaşır ve sezon boyunca tutarlı çeviri sağlanır."
+        },
+        {
+          "q": "Altyazılardaki kişi adları, marka adları ve özel terimleri yanlış çevrilmemesi için nasıl korurum?",
+          "a": "Sistem İstemi'ne bir sözlük ekleyin; tüm AI/LLM motorları buna uyacaktır. Örnek: «Olduğu gibi koru: iPhone, OpenAI, Premiere, kişi adı John Smith». TV dizileri için özellikle önerilir — tüm bölümler aynı terim sözlüğünü paylaşır, kahramanın 1. bölümde bir, 8. bölümde başka bir şekilde adlandırılmasını önler. Makine çevirisi (Google, DeepL, Qwen-MT) prompt özelleştirmesini kabul etmez, manuel son işlem gerekir."
+        },
+        {
+          "q": "SRT'yi VTT veya ASS'ye nasıl dönüştürürüm? Ayrı bir altyazı format dönüştürücü gerekir mi?",
+          "a": "Ayrı araç gerekmez. Çeviri sırasında hedef dili ve dışa aktarma formatını seçerek tek tıkla dönüştürün: SRT ↔ VTT, SRT/VTT → ASS, ayrıca iki dilli ASS/SRT çıktısı. VTT→SRT dönüşümü <c.classname> satır içi etiketlerini ve <00:00:06.040> karaoke zaman damgalarını otomatik işler; ASS dönüşümü \\an8 gibi konum etiketlerini varsayılan stille korur. Not: Kaynak ve hedef dilin aynı olması doğrulamada engellendiği için format dönüşümü şu anda gerçek bir çeviri geçişi gerektirir."
+        },
+        {
+          "q": "Altyazıları düz metin senaryosuna çevirebilir miyim? Veya yalnızca belirli satırları dışa aktarabilir miyim?",
+          "a": "«Metni Çıkar» düğmesi, zaman kodları ve cue numaraları olmadan diyalog metnini bir tıkla çıkarır (otomatik olarak panoya kopyalanır) — dil öğrenme materyalleri, podcast senaryoları, AI eğitim verisi veya seslendirme sanatçısına devir için pratiktir. Daha ayrıntılı satır bazlı düzenleme (anahtar kelimeyle filtreleme, terim toplu değiştirme, ön ek/son ek ekleme, sıralama/yineleme temizleme) için [Metin Araç Kutusu](../text-toolbox) ile birleştirin — regex eşleştirme ve satır işlemleri çoğu görevi kapsar."
         },
         {
           "q": "Çeviriden sonra zaman kodları uyuşmazsa veya okunamayan karakter (□□□) çıkarsa?",
           "a": "Araç yalnızca metni çevirir, zaman kodlarını değiştirmez. Uyuşmazlık genelde kaynak ve hedef videonun kare hızı farklılığından (23.976 vs 25 fps) kaynaklanır — Aegisub veya Subtitle Edit ile düzeltin. Kodlama: jschardet UTF-8/UTF-16/GBK/Shift-JIS'i otomatik algılar; başarısız olursa UTF-8'e döner."
         },
         {
-          "q": "YouTube veya dil öğrenimi için iki dilli altyazı nasıl oluşturulur?",
-          "a": "Hedef dille birlikte 'İki Dilli' modunu seçin. Çeviriyi üste (öğrenme için) veya alta (izleme için) yerleştirin. ASS formatında dışa aktararak renkli iki dilli altyazılar elde edin — YouTube, Premiere veya DaVinci Resolve'de doğrudan kullanın."
+          "q": "Altyazı dosyaları sunucuya yükleniyor mu? Gizlilik güvenli mi?",
+          "a": "Tamamen istemci tarafı: altyazı dosyası okuma, ayrıştırma ve çeviri istekleri tarayıcınızda gerçekleşir — orijinal içerik sunucularımıza hiç ulaşmaz. LLM motor istekleri doğrudan tarayıcınızdan yapılandırdığınız API uç noktasına gider (OpenAI, DeepSeek vb.) ve API Key'ler yalnızca yerel localStorage'da saklanır. Çeviri önbelleği tarayıcı IndexedDB'sini kullanır ve oturumlar arasında kalır. Kaynak kod GitHub'da açıktır (rockbenben/subtitle-translator), self-host veya inceleme yapabilirsiniz."
         }
       ],
       "howto": [
@@ -263,7 +288,7 @@
         "Zaman kodları değiştirilmez — sadece metin çevrilir, orijinal zamanlama korunur",
         "UTF-8/UTF-16/GBK kodlama otomatik algılama",
         "İki dilli altyazı konumu: üst (öğrenme) veya alt (izleme)",
-        "15+ çeviri motoru: Google ücretsiz, DeepSeek, DeepL, OpenAI",
+        "25+ çeviri motoru: Google ücretsiz, DeepSeek, Claude, GPT, Gemini, DeepL, Qwen-MT",
         "YouTube, Premiere, DaVinci Resolve, Aegisub ile uyumlu"
       ]
     }
@@ -279,11 +304,11 @@
   },
   "Metadata": {
     "title": "ToolsByAI - Geliştiriciler İçin Yapay Zeka ve Veri Araçları",
-    "description": "Geliştiriciler için ücretsiz AI araç seti: Altyazı çevirisi, i18n, Markdown ve JSON düzenleme. Güvenli, yerel işlem ve açık kaynaklı çözüm.",
+    "description": "ToolsByAI: altyazı, Markdown, JSON i18n çevirisi ve metin/JSON toplu işleme için 17 ücretsiz açık kaynak araç. 25+ AI motoru.",
     "homeTitle": "ToolsByAI Paketi",
     "homeDescription": "Çeviri, metin, JSON ve veri dönüşümü için 20+ araç. Geliştirici ve yaratıcı verimliliğini artırın.",
     "ogTitle": "ToolsByAI - Ücretsiz ve Açık Kaynak Geliştirici Araçları",
-    "ogDescription": "Çeviri, veri işleme ve JSON düzenleme için 20+ araç. Yerel işlem gücüyle gizliliğinizi koruyan açık kaynaklı platform."
+    "ogDescription": "ToolsByAI: altyazı, Markdown, JSON i18n çevirisi ve metin/JSON toplu işleme için 17 ücretsiz açık kaynak araç. 25+ AI motoru."
   },
   "languages": {
     "auto": "Otomatik Algılama",
@@ -417,13 +442,19 @@
   },
   "feedback": {
     "feedback1": "Geri Bildirim & Öneriler",
-    "feedback2": "Sorun yaşarsanız veya önerileriniz varsa, bana bildirin! Geri bildiriminiz gelecekteki geliştirmeleri etkiler ve daha iyi araçlar oluşturmamıza yardımcı olur.",
+    "feedback2": "Sorun yaşarsanız veya önerileriniz varsa, bana bildirin!Geri bildiriminiz gelecekteki geliştirmeleri etkiler ve daha iyi araçlar oluşturmamıza yardımcı ol…",
     "feedback3": "Kullanım durumunuzu, sorunu veya fikri açıklayın. Her mesajı okuyorum ve en kısa sürede yanıtlayacağım/optimize edeceğim.",
     "reaction0": "Beğen",
     "reaction1": "Destek",
     "reaction2": "Harika",
     "reaction3": "Ne?",
     "reaction4": "Kafam Karıştı",
-    "placeholder": "Mesaj bırakın (giriş gerekmez, yanıt için e-posta isteğe bağlı)"
+    "placeholder": "Mesaj bırakın (giriş gerekmez, yanıt için e-posta isteğe bağlı)",
+    "metaDescription": "Tools By AI geri bildirim sayfası: hata bildir, özellik öner veya kullanım örneklerini paylaş. Waline tabanlı, anonim gönderim mümkün, ücretsiz."
+  },
+  "NotFound": {
+    "title": "Sayfa Bulunamadı",
+    "description": "Ziyaret ettiğiniz sayfa mevcut değil veya taşınmış.",
+    "goHome": "Ana Sayfaya Dön"
   }
 }

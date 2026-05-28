@@ -117,7 +117,7 @@
     "resultToSource": "Kết quả ➔ Nguồn",
     "resultToSourceTooltip": "Ghi đè văn bản kết quả vào ô nhập liệu",
     "readOnlyMode": "Chế độ chỉ đọc",
-    "readOnlyModeTooltip": "Văn bản quá dài, đã tự động chuyển sang chế độ chỉ đọc để đảm bảo hiệu suất trang",
+    "readOnlyModeTooltip": "Văn bản quá dài: trình soạn thảo tạm thời ở chế độ chỉ đọc và chỉ hiển thị bản xem trước một phần. Toàn bộ nội dung của bạn không bị ảnh hưởng — xử lý và xuất vẫn dùng toàn bộ văn bản.",
     "clearInputTooltip": "Xóa nội dung đã nhập và tệp đã tải lên",
     "fileExported": "Đã xuất tệp: {fileName}",
     "exportSuccess": "Xuất thành công: {fileName}",
@@ -143,7 +143,8 @@
     "langPresetIndian": "Tiểu lục địa Ấn Độ",
     "selectedCount": "Đã chọn {count}",
     "recentLanguages": "Gần đây",
-    "langGroupAmericasOceania": "Châu Mỹ và Châu Đại Dương"
+    "langGroupAmericasOceania": "Châu Mỹ và Châu Đại Dương",
+    "relatedTools": "Công cụ liên quan"
   },
   "SubtitleTranslator": {
     "clientDescription": "Tải lên phụ đề hoặc dán nội dung. Chọn ngôn ngữ đích để dịch nhanh. Hỗ trợ xử lý hàng loạt và giữ nguyên dòng thời gian.",
@@ -227,21 +228,45 @@
   "tools": {
     "subtitleTranslator": {
       "title": "Dịch giả Phụ đề",
-      "description": "Dịch hàng loạt SRT, ASS, VTT, LRC. 50+ ngôn ngữ.",
-      "metaTitle": "Dịch Phụ Đề Online - SRT/VTT Cho Video & Phim",
-      "metaDescription": "Đang dịch video? Dịch phụ đề SRT, ASS, VTT hàng loạt với AI. Tạo phụ đề song ngữ và giữ nguyên đồng bộ thời gian. Công cụ thiết yếu cho nhà sáng tạo video và fansub.",
+      "description": "Dịch hàng loạt SRT, ASS, VTT, LRC. 120+ ngôn ngữ.",
+      "metaTitle": "Dịch Phụ Đề Miễn Phí | Hàng Loạt SRT/VTT/ASS + Song Ngữ",
+      "metaDescription": "Trình dịch phụ đề AI cho SRT, ASS, VTT, LRC. 25+ engine: DeepSeek, Claude, GPT, DeepL, Google. 120+ ngôn ngữ, giữ nguyên timecode, song ngữ.",
       "faq": [
         {
-          "q": "Có thể dịch phụ đề SRT và ASS tải từ YouTube không?",
-          "a": "Hỗ trợ SRT, ASS, VTT, LRC. Thẻ vị trí/căn chỉnh ASS (\\an8, v.v.) được bảo toàn sau dịch. Phụ đề YouTube trích xuất qua yt-dlp, Galaxy Play hoặc FPT Play qua bảng điều khiển sáng tạo, nền tảng streaming từ nguồn hợp pháp. Lưu ý: Hiệu ứng ASS nội tuyến phức tạp (màu, hoạt hình, karaoke) được đơn giản hóa khi dịch."
+          "q": "Hỗ trợ những định dạng phụ đề nào? SRT, ASS, VTT và LRC đều dịch được chứ?",
+          "a": "Hỗ trợ bốn định dạng: SRT, ASS, VTT và LRC. SRT/VTT phù hợp YouTube, trình phát HTML5 và bảng điều khiển nhà sáng tạo (xuất phụ đề YouTube qua yt-dlp); ASS phù hợp Aegisub và fansub anime, thẻ vị trí đầu dòng (\\\\an8) được khôi phục sau khi dịch; LRC phù hợp tệp lời bài hát. Mã hóa tệp (UTF-8 / UTF-16 / GBK / Shift-JIS) được tự động phát hiện qua jschardet. Các thẻ hiệu ứng inline ASS phức tạp (màu sắc, hoạt ảnh, karaoke) được đơn giản hóa trong quá trình dịch."
+        },
+        {
+          "q": "Phụ đề: dùng dịch máy hay dịch AI/LLM? Cái nào chất lượng tốt nhất, cái nào rẻ nhất?",
+          "a": "Để rẻ thì dùng dịch máy, để chất lượng thì dùng AI/LLM. Dịch máy (MT) rẻ hoặc miễn phí nhưng đối thoại nghe phẳng: Google bản miễn phí không tốn chi phí (đầu vào dài bị cắt); DeepL là đỉnh cao cho các ngôn ngữ châu Âu; Qwen-MT và Azure Translate tương tự. Các mô hình AI lớn (LLM) tính phí theo token nhưng nghe tự nhiên hơn rõ rệt — DeepSeek là giá trị tốt nhất cho khối lượng cả mùa; Claude Sonnet hoặc GPT-5 cho đối thoại tự nhiên nhất; ngữ cảnh 1M token của Gemini 3 Pro xử lý phụ đề cỡ một cuốn sách. Cấu hình engine được dùng chung với [Dịch JSON](../json-translate)."
+        },
+        {
+          "q": "Làm sao tạo phụ đề song ngữ cho YouTube hoặc học ngoại ngữ?",
+          "a": "Chọn chế độ 'Song ngữ' với ngôn ngữ đích. Đặt bản dịch phía trên (học) hoặc phía dưới (xem). Xuất ASS cho phụ đề song ngữ có màu, dùng trực tiếp trên YouTube, Premiere hoặc DaVinci Resolve."
+        },
+        {
+          "q": "Có thể dịch bao nhiêu tệp phụ đề cùng lúc? Cả một mùa phim thì sao?",
+          "a": "Hỗ trợ tải hàng loạt toàn bộ phụ đề của một mùa để dịch đồng thời, không có giới hạn cứng số lượng tệp (giới hạn thực tế phụ thuộc vào độ đồng thời của engine dịch và hạn ngạch API của bạn). Mỗi tệp được dịch và lưu cache độc lập (IndexedDB), nên làm mới trang không mất các tệp đã dịch. Với thuật ngữ dùng chung giữa các tập (tên nhân vật, địa danh), đặt một bảng thuật ngữ trong System Prompt — tất cả tệp dùng chung ngữ cảnh, đảm bảo bản dịch nhất quán xuyên suốt cả mùa."
+        },
+        {
+          "q": "Làm thế nào để giữ tên người, tên thương hiệu và thuật ngữ chuyên biệt trong phụ đề không bị dịch sai?",
+          "a": "Thêm bảng thuật ngữ vào System Prompt; mọi engine AI/LLM đều tuân thủ. Ví dụ: «Giữ nguyên: iPhone, OpenAI, Premiere, tên người John Smith». Đặc biệt khuyến nghị cho phim truyền hình — tất cả các tập chia sẻ cùng một từ điển thuật ngữ, tránh việc nhân vật chính được gọi theo một cách ở tập 1 và khác đi ở tập 8. Dịch máy (Google, DeepL, Qwen-MT) không chấp nhận tùy chỉnh prompt, cần xử lý thủ công sau đó."
+        },
+        {
+          "q": "Cách chuyển SRT sang VTT hoặc ASS? Có cần công cụ chuyển định dạng phụ đề riêng không?",
+          "a": "Không cần công cụ riêng. Chọn ngôn ngữ đích và định dạng xuất trong quá trình dịch để chuyển đổi một cú nhấp: SRT ↔ VTT, SRT/VTT → ASS, cùng với xuất song ngữ ASS/SRT. Chuyển VTT→SRT tự động xử lý các thẻ nội tuyến <c.classname> và dấu thời gian karaoke <00:00:06.040>; chuyển sang ASS giữ các thẻ vị trí như \\an8 với kiểu mặc định. Lưu ý: ngôn ngữ nguồn và đích giống nhau bị chặn bởi xác thực, nên chuyển định dạng hiện cần một lượt dịch thực tế."
+        },
+        {
+          "q": "Có thể chuyển phụ đề thành kịch bản văn bản thuần? Hoặc xuất chỉ một số dòng?",
+          "a": "Nút «Trích xuất văn bản» trích xuất văn bản đối thoại không có timecode và số thứ tự cue (tự động sao chép vào clipboard) — hữu ích cho tài liệu học ngôn ngữ, kịch bản podcast, dữ liệu huấn luyện AI hoặc bàn giao cho diễn viên lồng tiếng. Để chỉnh sửa theo dòng tinh tế hơn (lọc theo từ khóa, thay thế thuật ngữ hàng loạt, thêm prefix/suffix, sắp xếp/khử trùng lặp), kết hợp với [Hộp công cụ Văn bản](../text-toolbox) — các chức năng regex và thao tác dòng của nó bao quát hầu hết các tác vụ. Để chia phụ đề rất dài theo thời gian hoặc số ký tự, hãy dùng [Chia văn bản](../text-splitter)."
         },
         {
           "q": "Làm gì nếu timecode sai lệch hoặc xuất hiện ký tự lỗi (□□□) sau khi dịch?",
           "a": "Công cụ chỉ dịch văn bản, không sửa timecode. Lệch thời gian thường do framerate không khớp (23.976 vs 25 fps) giữa nguồn và video đích — chỉnh bằng Aegisub hoặc Subtitle Edit. Mã hóa: jschardet tự phát hiện UTF-8/UTF-16/GBK/Shift-JIS; nếu thất bại, mặc định UTF-8."
         },
         {
-          "q": "Làm sao tạo phụ đề song ngữ cho YouTube hoặc học ngoại ngữ?",
-          "a": "Chọn chế độ 'Song ngữ' với ngôn ngữ đích. Đặt bản dịch phía trên (học) hoặc phía dưới (xem). Xuất ASS cho phụ đề song ngữ có màu, dùng trực tiếp trên YouTube, Premiere hoặc DaVinci Resolve."
+          "q": "Tệp phụ đề có được tải lên máy chủ không? Có riêng tư và an toàn không?",
+          "a": "Hoàn toàn phía client: đọc tệp phụ đề, phân tích cú pháp và yêu cầu dịch đều diễn ra trong trình duyệt của bạn — nội dung gốc không bao giờ đi qua máy chủ của chúng tôi. Yêu cầu engine LLM đi thẳng từ trình duyệt đến endpoint API bạn đã cấu hình (OpenAI, DeepSeek, v.v.), và API Key chỉ lưu trong localStorage cục bộ. Bộ nhớ đệm dịch dùng IndexedDB của trình duyệt và duy trì giữa các phiên. Mã nguồn mở trên GitHub (rockbenben/subtitle-translator) để tự host hoặc kiểm tra."
         }
       ],
       "howto": [
@@ -263,7 +288,7 @@
         "Timecode không đổi — chỉ dịch văn bản, thời gian gốc được bảo toàn",
         "Tự phát hiện mã hóa UTF-8/UTF-16/GBK",
         "Vị trí phụ đề song ngữ: trên (học) hoặc dưới (xem)",
-        "15+ engine dịch: Google miễn phí, DeepSeek, DeepL, OpenAI",
+        "25+ engine dịch: Google miễn phí, DeepSeek, Claude, GPT, Gemini, DeepL, Qwen-MT",
         "Tương thích với YouTube, Premiere, DaVinci Resolve, Aegisub"
       ]
     }
@@ -279,11 +304,11 @@
   },
   "Metadata": {
     "title": "ToolsByAI - Bộ Công Cụ Dịch Thuật & Dữ Liệu AI Online",
-    "description": "Bộ công cụ AI miễn phí cho nhà phát triển: dịch phụ đề, i18n, Markdown và chỉnh sửa JSON. Xử lý cục bộ an toàn, mã nguồn mở và hỗ trợ xử lý hàng loạt.",
+    "description": "ToolsByAI: 17 công cụ mã nguồn mở miễn phí cho dịch phụ đề, Markdown, JSON i18n và xử lý văn bản/JSON. 25+ engine AI.",
     "homeTitle": "Bộ ToolsByAI",
     "homeDescription": "20+ công cụ cho dịch, văn bản, JSON và chuyển đổi dữ liệu. Tăng cường hiệu quả cho nhà phát triển và người sáng tạo.",
     "ogTitle": "ToolsByAI - Công Cụ Dev AI Miễn Phí & Mã Nguồn Mở",
-    "ogDescription": "20+ tiện ích cho nhà phát triển: dịch thuật, xử lý dữ liệu và JSON. Bảo vệ quyền riêng tư với xử lý cục bộ ngay trên trình duyệt."
+    "ogDescription": "ToolsByAI: 17 công cụ mã nguồn mở miễn phí cho dịch phụ đề, Markdown, JSON i18n và xử lý văn bản/JSON. 25+ engine AI."
   },
   "languages": {
     "auto": "Tự động phát hiện",
@@ -417,13 +442,19 @@
   },
   "feedback": {
     "feedback1": "Phản hồi & Gợi ý",
-    "feedback2": "Nếu bạn gặp vấn đề hoặc có gợi ý, hãy cho tôi biết! Phản hồi của bạn ảnh hưởng đến sự phát triển trong tương lai và giúp chúng tôi tạo ra các công cụ tốt hơn.",
+    "feedback2": "Nếu bạn gặp vấn đề hoặc có gợi ý, hãy cho tôi biết!Phản hồi của bạn ảnh hưởng đến sự phát triển trong tương lai và giúp chúng tôi tạo ra các công cụ tốt h…",
     "feedback3": "Mô tả trường hợp sử dụng, vấn đề hoặc ý tưởng của bạn. Tôi đọc từng tin nhắn và sẽ phản hồi/tối ưu hóa sớm nhất có thể.",
     "reaction0": "Thích",
     "reaction1": "Ủng hộ",
     "reaction2": "Tuyệt",
     "reaction3": "Cái gì?",
     "reaction4": "Bối rối",
-    "placeholder": "Để lại tin nhắn (không cần đăng nhập, email tùy chọn để trả lời)"
+    "placeholder": "Để lại tin nhắn (không cần đăng nhập, email tùy chọn để trả lời)",
+    "metaDescription": "Trang phản hồi Tools By AI: báo lỗi, đề xuất tính năng, chia sẻ tình huống sử dụng. Dựa trên Waline, đăng ẩn danh được phép, miễn phí."
+  },
+  "NotFound": {
+    "title": "Không tìm thấy trang",
+    "description": "Trang bạn truy cập không tồn tại hoặc đã được di chuyển.",
+    "goHome": "Về trang chủ"
   }
 }

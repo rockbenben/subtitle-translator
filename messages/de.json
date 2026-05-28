@@ -77,7 +77,7 @@
     "resultToSource": "Ergebnis ➔ Quelle",
     "resultToSourceTooltip": "Eingabefeld mit dem Ergebnistext überschreiben",
     "readOnlyMode": "Nur-Lese-Modus",
-    "readOnlyModeTooltip": "Text zu lang; automatisch in den Nur-Lese-Modus gewechselt, um die Seitenleistung zu erhalten",
+    "readOnlyModeTooltip": "Text zu lang: Der Editor ist vorübergehend schreibgeschützt und zeigt nur eine Teilvorschau. Ihr vollständiger Inhalt bleibt unverändert – Verarbeitung und Export verwenden weiterhin den gesamten Text.",
     "clearInputTooltip": "Eingabe und hochgeladene Dateien löschen",
     "smartLineBreak": "Intelligenter Zeilenumbruch",
     "replaceText": "Text ersetzen",
@@ -143,7 +143,8 @@
     "langPresetIndian": "Indischer Subkontinent",
     "selectedCount": "{count} ausgewählt",
     "recentLanguages": "Zuletzt verwendet",
-    "langGroupAmericasOceania": "Amerika & Ozeanien"
+    "langGroupAmericasOceania": "Amerika & Ozeanien",
+    "relatedTools": "Ähnliche Tools"
   },
   "SubtitleTranslator": {
     "clientDescription": "Untertiteldatei hochladen oder Inhalt einfügen, Zielsprache wählen für schnelle Übersetzung. Unterstützt Stapelverarbeitung und behält Zeitachse bei.",
@@ -227,21 +228,45 @@
   "tools": {
     "subtitleTranslator": {
       "title": "Untertitel-Übersetzer",
-      "description": "Batch-Übersetzung für SRT, ASS, VTT, LRC. 50+ Sprachen.",
-      "metaTitle": "Untertitel-Übersetzer | SRT/ASS/VTT KI, gratis zweisprachig",
-      "metaDescription": "Videos übersetzen? Untertitel effizient übersetzen. Unterstützt SRT, VTT & ASS mit DeepSeek & ChatGPT. Timeline bleibt erhalten. Kostenlos & batch-fähig.",
+      "description": "Batch-Übersetzung für SRT, ASS, VTT, LRC. 120+ Sprachen.",
+      "metaTitle": "Untertitel-Übersetzer | SRT/VTT/ASS Batch KI zweisprachig",
+      "metaDescription": "KI-Untertitelübersetzer für SRT, ASS, VTT, LRC. 25+ Engines: DeepSeek, Claude, GPT, DeepL. 120+ Sprachen, Timecodes erhalten, zweisprachig.",
       "faq": [
         {
-          "q": "Kann ich SRT- und ASS-Untertitel von YouTube übersetzen?",
-          "a": "Unterstützt SRT, ASS, VTT, LRC. ASS-Position/Ausrichtungs-Tags (\\an8 etc.) werden nach der Übersetzung beibehalten. YouTube-Untertitel via yt-dlp, ARD/ZDF Mediathek, Streaming-Plattformen aus legitimen Quellen. Hinweis: Komplexe ASS-Inline-Effekte (Farbe, Animation, Karaoke) werden bei der Übersetzung vereinfacht."
+          "q": "Welche Untertitelformate werden unterstützt? Können SRT, ASS, VTT und LRC übersetzt werden?",
+          "a": "Vier Formate unterstützt: SRT, ASS, VTT und LRC. SRT/VTT für YouTube, HTML5-Player und Creator-Dashboards (YouTube-Untertitel via yt-dlp exportieren); ASS für Aegisub und Anime-Fansubs, Positions-Tags am Zeilenanfang (\\\\an8 etc.) werden nach der Übersetzung wiederhergestellt; LRC für Liedtexte. Dateikodierung (UTF-8 / UTF-16 / GBK / Shift-JIS) wird via jschardet automatisch erkannt. Komplexe ASS-Inline-Effekt-Tags (Farben, Animation, Karaoke) werden während der Übersetzung vereinfacht."
+        },
+        {
+          "q": "Untertitel: Maschinelle Übersetzung oder KI/LLM-Übersetzung verwenden? Was ist beste Qualität, was am günstigsten?",
+          "a": "Für günstig maschinelle Übersetzung, für Qualität KI/LLM. Maschinelle Übersetzung (MT) ist günstig oder kostenlos, klingt bei Dialogen aber flach: Google Free Tier kostet nichts (lange Eingaben werden gekürzt); DeepL ist Spitzenklasse für europäische Sprachen; Qwen-MT und Azure Translate sind ähnlich. Große KI-Sprachmodelle (LLM) rechnen pro Token ab, klingen aber merklich natürlicher — DeepSeek bietet das beste Preis-Leistungs-Verhältnis für Staffel-Batches; Claude Sonnet oder GPT-5 liefern die natürlichsten Dialoge; Gemini 3 Pro mit 1M-Token-Kontext bewältigt buchlange…"
+        },
+        {
+          "q": "Wie erstelle ich zweisprachige Untertitel für YouTube oder zum Sprachenlernen?",
+          "a": "Wählen Sie den 'Zweisprachig'-Modus mit Ihrer Zielsprache. Position der Übersetzung wählbar: oben (Lernfokus) oder unten (Konsumfokus). Export als ASS für farbige zweisprachige Untertitel, direkt für YouTube, Premiere oder DaVinci Resolve einsetzbar."
+        },
+        {
+          "q": "Wie viele Untertiteldateien kann ich gleichzeitig im Batch übersetzen? Was ist mit einer ganzen Serienstaffel?",
+          "a": "Laden Sie die Untertitel einer ganzen Staffel für die parallele Übersetzung hoch — ohne harte Dateigrenze (das tatsächliche Limit hängt von der Engine-Parallelität und Ihrem API-Kontingent ab). Jede Datei wird unabhängig übersetzt und gecached (IndexedDB), sodass das Neuladen der Seite keine übersetzten Dateien verliert. Für einheitliche Terminologie über mehrere Episoden hinweg (Charakternamen, Ortsnamen) hinterlegen Sie ein Glossar im System-Prompt — alle Dateien teilen denselben Kontext für konsistente Übersetzungen über die ganze Staffel."
+        },
+        {
+          "q": "Wie behalte ich Personennamen, Markennamen und Eigennamen in Untertiteln im Original, ohne sie falsch zu übersetzen?",
+          "a": "Fügen Sie ein Glossar im System-Prompt hinzu; alle KI/LLM-Engines werden es respektieren. Beispiel: „Wörtlich beibehalten: iPhone, OpenAI, Premiere, Personenname John Smith.\" Besonders empfohlen für TV-Serien — alle Episoden teilen sich dasselbe Terminologie-Wörterbuch, sodass die Hauptfigur in Episode 1 nicht so und in Episode 8 anders heißt. Maschinelle Übersetzung (Google, DeepL, Qwen-MT) akzeptiert keine Prompt-Anpassung, erfordert manuelle Nachbearbeitung."
+        },
+        {
+          "q": "Wie konvertiere ich SRT zu VTT oder ASS? Brauche ich einen separaten Untertitelformat-Konverter?",
+          "a": "Kein separates Tool nötig. Wählen Sie während der Übersetzung Zielsprache und Exportformat für die Ein-Klick-Konvertierung: SRT ↔ VTT, SRT/VTT → ASS sowie zweisprachiger ASS/SRT-Export. Bei VTT zu SRT werden inline <c.classname>-Tags und <00:00:06.040> Karaoke-Timestamps automatisch behandelt; die ASS-Konvertierung behält \\an8-Positions-Tags mit Standardstil bei. Hinweis: Identische Quell- und Zielsprache werden durch Validierung blockiert, sodass Formatkonvertierung derzeit einen tatsächlichen Übersetzungsdurchgang erfordert."
+        },
+        {
+          "q": "Kann ich Untertitel in Klartextskripte umwandeln? Oder nur bestimmte Zeilen exportieren?",
+          "a": "Der Button „Text extrahieren\" extrahiert den Dialogtext ohne Timecodes und Cue-Nummern (wird automatisch in die Zwischenablage kopiert) — nützlich für Sprachlernmaterial, Podcast-Skripte, KI-Trainingsdaten oder die Übergabe an Synchronsprecher. Für eine feinere Zeilenbearbeitung (Filter per Stichwort, Begriffsersetzung in Stapeln, Präfix/Suffix anhängen, Sortieren/Dedupe) anschließend [Text Toolbox](../text-toolbox) verwenden — dessen Regex-Matching und Zeilenoperationen decken das meiste ab. Zum Aufteilen sehr langer Untertitel nach Zeit oder Zeichenzahl bietet sich."
         },
         {
           "q": "Was tun bei Timecode-Abweichungen oder Zeichensalat (□□□) nach der Übersetzung?",
           "a": "Das Tool übersetzt nur Text und ändert Timecodes nie. Timing-Abweichungen kommen von Framerate-Unterschieden (23,976 vs 25 fps) zwischen Quelle und Zielvideo — mit Aegisub oder Subtitle Edit korrigieren. Kodierung: jschardet erkennt UTF-8/UTF-16/GBK/Shift-JIS automatisch; bei Fehlschlag Standardeinstellung UTF-8. Bei Problemen Quelldatei als UTF-8 neu speichern."
         },
         {
-          "q": "Wie erstelle ich zweisprachige Untertitel für YouTube oder zum Sprachenlernen?",
-          "a": "Wählen Sie den 'Zweisprachig'-Modus mit Ihrer Zielsprache. Position der Übersetzung wählbar: oben (Lernfokus) oder unten (Konsumfokus). Export als ASS für farbige zweisprachige Untertitel, direkt für YouTube, Premiere oder DaVinci Resolve einsetzbar."
+          "q": "Werden Untertiteldateien auf Ihre Server hochgeladen? Ist es privat und sicher?",
+          "a": "Vollständig clientseitig: Lesen, Parsen und Übersetzungsanfragen der Untertiteldateien laufen alle im Browser — Originalinhalte berühren nie unsere Server. LLM-Engine-Anfragen gehen direkt aus Ihrem Browser an den konfigurierten API-Endpunkt (OpenAI, DeepSeek usw.), API-Keys werden nur im lokalen localStorage gespeichert. Der Übersetzungscache nutzt browserseitiges IndexedDB und bleibt sitzungsübergreifend erhalten. Der Quellcode ist auf GitHub (rockbenben/subtitle-translator) zum Self-Hosting oder Audit verfügbar."
         }
       ],
       "howto": [
@@ -263,8 +288,8 @@
         "Timecodes unverändert — nur Text wird übersetzt, Original-Timing erhalten",
         "Automatische UTF-8/UTF-16/GBK-Kodierungserkennung",
         "Zweisprachige Untertitelposition: oben (Lernen) oder unten (Anschauen)",
-        "15+ Übersetzungs-Engines: Google kostenlos, DeepSeek, DeepL, OpenAI",
-        "Kompatibel mit YouTube, Premiere, DaVinci Resolve, Aegisub"
+        "25+ Übersetzungs-Engines: Google kostenlos, DeepSeek, Claude, GPT, Gemini, DeepL, Qwen-MT",
+        "Kompatibel mit YouTube, Vimeo, Premiere, DaVinci Resolve, Aegisub"
       ]
     }
   },
@@ -279,11 +304,11 @@
   },
   "Metadata": {
     "title": "ToolsByAI | Kostenlose KI-Dev- & Übersetzungstools",
-    "description": "20+ Open-Source-Tools: Untertitel-Übersetzung, i18n, JSON & Markdown. Mit DeepSeek & ChatGPT. Lokal, sicher & effizient für Entwickler.",
+    "description": "ToolsByAI: 17 Open-Source-Tools für Untertitel-, Markdown- und JSON-i18n-Übersetzung sowie Text- und JSON-Batch-Verarbeitung. 25+ KI-Engines.",
     "homeTitle": "ToolsByAI Werkzeugkasten",
     "homeDescription": "20+ Tools für Übersetzung, Text, JSON und Datenkonvertierung. Effizienzsteigerung für Entwickler und Creator.",
     "ogTitle": "ToolsByAI | Kostenlose KI-Dev- & Übersetzungstools",
-    "ogDescription": "20+ Open-Source-Tools: Untertitel-Übersetzung, i18n, JSON & Markdown. Mit DeepSeek & ChatGPT. Lokal, sicher & effizient für Entwickler."
+    "ogDescription": "ToolsByAI: 17 Open-Source-Tools für Untertitel-, Markdown- und JSON-i18n-Übersetzung sowie Text- und JSON-Batch-Verarbeitung. 25+ KI-Engines."
   },
   "languages": {
     "auto": "Automatisch",
@@ -417,13 +442,19 @@
   },
   "feedback": {
     "feedback1": "Feedback & Vorschläge",
-    "feedback2": "Wenn Sie Probleme haben oder Vorschläge, lassen Sie es mich wissen! Ihr Feedback beeinflusst die zukünftige Entwicklung und hilft uns, bessere Tools zu bauen.",
+    "feedback2": "Wenn Sie Probleme haben oder Vorschläge, lassen Sie es mich wissen!Ihr Feedback beeinflusst die zukünftige Entwicklung und hilft uns, bessere Tools zu bau…",
     "feedback3": "Bitte beschreiben Sie Ihren Anwendungsfall, das Problem oder Ihre Idee. Ich lese jede Nachricht und werde so schnell wie möglich antworten/optimieren.",
     "reaction0": "Gefällt mir",
     "reaction1": "Unterstützung",
     "reaction2": "Cool",
     "reaction3": "Was?",
     "reaction4": "Verwirrt",
-    "placeholder": "Nachricht hinterlassen (kein Login nötig, E-Mail optional für Antwort)"
+    "placeholder": "Nachricht hinterlassen (kein Login nötig, E-Mail optional für Antwort)",
+    "metaDescription": "Feedback-Seite für Tools By AI: Fehler melden, Funktionen vorschlagen, Anwendungsfälle teilen. Basiert auf Waline, anonym möglich."
+  },
+  "NotFound": {
+    "title": "Seite nicht gefunden",
+    "description": "Die aufgerufene Seite existiert nicht oder wurde verschoben.",
+    "goHome": "Zur Startseite"
   }
 }

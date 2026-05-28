@@ -48,7 +48,7 @@
     "resultToSource": "結果 ➔ 原文",
     "resultToSourceTooltip": "將結果文字覆蓋到輸入框",
     "readOnlyMode": "只讀模式",
-    "readOnlyModeTooltip": "文字過長，為保證頁面性能已自動切換為只讀模式",
+    "readOnlyModeTooltip": "文字過長，編輯框暫為唯讀、僅顯示部分預覽；完整內容不受影響，處理與匯出仍按全文進行",
     "exportFile": "匯出",
     "exportAllFile": "匯出所有檔案",
     "exportedFile": "已匯出",
@@ -143,10 +143,11 @@
     "langPresetIndian": "印度系",
     "selectedCount": "已選 {count} 種",
     "recentLanguages": "最近使用",
-    "langGroupAmericasOceania": "美洲及大洋洲"
+    "langGroupAmericasOceania": "美洲及大洋洲",
+    "relatedTools": "相關工具"
   },
   "SubtitleTranslator": {
-    "clientDescription": "上傳字幕文件或粘貼內容，選擇目標語言即可快速翻譯。支持批量處理，自動保留時間軸。",
+    "clientDescription": "上傳字幕檔案或粘貼內容，選擇目標語言即可快速翻譯。支持批量處理，自動保留時間軸。",
     "subtitleFormat": "字幕格式",
     "translatedOnly": "僅譯文",
     "bilingual": "雙語",
@@ -155,10 +156,10 @@
     "bilingualFormatTooltip": "ASS:原文與譯文可分別設定字體/顏色樣式。SRT:純文字,原文與譯文疊在同一時間段。",
     "translationFirst": "譯文在上",
     "originalFirst": "譯文在下",
-    "unsupportedSub": "無法識別字幕格式，請確保文件為 SRT、ASS、VTT 或 LRC 格式。",
-    "noFileUploaded": "請先上傳字幕文件。",
-    "noSourceText": "請上傳字幕文件或粘貼文本。",
-    "noExtractedText": "未提取到字幕內容，請檢查文件格式。",
+    "unsupportedSub": "無法識別字幕格式，請確保檔案為 SRT、ASS、VTT 或 LRC 格式。",
+    "noFileUploaded": "請先上傳字幕檔案。",
+    "noSourceText": "請上傳字幕檔案或粘貼文本。",
+    "noExtractedText": "未提取到字幕內容，請檢查檔案格式。",
     "textExtracted": "已提取字幕文本，",
     "bilingualError": "檢測到複雜樣式標籤，雙語模式可能導致格式錯亂，建議關閉「雙語字幕」。"
   },
@@ -227,21 +228,45 @@
   "tools": {
     "subtitleTranslator": {
       "title": "字幕翻譯器",
-      "description": "批次翻譯 SRT、ASS、VTT、LRC 字幕，支援 50+ 語言",
-      "metaTitle": "字幕翻譯工具 - SRT/ASS/VTT 批次 AI 翻譯，免費雙語字幕",
-      "metaDescription": "影片字幕翻譯太耗時？這款工具支援 SRT、ASS 等格式批次翻譯，接入 DeepSeek 與 Google 引擎。自動保留時間軸，支援雙語字幕產生，讓影片本地化更簡單高效！",
+      "description": "批次翻譯 SRT、ASS、VTT、LRC 字幕，支援 120+ 語言",
+      "metaTitle": "字幕翻譯器 - SRT/ASS/VTT/LRC 批次 AI 翻譯與雙語字幕產生",
+      "metaDescription": "AI 字幕翻譯，SRT/ASS/VTT/LRC 批量互轉，接入 DeepSeek、Claude、GPT 等 25+ 引擎，保留時間軸一鍵匯出雙語字幕。",
       "faq": [
         {
-          "q": "能翻譯 YouTube 下載的 SRT 和 ASS 字幕檔案嗎？",
-          "a": "支援 SRT、ASS、VTT、LRC 四種字幕格式，對白文字翻譯後 ASS 位置樣式標籤（如 \\\\an8）會被保留。YouTube 影片字幕可用 yt-dlp 匯出再上傳翻譯；B 站影片字幕可通過創作中心下載；流媒體平臺的字幕需從合法來源獲取。注：復雜的 ASS 內聯特效標籤（顏色、動畫、卡拉 OK）在翻譯過程中會被簡化。"
+          "q": "支援哪些字幕格式？SRT、ASS、VTT、LRC 都能翻譯嗎？",
+          "a": "支援 SRT、ASS、VTT、LRC 四種格式。SRT/VTT 適配 YouTube、HTML5 播放器和創作中心下載（YouTube 用 yt-dlp 匯出）；ASS 適配 Aegisub 與動漫字幕組，行首位置標籤（如 \\\\an8）翻譯後自動還原；LRC 適配音樂歌詞檔案。檔案編碼（UTF-8/UTF-16/GBK/Shift-JIS）透過 jschardet 自動識別。複雜的 ASS 行內特效標籤（顏色、動畫、卡拉 OK）會被簡化。"
+        },
+        {
+          "q": "字幕翻譯用機器翻譯還是 AI 翻譯？哪個品質好、哪個便宜？",
+          "a": "便宜選機器翻譯，高品質選 AI 大模型。機器翻譯（MT）便宜或免費但對白語感平庸：Google 免費版零成本（長文字會被截斷）、DeepL 歐洲語言頂尖、Qwen-MT 和 Azure Translate 同屬此類。AI 大模型（LLM）按 token 計費但譯文明顯更自然——性價比首選 DeepSeek（整季劇集大批量首選）；口語化品質首選 Claude Sonnet 或 GPT-5；超長字幕用 Gemini 3 Pro 的 1M token 上下文。引擎設定在 [JSON 翻譯](../json-translate)、[Markdown 翻譯](../md-translator) 間共享。"
+        },
+        {
+          "q": "怎麼做 B 站、YouTube 的中英雙語字幕？能用於語言學習嗎？",
+          "a": "選擇「雙語」匯出模式，譯文位置可選在原文上方（學英語推薦）或下方（看外語劇推薦）。匯出 ASS 格式可爲原文和譯文設定不同顏色、字體大小和位置，直接上傳至 B 站字幕系統或 YouTube 社區字幕，Premiere/DaVinci Resolve 也可直接嵌入。"
+        },
+        {
+          "q": "一次能批次翻譯幾個字幕檔案？整季劇集怎麼處理？",
+          "a": "支援批次上傳整季字幕同時翻譯，檔案數無硬上限（實際受翻譯引擎並發限制和 API 配額影響）。每個檔案獨立翻譯並獨立快取（IndexedDB），中途重新整理頁面已譯檔案不會遺失。劇集若有統一術語（人名、地名、專有名詞），建議在「系統提示詞」裡寫一份術語表，所有檔案共享同一份上下文，保證全季譯名一致。"
+        },
+        {
+          "q": "字幕裡的人名、品牌名、專有名詞怎麼保持原文不被亂譯？",
+          "a": "在「系統提示詞」裡寫一份術語保留表，AI 大模型引擎都會遵循。例如：「保持原文：iPhone、OpenAI、Premiere、人名 John Smith」。劇集翻譯尤其推薦——整季對白共享同一份術語詞典，避免「駭客任務」第 1 集叫這個、第 8 集變那個。機器翻譯（Google、DeepL、Qwen-MT）不支援 prompt 自訂，需要人工後處理。"
+        },
+        {
+          "q": "怎麼把 SRT 轉成 VTT 或 ASS？需要單獨的字幕格式轉換器嗎？",
+          "a": "不需要。在翻譯流程中選擇目標語言和匯出格式即可一鍵互轉：SRT ↔ VTT、SRT/VTT → ASS、雙語 ASS/SRT 均支援。VTT 轉 SRT 時自動處理 <c.classname> 內聯標籤和 <00:00:06.040> 卡拉 OK 時間戳；轉 ASS 會保留 \\\\an8 等位置標籤並套用預設樣式。注意：來源語言和目標語言相同時會被自動禁止，目前格式轉換需要綁定一次實際翻譯。"
+        },
+        {
+          "q": "能不能把字幕轉成純文字劇本？或者只匯出部分台詞？",
+          "a": "「提取純文字」按鈕可一鍵提取去掉時間碼和序號的對白文字（自動複製到剪貼簿），適合做語言學習教材、podcast 腳本回填、AI 餵料二次處理或轉給配音演員。如需更精細的行級編輯（按關鍵字篩選、批次替換術語、加前後綴、去重排序），匯出後用 [文字工具箱](../text-toolbox) 的正規表達式比對和行操作功能配合更順手；超長字幕想按時間或字數拆段，配合 [文字分割](../text-splitter) 處理。"
         },
         {
           "q": "翻譯後字幕時間軸對不上或出現亂碼（□□□）怎麼辦？",
           "a": "工具只翻譯文字，時間軸完整保留不做任何修改。如翻譯後時間對不上，通常是源檔案幀率與目標影片不一致（23.976 vs 25 fps）所致，需用 Aegisub 或 Subtitle Edit 調整。亂碼問題：工具通過 jschardet 自動識別 UTF-8/UTF-16/GBK/Shift-JIS 等編碼，識別失敗會回退到 UTF-8，此時請先用 Notepad++ 或 VS Code 另存爲 UTF-8 再上傳。"
         },
         {
-          "q": "怎麼做 B 站、YouTube 的中英雙語字幕？能用於語言學習嗎？",
-          "a": "選擇「雙語」匯出模式，譯文位置可選在原文上方（學英語推薦）或下方（看外語劇推薦）。匯出 ASS 格式可爲原文和譯文設定不同顏色、字體大小和位置，直接上傳至 B 站字幕系統或 YouTube 社區字幕，Premiere/DaVinci Resolve 也可直接嵌入。"
+          "q": "字幕翻譯會上傳到伺服器嗎？隱私安全嗎？",
+          "a": "完全前端處理：字幕檔案讀取、解析、翻譯請求都在瀏覽器內完成，原文不經過我們的伺服器儲存。LLM 引擎的請求直接從你的瀏覽器發往你設定的 API 端點（OpenAI、DeepSeek 等），API Key 僅儲存在本地 localStorage。翻譯快取使用瀏覽器 IndexedDB，關閉頁面也保留，下次翻譯同樣內容直接命中快取。開源程式碼可在 GitHub 審查（rockbenben/subtitle-translator）。"
         }
       ],
       "howto": [
@@ -263,8 +288,8 @@
         "時間軸零修改（僅翻譯文字，時間碼原樣保留）",
         "UTF-8/UTF-16/GBK 編碼自動檢測",
         "雙語字幕譯文位置可選（上方學習 / 下方觀看）",
-        "15+ 翻譯引擎：Google 免費、DeepSeek、DeepL、OpenAI",
-        "兼容 B 站、YouTube、Premiere、DaVinci Resolve、Aegisub"
+        "25+ 翻譯引擎：Google 免費、DeepSeek、Claude、GPT、Gemini、DeepL、Qwen-MT",
+        "相容 B 站、YouTube、Premiere、DaVinci Resolve、Aegisub"
       ]
     }
   },
@@ -279,11 +304,11 @@
   },
   "Metadata": {
     "title": "ToolsByAI | 免費開源的 AI 翻譯與資料處理工具集",
-    "description": "尋找高效開發工具？ToolsByAI 匯集字幕翻譯、i18n 處理等 20+ 款免費開源應用。接入 DeepSeek 等主流模型，支援批次處理且資料隱私安全，立即開啟 AI 提效之旅！",
+    "description": "ToolsByAI 集合 17 款免費工具：字幕、Markdown、JSON i18n 翻譯，文字/JSON 批次處理。25+ AI 引擎，全前端處理。",
     "homeTitle": "ToolsByAI 工具集",
     "homeDescription": "20+ 實用工具，涵蓋多語言翻譯、文字處理、JSON 編輯和資料轉換，助力開發者和創作者提升效率。",
     "ogTitle": "ToolsByAI | 免費開源的 AI 翻譯與資料處理工具集",
-    "ogDescription": "尋找高效開發工具？ToolsByAI 匯集字幕翻譯、i18n 處理等 20+ 款免費開源應用。接入 DeepSeek 等主流模型，支援批次處理且資料隱私安全，立即開啟 AI 提效之旅！"
+    "ogDescription": "ToolsByAI 集合 17 款免費工具：字幕、Markdown、JSON i18n 翻譯，文字/JSON 批次處理。25+ AI 引擎，全前端處理。"
   },
   "languages": {
     "auto": "自動檢測",
@@ -424,6 +449,12 @@
     "reaction2": "有點酷",
     "reaction3": "啥玩意",
     "reaction4": "看不懂",
-    "placeholder": "請留言，無需登錄（填寫郵箱可獲回復提醒）"
+    "placeholder": "請留言，無需登錄（填寫郵箱可獲回復提醒）",
+    "metaDescription": "意見回饋頁：回報使用問題、提交功能建議、參與工具改進。基於 Waline 評論系統，匿名也可發言。"
+  },
+  "NotFound": {
+    "title": "頁面未找到",
+    "description": "你訪問的頁面不存在或已移動。",
+    "goHome": "返回首頁"
   }
 }

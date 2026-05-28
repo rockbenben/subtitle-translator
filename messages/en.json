@@ -77,7 +77,7 @@
     "resultToSource": "Result ➔ Source",
     "resultToSourceTooltip": "Overwrite input area with result text",
     "readOnlyMode": "Read-Only Mode",
-    "readOnlyModeTooltip": "Text is too long; automatically switched to read-only mode to maintain page performance",
+    "readOnlyModeTooltip": "Text is too long: the editor is temporarily read-only and shows a partial preview only. Your full content is unaffected — processing and export still use the entire text.",
     "clearInputTooltip": "Clear input content and uploaded files",
     "smartLineBreak": "Smart Line Break",
     "replaceText": "Replace Text",
@@ -143,7 +143,8 @@
     "langPresetIndian": "Indian Subcontinent",
     "selectedCount": "{count} selected",
     "recentLanguages": "Recent",
-    "langGroupAmericasOceania": "Americas & Oceania"
+    "langGroupAmericasOceania": "Americas & Oceania",
+    "relatedTools": "Related Tools"
   },
   "SubtitleTranslator": {
     "clientDescription": "Upload subtitles or paste content. Select target language for fast translation. Supports batch processing and retains timelines.",
@@ -227,21 +228,45 @@
   "tools": {
     "subtitleTranslator": {
       "title": "Subtitle Translator",
-      "description": "Batch translate SRT, ASS, VTT, LRC subtitles. 50+ languages.",
-      "metaTitle": "Subtitle Translator | Free Online SRT/ASS/VTT Batch Tool",
-      "metaDescription": "Translating videos? Batch translate SRT/ASS subtitles with AI. Auto-timeline sync & bilingual support. Integrates DeepSeek & Google. Accurate & fast. Try free!",
+      "description": "Batch translate SRT, ASS, VTT, LRC subtitles. 120+ languages.",
+      "metaTitle": "Free Subtitle Translator | Batch SRT/VTT/ASS + Bilingual",
+      "metaDescription": "AI subtitle translator for SRT, ASS, VTT, LRC. 25+ engines: DeepSeek, Claude, GPT, DeepL. 120+ languages, preserved timecodes, bilingual.",
       "faq": [
         {
-          "q": "Can I translate SRT and ASS subtitles downloaded from YouTube?",
-          "a": "Supports SRT, ASS, VTT, LRC subtitle formats. Position/alignment tags like \\an8 in ASS are preserved after translation. YouTube subtitles can be exported via yt-dlp, Twitch VODs via creator dashboard, streaming platforms (Netflix/Prime/Disney+) require legitimate sources. Note: Complex inline ASS effects (color, animation, karaoke) are simplified during translation."
+          "q": "Which subtitle formats are supported? Can it translate SRT, ASS, VTT, and LRC?",
+          "a": "Four formats supported: SRT, ASS, VTT, and LRC. SRT/VTT fit YouTube, HTML5 players, and creator dashboards (export YouTube captions with yt-dlp); ASS fits Aegisub and anime fansubs, with line-leading position tags (e.g. \\\\an8) auto-restored after translation; LRC fits music lyrics. File encoding (UTF-8 / UTF-16 / GBK / Shift-JIS) is auto-detected via jschardet. Complex inline ASS effect tags (colors, animation, karaoke) are simplified during translation."
+        },
+        {
+          "q": "Should I use machine translation or AI/LLM translation for subtitles? Which is best quality, which is cheapest?",
+          "a": "For cheap, use machine translation; for quality, use an AI/LLM. Machine translation (MT) is cheap or free but reads flat for dialogue: Google free tier costs nothing (long inputs get truncated); DeepL is top tier for European languages; Qwen-MT and Azure Translate are similar. AI/LLM bills per token but reads noticeably more natural — DeepSeek is the value pick for whole-season batches; Claude Sonnet or GPT-5 give the most natural dialogue; Gemini 3 Pro's 1M-token context handles book-length subtitles. Engine configs are shared with [JSON Translator](../json-translate)…"
+        },
+        {
+          "q": "How do I create bilingual subtitles for YouTube or language learning?",
+          "a": "Select 'Bilingual' mode with your target language. Position translation above (for learning — focus on translation) or below (for consumption — primary is original). Export as ASS for colored dual-language subtitles, embed in Premiere/DaVinci Resolve, or upload to YouTube community subs, Vimeo, or any player supporting ASS format."
+        },
+        {
+          "q": "How many subtitle files can I batch translate at once? What about a whole season of episodes?",
+          "a": "Batch upload an entire season's subtitles for simultaneous translation with no hard file limit (actual limit depends on your translation engine's concurrency and API quota). Each file translates and caches independently (IndexedDB), so refreshing the page doesn't lose translated files. For shared terminology across episodes (character names, place names), put a glossary in the System Prompt — all files share the same context, ensuring consistent translations across the entire season."
+        },
+        {
+          "q": "How do I preserve names, brands, and proper nouns in subtitles so they aren't mistranslated?",
+          "a": "Add a glossary in the System Prompt; AI/LLM engines will respect it. Example: \"Keep verbatim: iPhone, OpenAI, Premiere, person name John Smith.\" Especially recommended for TV series — all episodes share the same term dictionary, so the protagonist doesn't get called one name in episode 1 and a different one in episode 8. Machine translation (Google, DeepL, Qwen-MT) doesn't accept prompt customization, requires manual post-processing."
+        },
+        {
+          "q": "How do I convert SRT to VTT or ASS? Do I need a separate subtitle format converter?",
+          "a": "No separate tool needed. Pick your target language and export format during translation for one-click conversion: SRT ↔ VTT, SRT/VTT → ASS, plus bilingual ASS/SRT output. VTT-to-SRT auto-handles inline <c.classname> tags and <00:00:06.040> karaoke timestamps; ASS conversion preserves \\an8 position tags with default styling. Note: identical source and target language are blocked by validation, so format conversion currently requires an actual translation pass."
+        },
+        {
+          "q": "Can I convert subtitles to plain-text scripts? Or export only specific lines?",
+          "a": "The 'Extract Text' button extracts the dialogue text without timecodes or cue numbers (auto-copied to clipboard) — useful for language learning materials, podcast scripts, AI training data, or voice-actor handoffs. For more granular line-level editing (filter by keyword, batch-replace terms, add prefix/suffix, sort/dedupe), pair with [Text Toolbox](../text-toolbox) — its regex matching and line operations cover most subtitle cleanup tasks. For splitting very long subtitles by time or character count, use [Text Splitter](../text-splitter)."
         },
         {
           "q": "How do I fix subtitle timing mismatch or encoding (□□□) issues after translation?",
           "a": "The tool only translates text and never modifies timecodes. Timing mismatches after translation usually stem from framerate inconsistencies (23.976 vs 25 fps) in the source — fix with Aegisub or Subtitle Edit. For encoding, jschardet auto-detects UTF-8/UTF-16/GBK/Shift-JIS; if detection fails it defaults to UTF-8, so re-save source as UTF-8 via Notepad++ or VS Code before uploading."
         },
         {
-          "q": "How do I create bilingual subtitles for YouTube or language learning?",
-          "a": "Select 'Bilingual' mode with your target language. Position translation above (for learning — focus on translation) or below (for consumption — primary is original). Export as ASS for colored dual-language subtitles, embed in Premiere/DaVinci Resolve, or upload to YouTube community subs, Vimeo, or any player supporting ASS format."
+          "q": "Are subtitle files uploaded to your server? Is it private and secure?",
+          "a": "Fully client-side: subtitle file reading, parsing, and translation requests all happen in your browser — original content never touches our servers. LLM engine requests go directly from your browser to your configured API endpoint (OpenAI, DeepSeek, etc.), and API keys are stored only in local browser storage. Translation cache uses browser IndexedDB and persists across sessions. Source code is open on GitHub (rockbenben/subtitle-translator) for self-hosting or auditing."
         }
       ],
       "howto": [
@@ -263,7 +288,7 @@
         "Timecodes untouched — tool only translates text, original timing preserved",
         "UTF-8/UTF-16/GBK encoding auto-detection",
         "Bilingual subtitle position: above (learning) or below (viewing)",
-        "15+ translation engines: Google free, DeepSeek, DeepL, OpenAI",
+        "25+ translation engines: Google free, DeepSeek, Claude, GPT, Gemini, DeepL, Qwen-MT",
         "Compatible with YouTube, Twitch, Vimeo, Premiere, DaVinci Resolve, Aegisub"
       ]
     }
@@ -279,11 +304,11 @@
   },
   "Metadata": {
     "title": "ToolsByAI | Free Open Source AI Translation & Data Tools",
-    "description": "Looking for efficient dev tools? ToolsByAI offers 20+ free apps like Subtitle Translator & JSON Editor. Powered by DeepSeek & AI, secure & local. Start now!",
+    "description": "ToolsByAI: 17 free open-source tools for subtitle, Markdown, JSON i18n translation and text/JSON batch processing. 25+ AI engines.",
     "homeTitle": "ToolsByAI Toolset",
     "homeDescription": "20+ tools for translation, text, JSON, and data conversion. Boost efficiency for developers and creators.",
     "ogTitle": "ToolsByAI | Free Open Source AI Translation & Data Tools",
-    "ogDescription": "Looking for efficient dev tools? ToolsByAI offers 20+ free apps like Subtitle Translator & JSON Editor. Powered by DeepSeek & AI, secure & local. Start now!"
+    "ogDescription": "ToolsByAI: 17 free open-source tools for subtitle, Markdown, JSON i18n translation and text/JSON batch processing. 25+ AI engines."
   },
   "languages": {
     "auto": "Auto Detect",
@@ -424,6 +449,12 @@
     "reaction2": "Cool",
     "reaction3": "What?",
     "reaction4": "Confused",
-    "placeholder": "Leave a message (no login required, email optional for reply)"
+    "placeholder": "Leave a message (no login required, email optional for reply)",
+    "metaDescription": "Feedback for Tools By AI: report bugs, suggest features, share use-case ideas. Built on Waline, anonymous posting allowed, free."
+  },
+  "NotFound": {
+    "title": "Page Not Found",
+    "description": "The page you visited doesn't exist or has been moved.",
+    "goHome": "Back to Home"
   }
 }

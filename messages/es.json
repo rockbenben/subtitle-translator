@@ -77,7 +77,7 @@
     "resultToSource": "Resultado ➔ Fuente",
     "resultToSourceTooltip": "Sobrescribir el área de entrada con el texto del resultado",
     "readOnlyMode": "Modo Solo Lectura",
-    "readOnlyModeTooltip": "Texto demasiado largo; cambiado automáticamente a modo solo lectura para mantener el rendimiento",
+    "readOnlyModeTooltip": "El texto es demasiado largo: el editor está temporalmente en solo lectura y muestra solo una vista previa parcial. Tu contenido completo no se ve afectado: el procesamiento y la exportación siguen usando todo el texto.",
     "clearInputTooltip": "Limpiar contenido introducido y archivos subidos",
     "smartLineBreak": "Salto de Línea Inteligente",
     "replaceText": "Reemplazar Texto",
@@ -143,7 +143,8 @@
     "langPresetIndian": "Subcontinente Indio",
     "selectedCount": "{count} seleccionados",
     "recentLanguages": "Recientes",
-    "langGroupAmericasOceania": "Américas y Oceanía"
+    "langGroupAmericasOceania": "Américas y Oceanía",
+    "relatedTools": "Herramientas relacionadas"
   },
   "SubtitleTranslator": {
     "clientDescription": "Sube subtítulos o pega contenido. Selecciona idioma destino para traducción rápida. Soporta procesamiento por lotes y conserva línea de tiempo.",
@@ -227,21 +228,45 @@
   "tools": {
     "subtitleTranslator": {
       "title": "Traductor Subtítulos",
-      "description": "Traducción por lote SRT, ASS, VTT, LRC. 50+ idiomas.",
-      "metaTitle": "Traductor de subtítulos | SRT/ASS/VTT IA, bilingüe gratis",
-      "metaDescription": "¿Traduciendo videos? Traduce subtítulos eficientemente. Compatible con SRT, VTT y ASS usando DeepSeek y ChatGPT. Conserva tiempos. Procesamiento por lotes.",
+      "description": "Traducción por lote SRT, ASS, VTT, LRC. 120+ idiomas.",
+      "metaTitle": "Traductor subtítulos gratis | SRT/VTT/ASS IA bilingüe",
+      "metaDescription": "Traductor IA de subtítulos para SRT, ASS, VTT, LRC. 25+ motores: DeepSeek, Claude, GPT, DeepL. 120+ idiomas, timecodes intactos, bilingüe.",
       "faq": [
         {
-          "q": "¿Se pueden traducir subtítulos SRT y ASS descargados de YouTube?",
-          "a": "Compatible con SRT, ASS, VTT, LRC. Las etiquetas de posición/alineación ASS (\\an8, etc.) se preservan tras la traducción. Subtítulos YouTube vía yt-dlp, Atresplayer o RTVE Play vía panel de creador, plataformas streaming desde fuentes legítimas. Nota: Efectos ASS inline complejos (color, animación, karaoke) se simplifican durante la traducción."
+          "q": "¿Qué formatos de subtítulos son compatibles? ¿Se pueden traducir SRT, ASS, VTT y LRC?",
+          "a": "Cuatro formatos compatibles: SRT, ASS, VTT y LRC. SRT/VTT para YouTube, reproductores HTML5 y paneles de creador (exporta subtítulos de YouTube con yt-dlp); ASS para Aegisub y fansubs de anime, etiquetas de posición al inicio de línea (\\\\an8) restauradas tras la traducción; LRC para letras de música. La codificación (UTF-8 / UTF-16 / GBK / Shift-JIS) se detecta automáticamente con jschardet. Las etiquetas de efectos ASS inline complejas (colores, animación, karaoke) se simplifican durante la traducción."
+        },
+        {
+          "q": "Subtítulos: ¿usar traducción automática o traducción IA/LLM? ¿Cuál es la mejor calidad, cuál la más barata?",
+          "a": "Para lo barato, traducción automática; para calidad, IA/LLM. La traducción automática (MT) es barata o gratis pero plana en diálogos: Google free tier no cuesta nada (las entradas largas se truncan); DeepL es top para lenguas europeas; Qwen-MT y Azure Translate son similares. Los grandes modelos IA (LLM) facturan por token pero suenan notablemente más naturales — DeepSeek es la mejor relación calidad-precio para lotes de temporadas; Claude Sonnet o GPT-5 dan los diálogos más naturales; el contexto de 1M tokens de Gemini 3 Pro maneja subtítulos del tamaño de un libro.…"
+        },
+        {
+          "q": "¿Cómo crear subtítulos bilingües para YouTube o aprendizaje de idiomas?",
+          "a": "Seleccione modo 'Bilingüe' con su idioma de destino. Posición de la traducción: arriba (para aprender) o abajo (para ver contenido). Exporte como ASS para subtítulos bilingües con colores, directamente usable en YouTube, Premiere o DaVinci Resolve."
+        },
+        {
+          "q": "¿Cuántos archivos de subtítulos puedo traducir por lotes a la vez? ¿Qué tal una temporada entera de series?",
+          "a": "Cargue por lotes los subtítulos de una temporada completa para traducción simultánea — sin límite estricto de archivos (el límite real depende de la concurrencia del motor de traducción y su cuota de API). Cada archivo se traduce y cachea independientemente (IndexedDB), así que refrescar la página no pierde archivos traducidos. Para terminología compartida entre episodios (nombres de personajes, lugares), coloque un glosario en el System Prompt — todos los archivos comparten el mismo contexto, garantizando traducciones consistentes en toda la temporada."
+        },
+        {
+          "q": "¿Cómo conservo nombres propios, marcas y términos específicos en los subtítulos para que no se traduzcan mal?",
+          "a": "Añade un glosario en el System Prompt; todos los motores IA/LLM lo respetarán. Ejemplo: «Mantener literal: iPhone, OpenAI, Premiere, nombre de persona John Smith». Especialmente recomendado para series de TV — todos los episodios comparten el mismo diccionario terminológico, evitando que un protagonista se llame de una forma en el episodio 1 y diferente en el episodio 8. La traducción automática (Google, DeepL, Qwen-MT) no acepta personalización por prompt, requiere post-procesamiento manual."
+        },
+        {
+          "q": "¿Cómo convierto SRT a VTT o ASS? ¿Necesito un conversor de formato de subtítulos aparte?",
+          "a": "No se necesita herramienta aparte. Elija idioma de destino y formato de exportación durante la traducción para una conversión en un clic: SRT ↔ VTT, SRT/VTT → ASS, además de salida ASS/SRT bilingüe. La conversión de VTT a SRT maneja automáticamente las etiquetas inline <c.classname> y los timestamps de karaoke <00:00:06.040>; la conversión a ASS conserva las etiquetas de posición \\an8 con estilo por defecto. Nota: idiomas de origen y destino idénticos son bloqueados por validación, así que la conversión de formato actualmente requiere una pasada real de traducción."
+        },
+        {
+          "q": "¿Puedo convertir subtítulos a guiones de texto plano? ¿O exportar solo líneas específicas?",
+          "a": "El botón «Extraer Texto» extrae el texto del diálogo sin timecodes ni números de cue (copiado automáticamente al portapapeles) — útil para materiales de aprendizaje de idiomas, guiones de podcast, datos de entrenamiento de IA o entrega a actores de doblaje. Para edición línea a línea más fina (filtrar por palabra clave, sustituir términos en lote, añadir prefijo/sufijo, ordenar/dedupe), combina con [Text Toolbox](../text-toolbox) — sus funciones de regex y operaciones por línea cubren la mayoría de tareas. Para dividir subtítulos muy largos por tiempo o caracteres, usa."
         },
         {
           "q": "¿Qué hacer si los timecodes no coinciden o aparecen caracteres ilegibles (□□□)?",
           "a": "La herramienta solo traduce texto sin modificar timecodes. Los desfases vienen de framerates inconsistentes (23,976 vs 25 fps) entre origen y video destino — ajuste con Aegisub o Subtitle Edit. Codificación: jschardet detecta UTF-8/UTF-16/GBK/Shift-JIS automáticamente; si falla, UTF-8 por defecto. Si aparecen caracteres ilegibles, guarde el archivo origen como UTF-8 con Notepad++ o VS Code."
         },
         {
-          "q": "¿Cómo crear subtítulos bilingües para YouTube o aprendizaje de idiomas?",
-          "a": "Seleccione modo 'Bilingüe' con su idioma de destino. Posición de la traducción: arriba (para aprender) o abajo (para ver contenido). Exporte como ASS para subtítulos bilingües con colores, directamente usable en YouTube, Premiere o DaVinci Resolve."
+          "q": "¿Se suben los archivos de subtítulos a su servidor? ¿Es privado y seguro?",
+          "a": "Totalmente del lado cliente: la lectura, parseo y solicitudes de traducción de subtítulos ocurren en su navegador — el contenido original nunca toca nuestros servidores. Las solicitudes del motor LLM van directamente desde su navegador a su endpoint API configurado (OpenAI, DeepSeek, etc.), y las API keys se almacenan solo en el localStorage local. La caché de traducción usa IndexedDB del navegador y persiste entre sesiones. El código fuente está abierto en GitHub (rockbenben/subtitle-translator) para auto-hospedaje o auditoría."
         }
       ],
       "howto": [
@@ -263,8 +288,8 @@
         "Timecodes intactos — solo se traduce el texto, timing original preservado",
         "Detección automática de codificación UTF-8/UTF-16/GBK",
         "Posición subtítulos bilingües: arriba (aprendizaje) o abajo (visualización)",
-        "15+ motores de traducción: Google gratis, DeepSeek, DeepL, OpenAI",
-        "Compatible con YouTube, Premiere, DaVinci Resolve, Aegisub"
+        "25+ motores de traducción: Google gratis, DeepSeek, Claude, GPT, Gemini, DeepL, Qwen-MT",
+        "Compatible con YouTube, Vimeo, Premiere, DaVinci Resolve, Aegisub"
       ]
     }
   },
@@ -279,11 +304,11 @@
   },
   "Metadata": {
     "title": "ToolsByAI | Herramientas de Traducción y Dev con IA",
-    "description": "Más de 20 herramientas open source: traducción de subtítulos, i18n, JSON y Markdown. Soporta DeepSeek y ChatGPT. Privacidad local y eficiencia.",
+    "description": "ToolsByAI: 17 herramientas open source gratis para traducción de subtítulos, Markdown, JSON i18n y procesamiento por lotes. 25+ motores IA.",
     "homeTitle": "Suite ToolsByAI",
     "homeDescription": "20+ herramientas para traducción, texto, JSON y conversión de datos. Impulsa la eficiencia de desarrolladores y creadores.",
     "ogTitle": "ToolsByAI | Herramientas de Traducción y Dev con IA",
-    "ogDescription": "Más de 20 herramientas open source: traducción de subtítulos, i18n, JSON y Markdown. Soporta DeepSeek y ChatGPT. Privacidad local y eficiencia."
+    "ogDescription": "ToolsByAI: 17 herramientas open source gratis para traducción de subtítulos, Markdown, JSON i18n y procesamiento por lotes. 25+ motores IA."
   },
   "languages": {
     "auto": "Detección Auto",
@@ -424,6 +449,12 @@
     "reaction2": "Genial",
     "reaction3": "¿Qué?",
     "reaction4": "Confuso",
-    "placeholder": "Deja un mensaje (no requiere login, email opcional para respuesta)"
+    "placeholder": "Deja un mensaje (no requiere login, email opcional para respuesta)",
+    "metaDescription": "Página de feedback para Tools By AI: reporta errores, sugiere funciones, comparte casos de uso. Basada en Waline, publicación anónima."
+  },
+  "NotFound": {
+    "title": "Página no encontrada",
+    "description": "La página que visitaste no existe o ha sido movida.",
+    "goHome": "Volver al inicio"
   }
 }

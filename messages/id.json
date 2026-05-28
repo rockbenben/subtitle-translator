@@ -117,7 +117,7 @@
     "resultToSource": "Hasil ➔ Sumber",
     "resultToSourceTooltip": "Timpa kotak input dengan teks hasil",
     "readOnlyMode": "Mode Hanya-Baca",
-    "readOnlyModeTooltip": "Teks terlalu panjang, otomatis beralih ke mode hanya-baca untuk menjaga performa halaman",
+    "readOnlyModeTooltip": "Teks terlalu panjang: editor sementara hanya-baca dan hanya menampilkan pratinjau sebagian. Konten lengkap Anda tidak terpengaruh — pemrosesan dan ekspor tetap menggunakan seluruh teks.",
     "clearInputTooltip": "Bersihkan konten input dan file yang diunggah",
     "fileExported": "File diekspor: {fileName}",
     "exportSuccess": "Ekspor berhasil: {fileName}",
@@ -143,7 +143,8 @@
     "langPresetIndian": "Anak Benua India",
     "selectedCount": "{count} dipilih",
     "recentLanguages": "Terbaru",
-    "langGroupAmericasOceania": "Amerika & Oseania"
+    "langGroupAmericasOceania": "Amerika & Oseania",
+    "relatedTools": "Alat Terkait"
   },
   "SubtitleTranslator": {
     "clientDescription": "Unggah subtitle atau tempel konten. Pilih bahasa target untuk terjemahan cepat. Mendukung pemrosesan batch dan mempertahankan timeline.",
@@ -227,21 +228,45 @@
   "tools": {
     "subtitleTranslator": {
       "title": "Penerjemah Subtitle",
-      "description": "Terjemahan batch SRT, ASS, VTT, LRC. 50+ bahasa.",
-      "metaTitle": "Penerjemah Subtitle Online - SRT/VTT untuk Video & Film",
-      "metaDescription": "Menerjemahkan video? Terjemahkan SRT, ASS, VTT secara batch dengan AI. Buat subtitle dwibahasa dan pertahankan sinkronisasi waktu. Wajib untuk kreator!",
+      "description": "Terjemahan batch SRT, ASS, VTT, LRC. 120+ bahasa.",
+      "metaTitle": "Penerjemah Subtitle Gratis | Batch SRT/VTT/ASS + Dwibahasa",
+      "metaDescription": "Penerjemah subtitle AI untuk SRT, ASS, VTT, LRC. 25+ mesin: DeepSeek, Claude, GPT, DeepL, Google. 120+ bahasa, timecode utuh, output dwibahasa.",
       "faq": [
         {
-          "q": "Bisakah menerjemahkan subtitle SRT dan ASS dari YouTube?",
-          "a": "Mendukung SRT, ASS, VTT, LRC. Tag posisi/perataan ASS (\\an8 dll.) dipertahankan setelah terjemahan. Subtitle YouTube via yt-dlp, Vidio atau GoPlay via dasbor kreator, platform streaming dari sumber yang sah. Catatan: Efek ASS inline kompleks (warna, animasi, karaoke) disederhanakan saat terjemahan."
+          "q": "Format subtitle apa saja yang didukung? Bisa menerjemahkan SRT, ASS, VTT, dan LRC?",
+          "a": "Empat format didukung: SRT, ASS, VTT, dan LRC. SRT/VTT untuk YouTube, pemutar HTML5, dan dasbor kreator (ekspor subtitle YouTube dengan yt-dlp); ASS untuk Aegisub dan fansub anime, tag posisi di awal baris (\\\\an8) dipulihkan setelah terjemahan; LRC untuk lirik musik. Encoding file (UTF-8 / UTF-16 / GBK / Shift-JIS) dideteksi otomatis via jschardet. Tag inline efek ASS yang kompleks (warna, animasi, karaoke) disederhanakan selama terjemahan."
+        },
+        {
+          "q": "Subtitle: pakai mesin terjemahan atau terjemahan AI/LLM? Mana kualitas terbaik, mana paling murah?",
+          "a": "Untuk murah, mesin terjemahan; untuk kualitas, AI/LLM. Mesin terjemahan (MT) murah atau gratis tapi datar untuk dialog: Google free tier tidak berbiaya (input panjang akan terpotong); DeepL terbaik untuk bahasa Eropa; Qwen-MT dan Azure Translate serupa. Model AI besar (LLM) ditagih per token tapi terdengar jauh lebih natural — DeepSeek adalah nilai terbaik untuk batch satu musim penuh; Claude Sonnet atau GPT-5 memberikan dialog paling natural; konteks 1M token Gemini 3 Pro menangani subtitle sebesar buku. Konfigurasi mesin dibagi dengan [Penerjemah JSON](../json-translate)…"
+        },
+        {
+          "q": "Bagaimana membuat subtitle dwibahasa untuk YouTube atau pembelajaran bahasa?",
+          "a": "Pilih mode 'Dwibahasa' dengan bahasa target. Tempatkan terjemahan di atas (untuk pembelajaran) atau bawah (untuk menonton). Ekspor sebagai ASS untuk subtitle dwibahasa berwarna — langsung dapat digunakan di YouTube, Premiere, atau DaVinci Resolve."
+        },
+        {
+          "q": "Berapa banyak file subtitle yang bisa diterjemahkan secara batch? Bagaimana dengan satu musim episode lengkap?",
+          "a": "Unggah batch subtitle satu musim penuh untuk diterjemahkan bersamaan tanpa batas keras jumlah file (batas aktual tergantung pada konkurensi mesin terjemahan dan kuota API Anda). Setiap file diterjemahkan dan di-cache secara independen (IndexedDB), jadi me-refresh halaman tidak akan menghilangkan file yang sudah diterjemahkan. Untuk terminologi bersama antar episode (nama karakter, nama tempat), masukkan glosarium di System Prompt — semua file berbagi konteks yang sama, memastikan terjemahan konsisten di seluruh musim."
+        },
+        {
+          "q": "Bagaimana mempertahankan nama orang, merek, dan istilah khusus dalam subtitle agar tidak salah diterjemahkan?",
+          "a": "Tambahkan glosarium di System Prompt; semua mesin AI/LLM akan mematuhinya. Contoh: «Pertahankan apa adanya: iPhone, OpenAI, Premiere, nama orang John Smith». Sangat direkomendasikan untuk serial TV — semua episode berbagi kamus istilah yang sama, mencegah protagonis dipanggil dengan satu cara di episode 1 dan berbeda di episode 8. Mesin terjemahan (Google, DeepL, Qwen-MT) tidak menerima kustomisasi prompt, memerlukan pasca-pemrosesan manual."
+        },
+        {
+          "q": "Bagaimana mengonversi SRT ke VTT atau ASS? Perlu konverter format subtitle terpisah?",
+          "a": "Tidak perlu alat terpisah. Pilih bahasa target dan format ekspor selama proses terjemahan untuk konversi satu klik: SRT ↔ VTT, SRT/VTT → ASS, plus output ASS/SRT dwibahasa. Konversi VTT-ke-SRT otomatis menangani tag inline <c.classname> dan timestamp karaoke <00:00:06.040>; konversi ASS mempertahankan tag posisi seperti \\an8 dengan styling default. Catatan: bahasa sumber dan target yang identik diblokir oleh validasi, jadi konversi format saat ini memerlukan satu pass terjemahan aktual."
+        },
+        {
+          "q": "Bisakah mengonversi subtitle menjadi skrip teks biasa? Atau hanya mengekspor baris tertentu?",
+          "a": "Tombol «Ekstrak Teks» mengekstrak teks dialog tanpa timecode dan nomor cue (otomatis disalin ke clipboard) — berguna untuk materi pembelajaran bahasa, skrip podcast, data pelatihan AI, atau penyerahan ke pengisi suara. Untuk pengeditan per baris yang lebih halus (filter kata kunci, ganti istilah massal, tambah prefix/suffix, urut/dedupe), padukan dengan [Text Toolbox](../text-toolbox) — fitur regex dan operasi barisnya mencakup sebagian besar tugas. Untuk membagi subtitle sangat panjang berdasarkan waktu atau jumlah karakter, gunakan [Text Splitter](../text-splitter)."
         },
         {
           "q": "Bagaimana mengatasi timecode tidak sinkron atau karakter rusak (□□□) setelah terjemahan?",
           "a": "Alat hanya menerjemahkan teks, tidak pernah mengubah timecode. Ketidaksesuaian biasanya karena framerate berbeda (23.976 vs 25 fps) antara sumber dan video target — perbaiki dengan Aegisub atau Subtitle Edit. Pengkodean: jschardet mendeteksi UTF-8/UTF-16/GBK/Shift-JIS otomatis; jika gagal, default ke UTF-8."
         },
         {
-          "q": "Bagaimana membuat subtitle dwibahasa untuk YouTube atau pembelajaran bahasa?",
-          "a": "Pilih mode 'Dwibahasa' dengan bahasa target. Tempatkan terjemahan di atas (untuk pembelajaran) atau bawah (untuk menonton). Ekspor sebagai ASS untuk subtitle dwibahasa berwarna — langsung dapat digunakan di YouTube, Premiere, atau DaVinci Resolve."
+          "q": "Apakah file subtitle diunggah ke server Anda? Apakah privat dan aman?",
+          "a": "Sepenuhnya sisi-klien: pembacaan file subtitle, parsing, dan permintaan terjemahan semua terjadi di browser Anda — konten asli tidak pernah menyentuh server kami. Permintaan mesin LLM dikirim langsung dari browser Anda ke endpoint API yang Anda konfigurasi (OpenAI, DeepSeek, dll.), dan API Key disimpan hanya di localStorage browser lokal. Cache terjemahan menggunakan IndexedDB browser dan tetap ada di seluruh sesi. Kode sumber terbuka di GitHub (rockbenben/subtitle-translator) untuk self-hosting atau audit."
         }
       ],
       "howto": [
@@ -263,7 +288,7 @@
         "Timecode tidak diubah — hanya teks diterjemahkan, waktu asli dipertahankan",
         "Deteksi pengkodean otomatis UTF-8/UTF-16/GBK",
         "Posisi subtitle dwibahasa: atas (belajar) atau bawah (menonton)",
-        "15+ mesin terjemahan: Google gratis, DeepSeek, DeepL, OpenAI",
+        "25+ mesin terjemahan: Google gratis, DeepSeek, Claude, GPT, Gemini, DeepL, Qwen-MT",
         "Kompatibel dengan YouTube, Premiere, DaVinci Resolve, Aegisub"
       ]
     }
@@ -279,11 +304,11 @@
   },
   "Metadata": {
     "title": "ToolsByAI - Peralatan Data & Terjemahan AI untuk Developer",
-    "description": "Kumpulan alat AI gratis untuk developer: terjemahan subtitle, i18n, Markdown, dan edit JSON. Proses batch cepat, aman secara lokal, dan open source.",
+    "description": "ToolsByAI: 17 alat open source gratis untuk penerjemahan subtitle, Markdown, JSON i18n, dan pemrosesan teks/JSON batch. 25+ AI engine.",
     "homeTitle": "Suite ToolsByAI",
     "homeDescription": "20+ alat untuk terjemahan, teks, JSON, dan konversi data. Tingkatkan efisiensi pengembang dan kreator.",
     "ogTitle": "ToolsByAI - Alat Dev AI Gratis dan Open Source",
-    "ogDescription": "20+ utilitas untuk pengembang: terjemahan, pemrosesan data, dan JSON. Hormati privasi Anda dengan pemrosesan lokal di browser."
+    "ogDescription": "ToolsByAI: 17 alat open source gratis untuk penerjemahan subtitle, Markdown, JSON i18n, dan pemrosesan teks/JSON batch. 25+ AI engine."
   },
   "languages": {
     "auto": "Deteksi Otomatis",
@@ -417,13 +442,19 @@
   },
   "feedback": {
     "feedback1": "Umpan Balik & Saran",
-    "feedback2": "Jika Anda menemukan masalah atau memiliki saran, beri tahu saya! Umpan balik Anda memengaruhi pengembangan masa depan dan membantu kami membuat alat yang lebih baik.",
+    "feedback2": "Jika Anda menemukan masalah atau memiliki saran, beri tahu saya!Umpan balik Anda memengaruhi pengembangan masa depan dan membantu kami membuat alat yang l…",
     "feedback3": "Jelaskan kasus penggunaan, masalah, atau ide Anda. Saya membaca setiap pesan dan akan merespons/mengoptimalkan sesegera mungkin.",
     "reaction0": "Suka",
     "reaction1": "Dukung",
     "reaction2": "Keren",
     "reaction3": "Apa?",
     "reaction4": "Bingung",
-    "placeholder": "Tinggalkan pesan (tidak perlu login, email opsional untuk balasan)"
+    "placeholder": "Tinggalkan pesan (tidak perlu login, email opsional untuk balasan)",
+    "metaDescription": "Halaman feedback Tools By AI: laporkan bug, sarankan fitur, atau bagikan ide penggunaan. Berbasis Waline, posting anonim diizinkan, gratis."
+  },
+  "NotFound": {
+    "title": "Halaman Tidak Ditemukan",
+    "description": "Halaman yang Anda kunjungi tidak ada atau telah dipindahkan.",
+    "goHome": "Kembali ke Beranda"
   }
 }

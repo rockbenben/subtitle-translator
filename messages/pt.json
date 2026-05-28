@@ -117,7 +117,7 @@
     "resultToSource": "Resultado ➔ Original",
     "resultToSourceTooltip": "Substituir o conteúdo da caixa de entrada pelo texto do resultado",
     "readOnlyMode": "Modo Somente Leitura",
-    "readOnlyModeTooltip": "Texto muito longo; modo somente leitura ativado automaticamente para manter o desempenho da página",
+    "readOnlyModeTooltip": "Texto muito longo: o editor está temporariamente somente leitura e mostra apenas uma prévia parcial. Seu conteúdo completo não é afetado — o processamento e a exportação ainda usam o texto inteiro.",
     "clearInputTooltip": "Limpar conteúdo de entrada e arquivos enviados",
     "fileExported": "Arquivo exportado: {fileName}",
     "exportSuccess": "Exportado com sucesso: {fileName}",
@@ -143,7 +143,8 @@
     "langPresetIndian": "Subcontinente Indiano",
     "selectedCount": "{count} selecionadas",
     "recentLanguages": "Recentes",
-    "langGroupAmericasOceania": "Américas e Oceânia"
+    "langGroupAmericasOceania": "Américas e Oceânia",
+    "relatedTools": "Ferramentas relacionadas"
   },
   "SubtitleTranslator": {
     "clientDescription": "Envie legendas ou cole conteúdo. Selecione o idioma de destino para tradução rápida. Suporta processamento em lote e preserva a linha do tempo.",
@@ -227,21 +228,45 @@
   "tools": {
     "subtitleTranslator": {
       "title": "Tradutor Legendas",
-      "description": "Tradução em lote SRT, ASS, VTT, LRC. 50+ idiomas.",
-      "metaTitle": "Tradutor de Legendas - SRT/VTT Online para Vídeos",
-      "metaDescription": "Traduzindo vídeos? Traduza legendas SRT, ASS, VTT em lote com IA. Gere legendas bilíngues mantendo a sincronia. Essencial para criadores de conteúdo!",
+      "description": "Tradução em lote SRT, ASS, VTT, LRC. 120+ idiomas.",
+      "metaTitle": "Tradutor de Legendas | Lote SRT/VTT/ASS + Bilíngue",
+      "metaDescription": "Tradutor IA de legendas para SRT, ASS, VTT, LRC. 25+ motores: DeepSeek, Claude, GPT, DeepL. 120+ idiomas, timecodes preservados, bilíngue.",
       "faq": [
         {
-          "q": "Posso traduzir legendas SRT e ASS baixadas do YouTube?",
-          "a": "Suporta SRT, ASS, VTT, LRC. Tags de posição/alinhamento ASS (\\an8, etc.) são preservadas após tradução. Legendas YouTube via yt-dlp, Globoplay ou RTP Play via painel de criador, plataformas streaming de fontes legítimas. Nota: Efeitos ASS inline complexos (cor, animação, karaokê) são simplificados durante a tradução."
+          "q": "Quais formatos de legenda são suportados? É possível traduzir SRT, ASS, VTT e LRC?",
+          "a": "Quatro formatos suportados: SRT, ASS, VTT e LRC. SRT/VTT para YouTube, players HTML5 e painéis de criadores (exporte legendas do YouTube com yt-dlp); ASS para Aegisub e fansubs de anime, tags de posição no início de linha (\\\\an8) restauradas após a tradução; LRC para letras musicais. A codificação do arquivo (UTF-8 / UTF-16 / GBK / Shift-JIS) é detectada automaticamente via jschardet. Tags inline complexas de efeitos ASS (cores, animação, karaokê) são simplificadas durante a tradução."
+        },
+        {
+          "q": "Legendas: usar tradução automática ou tradução IA/LLM? Qual a melhor qualidade, qual a mais barata?",
+          "a": "Para barato, tradução automática; para qualidade, IA/LLM. A tradução automática (MT) é barata ou grátis mas soa rasa em diálogos: Google versão gratuita custa zero (entradas longas são truncadas); DeepL é referência para idiomas europeus; Qwen-MT e Azure Translate são similares. Os grandes modelos IA (LLM) cobram por token mas soam notavelmente mais naturais — DeepSeek é o melhor custo-benefício para lotes de temporadas; Claude Sonnet ou GPT-5 dão os diálogos mais naturais; o contexto de 1M tokens do Gemini 3 Pro absorve legendas do tamanho de um livro. Configurações…"
+        },
+        {
+          "q": "Como criar legendas bilíngues para YouTube ou aprendizado de idiomas?",
+          "a": "Selecione modo 'Bilíngue' com o idioma alvo. Posicione a tradução acima (para aprendizado) ou abaixo (para consumo). Exporte como ASS para legendas bilíngues coloridas, diretamente usáveis no YouTube, Premiere ou DaVinci Resolve."
+        },
+        {
+          "q": "Quantos arquivos de legenda posso traduzir em lote? E uma temporada inteira de episódios?",
+          "a": "Suporta upload em lote de uma temporada inteira para tradução simultânea, sem limite rígido de arquivos (o limite real depende da concorrência do motor e da sua cota de API). Cada arquivo é traduzido e cacheado de forma independente (IndexedDB), então recarregar a página não perde os arquivos já traduzidos. Para terminologia compartilhada entre episódios (nomes de personagens, locais), coloque um glossário no System Prompt — todos os arquivos compartilham o mesmo contexto, garantindo consistência ao longo de toda a temporada."
+        },
+        {
+          "q": "Como preservo nomes próprios, marcas e termos específicos nas legendas para que não sejam mal traduzidos?",
+          "a": "Adicione um glossário no Prompt de Sistema; todos os motores IA/LLM o respeitarão. Exemplo: «Manter literal: iPhone, OpenAI, Premiere, nome de pessoa John Smith». Especialmente recomendado para séries de TV — todos os episódios compartilham o mesmo dicionário terminológico, evitando que um protagonista seja chamado de uma forma no episódio 1 e diferente no episódio 8. A tradução automática (Google, DeepL, Qwen-MT) não aceita personalização por prompt, requer pós-processamento manual."
+        },
+        {
+          "q": "Como converter SRT para VTT ou ASS? Preciso de um conversor de formato à parte?",
+          "a": "Não precisa de ferramenta separada. Escolha o idioma de destino e o formato de exportação durante a tradução para conversão em um clique: SRT ↔ VTT, SRT/VTT → ASS, mais saída bilíngue ASS/SRT. A conversão VTT→SRT trata automaticamente as tags inline <c.classname> e os timestamps karaokê <00:00:06.040>; a conversão para ASS preserva tags de posição como \\an8 com estilo padrão. Observação: idiomas de origem e destino idênticos são bloqueados pela validação, então a conversão de formato exige atualmente uma tradução real."
+        },
+        {
+          "q": "Posso converter legendas em roteiro de texto puro? Ou exportar só linhas específicas?",
+          "a": "O botão «Extrair Texto» extrai o texto dos diálogos sem timecodes nem números de cue (copiado automaticamente para a área de transferência) — útil para materiais de aprendizado de idiomas, scripts de podcast, dados de treinamento de IA ou entrega para dubladores. Para edição linha a linha mais refinada (filtrar por palavra-chave, substituir termos em lote, adicionar prefixo/sufixo, ordenar/deduplicar), combine com [Text Toolbox](../text-toolbox) — suas funções de regex e operações por linha cobrem a maioria das tarefas. Para dividir legendas muito longas por tempo ou caracteres…"
         },
         {
           "q": "O que fazer se os timecodes não coincidirem ou aparecerem caracteres ilegíveis (□□□)?",
           "a": "A ferramenta apenas traduz texto sem modificar timecodes. Desajustes vêm de framerates inconsistentes (23,976 vs 25 fps) entre origem e vídeo destino — ajuste com Aegisub ou Subtitle Edit. Codificação: jschardet detecta UTF-8/UTF-16/GBK/Shift-JIS automaticamente; se falhar, UTF-8 por padrão."
         },
         {
-          "q": "Como criar legendas bilíngues para YouTube ou aprendizado de idiomas?",
-          "a": "Selecione modo 'Bilíngue' com o idioma alvo. Posicione a tradução acima (para aprendizado) ou abaixo (para consumo). Exporte como ASS para legendas bilíngues coloridas, diretamente usáveis no YouTube, Premiere ou DaVinci Resolve."
+          "q": "Os arquivos de legenda são enviados ao servidor? É privado e seguro?",
+          "a": "Totalmente client-side: leitura, parsing e requisições de tradução acontecem no seu navegador — o conteúdo original nunca passa pelos nossos servidores. As requisições aos motores LLM vão direto do seu navegador para o endpoint de API que você configurou (OpenAI, DeepSeek, etc.), e as API Keys ficam apenas no localStorage local. O cache de tradução usa IndexedDB do navegador e persiste entre sessões. Código aberto no GitHub (rockbenben/subtitle-translator) para self-hosting ou auditoria."
         }
       ],
       "howto": [
@@ -263,7 +288,7 @@
         "Timecodes intactos — apenas o texto é traduzido, timing original preservado",
         "Detecção automática de codificação UTF-8/UTF-16/GBK",
         "Posição de legenda bilíngue: acima (aprendizado) ou abaixo (visualização)",
-        "15+ motores de tradução: Google grátis, DeepSeek, DeepL, OpenAI",
+        "25+ motores de tradução: Google grátis, DeepSeek, Claude, GPT, Gemini, DeepL, Qwen-MT",
         "Compatível com YouTube, Premiere, DaVinci Resolve, Aegisub"
       ]
     }
@@ -279,11 +304,11 @@
   },
   "Metadata": {
     "title": "ToolsByAI - Ferramentas de IA e Dados para Desenvolvedores",
-    "description": "Suite completa de ferramentas IA: tradução de legendas, i18n, Markdown e edição JSON. Gratuito, open source e processamento local seguro.",
+    "description": "ToolsByAI: 17 ferramentas open source grátis para tradução de legendas, Markdown, JSON i18n e processamento em lote. 25+ motores IA.",
     "homeTitle": "Suíte ToolsByAI",
     "homeDescription": "20+ ferramentas para tradução, texto, JSON e conversão de dados. Impulsione a eficiência de desenvolvedores e criadores.",
     "ogTitle": "ToolsByAI - Ferramentas Dev IA Gratuitas e Open Source",
-    "ogDescription": "20+ utilitários para desenvolvedores: tradução, processamento de dados e JSON. Respeita sua privacidade com processamento local."
+    "ogDescription": "ToolsByAI: 17 ferramentas open source grátis para tradução de legendas, Markdown, JSON i18n e processamento em lote. 25+ motores IA."
   },
   "languages": {
     "auto": "Detecção Auto",
@@ -424,6 +449,12 @@
     "reaction2": "Legal",
     "reaction3": "O quê?",
     "reaction4": "Confuso",
-    "placeholder": "Deixe uma mensagem (não requer login, email opcional para resposta)"
+    "placeholder": "Deixe uma mensagem (não requer login, email opcional para resposta)",
+    "metaDescription": "Página de feedback do Tools By AI: relate bugs, sugira recursos, compartilhe casos de uso. Baseado em Waline, publicação anônima, grátis."
+  },
+  "NotFound": {
+    "title": "Página não encontrada",
+    "description": "A página que você visitou não existe ou foi movida.",
+    "goHome": "Voltar à página inicial"
   }
 }
