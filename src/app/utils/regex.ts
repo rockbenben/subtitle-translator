@@ -15,6 +15,9 @@ export const numberEndRegex = /\d$/;
 export const chapterTitleRegex =
   /^(序章|序言|引子|前言|卷首语|扉页|楔子|正文|终章|后记|附录|尾声|番外|[上中下][部册]册|第?\s{0,4}[\d〇零一二两三四五六七八九十百千万壹贰叁肆伍陆柒捌玖拾佰仟]+?\s{0,4}(?:章|节(?!课)|卷|集(?![合和])|幕(?![前后布])|回(?![合访忆顾应答音])|部(?![分赛游])|篇(?!张))).*/;
 
+// 章节单位标记（与 chapterTitleRegex 覆盖的 8 种一致）——供 extractChapterOrder / 排版规则共用，避免标记集漂移
+export const CHAPTER_MARKERS = "章节卷集幕回部篇";
+
 // 数字标题正则
 export const numberTitleRegex = /^[ 　\t]{0,4}\d{1,5}([：:,.， 、_—\-]|【.{1,30}】).{0,30}$/;
 

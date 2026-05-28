@@ -84,6 +84,14 @@ export const dedupeAdjacentLines = (lines: string[]): string[] => {
   return out;
 };
 
+// 整行只由句子标点（？！。…，、；：等）组成时不算分隔符——可能是正文里的反应/停顿行（？？？、……？、。。。）
+const SENTENCE_PUNCT_ONLY = /^[？！。…，、；：?!.,;:]+$/u;
+// 分隔行：整行仅由符号组成（≥3 个非字母/数字/空白字符，如 =====、---、***、~~~、→→→），但排除纯句子标点行 = 段落分隔，由排版步骤删掉并转成断点
+export const isSeparatorBar = (s: string): boolean => {
+  const t = s.trim();
+  return t.length >= 3 && /^[^\p{L}\p{N}\s]+$/u.test(t) && !SENTENCE_PUNCT_ONLY.test(t);
+};
+
 // 通用：移除所有重复行（非相邻去重），支持 trim 比较与排除集合
 export interface DedupeOptions {
   trim?: boolean;
