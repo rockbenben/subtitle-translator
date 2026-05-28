@@ -163,6 +163,12 @@ export const languages: LanguageOption[] = [
 //   DeepL:           https://developers.deepl.com/docs/getting-started/supported-languages
 //                    Now 110+ languages — only kn/am/ug/si/lo from our master
 //                    list remain unsupported.
+//   Google Cloud:    https://docs.cloud.google.com/translate/docs/languages
+//                    NMT model ~250 codes, LLM model ~100 codes. Same denylist
+//                    used for gtxFreeAPI (free public endpoint) since both route
+//                    through Google's translation backend. Only an/wo from our
+//                    master are missing. NOTE: Wolof is supported by Meta NLLB,
+//                    NOT Google — easy to confuse.
 //   Qwen-MT:         https://help.aliyun.com/zh/model-studio/machine-translation
 //                    Plus/flash/turbo tiers cover 92 languages; lite is smaller
 //                    and not separately tracked here.
@@ -170,7 +176,9 @@ export const languages: LanguageOption[] = [
 //                    Comprehensive — see denylist for the few gaps.
 //                    NOTE: Azure uses `ku` for Central Kurdish; our master code
 //                    is `ckb` (BCP-47). Mapping lives in services/traditional.ts
-//                    as AZURE_LANG_MAP.
+//                    as AZURE_LANG_MAP. Beware of the Transliterate-only entries
+//                    (be / tg) — they look supported in the docs but the Text
+//                    Translation API rejects them.
 //   TranslateGemma   https://huggingface.co/collections/google/translategemma
 //                    Three variants: 4b / 12b / 27b. ALL THREE share the same
 //                    55-language coverage (verified 2026-05-22 by reading each
@@ -194,23 +202,39 @@ export const languages: LanguageOption[] = [
 // ════════════════════════════════════════════════════════════════════════════
 const UNSUPPORTED_LANGS: Record<string, Set<string>> = {
   // DeepL & DeepLX — same coverage (DeepLX is a community proxy in front of DeepL).
+  // Verified 2026-05-26 — denylist is complete, no other master codes missing.
   deepl: new Set(["kn", "am", "ug", "si", "lo"]),
   deeplx: new Set(["kn", "am", "ug", "si", "lo"]),
 
+  // Google Cloud Translation / GTX (Free). Both go through Google's NMT backend.
+  // Only 2 codes from our master aren't on Google's official supported list:
+  // `an` (Aragonese) and `wo` (Wolof). Most other niche codes (ace/scn/lmo/etc)
+  // are supported. Verified 2026-05-26.
+  gtxFreeAPI: new Set(["an", "wo"]),
+  google: new Set(["an", "wo"]),
+
   // Azure Translator. Pre-existing `jv` (Javanese) plus 21 from the 2026-05
-  // expansion that Azure doesn't cover.
+  // expansion, plus `be` and `tg` (added 2026-05-26 — both languages appear
+  // only in Azure's Transliterate API table, NOT in Text Translation, which
+  // is the API we hit).
   azure: new Set([
     "jv",
     // 2026-05 additions:
     "ace", "an", "ay", "br", "ceb", "eo", "gn", "la", "lb", "lmo",
     "oc", "om", "pag", "pam", "qu", "sa", "scn", "su", "ts", "wo", "yi",
+    // 2026-05-26 additions (Transliterate-only, no Text Translation):
+    "be", "tg",
   ]),
 
-  // Qwen-MT plus/flash/turbo. Pre-existing 10 plus 33 new gaps.
+  // Qwen-MT plus/flash/turbo. 41 codes denied; 80 of our master supported
+  // (Qwen-MT claims 92 in total — the gap is Arabic dialects + a few codes
+  // like ast/nn/sd/tl/vec/war that aren't in our master at all).
+  // Official list: https://help.aliyun.com/zh/model-studio/machine-translation
   qwenMt: new Set([
     "ky", "tk", "tg", "mn", "ml", "pa", "bho", "ha", "am", "ug",
-    // 2026-05 additions:
-    "ace", "an", "ay", "ba", "br", "ckb", "eo", "ga", "gn", "gom",
+    // 2026-05 additions (ga/gn removed 2026-05-26 — both are in Qwen-MT's
+    // official 92-language list, were wrongly denied):
+    "ace", "an", "ay", "ba", "br", "ckb", "eo", "gom",
     "ht", "ig", "kmr", "la", "lmo", "ln", "mg", "mi", "om", "pam",
     "prs", "ps", "qu", "sa", "st", "su", "tn", "ts", "tt", "wo",
     "xh", "yi", "zu",

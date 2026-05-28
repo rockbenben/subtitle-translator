@@ -92,19 +92,19 @@ export const PROVIDERS = {
     apiKeyUrl: "https://www.deepl.com/your-account/keys",
     defaults: { url: "", apiKey: "", chunkSize: 5000, delayTime: 200, batchSize: 20 },
   },
-  azure: {
-    kind: "custom",
-    category: "machine-translation",
-    label: "Azure Translate",
-    docs: "https://learn.microsoft.com/azure/ai-services/translator/text-translation/reference/v3/translate",
-    defaults: { apiKey: "", chunkSize: 10000, delayTime: 200, region: "eastasia", batchSize: 100 },
-  },
   deeplx: {
     kind: "custom",
     category: "machine-translation",
     label: "DeepLX (Free)",
     docs: "https://deeplx.owo.network/endpoints/free.html",
     defaults: { url: "", chunkSize: 1000, delayTime: 200, batchSize: 10 },
+  },
+  azure: {
+    kind: "custom",
+    category: "machine-translation",
+    label: "Azure Translate",
+    docs: "https://learn.microsoft.com/azure/ai-services/translator/text-translation/reference/v3/translate",
+    defaults: { apiKey: "", chunkSize: 10000, delayTime: 200, region: "eastasia", batchSize: 100 },
   },
   qwenMt: {
     kind: "custom",
@@ -600,7 +600,11 @@ export const PROVIDERS = {
     // on another service, also wire it in services/llm.ts (UI + cache key alone
     // gives a half-functional knob). Cloud services skip this on purpose: no
     // repeat-loop risk + their own server-side caps.
-    defaults: { url: "", apiKey: "", model: "", temperature: 0.7, maxTokens: 0, sendSystemPrompt: true, batchSize: 10, contextBatchSize: 1, contextWindow: 100 },
+    // contextWindow defaults smaller than cloud LLM (100) because the Custom
+    // path is the entry point for local Ollama/LM Studio users — small models
+    // (<14B) commonly drop lines or scramble structure in long batches.
+    // Power users with bigger local models can raise it in Advanced Settings.
+    defaults: { url: "", apiKey: "", model: "", temperature: 0.7, maxTokens: 0, sendSystemPrompt: true, batchSize: 10, contextBatchSize: 1, contextWindow: 30 },
     endpoints: [
       // Local servers first (LM Studio → Ollama → llama.cpp by general
       // popularity), cloud aggregators after. Order matches translategemma's
