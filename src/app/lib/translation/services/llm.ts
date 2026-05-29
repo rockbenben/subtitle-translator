@@ -89,74 +89,78 @@ const resolveEndpoint = (key: OpenAICompatProviderKey, spec: OpenAICompatProvide
 
 // DeepSeek V4: top-level `thinking: {type}` + `reasoning_effort`.
 // (Distinct from NVIDIA NIM which nests both inside `chat_template_kwargs`.)
-const buildDeepseekExtraBody = (reasoningEffort: ReasoningEffort | undefined): Record<string, unknown> => {
-  if (!reasoningEffort) return {};
+//
+// ⚠ DeepSeek V4 server-defaults thinking ON: omitting the field leaves it
+// enabled, so a thinking-OFF request must send an EXPLICIT `{type:"disabled"}`
+// — not `{}`. Skipping this silently billed reasoning tokens on every line (the
+// "10M tokens" MD-translation report). Mirrors buildMoonshotExtraBody; the
+// server-default-ON rule is tracked in registry's SERVER_DEFAULT_THINKING_ON.
+// Doc: api-docs.deepseek.com/zh-cn/guides/thinking_mode ("默认思考开关为 enabled").
+// Untagged custom SKUs (absent from the registry models list) can't toggle
+// thinking through the UI, so we send nothing and let the server default stand.
+export const buildDeepseekExtraBody = (model: string | undefined, reasoningEffort: ReasoningEffort | undefined): Record<string, unknown> => {
+  if (!isThinkingModel("deepseek", model || OPENAI_COMPAT_PROVIDERS.deepseek.defaultModel)) return {};
+  if (!reasoningEffort) return { thinking: { type: "disabled" } };
   return { thinking: { type: "enabled" }, reasoning_effort: reasoningEffort };
 };
 
-// Moonshot K2.6: flat `thinking: {type: "enabled"|"disabled"}`. Server default
-// is ON, so effort-undefined must send explicit "disabled" — re-check
-// isThinkingModel to skip untagged K2.5 which would reject the param.
-const buildMoonshotExtraBody = (model: string | undefined, reasoningEffort: ReasoningEffort | undefined): Record<string, unknown> => {
-  const effectiveModel = model || OPENAI_COMPAT_PROVIDERS.moonshot.defaultModel;
-  if (!isThinkingModel("moonshot", effectiveModel)) return {};
+// Binary thinking (on/off, no granularity) for vendors whose server default is
+// thinking ON: turning it OFF must send an EXPLICIT `{thinking:{type:"disabled"}}`,
+// never `{}` (omitting leaves thinking on → silent reasoning-token burn). Shared
+// by Moonshot (Kimi), Doubao (Seed), Zhipu (GLM) — identical wire shape, all
+// verified server-default-ON. isThinkingModel skips untagged custom SKUs that
+// would reject the param. Docs: volcengine.com/docs/82379 (Doubao),
+// docs.bigmodel.cn (Zhipu, glm-4.7 forced-thinking), platform.moonshot.cn (Kimi).
+const binaryThinkingBody = (service: OpenAICompatProviderKey, model: string | undefined, reasoningEffort: ReasoningEffort | undefined): Record<string, unknown> => {
+  if (!isThinkingModel(service, model || OPENAI_COMPAT_PROVIDERS[service].defaultModel)) return {};
   return { thinking: { type: reasoningEffort ? "enabled" : "disabled" } };
 };
 
-// Shared `{reasoning_effort: enum}` shape — OpenAI GPT-5's protocol that the
-// aggregators (OpenRouter / Groq / SiliconFlow) inherit and remap to their
-// upstream-vendor specifics (Claude budget_tokens, Gemini thinkingLevel,
-// DeepSeek thinking, etc.) on their side. Same wire payload, four consumers.
-// Docs: developers.openai.com/api/docs/models/gpt-5.4 (source of truth)
+// Aggregators (OpenRouter / Groq / SiliconFlow): pass `reasoning_effort` through
+// to whatever upstream model the user picked. We deliberately OMIT when off
+// rather than send "none" — "none" isn't universally accepted across arbitrary
+// upstream models, and each model's omit-default is out of our hands here.
 const buildReasoningEffortBody = (reasoningEffort: ReasoningEffort | undefined): Record<string, unknown> => {
   if (!reasoningEffort) return {};
   return { reasoning_effort: reasoningEffort };
 };
 
-// Grok 4.3: only accepts "low" | "high" (no "medium" — would 400).
-// grok-4.20-* SKUs are thinking-intrinsic and don't accept the param at all.
-// Doc: docs.x.ai/docs/api-reference
-const buildGrokExtraBody = (reasoningEffort: ReasoningEffort | undefined): Record<string, unknown> => {
-  if (!reasoningEffort) return {};
-  return { reasoning_effort: reasoningEffort === "high" ? "high" : "low" };
+// OpenAI GPT-5.x: `reasoning_effort` enum. Omit-default is MODEL-dependent
+// (gpt-5.4 → "none", gpt-5.5 → "medium"), so OFF must send an explicit "none" to
+// truly disable reasoning. "none" is valid for the 5.4/5.5 SKUs we list (the
+// legacy "minimal" is NOT). Doc: developers.openai.com/api/docs/models/gpt-5.4
+const buildOpenAIReasoningBody = (model: string | undefined, reasoningEffort: ReasoningEffort | undefined): Record<string, unknown> => {
+  if (!isThinkingModel("openai", model || OPENAI_COMPAT_PROVIDERS.openai.defaultModel)) return {};
+  return { reasoning_effort: reasoningEffort ?? "none" };
 };
 
-// Qwen3.x: top-level `enable_thinking: bool` + `thinking_budget: int` (DashScope
-// OpenAI-compat). Effort mapped to a sensible token budget for translation use.
-// Doc: help.aliyun.com/zh/model-studio/qwen-api-via-openai-chat-completions
+// Grok 4.3: `reasoning_effort` accepts none/low/medium/high; OMITTING defaults to
+// "low" (reasoning ON), so OFF must send "none". (An earlier note that only
+// low/high exist was wrong — docs.x.ai/docs/guides/reasoning lists all four.)
+const buildGrokExtraBody = (model: string | undefined, reasoningEffort: ReasoningEffort | undefined): Record<string, unknown> => {
+  if (!isThinkingModel("grok", model || OPENAI_COMPAT_PROVIDERS.grok.defaultModel)) return {};
+  return { reasoning_effort: reasoningEffort ?? "none" };
+};
+
+// Qwen3 (DashScope): `enable_thinking` bool + `thinking_budget` int. The
+// qwen3.6-plus series server-defaults thinking ON, so OFF must send
+// `enable_thinking:false` (omitting leaves it on). Doc: help.aliyun.com/zh/model-studio/deep-thinking
 const QWEN_THINKING_BUDGET: Record<ReasoningEffort, number> = { low: 1024, medium: 4096, high: 8192 };
-const buildQwenExtraBody = (reasoningEffort: ReasoningEffort | undefined): Record<string, unknown> => {
-  if (!reasoningEffort) return {};
+const buildQwenExtraBody = (model: string | undefined, reasoningEffort: ReasoningEffort | undefined): Record<string, unknown> => {
+  if (!isThinkingModel("qwen", model || OPENAI_COMPAT_PROVIDERS.qwen.defaultModel)) return {};
+  if (!reasoningEffort) return { enable_thinking: false };
   return { enable_thinking: true, thinking_budget: QWEN_THINKING_BUDGET[reasoningEffort] };
 };
 
-// Shared `{thinking: {type: "enabled"}}` shape — Doubao Seed 2.0 and Zhipu
-// GLM-4.6+ both adopt this exact wire payload, no effort dial in either API.
-// (Doubao additionally accepts "auto"|"disabled"; Zhipu accepts "disabled" —
-// neither needed here since orchestrator gates "off" by omitting the call.)
-// Doubao doc: volcengine.com/docs/82379
-// Zhipu doc:  docs.bigmodel.cn/cn/guide/start/model-overview
-const buildThinkingEnabledBody = (reasoningEffort: ReasoningEffort | undefined): Record<string, unknown> => {
-  if (!reasoningEffort) return {};
-  return { thinking: { type: "enabled" } };
-};
-
-// MiniMax M2.7: ⚠️ EXPERIMENTAL — best-guess `enable_thinking: true`.
-// Protocol under-documented; verify with a 200 from a tagged SKU + thinking on.
-// Doc: platform.minimax.io/docs/api-reference/text-chat
-const buildMinimaxExtraBody = (reasoningEffort: ReasoningEffort | undefined): Record<string, unknown> => {
-  if (!reasoningEffort) return {};
-  return { enable_thinking: true };
-};
-
-// Hunyuan (TurboS / T1 / A13B): ⚠️ EXPERIMENTAL — `enable_enhancement: true`.
-// T1 / A13B are thinking-intrinsic and may reject this param; TurboS is the
-// most likely to honor it. Verify per-SKU.
-// Doc: cloud.tencent.com/document/product/1729/111007
-const buildHunyuanExtraBody = (reasoningEffort: ReasoningEffort | undefined): Record<string, unknown> => {
-  if (!reasoningEffort) return {};
-  return { enable_enhancement: true };
-};
+// MiniMax & Hunyuan deliberately have NO thinking builder (and their models are
+// untagged in the registry, so no dead UI toggle):
+//   - MiniMax M2 thinking is intrinsic/unclosable; `enable_thinking` is NOT a
+//     hosted-API field (it's a local vLLM chat-template kwarg) → was a no-op.
+//   - Hunyuan's `enable_enhancement` is a WEB-SEARCH toggle, not thinking — the
+//     old builder silently turned on search. The OpenAI-compat path exposes no
+//     documented thinking field (only native `EnableThinking` / `/no_think`).
+// Follow-ups: MiniMax `reasoning_split:true` to keep `content` clean of <think>;
+// Hunyuan a13b `/no_think` prompt-prefix control.
 
 // ── Builder registry ───────────────────────────────────────────────────────
 // One entry per thinking-aware provider. Providers absent from this map go
@@ -166,24 +170,28 @@ const buildHunyuanExtraBody = (reasoningEffort: ReasoningEffort | undefined): Re
 type ExtraBodyBuilder = (params: TranslateTextParams) => Record<string, unknown>;
 
 const reasoningEffortBuilder: ExtraBodyBuilder = (p) => buildReasoningEffortBody(p.reasoningEffort);
-const thinkingEnabledBuilder: ExtraBodyBuilder = (p) => buildThinkingEnabledBody(p.reasoningEffort);
 
 const THINKING_BUILDERS: Partial<Record<OpenAICompatProviderKey, ExtraBodyBuilder>> = {
-  deepseek: (p) => buildDeepseekExtraBody(p.reasoningEffort),
-  moonshot: (p) => buildMoonshotExtraBody(p.model, p.reasoningEffort),
-  grok: (p) => buildGrokExtraBody(p.reasoningEffort),
-  qwen: (p) => buildQwenExtraBody(p.reasoningEffort),
-  minimax: (p) => buildMinimaxExtraBody(p.reasoningEffort),
-  hunyuan: (p) => buildHunyuanExtraBody(p.reasoningEffort),
-  // {reasoning_effort: enum} — OpenAI GPT-5 + aggregators
-  openai: reasoningEffortBuilder,
+  // Effort-style (granular), each server-default-ON → explicit disable when off
+  deepseek: (p) => buildDeepseekExtraBody(p.model, p.reasoningEffort),
+  openai: (p) => buildOpenAIReasoningBody(p.model, p.reasoningEffort),
+  grok: (p) => buildGrokExtraBody(p.model, p.reasoningEffort),
+  qwen: (p) => buildQwenExtraBody(p.model, p.reasoningEffort),
+  // Binary thinking (on/off), server-default-ON → explicit `{type:"disabled"}` when off
+  moonshot: (p) => binaryThinkingBody("moonshot", p.model, p.reasoningEffort),
+  doubao: (p) => binaryThinkingBody("doubao", p.model, p.reasoningEffort),
+  zhipu: (p) => binaryThinkingBody("zhipu", p.model, p.reasoningEffort),
+  // Aggregators: pass-through reasoning_effort, OMIT when off (see buildReasoningEffortBody)
   openrouter: reasoningEffortBuilder,
   groq: reasoningEffortBuilder,
   siliconflow: reasoningEffortBuilder,
-  // {thinking: {type: "enabled"}} — Doubao + Zhipu
-  doubao: thinkingEnabledBuilder,
-  zhipu: thinkingEnabledBuilder,
+  // (minimax / hunyuan intentionally absent — see builders note above)
 };
+
+// Exposed for the SERVER_DEFAULT_THINKING_ON invariant test: the thinking extra
+// body a provider injects for given params (so tests can assert OFF → non-empty
+// disable payload). Returns {} for providers with no builder.
+export const buildThinkingExtraBody = (service: OpenAICompatProviderKey, params: TranslateTextParams): Record<string, unknown> => THINKING_BUILDERS[service]?.(params) ?? {};
 
 // Factory: generate a TranslationService from a provider spec key, optionally
 // wiring in a thinking extra-body builder.

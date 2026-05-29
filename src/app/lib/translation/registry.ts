@@ -351,7 +351,9 @@ export const PROVIDERS = {
       { label: "International", url: "https://api.minimax.io/v1/chat/completions" },
     ],
     models: [
-      { label: "MiniMax M2.7", value: "MiniMax-M2.7", thinking: true },
+      // Not thinking-tagged: M2 reasoning is intrinsic/unclosable on the hosted
+      // API (no toggle param; `enable_thinking` is a local-deploy kwarg). See llm.ts.
+      { label: "MiniMax M2.7", value: "MiniMax-M2.7" },
       { label: "MiniMax M2.7 High-Speed", value: "MiniMax-M2.7-highspeed" },
       { label: "MiniMax M2.5", value: "MiniMax-M2.5" },
       { label: "MiniMax M2.1", value: "MiniMax-M2.1" },
@@ -385,12 +387,15 @@ export const PROVIDERS = {
     docs: "https://cloud.tencent.com/document/product/1729/111007",
     apiKeyUrl: "https://console.cloud.tencent.com/hunyuan/api-key",
     models: [
-      { label: "Hunyuan TurboS", value: "hunyuan-turbos-latest", thinking: true },
-      // 2.0-Thinking SKU 即 thinking 模式,无 toggle 参数
+      // Not thinking-tagged: the OpenAI-compat path has no documented thinking
+      // toggle (the old `enable_enhancement` was a web-search switch, not
+      // thinking). TurboS is fast-think, T1 is reasoning-intrinsic, a13b only
+      // toggles via the `/no_think` prompt prefix — none controllable here. See llm.ts.
+      { label: "Hunyuan TurboS", value: "hunyuan-turbos-latest" },
       { label: "Hunyuan 2.0 Thinking", value: "hunyuan-2.0-thinking-20251109" },
       { label: "Hunyuan 2.0 Instruct", value: "hunyuan-2.0-instruct-20251111" },
-      { label: "Hunyuan T1", value: "hunyuan-t1-latest", thinking: true },
-      { label: "Hunyuan A13B", value: "hunyuan-a13b", thinking: true },
+      { label: "Hunyuan T1", value: "hunyuan-t1-latest" },
+      { label: "Hunyuan A13B", value: "hunyuan-a13b" },
       { label: "Hunyuan Lite", value: "hunyuan-lite" },
     ],
   },
@@ -693,6 +698,35 @@ export const URL_IS_PRIMARY_CRED: ReadonlySet<string> = new Set(["llm", "transla
 export const NO_CRED_REQUIRED: ReadonlySet<string> = new Set(["gtxFreeAPI", "deeplx"]);
 
 /**
+ * Methods that get a live pre-flight reachability probe in validate() before bulk
+ * translation (a one-shot "Hello world" / health check). Membership follows one
+ * principle: probe a method IFF its dominant failure mode would NOT already
+ * fast-fail on its own AND probing it is free.
+ *
+ *   - gtxFreeAPI, deeplx: free public proxies — when down/rate-limited they throw
+ *     NETWORK / 5xx errors, which don't trip the per-line auth-abort cascade, so
+ *     without a probe a dead service slow-fails line-by-line. Probing is free.
+ *   - llm, translategemma: self-hosted (Ollama / LM Studio / vLLM) — "server not
+ *     running" / wrong URL is a NETWORK error (no auth-abort), and the probe hits
+ *     the user's own machine, so it's free.
+ *   - deepl: free tier returns 456 (quota) which is non-auth (no abort); the
+ *     fast-fail is worth the tiny quota the probe spends.
+ *
+ * Deliberately EXCLUDED — paid cloud LLMs (openai, deepseek, claude, gemini, …)
+ * and paid MT (google, azure, …): their dominant failure is a bad key (401/403),
+ * which ALREADY fast-aborts the whole batch for free via the per-line auth-abort
+ * cascade (isAuthError → abortControllerRef.abort()). Probing them would instead
+ * spend the user's tokens/quota on a "Hello world" health check every cold run.
+ *
+ * Invariants (registry.test.ts): NO_CRED_REQUIRED ⊆ this set (free methods are
+ * always cheap to probe), and the only LLM-category method here is the
+ * self-hosted `llm` (no paid cloud LLM is probed). validate()'s smart gate still
+ * PROCEEDS (not blocks) on transient 429/5xx from these — the probe only
+ * HARD-blocks definitive failures.
+ */
+export const PREFLIGHT_PROBE_METHODS: ReadonlySet<string> = new Set(["deepl", "deeplx", "llm", "gtxFreeAPI", "translategemma"]);
+
+/**
  * Services that require a non-empty URL **in addition to** apiKey. Compare with
  * URL_IS_PRIMARY_CRED (URL only, apiKey optional). Currently just Azure OpenAI,
  * where URL is the per-tenant resource endpoint and apiKey authenticates.
@@ -820,14 +854,41 @@ export const deriveThinkingParams = (method: string, config: TranslationConfig |
 
 /**
  * Vendors whose thinking switch is binary at the wire level — Low/Medium/High
- * all collapse to the same payload (Doubao/Zhipu: `{thinking:{type:"enabled"}}`;
- * Moonshot: same; MiniMax: `enable_thinking:true`; Hunyuan: `enable_enhancement:true`).
- * UI renders these as Off/On instead of Off/Low/Medium/High to avoid hinting
- * at granularity that doesn't exist. Selecting On stores a canonical "medium"
- * — the value is irrelevant to wire output, but a defined effort is what
- * triggers the thinking branch in deriveThinkingParams + builders.
+ * all collapse to the same payload (`{thinking:{type:"enabled"}}` for Doubao,
+ * Zhipu, and Moonshot). UI renders these as Off/On instead of Off/Low/Medium/High
+ * to avoid hinting at granularity that doesn't exist. Selecting On stores a
+ * canonical "medium" — the value is irrelevant to wire output, but a defined
+ * effort is what triggers the thinking branch in deriveThinkingParams + builders.
  */
-export const BINARY_EFFORT_VENDORS: ReadonlySet<string> = new Set(["doubao", "zhipu", "moonshot", "minimax", "hunyuan"]);
+export const BINARY_EFFORT_VENDORS: ReadonlySet<string> = new Set(["doubao", "zhipu", "moonshot"]);
+
+/**
+ * Providers whose API leaves reasoning/thinking ENABLED when the request omits
+ * the thinking field. For these, turning thinking OFF requires sending an
+ * EXPLICIT disable payload — merely omitting it silently keeps thinking on and
+ * burns reasoning tokens on every call. (The DeepSeek MD-translation "10M
+ * tokens" report traced to exactly this: a thinking-off request still returned
+ * full `reasoning_content`. Doc: api-docs.deepseek.com/zh-cn/guides/thinking_mode
+ * — "默认思考开关为 enabled".)
+ *
+ * The per-vendor disable wire-shape lives in each service's extra-body builder
+ * (services/llm.ts: buildDeepseekExtraBody / buildOpenAIReasoningBody /
+ * buildGrokExtraBody / buildQwenExtraBody / binaryThinkingBody for moonshot+
+ * doubao+zhipu; gemini handles it inline). THIS set is the single source of
+ * truth for WHO needs the explicit disable; the invariant test in
+ * services/__tests__/thinking.test.ts asserts every OpenAI-compat member emits a
+ * non-empty disable body when thinking is off.
+ *
+ * All verified against vendor docs: deepseek ("默认 enabled"), openai (gpt-5.5
+ * omit→medium; 5.4 omit→none, but we send explicit none either way), grok
+ * (omit→"low"), qwen (3.6-plus series), doubao (Seed 2.0), zhipu (glm-4.7
+ * forced-thinking), moonshot, gemini.
+ * EXCLUDED on purpose: minimax & hunyuan — thinking is intrinsic/uncontrollable
+ * on their hosted OpenAI-compat path (untagged in `models`, no builder; hunyuan's
+ * old `enable_enhancement` was actually a web-search toggle); aggregators
+ * (openrouter/groq/siliconflow) — per-model omit-default is out of our hands.
+ */
+export const SERVER_DEFAULT_THINKING_ON: ReadonlySet<string> = new Set(["deepseek", "openai", "grok", "qwen", "doubao", "zhipu", "moonshot", "gemini"]);
 
 /**
  * Quick-pick endpoints for providers that surface multiple URL options (regional
