@@ -20,37 +20,44 @@ export { translategemmaHealthCheck } from "./services/traditional";
 export { completeOpenAICompatUrl } from "./services/shared";
 
 /**
- * Test translation with a given method and config
+ * Core reachability probe: runs one real "Hello, world!" translation and THROWS
+ * on failure, so callers can classify the error (transient vs definitive). Used
+ * by the translator's smart pre-flight gate (validate()); testTranslation wraps
+ * it for the boolean API the manual "Test Connection" buttons use.
+ */
+export const runReachabilityProbe = async (translationMethod: TranslationMethod, config: Partial<TranslateTextParams>, systemPrompt?: string, userPrompt?: string, signal?: AbortSignal): Promise<string> => {
+  const params: TranslateTextParams = {
+    text: "Hello, world!",
+    targetLanguage: "zh",
+    sourceLanguage: "en",
+    cacheSuffix: "test",
+    translationMethod,
+    useCache: false,
+    ...config,
+    ...(systemPrompt && { systemPrompt }),
+    ...(userPrompt && { userPrompt }),
+    ...(signal && { signal }),
+  };
+  const result = await translationServices[translationMethod](params);
+  if (!result) throw new Error("Translation Test failed, no result received.");
+  return result;
+};
+
+/**
+ * Test translation with a given method and config \u2014 boolean wrapper around
+ * runReachabilityProbe for the manual "Test Connection" UI (any failure \u2192 false).
  */
 export const testTranslation = async (translationMethod: TranslationMethod, config: Partial<TranslateTextParams>, systemPrompt?: string, userPrompt?: string): Promise<boolean> => {
   try {
-    const params: TranslateTextParams = {
-      text: "Hello, world!",
-      targetLanguage: "zh",
-      sourceLanguage: "en",
-      cacheSuffix: "test",
-      translationMethod,
-      useCache: false,
-      ...config,
-      ...(systemPrompt && { systemPrompt }),
-      ...(userPrompt && { userPrompt }),
-    };
-
-    const result = await translationServices[translationMethod](params);
-
-    if (!result) throw new Error("Translation Test failed, no result received.");
-
-    // Validate that translation actually occurred
-    // For Chinese target language, result should contain Chinese characters
-    if (params.targetLanguage === "zh" && !/[\u4e00-\u9fa5]/.test(result)) {
+    const result = await runReachabilityProbe(translationMethod, config, systemPrompt, userPrompt);
+    // Probe target is zh, so result should contain Chinese \u2014 warn (not fail) if not.
+    if (!/[\u4e00-\u9fa5]/.test(result)) {
       console.warn("Translation result does not contain Chinese characters, may not have actually translated:", result);
     }
-
     // Warn if result is identical to source (possible translation failure)
-    if (result === params.text) {
+    if (result === "Hello, world!") {
       console.warn("Translation returned original text unchanged, may indicate translation service issue");
     }
-
     return true;
   } catch (error) {
     console.error("Translation Test failed", error);

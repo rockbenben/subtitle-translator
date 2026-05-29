@@ -56,9 +56,15 @@ export const isAuthError = (error: unknown): boolean => {
 const NON_RETRYABLE_MESSAGES = ["enable 'api relay'", "请在 api 设置中开启", "max_tokens reached"];
 
 /**
- * Check if error is retryable (server errors or rate limits)
+ * Check if error is retryable (server errors or rate limits).
+ *
+ * Also drives the translator's pre-flight reachability gate: the gate hard-blocks
+ * a translation only when this returns false (auth / CORS-needs-relay / aborts /
+ * other definitively-unrecoverable), and otherwise lets the resilient per-line
+ * pRetry + soft-fail handle it — so a single-shot probe is never stricter than
+ * the translation it guards.
  */
-const isRetryableError = (error: unknown): boolean => {
+export const isRetryableError = (error: unknown): boolean => {
   if (isAuthError(error)) return false;
   // Aborts are non-recoverable by retry:
   //   - AbortError: per-request timeout fired (createTimeoutController's

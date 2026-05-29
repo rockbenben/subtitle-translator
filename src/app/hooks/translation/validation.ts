@@ -67,3 +67,23 @@ export const validateTranslationInputs = (opts: ValidateInputsOpts): ValidateInp
 
   return { ok: true };
 };
+
+/**
+ * Signature over the credential / reachability-relevant config fields. validate()
+ * keys its in-memory, session-scoped probe memo on this to SKIP re-probing a
+ * config it already reachability-checked, and to force an immediate re-probe the
+ * moment any of these change (new key / url / model / relay / method). Prompts and
+ * temperature are intentionally excluded — they don't affect whether the endpoint
+ * is reachable or the credentials valid, so editing them shouldn't re-probe.
+ * Plain JSON string — the memo is an in-memory Set, so no hashing is needed.
+ */
+export const pingSignature = (method: string, config: TranslationConfig | undefined): string =>
+  JSON.stringify({
+    method,
+    url: config?.url ?? "",
+    apiKey: config?.apiKey ?? "",
+    model: config?.model ?? "",
+    region: config?.region ?? "",
+    apiVersion: config?.apiVersion ?? "",
+    useRelay: config?.useRelay ?? false,
+  });

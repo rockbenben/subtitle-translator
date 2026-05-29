@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { App } from "antd";
 import { useLocalStorage } from "@/app/hooks/useLocalStorage";
 import useFileUpload from "@/app/hooks/useFileUpload";
@@ -10,7 +10,7 @@ import { useTranslationProgress } from "@/app/hooks/useTranslationProgress";
 import {
   generateCacheSuffix,
   splitTextIntoChunks,
-  testTranslation,
+  runReachabilityProbe,
   useTranslation,
   defaultConfigs,
   deriveThinkingParams,
@@ -18,6 +18,7 @@ import {
   migrateConfig,
   resetConfigWithCredentials,
   LLM_MODELS,
+  PREFLIGHT_PROBE_METHODS,
   DEFAULT_SYSTEM_PROMPT,
   DEFAULT_USER_PROMPT,
   translategemmaHealthCheck,
@@ -32,9 +33,11 @@ import {
   exportTranslationSettings,
   createSettingsFileInput,
   validateTranslationInputs,
+  pingSignature,
   DEFAULT_RETRY_COUNT,
   DEFAULT_RETRY_TIMEOUT,
   isAuthError,
+  isRetryableError,
   type TranslationSettings,
   type UserRetryConfig,
 } from "@/app/hooks/translation";
@@ -89,6 +92,12 @@ const useTranslationState = () => {
   const [removeChars, setRemoveChars] = useLocalStorage<string>("translation-removeChars", "");
   const [multiLanguageMode, setMultiLanguageMode] = useLocalStorage<boolean>("translation-multiLanguageMode", false);
   const [retryCount, setRetryCount] = useLocalStorage<number>("translation-retryCount", DEFAULT_RETRY_COUNT);
+  // Session memo of probe-validated config signatures (pingSignature). Lets
+  // validate() skip re-probing a config it already reachability-checked this
+  // session; a changed signature (new key/url/model/relay) re-probes at once.
+  // useRef (not state) — no re-render needed; cleared on page refresh, which
+  // re-validates once per session (so an endpoint that died gets re-checked).
+  const validatedProbes = useRef<Set<string>>(new Set());
   // Per-request timeout in seconds (fetch signal setTimeout).
   const [requestTimeoutSec, setRequestTimeoutSec] = useLocalStorage<number>("translation-requestTimeoutSec", DEFAULT_RETRY_TIMEOUT);
   const [translatedText, setTranslatedText] = useState<string>("");
@@ -302,33 +311,67 @@ const useTranslationState = () => {
       return false;
     }
 
-    if (["deepl", "deeplx", "llm", "gtxFreeAPI", "translategemma"].includes(translationMethod)) {
-      // translategemma uses a lightweight reachability check (GET /v1/models)
-      // instead of full inference — avoids the 5-30s wait for cold-start model
-      // loading on LM Studio. Catches the common "server not running" case fast.
-      let testResult: boolean;
-      if (translationMethod === "translategemma") {
-        testResult = await translategemmaHealthCheck(String(config.url ?? ""));
-      } else {
-        const tempSystemPrompt = translationMethod === "llm" ? effectiveSystemPrompt : undefined;
-        const tempUserPrompt = translationMethod === "llm" ? effectiveUserPrompt : undefined;
-        testResult = await testTranslation(translationMethod, config, tempSystemPrompt, tempUserPrompt);
-      }
-      if (testResult !== true) {
-        const errorMessages: Record<string, string> = {
-          deeplx: t("deepLXUnavailable"),
-          deepl: t("deeplUnavailable"),
-          llm: t("llmUnavailable"),
-          gtxFreeAPI: t("gtxFreeAPIUnavailable"),
-          translategemma: t("translategemmaUnavailable"),
-        };
-        if (translationMethod === "deeplx") setTranslationMethod(DEFAULT_API);
-        // ⚠ Footgun: setState is async; below this line `translationMethod` in this
-        // scope still reads the old value (deeplx). Currently safe because we
-        // immediately `return false`. If you add code that re-reads
-        // `translationMethod` after this point, expect stale value.
-        message.open({ type: "error", content: errorMessages[translationMethod] || t("translationError"), duration: 10 });
-        return false;
+    if (PREFLIGHT_PROBE_METHODS.has(translationMethod)) {
+      // Pre-flight reachability gate, skipped when THIS exact config was already
+      // probe-validated this session — keyed by credential signature (changing
+      // key/url/model/relay re-probes at once). validate() runs only on translate,
+      // so editing the key never probes mid-typing.
+      const sig = pingSignature(translationMethod, config);
+      if (!validatedProbes.current.has(sig)) {
+        if (translationMethod === "translategemma") {
+          // Local LM Studio reachability (GET /v1/models) — has its own built-in
+          // 5s timeout for a fast fail when the server isn't running. Failure =
+          // hard-block (a local health check has no transient nuance).
+          if ((await translategemmaHealthCheck(String(config.url ?? ""))) !== true) {
+            message.open({ type: "error", content: t("translategemmaUnavailable"), duration: 10 });
+            return false;
+          }
+        } else {
+          // Bound the probe: unlike per-line translation it has no timeout of its
+          // own, so a hanging / black-hole endpoint (esp. a user-typed llm URL)
+          // could stall the whole run at "validating" forever. Use the user's
+          // per-request timeout as the ceiling; an abort is non-retryable → blocks.
+          const tempSystemPrompt = translationMethod === "llm" ? effectiveSystemPrompt : undefined;
+          const tempUserPrompt = translationMethod === "llm" ? effectiveUserPrompt : undefined;
+          const probeController = new AbortController();
+          const probeTimeout = setTimeout(() => probeController.abort(), requestTimeoutSec * 1000);
+          try {
+            await runReachabilityProbe(translationMethod, config, tempSystemPrompt, tempUserPrompt, probeController.signal);
+          } catch (error) {
+            // Smart gate: HARD-BLOCK only when retrying wouldn't help — the same
+            // errors the per-line translation gives up on (auth / CORS-needs-relay
+            // / abort/timeout, via isRetryableError). Transient reachable-but-busy
+            // failures (429 / 5xx / network blip) PROCEED: a single-shot probe must
+            // not be stricter than the resilient per-line pRetry + soft-fail, so a
+            // momentary blip can't block the whole job.
+            //
+            // deeplx is the exception — it's a flaky public proxy whose safety net
+            // IS the auto-switch to the free GTX default, so ANY probe failure
+            // (even transient) should fall back rather than proceed-and-soft-fail.
+            if (!isRetryableError(error) || translationMethod === "deeplx") {
+              const errorMessages: Record<string, string> = {
+                deeplx: t("deepLXUnavailable"),
+                deepl: t("deeplUnavailable"),
+                llm: t("llmUnavailable"),
+                gtxFreeAPI: t("gtxFreeAPIUnavailable"),
+              };
+              if (translationMethod === "deeplx") setTranslationMethod(DEFAULT_API);
+              // ⚠ Footgun: setState is async; below this line `translationMethod` in
+              // this scope still reads the old value (deeplx). Safe because we
+              // immediately `return false`.
+              message.open({ type: "error", content: errorMessages[translationMethod] || t("translationError"), duration: 10 });
+              return false;
+            }
+            // Transient → don't block, don't cache; the per-line retry handles it
+            // and the next run re-probes for a clean pass.
+            console.warn(`Reachability probe for ${translationMethod} hit a retryable error; proceeding (per-line retry will handle it).`, error);
+            return true;
+          } finally {
+            clearTimeout(probeTimeout);
+          }
+        }
+        // Clean success → remember for this session (skip re-probe on repeat runs).
+        validatedProbes.current.add(sig);
       }
     }
 
