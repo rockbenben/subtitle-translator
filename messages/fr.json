@@ -1,5 +1,10 @@
 {
   "common": {
+    "fileProcessFailed": "Échec du traitement du fichier — vérifiez son encodage ou essayez-en un autre",
+    "fileReadFailed": "Échec de la lecture du fichier",
+    "unrecognizedLangCodes": "Codes de langue non reconnus : {codes}",
+    "ignoredLangCodes": "Codes de langue non reconnus ignorés : {codes}",
+    "partialExportFailed": "Échec de l'export de certaines langues : {items}",
     "userGuide": "Guide d'utilisation",
     "privacyNotice": "Votre clé API et vos données sont stockées uniquement dans votre navigateur local, garantissant la confidentialité. Pour toute question ou suggestion, contactez-nous via la communauté ou la page de commentaires.",
     "dragAndDropText": "Cliquez ou glissez un fichier ici pour télécharger",
@@ -47,7 +52,6 @@
     "exportAllFile": "Tout exporter",
     "exportedFile": "Exporté",
     "fileExported": "Fichier exporté : {fileName}",
-    "exportSuccess": "Export réussi : {fileName}",
     "batchDownloaded": "Traitement terminé, le fichier a été téléchargé automatiquement",
     "extractedText": "Texte extrait",
     "translating": "Traduction...",
@@ -80,7 +84,7 @@
     "readOnlyModeTooltip": "Texte trop long : l'éditeur est temporairement en lecture seule et n'affiche qu'un aperçu partiel. Votre contenu complet n'est pas affecté — le traitement et l'export utilisent toujours l'intégralité du texte.",
     "clearInputTooltip": "Effacer le contenu saisi et les fichiers téléchargés",
     "smartLineBreak": "Saut de ligne intelligent",
-    "replaceText": "Remplacer le texte",
+    "replaceText": "Remplacer le texte ",
     "generateJson": "Générer JSON",
     "exportSettingTooltip": "Exporter la configuration vers un fichier",
     "importSettingTooltip": "Importer la configuration depuis un fichier",
@@ -90,10 +94,8 @@
     "importSettingError": "Échec de l'import, réessayez",
     "removeCharsAfterTranslation": "Supprimer caractères après traduction",
     "removeCharsAfterTranslationTooltip": "Supprimer automatiquement les caractères spécifiés après traduction (séparés par des espaces)",
-    "selectedLanguages": "Sélectionnés",
     "search": "Rechercher",
     "noMatches": "Aucun outil correspondant",
-    "selectAll": "Tout sélectionner",
     "clearAll": "Tout effacer",
     "cancel": "Annuler",
     "apply": "Appliquer",
@@ -164,6 +166,8 @@
     "bilingualError": "Balises de style complexes détectées. Le mode bilingue peut causer des erreurs de format. Recommandé de désactiver 'Sous-titres bilingues'."
   },
   "TranslationSettings": {
+    "resetConfigSuccess": "Configuration réinitialisée aux valeurs par défaut",
+    "resetCacheConfirm": "Effacer tout le cache de traduction ? Cette action est irréversible.",
     "docs": "Docs",
     "resetCacheTooltip": "Effacer tout le cache de traduction (irréversible)",
     "resetCache": "Effacer cache",
@@ -202,7 +206,7 @@
     "useRelay": "Relais API",
     "useRelayTooltip": "Activez le relais API en cas d'erreurs CORS ou 403",
     "reasoningEffort": "Effort de raisonnement",
-    "reasoningEffortExtra": "Off désactive le raisonnement ; un effort plus élevé est généralement plus précis, mais plus lent et consomme plus de tokens",
+    "reasoningEffortExtra": "Off désactive le raisonnement (par défaut) ; l'activer est généralement plus précis, mais plus lent et consomme plus de tokens. Les modèles personnalisés proposent aussi Auto = suivre la valeur par défaut du modèle (à n'utiliser que si Off provoque une erreur API).",
     "presetSelect": "Sélectionner un préréglage",
     "presetSave": "Enregistrer comme nouveau préréglage",
     "presetDelete": "Supprimer le préréglage actuel",
@@ -291,6 +295,70 @@
         "25+ moteurs de traduction : Google gratuit, DeepSeek, Claude, GPT, Gemini, DeepL, Qwen-MT",
         "Compatible avec YouTube, Vimeo, Premiere, DaVinci Resolve, Aegisub"
       ]
+    },
+    "jsonTranslate": {
+      "title": "Traducteur JSON i18n",
+      "description": "Outil de traduction JSON multilingue efficace"
+    },
+    "mdTranslator": {
+      "title": "Traducteur Markdown",
+      "description": "Traduction Markdown par lot, format et code préservés"
+    },
+    "textSplitter": {
+      "title": "Découpeur de Texte",
+      "description": "Découpe intelligente de texte long pour IA et réseaux sociaux"
+    },
+    "chineseConversion": {
+      "title": "Conversion chinois",
+      "description": "Convertir en masse simplifié, traditionnel Taïwan, traditionnel Hong Kong et nouveaux caractères japonais"
+    },
+    "novelProcessor": {
+      "title": "Formateur de romans web chinois",
+      "description": "Correction des problèmes de mise en page des romans web chinois téléchargés en un clic, avec division automatique des chapitres."
+    },
+    "textToolbox": {
+      "title": "Assistant texte regex",
+      "description": "Correspondance regex, tri, filtrage et plus pour le traitement en masse de texte"
+    },
+    "dataBatch": {
+      "title": "Processeur de texte",
+      "description": "Traitement par lots de données Excel — déduplication, extraction de colonnes, fusion, règles enchaînées"
+    },
+    "jsonValueExtractor": {
+      "title": "Extracteur Valeur JSON",
+      "description": "Extraire valeurs JSON par lot, sortie formatée"
+    },
+    "jsonNodeEdit": {
+      "title": "Édition JSON par Lot",
+      "description": "Éditer nœuds JSON par lot, préfixe/suffixe/remplacer"
+    },
+    "jsonValueTransformer": {
+      "title": "Mappeur Valeur JSON",
+      "description": "Mappage et migration de valeurs avec JSONPath"
+    },
+    "jsonValueSwapper": {
+      "title": "Échangeur Valeur JSON",
+      "description": "Échanger valeurs de deux champs en un clic"
+    },
+    "jsonNodeInserter": {
+      "title": "Inséreur Nœud JSON",
+      "description": "Insérer nouveaux nœuds à position spécifiée par lot"
+    },
+    "jsonSortClassify": {
+      "title": "Tri & Classification JSON",
+      "description": "Trier et grouper tableaux, règles personnalisées"
+    },
+    "jsonMatchUpdate": {
+      "title": "Mise à jour Match JSON",
+      "description": "Mise à jour par lot basée sur correspondance de champs"
+    },
+    "dataParserFlare": {
+      "title": "Convertisseur Flare",
+      "description": "Conversion favoris navigateur et format Flare"
+    },
+    "dataParserImgPrompt": {
+      "title": "Générateur Données IMGPrompt",
+      "description": "Générer données JSON IMGPrompt par lot"
     }
   },
   "navigation": {

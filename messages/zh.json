@@ -1,5 +1,10 @@
 {
   "common": {
+    "fileProcessFailed": "文件处理失败，请检查文件编码或换一个文件",
+    "fileReadFailed": "读取文件失败",
+    "unrecognizedLangCodes": "无法识别的语言代码：{codes}",
+    "ignoredLangCodes": "已忽略无法识别的语言代码：{codes}",
+    "partialExportFailed": "部分语言导出失败：{items}",
     "userGuide": "使用说明",
     "privacyNotice": "您的 API 密钥及数据仅存储在本地浏览器，确保隐私安全。如有问题或建议，欢迎通过社群或反馈页面联系我们。",
     "dragAndDropText": "点击或将文件拖拽至此上传",
@@ -82,10 +87,8 @@
     "importSettingError": "导入失败，请重试",
     "removeCharsAfterTranslation": "翻译后移除字符",
     "removeCharsAfterTranslationTooltip": "翻译完成后自动移除指定字符（多个用空格分隔）",
-    "selectedLanguages": "已选语言",
     "search": "搜索",
     "noMatches": "没有匹配的工具",
-    "selectAll": "全选",
     "clearAll": "清空",
     "cancel": "取消",
     "apply": "应用",
@@ -120,7 +123,6 @@
     "moreProviderSettings": "更多 Provider 设置",
     "clearInputTooltip": "清空输入内容和上传的文件",
     "fileExported": "已导出文件：{fileName}",
-    "exportSuccess": "导出成功：{fileName}",
     "batchDownloaded": "处理完成，文件已自动下载",
     "sourceTextPlaceholder": "请输入或粘贴待处理文本...",
     "smartLineBreak": "智能换行",
@@ -164,6 +166,8 @@
     "bilingualError": "检测到复杂样式标签，双语模式可能导致格式错乱，建议关闭「双语字幕」。"
   },
   "TranslationSettings": {
+    "resetConfigSuccess": "已恢复默认配置",
+    "resetCacheConfirm": "确定清除所有翻译缓存吗？此操作不可撤销",
     "docs": "文档",
     "resetCacheTooltip": "清除所有翻译缓存（操作不可撤销）",
     "resetCache": "清除缓存",
@@ -202,7 +206,7 @@
     "useRelay": "中转 API",
     "useRelayTooltip": "如遇到 CORS 或 403 错误，请开启中转 API",
     "reasoningEffort": "推理强度",
-    "reasoningEffortExtra": "Off 关闭思考；更高强度通常更准确，但响应更慢、消耗更多 token",
+    "reasoningEffortExtra": "Off 关闭思考（默认）；开启后通常更准确，但更慢、更耗 token。自定义模型还有 Auto = 跟随模型自带默认，仅当 Off 导致接口报错时改用。",
     "presetSelect": "选择预设",
     "presetSave": "另存为新预设",
     "presetDelete": "删除当前预设",
@@ -291,6 +295,70 @@
         "25+ 翻译引擎：Google 免费、DeepSeek、Claude、GPT、Gemini、DeepL、Qwen-MT",
         "兼容 B 站、YouTube、Premiere、DaVinci Resolve、Aegisub"
       ]
+    },
+    "jsonTranslate": {
+      "title": "JSON 多语言翻译",
+      "description": "高效的多语言 JSON 翻译工具"
+    },
+    "mdTranslator": {
+      "title": "Markdown 翻译",
+      "description": "批量翻译 Markdown 文档，保留格式和代码"
+    },
+    "textSplitter": {
+      "title": "文本分割",
+      "description": "智能分割长文本，适用于 AI 输入和社交媒体"
+    },
+    "chineseConversion": {
+      "title": "简繁转换",
+      "description": "批量转换简体、台湾繁体、香港繁体和日本新字体"
+    },
+    "novelProcessor": {
+      "title": "小说排版整理",
+      "description": "一键修复下载小说的格式问题，智能换行排版"
+    },
+    "textToolbox": {
+      "title": "多功能文本处理",
+      "description": "集成正则匹配、排序、过滤等功能，进行文本批量处理"
+    },
+    "dataBatch": {
+      "title": "数据批处理",
+      "description": "Excel 表格批量去重、列提取、文本合并，多规则按序执行"
+    },
+    "jsonValueExtractor": {
+      "title": "JSON 字段值提取",
+      "description": "批量提取 JSON 字段值，支持格式化输出"
+    },
+    "jsonNodeEdit": {
+      "title": "JSON 节点批量编辑",
+      "description": "批量编辑 JSON 节点值，支持前后缀和替换"
+    },
+    "jsonValueTransformer": {
+      "title": "JSON 字段值映射",
+      "description": "字段值映射和迁移，支持 JSONPath 定位"
+    },
+    "jsonValueSwapper": {
+      "title": "JSON 键值互换",
+      "description": "一键交换两个字段的值"
+    },
+    "jsonNodeInserter": {
+      "title": "JSON 节点批量插入",
+      "description": "在指定位置批量插入新节点"
+    },
+    "jsonSortClassify": {
+      "title": "JSON 排序分组",
+      "description": "数组排序和分组，支持自定义规则"
+    },
+    "jsonMatchUpdate": {
+      "title": "JSON 匹配更新",
+      "description": "根据字段匹配批量更新数据"
+    },
+    "dataParserFlare": {
+      "title": "Flare 书签转换",
+      "description": "浏览器书签与 Flare 格式互转"
+    },
+    "dataParserImgPrompt": {
+      "title": "IMGPrompt 数据生成",
+      "description": "批量生成 IMGPrompt JSON 数据"
     }
   },
   "navigation": {

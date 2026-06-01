@@ -1,5 +1,10 @@
 {
   "common": {
+    "fileProcessFailed": "फ़ाइल प्रोसेस करने में विफल — इसकी एन्कोडिंग जाँचें या कोई और फ़ाइल आज़माएँ",
+    "fileReadFailed": "फ़ाइल पढ़ने में विफल",
+    "unrecognizedLangCodes": "अपरिचित भाषा कोड: {codes}",
+    "ignoredLangCodes": "अपरिचित भाषा कोड अनदेखा किए गए: {codes}",
+    "partialExportFailed": "कुछ भाषाएँ निर्यात करने में विफल: {items}",
     "userGuide": "उपयोगकर्ता गाइड",
     "privacyNotice": "आपकी गोपनीयता सुनिश्चित करने के लिए आपकी API कुंजी और डेटा केवल आपके ब्राउज़र में स्थानीय रूप से संग्रहीत किए जाते हैं। यदि आपके कोई प्रश्न या सुझाव हैं, तो कृपया समुदाय या फीडबैक पृष्ठ के माध्यम से हमसे संपर्क करें।",
     "dragAndDropText": "अपलोड करने के लिए यहां क्लिक करें या फ़ाइल खींचें",
@@ -76,10 +81,8 @@
     "importSettingError": "आयात विफल, पुनः प्रयास करें",
     "removeCharsAfterTranslation": "अनुवाद के बाद वर्ण हटाएं",
     "removeCharsAfterTranslationTooltip": "अनुवाद के बाद निर्दिष्ट वर्णों को स्वचालित रूप से हटाएं (रिक्त स्थान से अलग करें)",
-    "selectedLanguages": "चयनित",
     "search": "खोजें",
     "noMatches": "कोई मिलान करने वाला उपकरण नहीं",
-    "selectAll": "सभी चुनें",
     "clearAll": "सभी साफ़ करें",
     "cancel": "रद्द करें",
     "apply": "लागू करें",
@@ -120,11 +123,10 @@
     "readOnlyModeTooltip": "टेक्स्ट बहुत लंबा है: एडिटर अस्थायी रूप से केवल-पढ़ने योग्य है और केवल आंशिक पूर्वावलोकन दिखाता है। आपकी पूरी सामग्री अप्रभावित है — प्रोसेसिंग और एक्सपोर्ट अब भी पूरे टेक्स्ट का उपयोग करते हैं।",
     "clearInputTooltip": "इनपुट सामग्री और अपलोड की गई फ़ाइलें साफ़ करें",
     "fileExported": "फ़ाइल निर्यात हुई: {fileName}",
-    "exportSuccess": "निर्यात सफल: {fileName}",
     "batchDownloaded": "प्रसंस्करण पूर्ण, फ़ाइल स्वचालित रूप से डाउनलोड हो गई",
     "sourceTextPlaceholder": "प्रसंस्करण के लिए टेक्स्ट दर्ज करें या पेस्ट करें...",
     "smartLineBreak": "स्मार्ट लाइन ब्रेक",
-    "replaceText": "टेक्स्ट बदलें",
+    "replaceText": "टेक्स्ट बदलें ",
     "generateJson": "JSON बनाएं",
     "gtxFreeAPIUnavailable": "GTX Free सेवा अस्थायी रूप से पहुंच योग्य नहीं है — यह नेटवर्क प्रतिबंध हो सकता है। कृपया बाद में पुनः प्रयास करें या किसी अन्य अनुवाद सेवा पर स्विच करें।",
     "translategemmaUnavailable": "TranslateGemma सेवा अस्थायी रूप से पहुंच योग्य नहीं है, सुनिश्चित करें कि आपका स्थानीय सर्वर (LM Studio / llama.cpp / Ollama) चल रहा है और URL सही है।",
@@ -164,6 +166,8 @@
     "bilingualError": "जटिल शैली टैग का पता चला। द्विभाषी मोड प्रारूप त्रुटियों का कारण बन सकता है। 'द्विभाषी उपशीर्षक' को बंद करने की अनुशंसा की जाती है।"
   },
   "TranslationSettings": {
+    "resetConfigSuccess": "कॉन्फ़िगरेशन डिफ़ॉल्ट पर रीसेट कर दिया गया",
+    "resetCacheConfirm": "सभी अनुवाद कैश साफ़ करें? इसे पूर्ववत नहीं किया जा सकता।",
     "docs": "दस्तावेज़",
     "resetCacheTooltip": "सभी अनुवाद कैश साफ़ करें (अपरिवर्तनीय)",
     "resetCache": "कैश साफ़ करें",
@@ -202,7 +206,7 @@
     "useRelay": "API रिले",
     "useRelayTooltip": "CORS या 403 त्रुटि होने पर API रिले सक्षम करें",
     "reasoningEffort": "तर्क प्रयास",
-    "reasoningEffortExtra": "Off सोच को निष्क्रिय करता है; अधिक प्रयास आमतौर पर अधिक सटीक होता है, लेकिन धीमा होता है और अधिक टोकन खपत करता है",
+    "reasoningEffortExtra": "Off सोच को निष्क्रिय करता है (डिफ़ॉल्ट); चालू करने पर आमतौर पर अधिक सटीक, लेकिन धीमा और अधिक टोकन खपत करता है। कस्टम मॉडल में Auto भी होता है = मॉडल के अपने डिफ़ॉल्ट का पालन करें (केवल तभी उपयोग करें जब Off से API त्रुटि हो)।",
     "presetSelect": "प्रीसेट चुनें",
     "presetSave": "नए प्रीसेट के रूप में सहेजें",
     "presetDelete": "वर्तमान प्रीसेट हटाएं",
@@ -291,6 +295,70 @@
         "25+ अनुवाद इंजन: Google मुफ्त, DeepSeek, Claude, GPT, Gemini, DeepL, Qwen-MT",
         "YouTube, Premiere, DaVinci Resolve, Aegisub के साथ संगत"
       ]
+    },
+    "jsonTranslate": {
+      "title": "i18n JSON अनुवादक",
+      "description": "कुशल बहुभाषी JSON अनुवाद उपकरण"
+    },
+    "mdTranslator": {
+      "title": "Markdown अनुवादक",
+      "description": "बैच Markdown अनुवाद, प्रारूप और कोड संरक्षित करें"
+    },
+    "chineseConversion": {
+      "title": "चीनी लिपि रूपांतरण",
+      "description": "सरलीकृत, ताइवान पारंपरिक, हांगकांग पारंपरिक और जापानी नए अक्षरों के बीच बैच रूपांतरण"
+    },
+    "novelProcessor": {
+      "title": "चीनी वेब नॉवल फ़ॉर्मेटर",
+      "description": "डाउनलोड किए चीनी वेब उपन्यास की फ़ॉर्मेटिंग समस्याएं एक क्लिक में ठीक करें"
+    },
+    "textToolbox": {
+      "title": "रेगेक्स टेक्स्ट असिस्टेंट",
+      "description": "रेगेक्स मिलान, सॉर्टिंग, फ़िल्टरिंग आदि के साथ बैच टेक्स्ट प्रोसेसिंग"
+    },
+    "dataBatch": {
+      "title": "व्यक्तिगत टेक्स्ट प्रोसेसिंग",
+      "description": "Excel डेटा बैच प्रोसेसिंग — डुप्लिकेट हटाना, कॉलम निष्कर्षण, टेक्स्ट विलय, श्रृंखला नियम"
+    },
+    "textSplitter": {
+      "title": "टेक्स्ट स्प्लिटर",
+      "description": "AI और सोशल मीडिया के लिए स्मार्ट लंबा टेक्स्ट विभाजन"
+    },
+    "jsonValueExtractor": {
+      "title": "JSON मान एक्सट्रैक्टर",
+      "description": "बैच JSON मान निकालें, स्वरूपित आउटपुट"
+    },
+    "jsonNodeEdit": {
+      "title": "बैच JSON संपादन",
+      "description": "बैच JSON नोड्स संपादित करें, उपसर्ग/प्रत्यय/बदलें"
+    },
+    "jsonValueTransformer": {
+      "title": "JSON मान मैपर",
+      "description": "JSONPath के साथ मान मैपिंग और प्रवासन"
+    },
+    "jsonValueSwapper": {
+      "title": "JSON मान स्वैपर",
+      "description": "एक क्लिक में दो फ़ील्ड मान स्वैप करें"
+    },
+    "jsonNodeInserter": {
+      "title": "JSON नोड इंसर्टर",
+      "description": "बैच में निर्दिष्ट स्थिति में नए नोड डालें"
+    },
+    "jsonSortClassify": {
+      "title": "JSON सॉर्ट और वर्गीकृत करें",
+      "description": "सरणियों को सॉर्ट और समूहबद्ध करें, कस्टम नियम"
+    },
+    "jsonMatchUpdate": {
+      "title": "JSON मैच अपडेट",
+      "description": "फ़ील्ड मिलान के आधार पर बैच अपडेट"
+    },
+    "dataParserFlare": {
+      "title": "फ्लेयर कन्वर्टर",
+      "description": "ब्राउज़र बुकमार्क और फ्लेयर प्रारूप रूपांतरण"
+    },
+    "dataParserImgPrompt": {
+      "title": "IMGPrompt डेटा जेनरेटर",
+      "description": "बैच IMGPrompt JSON डेटा उत्पन्न करें"
     }
   },
   "navigation": {

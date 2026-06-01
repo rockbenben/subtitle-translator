@@ -1,5 +1,10 @@
 {
   "common": {
+    "fileProcessFailed": "Gagal memproses file — periksa encoding-nya atau coba file lain",
+    "fileReadFailed": "Gagal membaca file",
+    "unrecognizedLangCodes": "Kode bahasa tidak dikenali: {codes}",
+    "ignoredLangCodes": "Mengabaikan kode bahasa yang tidak dikenali: {codes}",
+    "partialExportFailed": "Gagal mengekspor beberapa bahasa: {items}",
     "userGuide": "Panduan Pengguna",
     "privacyNotice": "Kunci API dan data Anda hanya disimpan secara lokal di browser Anda untuk memastikan privasi. Jika Anda memiliki pertanyaan atau saran, silakan hubungi kami melalui komunitas atau halaman umpan balik.",
     "dragAndDropText": "Klik atau seret file ke sini untuk mengunggah",
@@ -76,10 +81,8 @@
     "importSettingError": "Impor gagal, coba lagi",
     "removeCharsAfterTranslation": "Hapus karakter setelah terjemahan",
     "removeCharsAfterTranslationTooltip": "Hapus karakter yang ditentukan secara otomatis setelah terjemahan (pisahkan dengan spasi)",
-    "selectedLanguages": "Dipilih",
     "search": "Cari",
     "noMatches": "Tidak ada alat yang cocok",
-    "selectAll": "Pilih Semua",
     "clearAll": "Hapus Semua",
     "cancel": "Batal",
     "apply": "Terapkan",
@@ -120,11 +123,10 @@
     "readOnlyModeTooltip": "Teks terlalu panjang: editor sementara hanya-baca dan hanya menampilkan pratinjau sebagian. Konten lengkap Anda tidak terpengaruh — pemrosesan dan ekspor tetap menggunakan seluruh teks.",
     "clearInputTooltip": "Bersihkan konten input dan file yang diunggah",
     "fileExported": "File diekspor: {fileName}",
-    "exportSuccess": "Ekspor berhasil: {fileName}",
     "batchDownloaded": "Pemrosesan selesai, file diunduh otomatis",
     "sourceTextPlaceholder": "Masukkan atau tempel teks yang akan diproses...",
     "smartLineBreak": "Jeda Baris Cerdas",
-    "replaceText": "Ganti Teks",
+    "replaceText": "Ganti Teks ",
     "generateJson": "Hasilkan JSON",
     "gtxFreeAPIUnavailable": "Layanan GTX Free sementara tidak dapat dijangkau — mungkin pembatasan jaringan. Silakan coba lagi nanti atau beralih ke layanan terjemahan lain.",
     "translategemmaUnavailable": "Layanan TranslateGemma sementara tidak dapat dijangkau, pastikan server lokal Anda (LM Studio / llama.cpp / Ollama) sedang berjalan dan URL sudah benar.",
@@ -164,6 +166,8 @@
     "bilingualError": "Tag gaya kompleks terdeteksi. Mode dwibahasa dapat menyebabkan kesalahan format. Disarankan untuk mematikan 'Subtitle Dwibahasa'."
   },
   "TranslationSettings": {
+    "resetConfigSuccess": "Konfigurasi disetel ulang ke default",
+    "resetCacheConfirm": "Hapus semua cache terjemahan? Tindakan ini tidak dapat dibatalkan.",
     "docs": "Dokumen",
     "resetCacheTooltip": "Hapus semua cache terjemahan (tidak dapat dibatalkan)",
     "resetCache": "Hapus Cache",
@@ -202,7 +206,7 @@
     "useRelay": "Relay API",
     "useRelayTooltip": "Aktifkan relay API jika terjadi kesalahan CORS atau 403",
     "reasoningEffort": "Intensitas penalaran",
-    "reasoningEffortExtra": "Off menonaktifkan pemikiran; intensitas yang lebih tinggi biasanya lebih akurat tetapi lebih lambat dan mengonsumsi lebih banyak token",
+    "reasoningEffortExtra": "Off menonaktifkan pemikiran (default); mengaktifkannya biasanya lebih akurat tetapi lebih lambat dan menggunakan lebih banyak token. Model kustom juga punya Auto = mengikuti default bawaan model (gunakan hanya jika Off menyebabkan error API).",
     "presetSelect": "Pilih Preset",
     "presetSave": "Simpan sebagai Preset Baru",
     "presetDelete": "Hapus Preset Saat Ini",
@@ -291,6 +295,70 @@
         "25+ mesin terjemahan: Google gratis, DeepSeek, Claude, GPT, Gemini, DeepL, Qwen-MT",
         "Kompatibel dengan YouTube, Premiere, DaVinci Resolve, Aegisub"
       ]
+    },
+    "jsonTranslate": {
+      "title": "Penerjemah JSON i18n",
+      "description": "Alat terjemahan JSON multi-bahasa yang efisien"
+    },
+    "mdTranslator": {
+      "title": "Penerjemah Markdown",
+      "description": "Terjemahan Markdown batch, pertahankan format dan kode"
+    },
+    "chineseConversion": {
+      "title": "Konversi Karakter Tionghoa",
+      "description": "Konversi batch antara Sederhana, Tradisional Taiwan, Tradisional Hong Kong, dan Aksara Jepang Baru"
+    },
+    "novelProcessor": {
+      "title": "Pemformat Novel Web China",
+      "description": "Perbaiki masalah format novel web China yang diunduh dengan satu klik"
+    },
+    "textToolbox": {
+      "title": "Asisten Teks Regex",
+      "description": "Pencocokan regex, pengurutan, penyaringan, dan pemrosesan teks batch"
+    },
+    "dataBatch": {
+      "title": "Pemrosesan Teks Pribadi",
+      "description": "Pemrosesan data Excel batch — deduplikasi, ekstraksi kolom, gabung teks, aturan berurutan"
+    },
+    "textSplitter": {
+      "title": "Pemisah Teks",
+      "description": "Pemisahan teks panjang cerdas untuk AI dan media sosial"
+    },
+    "jsonValueExtractor": {
+      "title": "Pengekstrak Nilai JSON",
+      "description": "Ekstrak nilai JSON batch, output terformat"
+    },
+    "jsonNodeEdit": {
+      "title": "Pengeditan JSON Batch",
+      "description": "Edit node JSON batch, awalan/akhiran/ganti"
+    },
+    "jsonValueTransformer": {
+      "title": "Pemeta Nilai JSON",
+      "description": "Pemetaan dan migrasi nilai dengan JSONPath"
+    },
+    "jsonValueSwapper": {
+      "title": "Penukar Nilai JSON",
+      "description": "Tukar nilai dua bidang dengan satu klik"
+    },
+    "jsonNodeInserter": {
+      "title": "Penyisip Node JSON",
+      "description": "Sisipkan node baru di posisi yang ditentukan secara batch"
+    },
+    "jsonSortClassify": {
+      "title": "Urutkan & Klasifikasikan JSON",
+      "description": "Urutkan dan kelompokkan array, aturan kustom"
+    },
+    "jsonMatchUpdate": {
+      "title": "Pembaruan JSON Match",
+      "description": "Pembaruan batch berdasarkan pencocokan bidang"
+    },
+    "dataParserFlare": {
+      "title": "Konverter Flare",
+      "description": "Konversi bookmark browser dan format Flare"
+    },
+    "dataParserImgPrompt": {
+      "title": "Generator Data IMGPrompt",
+      "description": "Hasilkan data JSON IMGPrompt secara batch"
     }
   },
   "navigation": {

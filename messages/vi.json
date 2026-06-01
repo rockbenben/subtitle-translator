@@ -1,5 +1,10 @@
 {
   "common": {
+    "fileProcessFailed": "Xử lý tệp thất bại — kiểm tra mã hóa hoặc thử tệp khác",
+    "fileReadFailed": "Đọc tệp thất bại",
+    "unrecognizedLangCodes": "Mã ngôn ngữ không nhận dạng được: {codes}",
+    "ignoredLangCodes": "Đã bỏ qua các mã ngôn ngữ không nhận dạng được: {codes}",
+    "partialExportFailed": "Xuất một số ngôn ngữ thất bại: {items}",
     "userGuide": "Hướng Dẫn Sử Dụng",
     "privacyNotice": "Khóa API và dữ liệu của bạn chỉ được lưu trữ cục bộ trên trình duyệt để đảm bảo quyền riêng tư. Nếu có thắc mắc hoặc góp ý, vui lòng liên hệ qua cộng đồng hoặc trang phản hồi.",
     "dragAndDropText": "Nhấp hoặc kéo tệp vào đây để tải lên",
@@ -76,10 +81,8 @@
     "importSettingError": "Nhập thất bại, vui lòng thử lại",
     "removeCharsAfterTranslation": "Xóa ký tự sau khi dịch",
     "removeCharsAfterTranslationTooltip": "Tự động xóa các ký tự được chỉ định sau khi dịch (phân tách bằng dấu cách)",
-    "selectedLanguages": "Đã chọn",
     "search": "Tìm kiếm",
     "noMatches": "Không có công cụ phù hợp",
-    "selectAll": "Chọn tất cả",
     "clearAll": "Xóa tất cả",
     "cancel": "Hủy",
     "apply": "Áp dụng",
@@ -120,11 +123,10 @@
     "readOnlyModeTooltip": "Văn bản quá dài: trình soạn thảo tạm thời ở chế độ chỉ đọc và chỉ hiển thị bản xem trước một phần. Toàn bộ nội dung của bạn không bị ảnh hưởng — xử lý và xuất vẫn dùng toàn bộ văn bản.",
     "clearInputTooltip": "Xóa nội dung đã nhập và tệp đã tải lên",
     "fileExported": "Đã xuất tệp: {fileName}",
-    "exportSuccess": "Xuất thành công: {fileName}",
     "batchDownloaded": "Xử lý hoàn tất, tệp đã được tải xuống tự động",
     "sourceTextPlaceholder": "Nhập hoặc dán văn bản cần xử lý...",
     "smartLineBreak": "Xuống dòng thông minh",
-    "replaceText": "Thay thế văn bản",
+    "replaceText": "Thay thế văn bản ",
     "generateJson": "Tạo JSON",
     "gtxFreeAPIUnavailable": "Dịch vụ GTX Free tạm thời không kết nối được — có thể do hạn chế mạng. Vui lòng thử lại sau hoặc chuyển sang dịch vụ dịch khác.",
     "translategemmaUnavailable": "Dịch vụ TranslateGemma tạm thời không kết nối được, hãy đảm bảo máy chủ cục bộ của bạn (LM Studio / llama.cpp / Ollama) đang chạy và URL chính xác.",
@@ -164,6 +166,8 @@
     "bilingualError": "Phát hiện thẻ kiểu phức tạp. Chế độ song ngữ có thể gây lỗi định dạng. Khuyên dùng tắt 'Phụ đề song ngữ'."
   },
   "TranslationSettings": {
+    "resetConfigSuccess": "Đã đặt lại cấu hình về mặc định",
+    "resetCacheConfirm": "Xóa toàn bộ bộ nhớ đệm dịch? Thao tác này không thể hoàn tác.",
     "docs": "Tài liệu",
     "resetCacheTooltip": "Xóa tất cả bộ nhớ đệm dịch (không thể hoàn tác)",
     "resetCache": "Xóa bộ nhớ đệm",
@@ -202,7 +206,7 @@
     "useRelay": "Chuyển tiếp API",
     "useRelayTooltip": "Bật chuyển tiếp API khi gặp lỗi CORS hoặc 403",
     "reasoningEffort": "Mức độ suy luận",
-    "reasoningEffortExtra": "Off tắt chế độ suy nghĩ; mức độ cao hơn thường chính xác hơn, nhưng chậm hơn và tiêu tốn nhiều token hơn",
+    "reasoningEffortExtra": "Off tắt chế độ suy nghĩ (mặc định); bật lên thường chính xác hơn nhưng chậm hơn và tiêu tốn nhiều token hơn. Các mô hình tùy chỉnh còn có Auto = theo mặc định tích hợp của mô hình (chỉ dùng khi Off gây lỗi API).",
     "presetSelect": "Chọn cài đặt sẵn",
     "presetSave": "Lưu như cài đặt sẵn mới",
     "presetDelete": "Xóa cài đặt sẵn hiện tại",
@@ -291,6 +295,70 @@
         "25+ engine dịch: Google miễn phí, DeepSeek, Claude, GPT, Gemini, DeepL, Qwen-MT",
         "Tương thích với YouTube, Premiere, DaVinci Resolve, Aegisub"
       ]
+    },
+    "jsonTranslate": {
+      "title": "Dịch giả JSON i18n",
+      "description": "Công cụ dịch JSON đa ngôn ngữ hiệu quả"
+    },
+    "mdTranslator": {
+      "title": "Dịch giả Markdown",
+      "description": "Dịch Markdown hàng loạt, giữ định dạng và mã"
+    },
+    "textSplitter": {
+      "title": "Bộ chia văn bản",
+      "description": "Chia văn bản dài thông minh cho AI và mạng xã hội"
+    },
+    "chineseConversion": {
+      "title": "Chuyển đổi Giản thể ↔ Phồn thể",
+      "description": "Chuyển đổi hàng loạt giữa giản thể, phồn thể Đài Loan, phồn thể Hồng Kông và chữ Nhật mới"
+    },
+    "novelProcessor": {
+      "title": "Trình định dạng tiểu thuyết mạng Trung Quốc",
+      "description": "Sửa hàng loạt lỗi định dạng tiểu thuyết mạng Trung Quốc tải về, hỗ trợ ngắt dòng thông minh"
+    },
+    "textToolbox": {
+      "title": "Trợ lý văn bản Regex",
+      "description": "Tích hợp regex, sắp xếp, lọc và nhiều tính năng xử lý văn bản hàng loạt"
+    },
+    "dataBatch": {
+      "title": "Xử lý văn bản",
+      "description": "Xử lý dữ liệu Excel hàng loạt — loại bỏ trùng, trích xuất cột, hợp nhất văn bản, quy tắc nối tiếp"
+    },
+    "jsonValueExtractor": {
+      "title": "Trình trích xuất Giá trị JSON",
+      "description": "Trích xuất giá trị JSON hàng loạt, đầu ra có định dạng"
+    },
+    "jsonNodeEdit": {
+      "title": "Chỉnh sửa JSON Hàng loạt",
+      "description": "Chỉnh sửa nút JSON hàng loạt, tiền tố/hậu tố/thay thế"
+    },
+    "jsonValueTransformer": {
+      "title": "Trình ánh xạ Giá trị JSON",
+      "description": "Ánh xạ và di chuyển giá trị với JSONPath"
+    },
+    "jsonValueSwapper": {
+      "title": "Trình hoán đổi Giá trị JSON",
+      "description": "Hoán đổi giá trị hai trường bằng một cú nhấp chuột"
+    },
+    "jsonNodeInserter": {
+      "title": "Trình chèn Nút JSON",
+      "description": "Chèn nút mới tại vị trí được chỉ định hàng loạt"
+    },
+    "jsonSortClassify": {
+      "title": "Sắp xếp & Phân loại JSON",
+      "description": "Sắp xếp và nhóm mảng, quy tắc tùy chỉnh"
+    },
+    "jsonMatchUpdate": {
+      "title": "Cập nhật JSON Match",
+      "description": "Cập nhật hàng loạt dựa trên khớp trường"
+    },
+    "dataParserFlare": {
+      "title": "Trình chuyển đổi Flare",
+      "description": "Chuyển đổi bookmark trình duyệt và định dạng Flare"
+    },
+    "dataParserImgPrompt": {
+      "title": "Trình tạo dữ liệu IMGPrompt",
+      "description": "Tạo dữ liệu JSON IMGPrompt hàng loạt"
     }
   },
   "navigation": {

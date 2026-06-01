@@ -1,5 +1,10 @@
 {
   "common": {
+    "fileProcessFailed": "Datei konnte nicht verarbeitet werden – prüfen Sie die Kodierung oder versuchen Sie eine andere",
+    "fileReadFailed": "Datei konnte nicht gelesen werden",
+    "unrecognizedLangCodes": "Nicht erkannte Sprachcodes: {codes}",
+    "ignoredLangCodes": "Nicht erkannte Sprachcodes ignoriert: {codes}",
+    "partialExportFailed": "Export einiger Sprachen fehlgeschlagen: {items}",
     "userGuide": "Benutzerhandbuch",
     "privacyNotice": "Ihr API-Schlüssel und Ihre Daten werden nur lokal im Browser gespeichert, um Ihre Privatsphäre zu schützen. Bei Fragen oder Vorschlägen kontaktieren Sie uns bitte über die Community oder die Feedback-Seite.",
     "dragAndDropText": "Klicken oder Datei hierher ziehen zum Hochladen",
@@ -47,7 +52,6 @@
     "exportAllFile": "Alle exportieren",
     "exportedFile": "Exportiert",
     "fileExported": "Datei exportiert: {fileName}",
-    "exportSuccess": "Export erfolgreich: {fileName}",
     "batchDownloaded": "Verarbeitung abgeschlossen, Datei wurde automatisch heruntergeladen",
     "extractedText": "Extrahierter Text",
     "translating": "Übersetze...",
@@ -80,7 +84,7 @@
     "readOnlyModeTooltip": "Text zu lang: Der Editor ist vorübergehend schreibgeschützt und zeigt nur eine Teilvorschau. Ihr vollständiger Inhalt bleibt unverändert – Verarbeitung und Export verwenden weiterhin den gesamten Text.",
     "clearInputTooltip": "Eingabe und hochgeladene Dateien löschen",
     "smartLineBreak": "Intelligenter Zeilenumbruch",
-    "replaceText": "Text ersetzen",
+    "replaceText": "Text ersetzen ",
     "generateJson": "JSON generieren",
     "exportSettingTooltip": "Konfiguration in Datei exportieren",
     "importSettingTooltip": "Konfiguration aus Datei importieren",
@@ -90,10 +94,8 @@
     "importSettingError": "Import fehlgeschlagen, bitte erneut versuchen",
     "removeCharsAfterTranslation": "Zeichen nach Übersetzung entfernen",
     "removeCharsAfterTranslationTooltip": "Angebene Zeichen nach der Übersetzung automatisch entfernen (mehrere durch Leerzeichen trennen)",
-    "selectedLanguages": "Ausgewählt",
     "search": "Suchen",
     "noMatches": "Keine passenden Tools",
-    "selectAll": "Alle auswählen",
     "clearAll": "Alle löschen",
     "cancel": "Abbrechen",
     "apply": "Anwenden",
@@ -164,6 +166,8 @@
     "bilingualError": "Komplexe Stil-Tags erkannt. Zweisprachiger Modus kann zu Formatierungsfehlern führen. Empfohlen: 'Zweisprachige Untertitel' deaktivieren."
   },
   "TranslationSettings": {
+    "resetConfigSuccess": "Konfiguration auf Standardwerte zurückgesetzt",
+    "resetCacheConfirm": "Gesamten Übersetzungscache löschen? Dies kann nicht rückgängig gemacht werden.",
     "docs": "Dokumentation",
     "resetCacheTooltip": "Alle Übersetzungscaches löschen (nicht widerrufbar)",
     "resetCache": "Cache löschen",
@@ -202,7 +206,7 @@
     "useRelay": "API-Relay",
     "useRelayTooltip": "Aktivieren Sie API-Relay bei CORS- oder 403-Fehlern",
     "reasoningEffort": "Reasoning-Aufwand",
-    "reasoningEffortExtra": "Off deaktiviert das Denken; höherer Aufwand ist meist genauer, aber langsamer und verbraucht mehr Tokens",
+    "reasoningEffortExtra": "Off deaktiviert das Denken (Standard); aktiviert ist es meist genauer, aber langsamer und verbraucht mehr Tokens. Benutzerdefinierte Modelle bieten zudem Auto = der modelleigenen Voreinstellung folgen (nur verwenden, wenn Off einen API-Fehler verursacht).",
     "presetSelect": "Voreinstellung wählen",
     "presetSave": "Als neue Voreinstellung speichern",
     "presetDelete": "Aktuelle Voreinstellung löschen",
@@ -291,6 +295,70 @@
         "25+ Übersetzungs-Engines: Google kostenlos, DeepSeek, Claude, GPT, Gemini, DeepL, Qwen-MT",
         "Kompatibel mit YouTube, Vimeo, Premiere, DaVinci Resolve, Aegisub"
       ]
+    },
+    "jsonTranslate": {
+      "title": "i18n JSON-Übersetzer",
+      "description": "Effizientes mehrsprachiges JSON-Übersetzungstool"
+    },
+    "mdTranslator": {
+      "title": "Markdown-Übersetzer",
+      "description": "Markdown-Batch-Übersetzung, Format und Code behalten"
+    },
+    "textSplitter": {
+      "title": "Text-Splitter",
+      "description": "Smarte Langtext-Teilung für KI und Social Media"
+    },
+    "chineseConversion": {
+      "title": "Chinesisch-Konvertierung",
+      "description": "Vereinfacht, Taiwan-Traditionell, Hongkong-Traditionell und japanische Schriftzeichen in Masse konvertieren"
+    },
+    "novelProcessor": {
+      "title": "Chinesischer Web-Roman-Formatierer",
+      "description": "Formatierungsprobleme heruntergeladener chinesischer Webromane per Klick beheben, intelligente Zeilenumbrüche"
+    },
+    "textToolbox": {
+      "title": "Regex-Text-Assistent",
+      "description": "Regex-Matching, Sortierung, Filterung und mehr für die Massentextverarbeitung"
+    },
+    "dataBatch": {
+      "title": "Textprozessor",
+      "description": "Excel-Stapelverarbeitung — Deduplizierung, Spaltenextraktion, Textverbindung, mehrere Regeln in Reihenfolge"
+    },
+    "jsonValueExtractor": {
+      "title": "JSON Wert-Extraktor",
+      "description": "JSON-Werte im Batch extrahieren, formatierte Ausgabe"
+    },
+    "jsonNodeEdit": {
+      "title": "JSON Batch Edit",
+      "description": "JSON-Knoten im Batch bearbeiten, Präfix/Suffix/Ersetzen"
+    },
+    "jsonValueTransformer": {
+      "title": "JSON Wert-Mapper",
+      "description": "Feldwert-Mapping und Migration mit JSONPath"
+    },
+    "jsonValueSwapper": {
+      "title": "JSON Wert-Tauscher",
+      "description": "Werte zweier Felder per Klick tauschen"
+    },
+    "jsonNodeInserter": {
+      "title": "JSON Knoten-Inserter",
+      "description": "Neue Knoten an Position im Batch einfügen"
+    },
+    "jsonSortClassify": {
+      "title": "JSON Sort & Classify",
+      "description": "Arrays sortieren und gruppieren, benutzerdefinierte Regeln"
+    },
+    "jsonMatchUpdate": {
+      "title": "JSON-Abgleich-Aktualisierung",
+      "description": "Daten basierend auf Feldabgleich im Batch aktualisieren"
+    },
+    "dataParserFlare": {
+      "title": "Flare Lesezeichen-Konverter",
+      "description": "Browser-Lesezeichen und Flare-Format konvertieren"
+    },
+    "dataParserImgPrompt": {
+      "title": "IMGPrompt Datengenerator",
+      "description": "IMGPrompt JSON-Daten im Batch generieren"
     }
   },
   "navigation": {

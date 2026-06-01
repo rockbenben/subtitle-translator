@@ -1,5 +1,10 @@
 {
   "common": {
+    "fileProcessFailed": "Failed to process the file — check its encoding or try another",
+    "fileReadFailed": "Failed to read the file",
+    "unrecognizedLangCodes": "Unrecognized language codes: {codes}",
+    "ignoredLangCodes": "Ignored unrecognized language codes: {codes}",
+    "partialExportFailed": "Failed to export some languages: {items}",
     "userGuide": "User Guide",
     "privacyNotice": "Your API key and data are stored locally in your browser to ensure privacy. If you have any questions or suggestions, please contact us via the community or feedback page.",
     "dragAndDropText": "Click or drag file here to upload",
@@ -47,7 +52,6 @@
     "exportAllFile": "Export All",
     "exportedFile": "Exported",
     "fileExported": "File exported: {fileName}",
-    "exportSuccess": "Export successful: {fileName}",
     "batchDownloaded": "Processing complete, file downloaded automatically",
     "extractedText": "Extracted Text",
     "translating": "Translating",
@@ -64,7 +68,7 @@
     "translationExported": "Translation complete, files exported",
     "sourceTextPlaceholder": "Enter or paste text to process...",
     "noSourceText": "Please enter or paste text content.",
-    "textExtracted": "Text extracted,",
+    "textExtracted": "Text extracted, ",
     "sourceArea": "Input Area",
     "resultArea": "Result Area",
     "translationMode": "Translation Mode",
@@ -80,7 +84,7 @@
     "readOnlyModeTooltip": "Text is too long: the editor is temporarily read-only and shows a partial preview only. Your full content is unaffected — processing and export still use the entire text.",
     "clearInputTooltip": "Clear input content and uploaded files",
     "smartLineBreak": "Smart Line Break",
-    "replaceText": "Replace Text",
+    "replaceText": "Replace Text ",
     "generateJson": "Generate JSON",
     "exportSettingTooltip": "Export configuration to file",
     "importSettingTooltip": "Import configuration from file",
@@ -90,10 +94,8 @@
     "importSettingError": "Import failed, please retry",
     "removeCharsAfterTranslation": "Remove Chars After Translation",
     "removeCharsAfterTranslationTooltip": "Automatically remove specified characters after translation (separate multiple with spaces)",
-    "selectedLanguages": "Selected",
     "search": "Search",
     "noMatches": "No matching tools",
-    "selectAll": "Select All",
     "clearAll": "Clear All",
     "cancel": "Cancel",
     "apply": "Apply",
@@ -160,10 +162,12 @@
     "noFileUploaded": "Please upload a subtitle file first.",
     "noSourceText": "Please upload subtitle file or paste text.",
     "noExtractedText": "No subtitle content extracted, please check file format.",
-    "textExtracted": "Subtitle text extracted,",
+    "textExtracted": "Subtitle text extracted, ",
     "bilingualError": "Complex style tags detected. Bilingual mode may cause formatting issues. Recommended to disable 'Bilingual Subtitles'."
   },
   "TranslationSettings": {
+    "resetConfigSuccess": "Configuration reset to defaults",
+    "resetCacheConfirm": "Clear all translation cache? This cannot be undone.",
     "docs": "Docs",
     "resetCacheTooltip": "Clear all translation cache (irreversible)",
     "resetCache": "Clear Cache",
@@ -202,7 +206,7 @@
     "useRelay": "API Relay",
     "useRelayTooltip": "Enable API relay if you encounter CORS or 403 errors",
     "reasoningEffort": "Reasoning Effort",
-    "reasoningEffortExtra": "Off disables thinking; higher effort is usually more accurate but slower and consumes more tokens",
+    "reasoningEffortExtra": "Off disables thinking (default); enabling is usually more accurate but slower and uses more tokens. Custom models also offer Auto = follow the model's built-in default (use only if Off triggers an API error).",
     "presetSelect": "Select Preset",
     "presetSave": "Save as new preset",
     "presetDelete": "Delete current preset",
@@ -291,6 +295,70 @@
         "25+ translation engines: Google free, DeepSeek, Claude, GPT, Gemini, DeepL, Qwen-MT",
         "Compatible with YouTube, Twitch, Vimeo, Premiere, DaVinci Resolve, Aegisub"
       ]
+    },
+    "jsonTranslate": {
+      "title": "JSON Multi-Language Translator",
+      "description": "Efficient multi-language JSON translation tool"
+    },
+    "mdTranslator": {
+      "title": "Markdown Translator",
+      "description": "Batch translate Markdown, preserving format and code"
+    },
+    "textSplitter": {
+      "title": "Text Splitter",
+      "description": "Smart long text splitter for AI and social media"
+    },
+    "chineseConversion": {
+      "title": "Chinese Conversion",
+      "description": "Bulk convert Simplified, Taiwan Traditional, Hong Kong Traditional, and Japanese New Character Form"
+    },
+    "novelProcessor": {
+      "title": "Chinese Novel Formatter",
+      "description": "One-click formatting for downloaded Chinese web novels — smart line breaks, chapter splitting, and clean layout."
+    },
+    "textToolbox": {
+      "title": "Multi-Function Text Processor",
+      "description": "Integrated regex matching, sorting, filtering, and more for bulk text processing"
+    },
+    "dataBatch": {
+      "title": "Batch Data Processor",
+      "description": "Excel batch data processing — dedup, column extraction, text merge, custom rules chained in sequence"
+    },
+    "jsonValueExtractor": {
+      "title": "JSON Field Value Extractor",
+      "description": "Batch extract JSON fields with formatting"
+    },
+    "jsonNodeEdit": {
+      "title": "JSON Node Bulk Edit",
+      "description": "Batch edit JSON nodes with prefix/suffix/replace"
+    },
+    "jsonValueTransformer": {
+      "title": "JSON Field Value Mapper",
+      "description": "Field value mapping and migration with JSONPath"
+    },
+    "jsonValueSwapper": {
+      "title": "JSON Value Swapper",
+      "description": "One-click swap of two field values"
+    },
+    "jsonNodeInserter": {
+      "title": "JSON Node Bulk Insert",
+      "description": "Batch insert new nodes at specified position"
+    },
+    "jsonSortClassify": {
+      "title": "JSON Sort & Group",
+      "description": "Sort and group arrays with custom rules"
+    },
+    "jsonMatchUpdate": {
+      "title": "JSON Match Update",
+      "description": "Batch update data by matching fields"
+    },
+    "dataParserFlare": {
+      "title": "Flare Bookmark Converter",
+      "description": "Convert bookmarks to/from Flare format"
+    },
+    "dataParserImgPrompt": {
+      "title": "IMGPrompt Data Gen",
+      "description": "Batch generate IMGPrompt JSON data"
     }
   },
   "navigation": {

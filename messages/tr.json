@@ -1,5 +1,10 @@
 {
   "common": {
+    "fileProcessFailed": "Dosya işlenemedi — kodlamasını kontrol edin veya başka bir dosya deneyin",
+    "fileReadFailed": "Dosya okunamadı",
+    "unrecognizedLangCodes": "Tanınmayan dil kodları: {codes}",
+    "ignoredLangCodes": "Tanınmayan dil kodları yoksayıldı: {codes}",
+    "partialExportFailed": "Bazı diller dışa aktarılamadı: {items}",
     "userGuide": "Kullanıcı Rehberi",
     "privacyNotice": "API anahtarınız ve verileriniz gizliliğinizi sağlamak için yalnızca yerel tarayıcınızda saklanır. Sorularınız veya önerileriniz varsa, topluluk veya geri bildirim sayfası aracılığıyla bizimle iletişime geçin.",
     "dragAndDropText": "Yüklemek için buraya tıklayın veya dosyayı sürükleyin",
@@ -76,10 +81,8 @@
     "importSettingError": "İçe aktarma başarısız, tekrar deneyin",
     "removeCharsAfterTranslation": "Çeviriden sonra karakterleri kaldır",
     "removeCharsAfterTranslationTooltip": "Çeviriden sonra belirtilen karakterleri otomatik olarak kaldır (boşlukla ayırın)",
-    "selectedLanguages": "Seçili",
     "search": "Ara",
     "noMatches": "Eşleşen araç yok",
-    "selectAll": "Tümünü seç",
     "clearAll": "Tümünü temizle",
     "cancel": "İptal",
     "apply": "Uygula",
@@ -120,11 +123,10 @@
     "readOnlyModeTooltip": "Metin çok uzun: düzenleyici geçici olarak salt okunur ve yalnızca kısmi bir önizleme gösteriyor. Tüm içeriğiniz etkilenmez; işleme ve dışa aktarma hâlâ metnin tamamını kullanır.",
     "clearInputTooltip": "Giriş içeriğini ve yüklenen dosyaları temizle",
     "fileExported": "Dışa aktarılan dosya: {fileName}",
-    "exportSuccess": "Dışa aktarma başarılı: {fileName}",
     "batchDownloaded": "İşlem tamamlandı, dosyalar otomatik olarak indirildi",
     "sourceTextPlaceholder": "İşlenecek metni girin veya yapıştırın...",
     "smartLineBreak": "Akıllı satır sonu",
-    "replaceText": "Metni değiştir",
+    "replaceText": "Metni değiştir ",
     "generateJson": "JSON Oluştur",
     "gtxFreeAPIUnavailable": "GTX Free hizmetine geçici olarak ulaşılamıyor — ağ kısıtlaması olabilir. Lütfen daha sonra tekrar deneyin veya başka bir çeviri hizmetine geçin.",
     "translategemmaUnavailable": "TranslateGemma hizmetine geçici olarak ulaşılamıyor, yerel sunucunuzun (LM Studio / llama.cpp / Ollama) çalıştığından ve URL'nin doğru olduğundan emin olun.",
@@ -164,6 +166,8 @@
     "bilingualError": "Karmaşık stil etiketleri algılandı. İki dilli mod format hatalarına neden olabilir. 'İki Dilli Altyazı'yı kapatmanız önerilir."
   },
   "TranslationSettings": {
+    "resetConfigSuccess": "Yapılandırma varsayılanlara sıfırlandı",
+    "resetCacheConfirm": "Tüm çeviri önbelleği temizlensin mi? Bu işlem geri alınamaz.",
     "docs": "Belgeler",
     "resetCacheTooltip": "Tüm çeviri önbelleğini temizle (geri alınamaz)",
     "resetCache": "Önbelleği Temizle",
@@ -202,7 +206,7 @@
     "useRelay": "API Aktarıcı",
     "useRelayTooltip": "CORS veya 403 hatalarında API aktarıcıyı etkinleştirin",
     "reasoningEffort": "Akıl yürütme yoğunluğu",
-    "reasoningEffortExtra": "Off düşünmeyi devre dışı bırakır; daha yüksek yoğunluk genellikle daha doğrudur, ancak daha yavaştır ve daha fazla token tüketir",
+    "reasoningEffortExtra": "Off düşünmeyi devre dışı bırakır (varsayılan); açmak genellikle daha doğrudur ama daha yavaştır ve daha fazla token tüketir. Özel modellerde ayrıca Auto vardır = modelin yerleşik varsayılanını izler (yalnızca Off bir API hatasına yol açarsa kullanın).",
     "presetSelect": "Ön Ayar Seç",
     "presetSave": "Yeni Ön Ayar Olarak Kaydet",
     "presetDelete": "Mevcut Ön Ayarı Sil",
@@ -291,6 +295,70 @@
         "25+ çeviri motoru: Google ücretsiz, DeepSeek, Claude, GPT, Gemini, DeepL, Qwen-MT",
         "YouTube, Premiere, DaVinci Resolve, Aegisub ile uyumlu"
       ]
+    },
+    "jsonTranslate": {
+      "title": "i18n JSON Çevirici",
+      "description": "Verimli çok dilli JSON çeviri aracı"
+    },
+    "mdTranslator": {
+      "title": "Markdown Çevirici",
+      "description": "Toplu Markdown çevirisi, format ve kodu korur"
+    },
+    "textSplitter": {
+      "title": "Metin Bölücü",
+      "description": "AI ve sosyal medya için akıllı uzun metin bölme"
+    },
+    "chineseConversion": {
+      "title": "Bas/Gel Çince Dönüştürücü",
+      "description": "Basitleştirilmiş, Tayvan geleneksel, Hong Kong geleneksel ve Japonca karakterleri toplu dönüştür"
+    },
+    "novelProcessor": {
+      "title": "Çince Web Roman Düzenleyici",
+      "description": "İndirilen Çince web romanların biçimlendirme sorunlarını tek tıkla düzeltin, akıllı satır sonu ile"
+    },
+    "textToolbox": {
+      "title": "Regex Metin Asistanı",
+      "description": "Toplu işlem için regex eşleştirme, sıralama, filtreleme ve diğer işlevleri entegre eder"
+    },
+    "dataBatch": {
+      "title": "Kişisel Metin İşleyici",
+      "description": "Excel toplu veri işleme — tekilleştirme, sütun çıkarma, metin birleştirme, zincirli kurallar"
+    },
+    "jsonValueExtractor": {
+      "title": "JSON Değer Çıkarıcı",
+      "description": "JSON değerlerini toplu çıkar, formatlı çıktı"
+    },
+    "jsonNodeEdit": {
+      "title": "Toplu JSON Düzenleme",
+      "description": "JSON düğümlerini toplu düzenle, önek/sonek/değiştir"
+    },
+    "jsonValueTransformer": {
+      "title": "JSON Değer Eşleyici",
+      "description": "JSONPath ile değer eşleme ve taşıma"
+    },
+    "jsonValueSwapper": {
+      "title": "JSON Değer Değiştirici",
+      "description": "Tek tıkla iki alanın değerlerini değiştir"
+    },
+    "jsonNodeInserter": {
+      "title": "JSON Düğüm Ekleyici",
+      "description": "Belirtilen konuma toplu yeni düğümler ekle"
+    },
+    "jsonSortClassify": {
+      "title": "JSON Sırala & Sınıflandır",
+      "description": "Dizileri sırala ve grupla, özel kurallar"
+    },
+    "jsonMatchUpdate": {
+      "title": "JSON Eşleşme Güncelleme",
+      "description": "Alan eşleşmesine dayalı toplu güncelleme"
+    },
+    "dataParserFlare": {
+      "title": "Flare Dönüştürücü",
+      "description": "Tarayıcı yer imleri ve Flare formatı dönüşümü"
+    },
+    "dataParserImgPrompt": {
+      "title": "IMGPrompt Veri Oluşturucu",
+      "description": "Toplu IMGPrompt JSON verileri oluştur"
     }
   },
   "navigation": {

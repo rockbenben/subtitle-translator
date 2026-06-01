@@ -1,5 +1,10 @@
 {
   "common": {
+    "fileProcessFailed": "ประมวลผลไฟล์ไม่สำเร็จ — ตรวจสอบการเข้ารหัสหรือลองไฟล์อื่น",
+    "fileReadFailed": "อ่านไฟล์ไม่สำเร็จ",
+    "unrecognizedLangCodes": "รหัสภาษาที่ไม่รู้จัก: {codes}",
+    "ignoredLangCodes": "ละเว้นรหัสภาษาที่ไม่รู้จัก: {codes}",
+    "partialExportFailed": "ส่งออกบางภาษาไม่สำเร็จ: {items}",
     "userGuide": "คู่มือการใช้งาน",
     "privacyNotice": "API Key และข้อมูลของคุณจะถูกเก็บไว้ในเบราว์เซอร์เท่านั้นเพื่อความเป็นส่วนตัว หากมีคำถามหรือข้อเสนอแนะ กรุณาติดต่อผ่านชุมชนหรือหน้าข้อเสนอแนะ",
     "dragAndDropText": "คลิกหรือลากไฟล์มาวางที่นี่เพื่ออัปโหลด",
@@ -76,10 +81,8 @@
     "importSettingError": "นำเข้าล้มเหลว กรุณาลองอีกครั้ง",
     "removeCharsAfterTranslation": "ลบตัวอักษรหลังแปล",
     "removeCharsAfterTranslationTooltip": "ลบตัวอักษรที่ระบุอัตโนมัติหลังแปล (แยกด้วยช่องว่าง)",
-    "selectedLanguages": "เลือกแล้ว",
     "search": "ค้นหา",
     "noMatches": "ไม่มีเครื่องมือที่ตรงกัน",
-    "selectAll": "เลือกทั้งหมด",
     "clearAll": "ล้างทั้งหมด",
     "cancel": "ยกเลิก",
     "apply": "ใช้งาน",
@@ -120,7 +123,6 @@
     "readOnlyModeTooltip": "ข้อความยาวเกินไป: ตัวแก้ไขเป็นแบบอ่านอย่างเดียวชั่วคราวและแสดงตัวอย่างเพียงบางส่วน เนื้อหาทั้งหมดของคุณไม่ได้รับผลกระทบ การประมวลผลและการส่งออกยังใช้ข้อความทั้งหมด",
     "clearInputTooltip": "ล้างเนื้อหาที่ป้อนและไฟล์ที่อัปโหลด",
     "fileExported": "ส่งออกไฟล์แล้ว: {fileName}",
-    "exportSuccess": "ส่งออกสำเร็จ: {fileName}",
     "batchDownloaded": "ประมวลผลเสร็จสิ้น ไฟล์ถูกดาวน์โหลดอัตโนมัติ",
     "sourceTextPlaceholder": "ป้อนหรือวางข้อความที่ต้องการประมวลผล...",
     "smartLineBreak": "ขึ้นบรรทัดใหม่อัจฉริยะ",
@@ -164,6 +166,8 @@
     "bilingualError": "ตรวจพบแท็กสไตล์ซับซ้อน โหมดสองภาษาอาจทำให้รูปแบบผิดพลาด แนะนำให้ปิด 'ซับไตเติลสองภาษา'"
   },
   "TranslationSettings": {
+    "resetConfigSuccess": "รีเซ็ตการตั้งค่าเป็นค่าเริ่มต้นแล้ว",
+    "resetCacheConfirm": "ล้างแคชการแปลทั้งหมดหรือไม่? การกระทำนี้ไม่สามารถยกเลิกได้",
     "docs": "เอกสาร",
     "resetCacheTooltip": "ล้างแคชการแปลทั้งหมด (ไม่สามารถเลิกทำ)",
     "resetCache": "ล้างแคช",
@@ -202,7 +206,7 @@
     "useRelay": "ใช้ API Relay",
     "useRelayTooltip": "เปิด API relay เมื่อพบข้อผิดพลาด CORS หรือ 403",
     "reasoningEffort": "ระดับการให้เหตุผล",
-    "reasoningEffortExtra": "Off ปิดโหมดการคิด; ระดับที่สูงขึ้นมักจะแม่นยำกว่า แต่ช้ากว่าและใช้โทเค็นมากขึ้น",
+    "reasoningEffortExtra": "Off ปิดโหมดการคิด (ค่าเริ่มต้น); การเปิดมักแม่นยำกว่าแต่ช้ากว่าและใช้โทเค็นมากขึ้น โมเดลที่กำหนดเองยังมี Auto = ทำตามค่าเริ่มต้นของโมเดลเอง (ใช้เฉพาะเมื่อ Off ทำให้เกิดข้อผิดพลาด API)",
     "presetSelect": "เลือกพรีเซ็ต",
     "presetSave": "บันทึกเป็นพรีเซ็ตใหม่",
     "presetDelete": "ลบพรีเซ็ตปัจจุบัน",
@@ -291,6 +295,70 @@
         "25+ เอนจินแปล: Google ฟรี, DeepSeek, Claude, GPT, Gemini, DeepL, Qwen-MT",
         "ใช้งานร่วมกับ YouTube, Premiere, DaVinci Resolve, Aegisub"
       ]
+    },
+    "jsonTranslate": {
+      "title": "ตัวแปล JSON i18n",
+      "description": "เครื่องมือแปล JSON หลายภาษาที่มีประสิทธิภาพ"
+    },
+    "mdTranslator": {
+      "title": "ตัวแปล Markdown",
+      "description": "แปล Markdown เป็นชุด รักษาการจัดรูปแบบและโค้ด"
+    },
+    "textSplitter": {
+      "title": "ตัวแบ่งข้อความ",
+      "description": "แบ่งข้อความยาวอย่างชาญฉลาดสำหรับ AI และโซเชียลมีเดีย"
+    },
+    "chineseConversion": {
+      "title": "แปลงอักษรจีนตัวย่อ ↔ ตัวเต็ม",
+      "description": "แปลงเป็นชุดระหว่างจีนตัวย่อ จีนตัวเต็มไต้หวัน จีนตัวเต็มฮ่องกง และอักษรญี่ปุ่นใหม่"
+    },
+    "novelProcessor": {
+      "title": "เครื่องมือจัดรูปแบบนิยายเว็บจีน",
+      "description": "แก้ปัญหาการจัดรูปแบบนิยายเว็บจีนที่ดาวน์โหลดเป็นชุด รองรับการตัดบรรทัดอัจฉริยะ"
+    },
+    "textToolbox": {
+      "title": "ผู้ช่วยข้อความ Regex",
+      "description": "รวม Regex การเรียงลำดับ การกรอง และฟีเจอร์ประมวลผลข้อความเป็นชุดอื่นๆ"
+    },
+    "dataBatch": {
+      "title": "ประมวลผลข้อความ",
+      "description": "การประมวลผลข้อมูล Excel เป็นชุด — ขจัดซ้ำ แยกคอลัมน์ รวมข้อความ กฎต่อเนื่อง"
+    },
+    "jsonValueExtractor": {
+      "title": "ตัวแยกค่า JSON",
+      "description": "แยกค่า JSON เป็นชุด เอาต์พุตมีการจัดรูปแบบ"
+    },
+    "jsonNodeEdit": {
+      "title": "แก้ไข JSON เป็นชุด",
+      "description": "แก้ไขโหนด JSON เป็นชุด คำนำหน้า/คำต่อท้าย/แทนที่"
+    },
+    "jsonValueTransformer": {
+      "title": "ตัวแมปค่า JSON",
+      "description": "แมปและย้ายค่าด้วย JSONPath"
+    },
+    "jsonValueSwapper": {
+      "title": "ตัวสลับค่า JSON",
+      "description": "สลับค่าสองฟิลด์ได้ในคลิกเดียว"
+    },
+    "jsonNodeInserter": {
+      "title": "ตัวแทรกโหนด JSON",
+      "description": "แทรกโหนดใหม่ที่ตำแหน่งที่ระบุเป็นชุด"
+    },
+    "jsonSortClassify": {
+      "title": "เรียงลำดับ & จัดประเภท JSON",
+      "description": "เรียงลำดับและจัดกลุ่มอาร์เรย์ กฎที่กำหนดเอง"
+    },
+    "jsonMatchUpdate": {
+      "title": "อัปเดต JSON Match",
+      "description": "อัปเดตเป็นชุดตามการจับคู่ฟิลด์"
+    },
+    "dataParserFlare": {
+      "title": "ตัวแปลง Flare",
+      "description": "แปลงบุ๊กมาร์กเบราว์เซอร์และรูปแบบ Flare"
+    },
+    "dataParserImgPrompt": {
+      "title": "ตัวสร้างข้อมูล IMGPrompt",
+      "description": "สร้างข้อมูล JSON IMGPrompt เป็นชุด"
     }
   },
   "navigation": {

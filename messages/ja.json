@@ -1,5 +1,10 @@
 {
   "common": {
+    "fileProcessFailed": "ファイルの処理に失敗しました。エンコードを確認するか、別のファイルをお試しください",
+    "fileReadFailed": "ファイルの読み込みに失敗しました",
+    "unrecognizedLangCodes": "認識できない言語コード：{codes}",
+    "ignoredLangCodes": "認識できない言語コードを無視しました：{codes}",
+    "partialExportFailed": "一部の言語のエクスポートに失敗しました：{items}",
     "userGuide": "利用ガイド",
     "privacyNotice": "APIキーとデータはローカルブラウザにのみ保存され、プライバシーは保護されます。ご質問やご提案がございましたら、コミュニティまたはフィードバックページからお問い合わせください。",
     "dragAndDropText": "クリックまたはファイルをここにドラッグしてアップロード",
@@ -76,10 +81,8 @@
     "importSettingError": "インポートに失敗しました。再試行してください",
     "removeCharsAfterTranslation": "翻訳後に文字を削除",
     "removeCharsAfterTranslationTooltip": "翻訳完了後に指定した文字を自動的に削除します（複数はスペースで区切る）",
-    "selectedLanguages": "選択済み",
     "search": "検索",
     "noMatches": "一致するツールがありません",
-    "selectAll": "すべて選択",
     "clearAll": "すべてクリア",
     "cancel": "キャンセル",
     "apply": "適用",
@@ -120,7 +123,6 @@
     "readOnlyModeTooltip": "テキストが長すぎるため、エディターは一時的に読み取り専用となり、一部のみをプレビュー表示しています。完全な内容は影響を受けず、処理と書き出しは全文に対して行われます。",
     "clearInputTooltip": "入力内容とアップロードされたファイルをクリア",
     "fileExported": "ファイルをエクスポートしました：{fileName}",
-    "exportSuccess": "エクスポート成功：{fileName}",
     "batchDownloaded": "処理完了、ファイルを自動ダウンロードしました",
     "sourceTextPlaceholder": "処理するテキストを入力または貼り付けてください...",
     "smartLineBreak": "スマート改行",
@@ -164,6 +166,8 @@
     "bilingualError": "複雑なスタイルタグが検出されました。対訳モードでは書式が崩れる可能性があるため、「対訳字幕」をオフにすることをお勧めします。"
   },
   "TranslationSettings": {
+    "resetConfigSuccess": "設定をデフォルトに戻しました",
+    "resetCacheConfirm": "すべての翻訳キャッシュを消去しますか？この操作は元に戻せません。",
     "docs": "ドキュメント",
     "resetCacheTooltip": "すべての翻訳キャッシュをクリア（操作は取り消せません）",
     "resetCache": "キャッシュをクリア",
@@ -202,7 +206,7 @@
     "useRelay": "API 中継",
     "useRelayTooltip": "CORS や 403 エラーが発生した場合は API 中継を有効にしてください",
     "reasoningEffort": "推論強度",
-    "reasoningEffortExtra": "Off で思考モードを無効化；強度を上げると通常は精度が向上しますが、応答が遅くなりトークン消費が増えます",
+    "reasoningEffortExtra": "Off で思考モードを無効化（既定）。有効にすると通常は精度が向上しますが、応答が遅くなりトークン消費が増えます。カスタムモデルには Auto もあり、モデル本来の既定に従います（Off で API エラーになる場合のみ使用）。",
     "presetSelect": "プリセットを選択",
     "presetSave": "新しいプリセットとして保存",
     "presetDelete": "現在のプリセットを削除",
@@ -291,6 +295,70 @@
         "25+ 翻訳エンジン：Google 無料、DeepSeek、Claude、GPT、Gemini、DeepL、Qwen-MT",
         "ニコニコ、YouTube、Premiere、DaVinci Resolve、Aegisub 互換"
       ]
+    },
+    "jsonTranslate": {
+      "title": "i18n JSON翻訳",
+      "description": "効率的な多言語JSON翻訳ツール"
+    },
+    "mdTranslator": {
+      "title": "Markdown翻訳",
+      "description": "Markdownドキュメントを一括翻訳、書式とコードを保持"
+    },
+    "textSplitter": {
+      "title": "テキスト分割",
+      "description": "長文をスマートに分割、AI入力とSNSに最適"
+    },
+    "chineseConversion": {
+      "title": "繁体・簡体字変換",
+      "description": "簡体字・台湾繁体字・香港繁体字・日本新字体を一括変換"
+    },
+    "novelProcessor": {
+      "title": "中国語小説テキスト整理ツール",
+      "description": "ダウンロードした中国語ネット小説の書式問題を一括修正、スマート改行対応"
+    },
+    "textToolbox": {
+      "title": "正規表現テキストアシスタント",
+      "description": "正規表現マッチング・ソート・フィルタリングなどを統合したテキスト一括処理ツール"
+    },
+    "dataBatch": {
+      "title": "テキスト処理ツール（自用）",
+      "description": "Excel 表データの一括重複削除・列抽出・テキスト結合、複数ルールを順次実行"
+    },
+    "jsonValueExtractor": {
+      "title": "JSON値抽出",
+      "description": "JSONフィールド値を一括抽出、フォーマット出力対応"
+    },
+    "jsonNodeEdit": {
+      "title": "JSON一括編集",
+      "description": "JSONノード値を一括編集、接頭辞/接尾辞と置換に対応"
+    },
+    "jsonValueTransformer": {
+      "title": "JSONキー値マッピング",
+      "description": "フィールド値のマッピングと移行、JSONPath位置特定に対応"
+    },
+    "jsonValueSwapper": {
+      "title": "JSONキー値交換",
+      "description": "2つのフィールドの値をワンクリックで交換"
+    },
+    "jsonNodeInserter": {
+      "title": "JSONノード挿入",
+      "description": "指定位置に新規ノードを一括挿入"
+    },
+    "jsonSortClassify": {
+      "title": "JSONソート分類",
+      "description": "配列のソートとグループ化、カスタムルールに対応"
+    },
+    "jsonMatchUpdate": {
+      "title": "JSONマッチング更新",
+      "description": "フィールドマッチングに基づいてデータを一括更新"
+    },
+    "dataParserFlare": {
+      "title": "Flareブックマーク変換",
+      "description": "ブラウザブックマークとFlare形式の相互変換"
+    },
+    "dataParserImgPrompt": {
+      "title": "IMGPromptデータ生成",
+      "description": "IMGPrompt JSONデータを一括生成"
     }
   },
   "navigation": {

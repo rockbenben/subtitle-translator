@@ -1,5 +1,10 @@
 {
   "common": {
+    "fileProcessFailed": "Falha ao processar o arquivo — verifique a codificação ou tente outro",
+    "fileReadFailed": "Falha ao ler o arquivo",
+    "unrecognizedLangCodes": "Códigos de idioma não reconhecidos: {codes}",
+    "ignoredLangCodes": "Códigos de idioma não reconhecidos ignorados: {codes}",
+    "partialExportFailed": "Falha ao exportar alguns idiomas: {items}",
     "userGuide": "Guia do Usuário",
     "privacyNotice": "Sua chave API e dados são armazenados apenas localmente no seu navegador para garantir a privacidade. Se tiver dúvidas ou sugestões, entre em contato através da comunidade ou da página de feedback.",
     "dragAndDropText": "Clique ou arraste um arquivo aqui para enviar",
@@ -76,10 +81,8 @@
     "importSettingError": "Falha ao importar, tente novamente",
     "removeCharsAfterTranslation": "Remover caracteres após tradução",
     "removeCharsAfterTranslationTooltip": "Remover automaticamente caracteres especificados após a tradução (separar com espaços)",
-    "selectedLanguages": "Selecionados",
     "search": "Pesquisar",
     "noMatches": "Nenhuma ferramenta correspondente",
-    "selectAll": "Selecionar tudo",
     "clearAll": "Limpar tudo",
     "cancel": "Cancelar",
     "apply": "Aplicar",
@@ -120,11 +123,10 @@
     "readOnlyModeTooltip": "Texto muito longo: o editor está temporariamente somente leitura e mostra apenas uma prévia parcial. Seu conteúdo completo não é afetado — o processamento e a exportação ainda usam o texto inteiro.",
     "clearInputTooltip": "Limpar conteúdo de entrada e arquivos enviados",
     "fileExported": "Arquivo exportado: {fileName}",
-    "exportSuccess": "Exportado com sucesso: {fileName}",
     "batchDownloaded": "Processamento concluído, arquivos baixados automaticamente",
     "sourceTextPlaceholder": "Digite ou cole o texto a ser processado...",
     "smartLineBreak": "Quebra de linha inteligente",
-    "replaceText": "Substituir texto",
+    "replaceText": "Substituir texto ",
     "generateJson": "Gerar JSON",
     "gtxFreeAPIUnavailable": "O serviço GTX Free está temporariamente inacessível — pode ser uma restrição de rede. Tente novamente mais tarde ou troque para outro serviço de tradução.",
     "translategemmaUnavailable": "O serviço TranslateGemma está temporariamente inacessível, verifique se o seu servidor local (LM Studio / llama.cpp / Ollama) está em execução e o URL está correto.",
@@ -164,6 +166,8 @@
     "bilingualError": "Tags de estilo complexas detectadas. Modo bilíngue pode causar erros de formatação. Recomendado desativar 'Legendas Bilíngues'."
   },
   "TranslationSettings": {
+    "resetConfigSuccess": "Configuração redefinida para os padrões",
+    "resetCacheConfirm": "Limpar todo o cache de tradução? Isso não pode ser desfeito.",
     "docs": "Docs",
     "resetCacheTooltip": "Limpar todo o cache de tradução (irreversível)",
     "resetCache": "Limpar Cache",
@@ -202,7 +206,7 @@
     "useRelay": "Relay da API",
     "useRelayTooltip": "Ative o relay da API em caso de erros CORS ou 403",
     "reasoningEffort": "Esforço de raciocínio",
-    "reasoningEffortExtra": "Off desativa o pensamento; maior esforço geralmente é mais preciso, mas mais lento e consome mais tokens",
+    "reasoningEffortExtra": "Off desativa o pensamento (padrão); ativá-lo geralmente é mais preciso, mas mais lento e consome mais tokens. Modelos personalizados também oferecem Auto = seguir o padrão integrado do modelo (use apenas se Off causar erro de API).",
     "presetSelect": "Selecionar predefinição",
     "presetSave": "Salvar como nova predefinição",
     "presetDelete": "Excluir predefinição atual",
@@ -291,6 +295,70 @@
         "25+ motores de tradução: Google grátis, DeepSeek, Claude, GPT, Gemini, DeepL, Qwen-MT",
         "Compatível com YouTube, Premiere, DaVinci Resolve, Aegisub"
       ]
+    },
+    "jsonTranslate": {
+      "title": "Tradutor JSON i18n",
+      "description": "Ferramenta eficiente de tradução JSON multilíngue"
+    },
+    "mdTranslator": {
+      "title": "Tradutor Markdown",
+      "description": "Tradução Markdown em lote, preserva formato e código"
+    },
+    "textSplitter": {
+      "title": "Divisor de Texto",
+      "description": "Divisão inteligente de texto longo para IA e redes sociais"
+    },
+    "chineseConversion": {
+      "title": "Conversor Simp/Trad",
+      "description": "Converta em lote simplificado, tradicional de Taiwan, Hong Kong e caracteres japoneses"
+    },
+    "novelProcessor": {
+      "title": "Formatador de romances web chineses",
+      "description": "Corrija problemas de formatação de novelas web chinesas baixadas com um clique, com quebra de linha inteligente"
+    },
+    "textToolbox": {
+      "title": "Assistente de Texto com Regex",
+      "description": "Integra correspondência por regex, ordenação, filtragem e outras funcionalidades para processamento em lote"
+    },
+    "dataBatch": {
+      "title": "Processador de Texto",
+      "description": "Processamento em lote de dados Excel — deduplicação, extração de colunas, fusão, regras encadeadas"
+    },
+    "jsonValueExtractor": {
+      "title": "Extrator Valor JSON",
+      "description": "Extrair valores JSON em lote, saída formatada"
+    },
+    "jsonNodeEdit": {
+      "title": "Edição JSON em Lote",
+      "description": "Editar nós JSON em lote, prefixo/sufixo/substituir"
+    },
+    "jsonValueTransformer": {
+      "title": "Mapeador Valor JSON",
+      "description": "Mapeamento e migração de valores com JSONPath"
+    },
+    "jsonValueSwapper": {
+      "title": "Trocador Valor JSON",
+      "description": "Trocar valores de dois campos em um clique"
+    },
+    "jsonNodeInserter": {
+      "title": "Inseridor Nó JSON",
+      "description": "Inserir novos nós em posição especificada em lote"
+    },
+    "jsonSortClassify": {
+      "title": "Ordenar & Classificar JSON",
+      "description": "Ordenar e agrupar arrays, regras personalizadas"
+    },
+    "jsonMatchUpdate": {
+      "title": "Atualização Match JSON",
+      "description": "Atualização em lote baseada em correspondência de campos"
+    },
+    "dataParserFlare": {
+      "title": "Conversor Flare",
+      "description": "Conversão favoritos navegador e formato Flare"
+    },
+    "dataParserImgPrompt": {
+      "title": "Gerador Dados IMGPrompt",
+      "description": "Gerar dados JSON IMGPrompt em lote"
     }
   },
   "navigation": {
