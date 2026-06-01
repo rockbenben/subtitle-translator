@@ -129,6 +129,82 @@ export const compressNewlines = (text: string, maxConsecutive: number = 2): stri
   return text.replace(re, "\n".repeat(maxConsecutive));
 };
 
+// 整理从命令行 / 终端（如 Claude Code）复制出来的文本：
+// 1) 去掉行首的引用竖线装饰（markdown `>`、终端块/框线竖条 ▎▌│ 等），保留竖线前的缩进；
+// 2) dedent：削掉所有非空行的公共行首缩进——覆盖「无竖线、纯缩进」的 CLI 文本，同时保留代码块/嵌套列表的相对缩进；
+// 3) 按段落重排：空行＝段落分隔；列表项与 ``` 围栏代码块逐行保留、不参与合并；其余连续行拼回整段；
+// 4) 折行拼接：两侧都是中日韩字符时不补空格（避免「中 文」），否则补一个空格（拼回英文折行）。
+const CLI_GUTTER_RE = /^([ \t]*)(?:[>▏▎▍▌▐█│┃┆┊║]\s?)+/;
+const CJK_CHAR_RE = /[　-〿㐀-鿿豈-﫿＀-￯]/;
+const LIST_ITEM_RE = /^\s*(?:[-*+]|\d+[.)])\s+/;
+// markdown 表格行（以 | 开头）：与列表项同等保留整行、不并入段落。
+// | 已从 CLI_GUTTER_RE 移除——否则会吃掉表格行首竖线，整张表还会被并成一段。
+const TABLE_ROW_RE = /^\s*\|/;
+const CODE_FENCE_RE = /^\s*```/;
+
+const isCJKChar = (ch: string): boolean => !!ch && CJK_CHAR_RE.test(ch);
+
+// 将同一段落的折行片段拼成一行：中日韩↔中日韩边界不补空格，其余补一个空格
+const joinParagraphFragments = (fragments: string[]): string => {
+  let acc = "";
+  for (const fragment of fragments) {
+    if (!acc) {
+      acc = fragment;
+      continue;
+    }
+    const noSpace = isCJKChar(acc[acc.length - 1]) && isCJKChar(fragment[0]);
+    acc += (noSpace ? "" : " ") + fragment;
+  }
+  return acc;
+};
+
+export const cleanCliText = (raw: string): string => {
+  // 1) 去竖线（保留竖线前的缩进，交给 dedent 统一处理）
+  const deGuttered = splitTextIntoLines(raw).map((line) => line.replace(CLI_GUTTER_RE, "$1")); // splitTextIntoLines 内部已规范化换行符
+  // 2) dedent：按所有非空行的最小行首缩进统一削去
+  const indents = deGuttered.filter((line) => line.trim()).map((line) => line.match(/^[ \t]*/)?.[0].length ?? 0);
+  const minIndent = indents.length ? indents.reduce((min, n) => Math.min(min, n), Infinity) : 0; // reduce 而非 Math.min(...arr)，避免几万行输入展开实参时爆栈
+  const dedented = minIndent ? deGuttered.map((line) => line.slice(minIndent)) : deGuttered;
+
+  // 3) 按段落重排
+  const out: string[] = [];
+  let buffer: string[] = [];
+  let inCodeBlock = false;
+  const flush = () => {
+    if (buffer.length) {
+      out.push(joinParagraphFragments(buffer));
+      buffer = [];
+    }
+  };
+
+  for (const line of dedented) {
+    if (CODE_FENCE_RE.test(line)) {
+      flush();
+      out.push(line.trimEnd());
+      inCodeBlock = !inCodeBlock;
+    } else if (inCodeBlock) {
+      out.push(line.trimEnd()); // 代码块内逐行原样保留（含相对缩进）
+    } else if (!line.trim()) {
+      flush(); // 空行＝段落分隔
+      out.push("");
+    } else if (LIST_ITEM_RE.test(line)) {
+      // 列表项＝新逻辑行起点：先 flush 上一块，再把本项压入 buffer，
+      // 其后被硬折的续行会经下面的 else 分支并入本项（修复多行列表项被拆成游离段落）。
+      flush();
+      buffer.push(line.trimEnd());
+    } else if (TABLE_ROW_RE.test(line)) {
+      flush();
+      out.push(line.trimEnd()); // 表格行整行原样保留，不参与合并
+    } else {
+      buffer.push(line.trim());
+    }
+  }
+  flush();
+
+  // 4) 段间空行折叠为单个，去掉首尾空行
+  return compressNewlines(out.join("\n"), 2).trim();
+};
+
 //将空格分隔的字符串解析为数组（不处理转义字符）
 export const splitBySpaces = (input: string): string[] => {
   if (!input || !input.trim()) return [];

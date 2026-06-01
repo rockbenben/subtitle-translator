@@ -8,7 +8,9 @@ export const getErrorMessage = (error: unknown): string => {
   }
 
   try {
-    return JSON.stringify(error);
+    // JSON.stringify returns `undefined` (not a string) for undefined/function/symbol
+    // inputs — guard so this never leaks a literal "undefined" into an error toast.
+    return JSON.stringify(error) ?? "Unknown error";
   } catch {
     return "Unknown error";
   }

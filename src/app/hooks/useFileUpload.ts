@@ -1,5 +1,7 @@
 "use client";
 import { useState } from "react";
+import { App } from "antd";
+import { useTranslations } from "next-intl";
 import { normalizeNewlines } from "@/app/utils";
 import type { UploadFile, UploadProps } from "antd";
 
@@ -7,6 +9,8 @@ import type { UploadFile, UploadProps } from "antd";
 const isDuplicateFile = (a: { name: string; size?: number }, b: { name: string; size?: number }): boolean => a.name === b.name && a.size === b.size;
 
 const useFileUpload = () => {
+  const { message } = App.useApp();
+  const t = useTranslations("common");
   const [sourceText, setSourceText] = useState<string>("");
   const [multipleFiles, setMultipleFiles] = useState<File[]>([]);
   const [uploadMode, setUploadMode] = useState<"single" | "multiple">("single");
@@ -14,40 +18,59 @@ const useFileUpload = () => {
   const [singleFileMode, setSingleFileMode] = useState(false);
   const [isFileProcessing, setIsFileProcessing] = useState<boolean>(false);
 
-  const readFile = (file: File, callback: (text: string) => void) => {
+  // onError lets batch callers settle their per-file Promise when decode/read fails.
+  // Without it the success `callback` (which usually calls resolve()) never runs, so a
+  // single bad file hangs the whole batch loop forever.
+  const readFile = (file: File, callback: (text: string) => void, onError?: () => void) => {
     setIsFileProcessing(true);
     const reader = new FileReader();
 
     reader.onload = async (e) => {
-      const buffer = e.target?.result as ArrayBuffer;
-      const uint8Array = new Uint8Array(buffer);
+      try {
+        const buffer = e.target?.result as ArrayBuffer;
+        const uint8Array = new Uint8Array(buffer);
 
-      // Sample first 512KB for encoding detection (avoids converting full file to string)
-      const SAMPLE_SIZE = 512 * 1024;
-      const sample = uint8Array.subarray(0, Math.min(SAMPLE_SIZE, uint8Array.length));
-      // Build binary string where charCode === byte value (required by jschardet)
-      // Cannot use TextDecoder("latin1") because browsers map it to Windows-1252,
-      // which remaps bytes 0x80-0x9F to different code points and breaks detection
-      let sampleString = "";
-      for (let i = 0; i < sample.length; i += 8192) {
-        sampleString += String.fromCharCode.apply(null, sample.subarray(i, i + 8192) as unknown as number[]);
+        // Sample first 512KB for encoding detection (avoids converting full file to string)
+        const SAMPLE_SIZE = 512 * 1024;
+        const sample = uint8Array.subarray(0, Math.min(SAMPLE_SIZE, uint8Array.length));
+        // Build binary string where charCode === byte value (required by jschardet)
+        // Cannot use TextDecoder("latin1") because browsers map it to Windows-1252,
+        // which remaps bytes 0x80-0x9F to different code points and breaks detection
+        let sampleString = "";
+        for (let i = 0; i < sample.length; i += 8192) {
+          sampleString += String.fromCharCode.apply(null, sample.subarray(i, i + 8192) as unknown as number[]);
+        }
+
+        // 检测编码（基于样本），后续仍对完整内容进行解码
+        // Lazy load jschardet
+        const jschardet = (await import("jschardet")).default;
+        const detected = jschardet.detect(sampleString);
+
+        // 解码文件内容。jschardet 可能返回 TextDecoder 不认的标签（或乱码标签），
+        // new TextDecoder(label) 会抛 RangeError —— 回退到 utf-8 而不是让整个回调崩掉。
+        let decoder: TextDecoder;
+        try {
+          decoder = new TextDecoder(detected.encoding || "utf-8");
+        } catch {
+          decoder = new TextDecoder("utf-8");
+        }
+        const text = decoder.decode(uint8Array);
+        callback(normalizeNewlines(text));
+      } catch (error) {
+        // jschardet 加载失败 / 解码异常等：别让 onload 静默 reject（否则下方 finally 之外
+        // 的 setIsFileProcessing(false) 永远不执行，处理中遮罩会一直转）。
+        console.error("处理文件出错：", error);
+        message.warning(t("fileProcessFailed"));
+        onError?.();
+      } finally {
+        setIsFileProcessing(false);
       }
-
-      // 检测编码（基于样本），后续仍对完整内容进行解码
-      // Lazy load jschardet
-      const jschardet = (await import("jschardet")).default;
-      const detected = jschardet.detect(sampleString);
-
-      // 解码文件内容
-      const decoder = new TextDecoder(detected.encoding || "utf-8");
-      const text = decoder.decode(uint8Array);
-      const normalized = normalizeNewlines(text);
-      callback(normalized);
-      setIsFileProcessing(false);
     };
 
     reader.onerror = (error) => {
       console.error("读取文件出错：", error);
+      message.error(t("fileReadFailed"));
+      onError?.();
       setIsFileProcessing(false);
     };
     reader.readAsArrayBuffer(file);
