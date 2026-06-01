@@ -75,14 +75,18 @@ const useTranslationState = () => {
   // Drawer for the full provider/model/prompt config surface. Replaces the
   // previous "Advanced" Tab; sits per-translator inside TranslationProvider.
   const [apiSettingsOpen, setApiSettingsOpen] = useState<boolean>(false);
-  const [translationMethod, setTranslationMethod] = useLocalStorage<string>("translation-method", DEFAULT_API);
-  // localStorage 残留旧/已删 service key (比如重命名前的 "aliyun" 或 已 retire 的
-  // method) → getDefaultConfig 返回 undefined。getSelectedConfig 内部翻译路径会
-  // fallback,但 translationMethod state 本身没修,ApiStatusBlock 的 Select 会显示
-  // 空白值。render-time 一次性纠偏,覆盖所有 mount 入口 (而非只 Drawer 打开时)。
-  if (!getDefaultConfig(translationMethod)) {
-    setTranslationMethod(DEFAULT_API);
-  }
+  // storedMethod = 用户真实选择(落盘);translationMethod = 当前生效值(派生)。
+  const [storedMethod, setTranslationMethod] = useLocalStorage<string>("translation-method", DEFAULT_API);
+  // 当 storedMethod 不是当前构建已知的 provider(getDefaultConfig 返回 undefined)时,
+  // 仅本次渲染回退到 DEFAULT_API 用于显示/翻译 —— 绝不写回 localStorage。
+  //
+  // ⚠ 为什么不能落盘纠偏(旧做法 setTranslationMethod(DEFAULT_API) 的坑):
+  // 用户选了某 provider(如 mimo)落盘后,若之后加载到一份"缺少该 provider 的旧 bundle"
+  // (浏览器/CDN 缓存、灰度发布中途、回滚),旧做法会立刻把 gtx 落盘,**永久覆盖**用户的
+  // 真实选择 —— 即使之后正确 bundle 回来了也回不去。纯派生则让真实选择安然留在 localStorage,
+  // 正确 bundle 一加载就自动恢复;旧/已删 key(如 "aliyun")也只是显示成 gtx,不破坏数据。
+  // 只有用户主动改选(setTranslationMethod)才写盘。
+  const translationMethod = getDefaultConfig(storedMethod) ? storedMethod : DEFAULT_API;
   const [translationConfigs, setTranslationConfigs] = useLocalStorage<TranslationConfigs>("translation-configs", defaultConfigs as TranslationConfigs);
   const [systemPrompt, setSystemPrompt] = useLocalStorage<string>("translation-systemPrompt", DEFAULT_SYSTEM_PROMPT);
   const [userPrompt, setUserPrompt] = useLocalStorage<string>("translation-userPrompt", DEFAULT_USER_PROMPT);
@@ -108,6 +112,16 @@ const useTranslationState = () => {
   // Lang-level failures: in multi-language batch mode, codes of langs that
   // errored out entirely. Replaces noisy per-lang toasts. See md-translator #7.
   const [failedLangs, setFailedLangs] = useState<string[]>([]);
+  // Representative raw API error from the last REAL soft-failure this run (e.g.
+  // "[422] reasoning_effort is not supported with this model") — surfaced in the
+  // failure panel so the user sees WHY, not just how many lines failed. Most
+  // useful when a user opts into thinking on an unsupported custom model. Captured
+  // at the soft-fail catch sites (auth/abort already filtered there); reset per run.
+  const [failedReason, setFailedReason] = useState<string>("");
+  const lastErrorRef = useRef<string | null>(null);
+  // True once the current run records any soft line-failure — gates the single-file
+  // success toast so we never say "完成" when the failure panel/warning is also showing.
+  const runHadFailuresRef = useRef(false);
 
   const effectiveSystemPrompt = systemPrompt.trim() ? systemPrompt : DEFAULT_SYSTEM_PROMPT;
   const effectiveUserPrompt = userPrompt.trim() ? userPrompt : DEFAULT_USER_PROMPT;
@@ -536,6 +550,8 @@ const useTranslationState = () => {
         return !translatedLines.slice(batchStart, batchEnd).includes(undefined);
       } catch (error) {
         if (isAuthError(error)) throw error;
+        // Real soft-failure (non-auth) — keep the message so the panel can show WHY.
+        lastErrorRef.current = (error as Error)?.message || String(error);
         console.warn(`Batch ${batchStart + 1}-${batchEnd} translation error:`, error);
         return false;
       }
@@ -709,8 +725,10 @@ const useTranslationState = () => {
       }
     }
     if (failedLinesList.length > 0) {
+      runHadFailuresRef.current = true;
       setFailedCount((prev) => prev + failedLinesList.length);
       setFailedLines((prev) => [...prev, ...failedLinesList]);
+      if (lastErrorRef.current) setFailedReason(lastErrorRef.current);
     }
 
     return translatedLines;
@@ -789,8 +807,9 @@ const useTranslationState = () => {
               // guard. Both must propagate so Promise.all kills the batch — translator
               // catch surfaces the real auth error / handles cascade silently.
               if (isAuthError(error) || abortControllerRef.current?.signal.aborted) throw error;
-              // Otherwise (network blip, 5xx, etc., after pRetry exhausted):
-              // soft-fail this line, keep peers running.
+              // Otherwise (network blip, 5xx, 4xx like a 422 thinking-param reject,
+              // etc., after pRetry exhausted): soft-fail this line, keep peers running.
+              lastErrorRef.current = (error as Error)?.message || String(error);
               translatedLines[index] = line;
               if (line && line.trim()) failedLinesList.push(line);
             }
@@ -809,8 +828,10 @@ const useTranslationState = () => {
 
         // Surface failures via the same channel as context-mode (TranslateFailurePanel).
         if (failedLinesList.length > 0) {
+          runHadFailuresRef.current = true;
           setFailedCount((prev) => prev + failedLinesList.length);
           setFailedLines((prev) => [...prev, ...failedLinesList]);
+          if (lastErrorRef.current) setFailedReason(lastErrorRef.current);
         }
 
         return translatedLines;
@@ -839,16 +860,41 @@ const useTranslationState = () => {
     }
   };
 
-  // Translation handlers
-  const runTranslation = async (performTranslation: PerformTranslation, sourceText: string, documentType?: "subtitle" | "markdown" | "generic") => {
-    setTranslatedText("");
-    // Reset soft-failure state for this run — the UI Alert is driven by these.
+  // Reset all soft-failure state. Used at the start of every run, and exposed so the
+  // failure panel's close button lets the user dismiss a handled failure outright.
+  const clearFailures = () => {
     setFailedCount(0);
     setFailedLines([]);
     setFailedLangs([]);
+    setFailedReason("");
+    lastErrorRef.current = null;
+    runHadFailuresRef.current = false;
+  };
+
+  // Let a component-level performTranslation flag a HARD failure it handled itself
+  // (e.g. a whole target language threw — see MD/Subtitle per-lang catch). The hook's
+  // line-level soft-fail sites set runHadFailuresRef directly; this covers the rest so
+  // runTranslation's return value reflects ALL failures, not just line failures.
+  const markRunHadFailures = () => {
+    runHadFailuresRef.current = true;
+  };
+
+  // Synchronous read of the run's failure flag. Tools that drive their OWN translation
+  // loop (e.g. JSONTranslator) can't use runTranslation's boolean return, so they read
+  // this directly after the loop to gate their success toast against the failure panel.
+  const hadRunFailures = () => runHadFailuresRef.current;
+
+  // Translation handlers
+  // Returns true when the run fully succeeded (no line- OR lang-level failures), so a
+  // caller that owns its own success messaging (e.g. MD single-file) can show a
+  // completion toast WITHOUT contradicting the failure panel/error toasts.
+  const runTranslation = async (performTranslation: PerformTranslation, sourceText: string, documentType?: "subtitle" | "markdown" | "generic"): Promise<boolean> => {
+    setTranslatedText("");
+    // Reset soft-failure state for this run — the UI Alert is driven by these.
+    clearFailures();
     if (!sourceText.trim()) {
-      message.error("No source text provided.");
-      return;
+      message.warning(t("noSourceText"));
+      return false;
     }
 
     // isTranslating 现在统一在 runTranslation 这一层管,validate 内部不再
@@ -857,8 +903,9 @@ const useTranslationState = () => {
     resetProgress();
     try {
       const isValid = await validate();
-      if (!isValid) return;
+      if (!isValid) return false;
       await performTranslation(sourceText, undefined, undefined, undefined, documentType);
+      return !runHadFailuresRef.current;
     } finally {
       setIsTranslating(false);
     }
@@ -896,6 +943,10 @@ const useTranslationState = () => {
     failedLines,
     failedLangs,
     setFailedLangs,
+    failedReason,
+    clearFailures,
+    markRunHadFailures,
+    hadRunFailures,
     isTranslating,
     setIsTranslating,
     apiSettingsOpen,

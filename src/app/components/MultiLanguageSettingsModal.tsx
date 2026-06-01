@@ -50,14 +50,33 @@ const MultiLanguageSettingsModal = ({ open, onClose, targetLanguages, setTargetL
       .map((lang) => lang.trim().toLowerCase())
       .filter(Boolean);
 
-    // Filter valid language codes and remove duplicates
-    const validLangs = rawLangs.filter((lang) => validLanguageCodes.has(lang));
-    const uniqueLangs = [...new Set(validLangs)];
+    // Empty input (nothing typed / only whitespace) → just close, don't show a
+    // malformed "Unrecognized: " warning with an empty list.
+    if (rawLangs.length === 0) {
+      onClose();
+      return;
+    }
+
+    // Partition into valid / unrecognized codes (de-duped, order-preserving).
+    const uniqueLangs = [...new Set(rawLangs.filter((lang) => validLanguageCodes.has(lang)))];
+    const unrecognized = [...new Set(rawLangs.filter((lang) => !validLanguageCodes.has(lang)))];
+
+    // Nothing valid parsed out of a non-empty input — warn and keep the modal open
+    // instead of silently applying an empty selection as "success".
+    if (uniqueLangs.length === 0) {
+      message.warning(t("unrecognizedLangCodes", { codes: unrecognized.join(", ") }));
+      return;
+    }
 
     setTargetLanguages(uniqueLangs);
     setMultiLanguageMode(true); // Always enable multi-language mode
 
-    message.success(t("settingsApplied"));
+    // Some codes were dropped — apply the valid ones but flag the rest.
+    if (unrecognized.length > 0) {
+      message.warning(t("ignoredLangCodes", { codes: unrecognized.join(", ") }));
+    } else {
+      message.success(t("settingsApplied"));
+    }
     onClose();
   };
 

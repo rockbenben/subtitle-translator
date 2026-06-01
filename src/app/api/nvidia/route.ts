@@ -69,22 +69,24 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(data, { status: response.status });
     }
 
-    if (data.choices?.[0]?.message?.content) {
-      // MiniMax models force-output `<think>...</think>` regardless of
-      // reasoning toggle — strip across the whole family (M2, M2.7, M3, …)
-      // rather than pinning to one version. Other providers only emit think
-      // tags when the user explicitly enables thinking, so we leave their
-      // output alone to respect intent.
-      // model is guaranteed string after the validation gate above
-      const isMinimax = model.toLowerCase().includes("minimax");
+    // A 200 with no message content is a malformed upstream response — surface
+    // it as a 502 (mirroring the non-JSON branch) instead of returning an empty
+    // body the client would silently treat as a successful but blank translation.
+    if (!data.choices?.[0]?.message?.content) {
+      console.error("Nvidia API returned 200 with no message content:", JSON.stringify(data).substring(0, 500));
+      return NextResponse.json({ error: "Nvidia API returned a response with no message content." }, { status: 502 });
+    }
 
-      if (isMinimax) {
-        let content = data.choices[0].message.content;
-        // Strip <think>...</think> tags and everything inside them
-        // Use a non-greedy regex to match correctly if multiple tags exist
-        content = content.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
-        data.choices[0].message.content = content;
-      }
+    // MiniMax models force-output `<think>...</think>` regardless of
+    // reasoning toggle — strip across the whole family (M2, M2.7, M3, …)
+    // rather than pinning to one version. Other providers only emit think
+    // tags when the user explicitly enables thinking, so we leave their
+    // output alone to respect intent.
+    // model is guaranteed string after the validation gate above
+    if (model.toLowerCase().includes("minimax")) {
+      // Strip <think>...</think> tags and everything inside them.
+      // Non-greedy regex matches correctly when multiple tags exist.
+      data.choices[0].message.content = data.choices[0].message.content.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
     }
 
     return NextResponse.json(data);

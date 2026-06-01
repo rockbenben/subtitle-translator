@@ -44,10 +44,12 @@ export const runReachabilityProbe = async (translationMethod: TranslationMethod,
 };
 
 /**
- * Test translation with a given method and config \u2014 boolean wrapper around
- * runReachabilityProbe for the manual "Test Connection" UI (any failure \u2192 false).
+ * Test translation with a given method and config for the manual "Test Connection"
+ * UI. Returns `null` on success, or the failure REASON (e.g. "[403] ...", "Failed to
+ * fetch") as a string so the Test buttons can surface the real cause instead of a
+ * generic "test failed". Wraps runReachabilityProbe (which throws).
  */
-export const testTranslation = async (translationMethod: TranslationMethod, config: Partial<TranslateTextParams>, systemPrompt?: string, userPrompt?: string): Promise<boolean> => {
+export const testTranslation = async (translationMethod: TranslationMethod, config: Partial<TranslateTextParams>, systemPrompt?: string, userPrompt?: string): Promise<string | null> => {
   try {
     const result = await runReachabilityProbe(translationMethod, config, systemPrompt, userPrompt);
     // Probe target is zh, so result should contain Chinese \u2014 warn (not fail) if not.
@@ -58,10 +60,10 @@ export const testTranslation = async (translationMethod: TranslationMethod, conf
     if (result === "Hello, world!") {
       console.warn("Translation returned original text unchanged, may indicate translation service issue");
     }
-    return true;
+    return null;
   } catch (error) {
     console.error("Translation Test failed", error);
-    return false;
+    return error instanceof Error && error.message ? error.message : String(error);
   }
 };
 

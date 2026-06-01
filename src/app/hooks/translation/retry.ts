@@ -45,9 +45,12 @@ export const isAuthError = (error: unknown): boolean => {
 
 /**
  * Errors that retrying won't fix — bail out immediately so the user isn't stuck
- * at 0% for 30-60s of doomed retries. These are thrown by service layers (e.g.
- * the DeepSeek CORS → "enable API Relay" rewrite) when the next attempt will
- * fail the same way.
+ * at 0% for 30-60s of doomed retries. These are thrown by service layers when the
+ * next attempt will fail the same way — notably the shared CORS → "enable API
+ * Relay" rewrite (withRelayHint in services/llm.ts), which now fires for EVERY
+ * relay-capable provider (not just DeepSeek) on a `Failed to fetch` with relay
+ * off. The "enable 'api relay'" marker below is what classifies them as
+ * non-retryable, so a doomed CORS error never burns 3 retries.
  *
  * "max_tokens reached" is the marker getOpenAICompatContent throws when a
  * response has finish_reason==="length" — same input + same max_tokens

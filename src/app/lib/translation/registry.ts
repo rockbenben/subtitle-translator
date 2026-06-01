@@ -5,7 +5,7 @@
 // OPENAI_COMPAT_PROVIDERS (factory input), findMethodLabel, getDefaultConfig,
 // and the TranslationMethod union type are all derived views over PROVIDERS.
 
-import type { ReasoningEffort, TranslationConfig, TranslationProvider } from "./types";
+import type { ThinkingDirective, TranslationConfig, TranslationProvider } from "./types";
 
 export type ServiceCategory = "machine-translation" | "llm" | "aggregator";
 
@@ -286,7 +286,7 @@ export const PROVIDERS = {
   doubao: {
     kind: "openai-compat",
     category: "llm",
-    label: "Doubao (火山方舟)",
+    label: "Doubao (Volcengine)",
     endpoint: "https://ark.cn-beijing.volces.com/api/v3/chat/completions",
     defaultModel: "doubao-seed-2-0-lite-260428",
     defaultTemperature: 0.7,
@@ -303,6 +303,44 @@ export const PROVIDERS = {
       { label: "Doubao Seed 2.0 Pro", value: "doubao-seed-2-0-pro-260215", thinking: true },
       { label: "Doubao Seed 2.0 Lite", value: "doubao-seed-2-0-lite-260428", thinking: true },
       { label: "Doubao Seed 2.0 Mini", value: "doubao-seed-2-0-mini-260428", thinking: true },
+    ],
+  },
+  mimo: {
+    kind: "openai-compat",
+    category: "llm",
+    label: "Xiaomi MiMo",
+    // Two billing modes share the same OpenAI-compat protocol but route through
+    // DIFFERENT base URLs with DIFFERENT key formats (docs: platform.xiaomimimo.com):
+    //   - 按量付费 (pay-as-you-go): api.xiaomimimo.com,        key sk-xxxxx
+    //   - Token Plan (订阅包量):     token-plan-cn.xiaomimimo.com, key tp-xxxxx
+    // Keys are not interchangeable, so we surface both products as quick-pick
+    // endpoints (same pattern as Doubao Standard/Coding Plan) and default to
+    // pay-as-you-go. Token Plan has three regional clusters (CN / Singapore /
+    // Europe) — all share the same tp-xxxxx key; allowCustomUrl also lets users
+    // paste any other variant.
+    endpoint: "https://api.xiaomimimo.com/v1/chat/completions",
+    defaultModel: "mimo-v2.5",
+    defaultTemperature: 0.7,
+    docs: "https://platform.xiaomimimo.com/docs/zh-CN/api/chat/openai-api",
+    apiKeyUrl: "https://platform.xiaomimimo.com/#/console/api-keys",
+    allowCustomUrl: true,
+    endpoints: [
+      { label: "Pay-as-you-go", url: "https://api.xiaomimimo.com/v1/chat/completions" },
+      { label: "Token Plan (CN)", url: "https://token-plan-cn.xiaomimimo.com/v1/chat/completions" },
+      { label: "Token Plan (Singapore)", url: "https://token-plan-sgp.xiaomimimo.com/v1/chat/completions" },
+      { label: "Token Plan (Europe)", url: "https://token-plan-ams.xiaomimimo.com/v1/chat/completions" },
+    ],
+    // Thinking control = binary `thinking: {type: "enabled"|"disabled"}` (same
+    // wire shape as Doubao/Zhipu/Moonshot → mimo is in BINARY_EFFORT_VENDORS, so
+    // UI renders Off/On not Off/Low/Med/High). MiMo server-defaults thinking ON
+    // (the doc leads with the disable example), so it's in SERVER_DEFAULT_THINKING_ON:
+    // the per-model thinking tag below makes each listed SKU send an explicit
+    // `{type:"disabled"}` when off (binaryThinkingBody), so the toggle's default-off
+    // state never silently burns reasoning tokens.
+    // Doc: platform.xiaomimimo.com/docs/zh-CN/api/chat/openai-api
+    models: [
+      { label: "MiMo V2.5", value: "mimo-v2.5", thinking: true },
+      { label: "MiMo V2.5 Pro", value: "mimo-v2.5-pro", thinking: true },
     ],
   },
   zhipu: {
@@ -362,7 +400,7 @@ export const PROVIDERS = {
   qianfan: {
     kind: "openai-compat",
     category: "llm",
-    label: "Baidu ERNIE (百度千帆)",
+    label: "Baidu ERNIE (Qianfan)",
     endpoint: "https://qianfan.baidubce.com/v2/chat/completions",
     defaultModel: "ernie-5.1",
     defaultTemperature: 0.7,
@@ -371,8 +409,10 @@ export const PROVIDERS = {
     models: [
       { label: "ERNIE 5.1", value: "ernie-5.1" },
       { label: "ERNIE 5.0", value: "ernie-5.0" },
-      // ERNIE 5.0-Thinking 是 thinking-intrinsic 模型(SKU 即 thinking 模式),无 toggle 参数
-      { label: "ERNIE 5.0 Thinking", value: "ernie-5.0-thinking-latest" },
+      // ERNIE 5.0-Thinking server-defaults enable_thinking=true, but it's a hybrid
+      // SKU with a real toggle: `enable_thinking` boolean (binary → qianfan is in
+      // BINARY_EFFORT_VENDORS). Tagged so off-state sends explicit enable_thinking:false.
+      { label: "ERNIE 5.0 Thinking", value: "ernie-5.0-thinking-latest", thinking: true },
       { label: "ERNIE 4.5 Turbo 128K", value: "ernie-4.5-turbo-128k-preview" },
       { label: "ERNIE 4.5 Turbo 32K", value: "ernie-4.5-turbo-32k" },
     ],
@@ -380,7 +420,7 @@ export const PROVIDERS = {
   hunyuan: {
     kind: "openai-compat",
     category: "llm",
-    label: "Tencent Hunyuan (混元)",
+    label: "Tencent Hunyuan",
     endpoint: "https://api.hunyuan.cloud.tencent.com/v1/chat/completions",
     defaultModel: "hunyuan-turbos-latest",
     defaultTemperature: 0.7,
@@ -410,9 +450,13 @@ export const PROVIDERS = {
     apiKeyUrl: "https://console.mistral.ai/api-keys",
     allowRelay: true,
     // 来自 https://docs.mistral.ai/models/overview
+    // Adjustable reasoning(mistral-medium-3-5 / mistral-small)通过 reasoning_effort
+    // 控制(docs.mistral.ai/studio-api/conversations/reasoning,取值 high|none,二元 →
+    // BINARY_EFFORT_VENDORS)。Magistral 是 native always-on(prompt_mode:reasoning),
+    // 无 toggle,故不标 thinking。Large 3 / Ministral 非推理模型。
     models: [
-      { label: "Mistral Medium 3.5", value: "mistral-medium-3-5" },
-      { label: "Mistral Small 4", value: "mistral-small-4" },
+      { label: "Mistral Medium 3.5", value: "mistral-medium-3-5", thinking: true },
+      { label: "Mistral Small 4", value: "mistral-small-4", thinking: true },
       { label: "Mistral Large 3", value: "mistral-large-3" },
       { label: "Ministral 3 14B", value: "ministral-3-14b" },
       // Magistral 是 thinking-intrinsic(model 选择即 thinking 模式),无 toggle 参数
@@ -450,13 +494,15 @@ export const PROVIDERS = {
     apiKeyUrl: "https://www.perplexity.ai/account/api/keys",
     allowRelay: true,
     // https://docs.perplexity.ai/docs/sonar/models
-    // Sonar Reasoning Pro / Deep Research 是 thinking-intrinsic 模型,无 toggle 参数,
-    // 用户选这些 SKU 即等于选 thinking 模式。
+    // sonar-reasoning-pro 是 thinking-intrinsic(<think> 内嵌,无 toggle),选它即 thinking。
+    // sonar-deep-research 是研究模型:推理无法关闭(默认 medium),但 reasoning_effort
+    // (low/medium/high)可调搜索深度/成本 → 标 thinking,走 graded builder(开启发 effort,
+    // 关闭省略 = 服务端默认 medium,无法真正禁用,故 perplexity 不进 SERVER_DEFAULT/BINARY)。
     models: [
       { label: "Sonar", value: "sonar" },
       { label: "Sonar Pro", value: "sonar-pro" },
       { label: "Sonar Reasoning Pro", value: "sonar-reasoning-pro" },
-      { label: "Sonar Deep Research", value: "sonar-deep-research" },
+      { label: "Sonar Deep Research", value: "sonar-deep-research", thinking: true },
     ],
   },
   cohere: {
@@ -468,12 +514,15 @@ export const PROVIDERS = {
     defaultTemperature: 0.7,
     docs: "https://docs.cohere.com/docs/compatibility-api",
     apiKeyUrl: "https://dashboard.cohere.com/api-keys",
-    // Command A Reasoning 是 thinking-intrinsic 模型(SKU 即 thinking 模式),无 toggle。
-    // https://docs.cohere.com/docs/models
+    // Command A Reasoning server-defaults thinking ON, but the compatibility API
+    // DOES expose a toggle: reasoning_effort "none"|"high" (low/medium unsupported,
+    // so it's binary → cohere is in BINARY_EFFORT_VENDORS). Tagged so the off-state
+    // sends an explicit "none" instead of silently reasoning.
+    // https://docs.cohere.com/docs/compatibility-api
     models: [
       { label: "Command A Plus", value: "command-a-plus-05-2026" },
       { label: "Command A", value: "command-a-03-2025" },
-      { label: "Command A Reasoning", value: "command-a-reasoning-08-2025" },
+      { label: "Command A Reasoning", value: "command-a-reasoning-08-2025", thinking: true },
       { label: "Command A Translate", value: "command-a-translate-08-2025" },
     ],
   },
@@ -547,6 +596,44 @@ export const PROVIDERS = {
       { label: "MiniMax M2.5", value: "minimax/MiniMax-M2.5" },
       { label: "GLM-5.1", value: "zai-org/GLM-5.1" },
       { label: "GLM-4.7", value: "zai-org/GLM-4.7" },
+    ],
+  },
+  github: {
+    kind: "openai-compat",
+    category: "aggregator",
+    label: "GitHub Models",
+    // GitHub's OpenAI-compat inference gateway. Auth is a GitHub PAT (Bearer) with
+    // the `models:read` scope — fine-grained token recommended. Generous free tier
+    // (rate-limited per model class), so it's a good no-cost entry point for users
+    // without a paid LLM key. Single endpoint, no regional variants → no allowCustomUrl.
+    endpoint: "https://models.github.ai/inference/chat/completions",
+    defaultModel: "openai/gpt-4.1-mini",
+    defaultTemperature: 0.7,
+    docs: "https://docs.github.com/en/github-models",
+    apiKeyUrl: "https://github.com/settings/personal-access-tokens",
+    // No thinking tags — GitHub's REST inference API does NOT document a
+    // `reasoning_effort` (or any reasoning) parameter: the supported body fields are
+    // model/messages/temperature/top_p/penalties/max_tokens/seed/stream/stop/tools/
+    // tool_choice/response_format/modalities/stream_options only (verified 2026-06
+    // against docs.github.com/en/rest/models/inference). So we expose NO thinking
+    // toggle here — sending reasoning_effort risks a 400, and even if ignored it's
+    // dead UI. Users wanting reasoning control pick the native OpenAI provider or Custom.
+    //
+    // Curated for the FREE tier's per-model daily caps (verified 2026-06): Low-tier
+    // models get 150 req/day, High-tier 50/day. Listed Low-first (widest quota), and
+    // the gpt-5 / o-series reasoning SKUs are deliberately OMITTED — their free tier is
+    // 8–15 req/day at 1–2 rpm and reasoning burns the 4000-output cap, so they hit the
+    // wall almost immediately under batch translation. Catalog IDs are lowercase
+    // {publisher}/{model} (a wrong-case ID 404s) — verified against models.github.ai/catalog/models.
+    models: [
+      // Low tier — 150 req/day (widest free quota)
+      { label: "GPT-4.1 Mini", value: "openai/gpt-4.1-mini" },
+      { label: "GPT-4o Mini", value: "openai/gpt-4o-mini" },
+      { label: "Mistral Medium 3", value: "mistral-ai/mistral-medium-2505" },
+      { label: "Phi-4", value: "microsoft/phi-4" },
+      // High tier — 50 req/day
+      { label: "GPT-4.1", value: "openai/gpt-4.1" },
+      { label: "Llama 3.3 70B", value: "meta/llama-3.3-70b-instruct" },
     ],
   },
   nvidia: {
@@ -832,24 +919,63 @@ export const isThinkingModel = (service: string, model: string): boolean => {
 };
 
 /**
+ * True when `service` has at least one thinking-tagged model — i.e. the provider
+ * has a KNOWN thinking-enable wire shape (a THINKING_BUILDER entry, or a custom
+ * service that handles thinking inline). Used to decide whether to offer a thinking
+ * toggle on a CUSTOM (unlisted) SKU: capable providers let the user opt into
+ * thinking on an unknown model; the catch-all Custom (`llm`, no `models` list) and
+ * MT services have no tagged model → not capable → no opt-in. Verified necessary by
+ * the 2026-05 audit: most providers 422/400 on reasoning params for unsupported
+ * models, so we only surface the toggle where we know the enable shape.
+ */
+export const isThinkingCapableProvider = (service: string): boolean => {
+  const p = PROVIDERS[service as ProviderKey] as ProviderSpec | undefined;
+  return (p?.models ?? []).some((m) => m.thinking === true);
+};
+
+/**
+ * True when `model` is a user-typed SKU NOT in the provider's curated `models`
+ * list — thinking capability is unknown for these. A listed-but-untagged model
+ * (e.g. mistral-large-3, ministral) returns FALSE: we KNOW it's non-thinking, so
+ * no opt-in toggle. Empty model (→ provider default) also returns FALSE.
+ */
+export const isCustomModel = (service: string, model: string): boolean => {
+  if (!model) return false;
+  const p = PROVIDERS[service as ProviderKey] as ProviderSpec | undefined;
+  if (!p) return false;
+  return !(p.models ?? []).some((m) => m.value === model);
+};
+
+/**
  * Derive the per-call `reasoningEffort` from a TranslationConfig's per-model
  * thinking record. Single source of truth for the gate:
  *   1. config.model exists
  *   2. user has an entry in config.thinkingEffort[model] (= picked an effort)
- *   3. model is tagged `thinking: true` in registry
+ *   3. EITHER the model is tagged `thinking: true` in registry,
+ *      OR it's a custom (unlisted) SKU on a thinking-capable provider — the user
+ *      opting into thinking on an unknown model (wire layer sends ENABLE only,
+ *      never a disable, so plain translations stay 400-safe; a 422/400 on an
+ *      unsupported SKU is the user's call — "选了 custom 就自己搞").
  *
- * Returns `undefined` (= thinking off) unless all three hold. Used by the
- * orchestrator (per-translate-call), the cache-key generator (per-cache-lookup),
- * and the Test button (per-test-config) — keep them in lockstep via this helper,
- * not parallel logic.
+ * A listed-but-untagged model (mistral-large-3, ministral) returns `undefined` —
+ * we KNOW it doesn't think. Returns `undefined` (= thinking off) unless (1)+(2)+(3)
+ * hold. Used by the orchestrator (per-translate-call), the cache-key generator
+ * (per-cache-lookup), and the Test button (per-test-config) — keep them in lockstep
+ * via this helper, not parallel logic.
  */
-export const deriveThinkingParams = (method: string, config: TranslationConfig | undefined): ReasoningEffort | undefined => {
+export const deriveThinkingParams = (method: string, config: TranslationConfig | undefined): ThinkingDirective | undefined => {
   const model = config?.model;
   if (!model) return undefined;
   const effort = config?.thinkingEffort?.[model];
   if (!effort) return undefined;
-  if (!isThinkingModel(method, model)) return undefined;
-  return effort;
+  if (isThinkingModel(method, model)) return effort;
+  // Custom model: pass the directive through verbatim — an effort (enable) or the
+  // "auto" sentinel (omit). Absence (handled above → undefined) is the DEFAULT "Off":
+  // the wire layer turns undefined into each provider's disable payload for a custom
+  // model, while "auto" means omit. Listed-but-untagged models fall through to
+  // undefined here and the wire OMITS for them (they're known non-thinking).
+  if (isThinkingCapableProvider(method) && isCustomModel(method, model)) return effort;
+  return undefined;
 };
 
 /**
@@ -860,7 +986,7 @@ export const deriveThinkingParams = (method: string, config: TranslationConfig |
  * canonical "medium" — the value is irrelevant to wire output, but a defined
  * effort is what triggers the thinking branch in deriveThinkingParams + builders.
  */
-export const BINARY_EFFORT_VENDORS: ReadonlySet<string> = new Set(["doubao", "zhipu", "moonshot"]);
+export const BINARY_EFFORT_VENDORS: ReadonlySet<string> = new Set(["doubao", "zhipu", "moonshot", "mimo", "siliconflow", "cohere", "qianfan", "mistral"]);
 
 /**
  * Providers whose API leaves reasoning/thinking ENABLED when the request omits
@@ -871,24 +997,45 @@ export const BINARY_EFFORT_VENDORS: ReadonlySet<string> = new Set(["doubao", "zh
  * full `reasoning_content`. Doc: api-docs.deepseek.com/zh-cn/guides/thinking_mode
  * — "默认思考开关为 enabled".)
  *
- * The per-vendor disable wire-shape lives in each service's extra-body builder
- * (services/llm.ts: buildDeepseekExtraBody / buildOpenAIReasoningBody /
- * buildGrokExtraBody / buildQwenExtraBody / binaryThinkingBody for moonshot+
- * doubao+zhipu; gemini handles it inline). THIS set is the single source of
+ * The per-vendor disable wire-shape lives in each entry of the THINKING_BUILDERS
+ * table (services/llm.ts), declared as `gated(service, effortShape)`; gemini +
+ * azureopenai (custom services) handle it inline. THIS set is the single source of
  * truth for WHO needs the explicit disable; the invariant test in
  * services/__tests__/thinking.test.ts asserts every OpenAI-compat member emits a
  * non-empty disable body when thinking is off.
  *
- * All verified against vendor docs: deepseek ("默认 enabled"), openai (gpt-5.5
- * omit→medium; 5.4 omit→none, but we send explicit none either way), grok
- * (omit→"low"), qwen (3.6-plus series), doubao (Seed 2.0), zhipu (glm-4.7
- * forced-thinking), moonshot, gemini.
- * EXCLUDED on purpose: minimax & hunyuan — thinking is intrinsic/uncontrollable
- * on their hosted OpenAI-compat path (untagged in `models`, no builder; hunyuan's
- * old `enable_enhancement` was actually a web-search toggle); aggregators
- * (openrouter/groq/siliconflow) — per-model omit-default is out of our hands.
+ * All verified against vendor docs (audit 2026-05): deepseek ("默认 enabled" on
+ * V4), openai (gpt-5.5/gpt-chat-latest omit→medium; 5.4 omit→none, but we send
+ * explicit none either way), grok (omit→"low"), qwen (3.5+ gen flips commercial
+ * default to ON, incl. 3.6-plus), doubao (Seed omit→enabled), zhipu (glm-4.7/5/5.1
+ * forced-thinking), moonshot (Kimi "enabled by default"), gemini (3.x omit→model's
+ * built-in level, can't fully disable on Pro), mimo (binary thinking:{type}; doc
+ * leads with the disable example), azureopenai (mirrors openai's gpt-5.5 omit→medium),
+ * siliconflow (unified enable_thinking default TRUE → DeepSeek/Kimi hybrids),
+ * mistral (adjustable-reasoning mistral-medium-3-5/small via reasoning_effort high|none;
+ * default model is reasoning-capable so omit may leave it on → send explicit "none").
+ * gemini + azureopenai are CUSTOM services (handle the disable inline:
+ * thinkingLevel "minimal" / reasoning_effort "none"), so the OpenAI-compat
+ * invariant test filters them out — they're listed here for documentation.
+ *
+ * EXCLUDED — verified genuinely intrinsic/uncontrollable on the OpenAI-compat
+ * path (untagged in `models`, no builder): minimax (M2.x interleaved thinking;
+ * `reasoning_split` only switches output format, no on/off), hunyuan (no standard
+ * thinking field; `enable_enhancement` is web-search), nvidia (NIM/vLLM defaults
+ * DeepSeek reasoning OFF — opt-in only, so omit is correct). NOTE mistral & perplexity
+ * are NO LONGER fully here: mistral's default medium/small accept reasoning_effort
+ * (Magistral SKU stays intrinsic); perplexity's sonar-deep-research accepts a GRADED
+ * reasoning_effort (low/medium/high) — but it can't be disabled (omit→server-default
+ * medium), so it's a builder, NOT a SERVER_DEFAULT member. sonar-reasoning-pro stays intrinsic.
+ *
+ * NOT in this set but DO send an explicit disable for their TAGGED reasoning SKUs
+ * (their DEFAULT model is non-reasoning, so they fail the per-default-model
+ * invariant — handled by their builders, not this set): openrouter (universal
+ * `reasoning:{enabled:false}` when off), cohere (command-a-reasoning → reasoning_effort
+ * "none"), qianfan (ernie-5.0-thinking → enable_thinking:false). groq gpt-oss is
+ * unconditionally ON / undisableable → omit is the only option.
  */
-export const SERVER_DEFAULT_THINKING_ON: ReadonlySet<string> = new Set(["deepseek", "openai", "grok", "qwen", "doubao", "zhipu", "moonshot", "gemini"]);
+export const SERVER_DEFAULT_THINKING_ON: ReadonlySet<string> = new Set(["deepseek", "openai", "grok", "qwen", "doubao", "zhipu", "moonshot", "gemini", "mimo", "azureopenai", "siliconflow", "mistral"]);
 
 /**
  * Quick-pick endpoints for providers that surface multiple URL options (regional

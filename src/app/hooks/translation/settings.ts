@@ -41,6 +41,22 @@ export const exportTranslationSettings = async (settings: Omit<TranslationSettin
 };
 
 /**
+ * Light structural sanity check: a parseable JSON object is not necessarily a
+ * settings file. Verify a couple of expected top-level keys/types so we reject
+ * foreign/malformed JSON instead of applying it and showing a false success.
+ */
+const isTranslationSettings = (value: unknown): value is TranslationSettings => {
+  if (typeof value !== "object" || value === null) return false;
+  const obj = value as Record<string, unknown>;
+  return (
+    typeof obj.translationMethod === "string" &&
+    typeof obj.translationConfigs === "object" &&
+    obj.translationConfigs !== null &&
+    Array.isArray(obj.targetLanguages)
+  );
+};
+
+/**
  * Create file input and read JSON settings file
  * Returns parsed settings, throws error on failure
  */
@@ -63,17 +79,18 @@ export const createSettingsFileInput = (
 
       readFile(file, (content) => {
         try {
-          const settings = JSON.parse(content) as TranslationSettings;
+          const parsed = JSON.parse(content) as unknown;
 
-          if (!settings || typeof settings !== "object") {
-            throw new Error("Invalid settings format");
+          if (!isTranslationSettings(parsed)) {
+            reject(new Error("Not a valid translation settings file. / 不是有效的翻译设置文件。"));
+            return;
           }
 
-          onSettingsLoaded(settings);
-          resolve(settings);
+          onSettingsLoaded(parsed);
+          resolve(parsed);
         } catch (parseError) {
           console.error("Parse error:", parseError);
-          reject(new Error("Failed to parse settings file"));
+          reject(new Error("Failed to parse settings file. / 无法解析设置文件。"));
         }
       });
     };

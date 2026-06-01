@@ -74,14 +74,16 @@ const ApiStatusBlock = ({ disabled = false }: ApiStatusBlockProps) => {
       ...(config as Partial<TranslateTextParams>),
       reasoningEffort: deriveThinkingParams(translationMethod, config),
     };
-    const ok = await testTranslation(translationMethod, testParams, effectiveSystem, effectiveUser);
+    const error = await testTranslation(translationMethod, testParams, effectiveSystem, effectiveUser);
     if (id !== testIdRef.current) return;
-    if (ok) {
+    if (!error) {
       setSessionStatus("connected");
       message.success(t("apiStatusConnected"));
     } else {
+      // testTranslation returns the real failure reason — surface it so the user sees
+      // WHY (401/403/CORS/timeout/…) instead of a generic "connection failed".
       setSessionStatus("failed");
-      message.error(t("apiStatusFailed"));
+      message.error(`${t("apiStatusFailed")}: ${error}`, 10);
     }
   };
 

@@ -16,6 +16,8 @@ import {
   clearTranslationCache,
   getDefaultConfig,
   isThinkingModel,
+  isThinkingCapableProvider,
+  isCustomModel,
   getProviderEndpoints,
   getProviderModels,
   migrateConfig,
@@ -80,11 +82,29 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
   // Low/Medium/High to the same wire payload — UI shows Off/On for them to
   // avoid hinting at granularity that doesn't exist. "On" stores "medium" as
   // a canonical value; the wire builder only checks effort presence anyway.
+  //
+  // Also shown for a CUSTOM (unlisted) SKU on a thinking-capable provider, so the
+  // user can opt into thinking on a model we haven't tagged yet (e.g. a freshly
+  // released one). Listed-but-untagged models (mistral-large-3) stay hidden — we
+  // know they don't think.
+  //
+  // Custom models get a THREE-state control Off/On/Auto, DEFAULT Off: Off sends an
+  // EXPLICIT disable (so a server-default-ON custom model — e.g. mimo-v2-omni — is
+  // actually off, not just "following the server default"); On enables; Auto omits
+  // the param (the escape valve for a non-thinking SKU that a STRICT provider would
+  // 422 on the disable — pick Auto to translate it normally). Default is Off, not
+  // Auto, so nothing silently keeps thinking on. Tagged models stay 2-state Off/On.
   const currentModel = config?.model ?? "";
-  const showThinkingControl = isThinkingModel(service, currentModel);
+  const isModelThinkingTagged = isThinkingModel(service, currentModel);
+  const showThinkingControl = isModelThinkingTagged || (isThinkingCapableProvider(service) && isCustomModel(service, currentModel));
+  const customThinking = showThinkingControl && !isModelThinkingTagged;
   const isBinaryEffort = BINARY_EFFORT_VENDORS.has(service);
   const thinkingEffortRecord = config?.thinkingEffort ?? {};
   const currentModelEffort = thinkingEffortRecord[currentModel];
+  // Stored directive → Select value. Unified across tagged/custom: tagged never stores
+  // "auto" (its 2-state UI can't produce it), so that branch is simply dead there.
+  // absence → "off" (default); "auto" → "auto"; effort → "on" (binary) or the literal.
+  const thinkingSelectValue = isBinaryEffort ? (currentModelEffort === "auto" ? "auto" : currentModelEffort ? "on" : "off") : (currentModelEffort ?? "off");
 
   const llmPresetIsEmpty = llmPresets.length === 0;
   const llmPresetPlaceholder = llmPresetIsEmpty ? t("presetEmptyHint") : t("presetSelect");
@@ -115,6 +135,7 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
       setSystemPrompt(DEFAULT_SYSTEM_PROMPT);
       setUserPrompt(DEFAULT_USER_PROMPT);
     }
+    message.success(t("resetConfigSuccess"));
   };
 
   const handleTestConfig = async () => {
@@ -146,15 +167,17 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
         ...(config as Partial<TranslateTextParams>),
         reasoningEffort: deriveThinkingParams(service, config),
       };
-      const isSuccess = await testTranslation(service, testParams, isLLMModel ? systemPrompt : undefined, isLLMModel ? userPrompt : undefined);
-      if (isSuccess) {
+      const testError = await testTranslation(service, testParams, isLLMModel ? systemPrompt : undefined, isLLMModel ? userPrompt : undefined);
+      if (!testError) {
         message.success(`${currentService?.label || service} - ${t("testConfigSuccess")}`);
       } else {
-        message.error(t("testConfigFail"));
+        // Surface the real reason (401/403/CORS/timeout/…), not a generic "test failed".
+        message.error(`${t("testConfigFail")}: ${testError}`, 10);
       }
     } catch (error) {
+      // Pre-flight errors (e.g. deriveThinkingParams) — testTranslation itself no longer throws.
       console.error("Test config failed", error);
-      message.error(t("testConfigFail"));
+      message.error(error instanceof Error && error.message ? `${t("testConfigFail")}: ${error.message}` : t("testConfigFail"), 10);
     } finally {
       setTestingService(null);
     }
@@ -196,9 +219,11 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
   // overflow the ~290px content area inside the Drawer at phone widths.
   const actionButtons = (
     <Space wrap>
-      <Tooltip title={t("resetCacheTooltip")}>
-        <Button onClick={resetTranslationCache}>{t("resetCache")}</Button>
-      </Tooltip>
+      <Popconfirm title={t("resetCacheConfirm")} onConfirm={resetTranslationCache} okText={t("resetCache")} cancelText={tCommon("cancel")} okButtonProps={{ danger: true }}>
+        <Tooltip title={t("resetCacheTooltip")}>
+          <Button>{t("resetCache")}</Button>
+        </Tooltip>
+      </Popconfirm>
       <Tooltip title={t("testConfigTooltip")}>
         <Button type="primary" loading={testingService === service} onClick={handleTestConfig}>
           {t("testConfig")}
@@ -533,28 +558,28 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
             )}
             {showThinkingControl && (
               <Form.Item label={t("reasoningEffort")} extra={t("reasoningEffortExtra")}>
-                <Select<"off" | "on" | ReasoningEffort>
-                  value={isBinaryEffort ? (currentModelEffort ? "on" : "off") : (currentModelEffort ?? "off")}
+                <Select<"auto" | "off" | "on" | ReasoningEffort>
+                  value={thinkingSelectValue}
                   onChange={(value) => {
                     const next = { ...thinkingEffortRecord };
-                    if (value === "off") delete next[currentModel];
+                    if (value === "off")
+                      delete next[currentModel]; // absence = the default Off (wire sends disable)
+                    else if (value === "auto") next[currentModel] = "auto"; // custom-only escape: omit
                     else if (value === "on") next[currentModel] = "medium";
                     else next[currentModel] = value;
                     handleConfigChange(service, "thinkingEffort", next);
                   }}
-                  options={
-                    isBinaryEffort
-                      ? [
-                          { value: "off", label: "Off" },
-                          { value: "on", label: "On" },
-                        ]
+                  options={[
+                    { value: "off" as const, label: "Off" },
+                    ...(isBinaryEffort
+                      ? [{ value: "on" as const, label: "On" }]
                       : [
-                          { value: "off", label: "Off" },
-                          { value: "low", label: "Low" },
-                          { value: "medium", label: "Medium" },
-                          { value: "high", label: "High" },
-                        ]
-                  }
+                          { value: "low" as const, label: "Low" },
+                          { value: "medium" as const, label: "Medium" },
+                          { value: "high" as const, label: "High" },
+                        ]),
+                    ...(customThinking ? [{ value: "auto" as const, label: "Auto" }] : []),
+                  ]}
                   aria-label={t("reasoningEffort")}
                 />
               </Form.Item>

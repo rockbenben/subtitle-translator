@@ -56,19 +56,41 @@ export async function POST(req: NextRequest) {
   } catch (error: unknown) {
     console.error("DeepL translation error:", error);
 
-    if (error instanceof deepl.DeepLError && (error.message.includes("is deprecated") || error.message.includes("not supported"))) {
-      const errorMsg = error.message;
-      return NextResponse.json(
-        {
-          error: `DeepL API error: ${errorMsg}`,
-          suggestion: "请更新您的语言代码。例如，使用'en-US'或'en-GB'代替'en'，使用'pt-BR'或'pt-PT'代替'pt'。",
-        },
-        { status: 400 },
-      );
-    }
-
+    // The deepl-node SDK signals fault class via the thrown error type rather
+    // than an HTTP status field (see translator.ts#checkStatusCode). Map each
+    // class to the status DeepL itself returned so the browser client's
+    // isRetryableError treats client-class faults (auth/quota/bad-request) as
+    // fast-fail instead of retrying them 3× as if they were 5xx.
     if (error instanceof deepl.DeepLError) {
-      return NextResponse.json({ error: `DeepL API error: ${error.message}` }, { status: 500 });
+      // Unsupported / deprecated language code — actionable client error.
+      if (error.message.includes("is deprecated") || error.message.includes("not supported")) {
+        return NextResponse.json(
+          {
+            error: `DeepL API error: ${error.message}`,
+            suggestion: "Please update your language code — e.g. use 'en-US'/'en-GB' instead of 'en', or 'pt-BR'/'pt-PT' instead of 'pt'. / 请更新您的语言代码。例如，使用'en-US'或'en-GB'代替'en'，使用'pt-BR'或'pt-PT'代替'pt'。",
+          },
+          { status: 400 },
+        );
+      }
+
+      let status = 500;
+      if (error instanceof deepl.AuthorizationError) {
+        status = 403; // invalid auth key
+      } else if (error instanceof deepl.QuotaExceededError) {
+        status = 456; // billing quota exhausted
+      } else if (error instanceof deepl.TooManyRequestsError) {
+        status = 429; // rate limited
+      } else if (error instanceof deepl.ArgumentError) {
+        status = 400; // bad client input
+      } else if (error instanceof deepl.ConnectionError) {
+        status = 502; // upstream/network failure reaching DeepL
+      } else if (error.message.includes("Bad request") || error.message.includes("Not found")) {
+        // Plain DeepLError text from 400/404 — still client-class.
+        status = error.message.includes("Not found") ? 404 : 400;
+      }
+      // else: service-unavailable / unexpected status → genuine 5xx → 500
+
+      return NextResponse.json({ error: `DeepL API error: ${error.message}` }, { status });
     }
 
     let errorMessage = "An unknown error occurred";

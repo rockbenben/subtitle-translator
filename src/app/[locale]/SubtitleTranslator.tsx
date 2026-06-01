@@ -91,6 +91,8 @@ const SubtitleTranslator = () => {
     failedLines,
     failedLangs,
     setFailedLangs,
+    failedReason,
+    clearFailures,
     isTranslating,
     setIsTranslating,
     progressPercent,
@@ -160,16 +162,14 @@ const SubtitleTranslator = () => {
   const [translatedTextLang, setTranslatedTextLang] = useState<string | null>(null);
   const { customFileName, setCustomFileName, generateFileName } = useExportFilename("subtitle-translator");
 
-  // 源文本变化时复位 extracted/translated 预览。用 render-time pattern 而非
-  // useEffect+setState (react-hooks/set-state-in-effect 禁止后者)。
+  // 源文本变化时只复位"源派生"的本地预览(extractedText)。译文结果及其元数据
+  // (translatedText / translatedTextExt / needsBilingualSuffix / translatedTextLang)保留——
+  // 和 JSON 翻译一致:改源后旧结果不清,直到重新翻译。既符合"保留旧结果",又不必在 render
+  // 阶段去 set 共享 context 的 translatedText(那会更新 TranslationProvider → setState-in-render 警告)。
   const [prevSourceText, setPrevSourceText] = useState(sourceText);
   if (prevSourceText !== sourceText) {
     setPrevSourceText(sourceText);
     setExtractedText("");
-    setTranslatedText("");
-    setTranslatedTextExt(null);
-    setNeedsBilingualSuffix(false);
-    setTranslatedTextLang(null);
   }
 
   const performTranslation = async (sourceText: string, fileNameSet?: string, fileIndex?: number, totalFiles?: number) => {
@@ -339,7 +339,7 @@ const SubtitleTranslator = () => {
 
           // Show success message for single file mode
           if (!multiLanguageMode && multipleFiles.length <= 1) {
-            message.success(`${t("exportedFile")}: ${translatedOnlyFileName}, ${bilingualFileName}`);
+            message.success(t("fileExported", { fileName: `${translatedOnlyFileName}, ${bilingualFileName}` }));
           }
 
           // 多语言模式下只把第一个语言写入 translatedText 作 UI 预览;
@@ -394,7 +394,9 @@ const SubtitleTranslator = () => {
             ? `${getErrorMessage(error)} ${tSubtitle("bilingualError")}`
             : `${getErrorMessage(error)} ${langLabel} ${t("translationError")}`;
 
-        message.error(content, 60);
+        // Shared key: failed languages roll into one toast instead of stacking N high
+        // — the TranslateFailurePanel keeps the full per-lang list.
+        message.error({ content, key: "translate-lang-fail", duration: 10 });
       }
     }
 
@@ -419,8 +421,10 @@ const SubtitleTranslator = () => {
     setIsTranslating(true);
     setProgressPercent(0);
     failedFilesRef.current = 0;
-    // Batch path doesn't go through runTranslation — reset lang-failure manually.
-    setFailedLangs([]);
+    // Batch path doesn't go through the hook's runTranslation — reset ALL failure
+    // state (not just langs) so counts don't accumulate across runs and the failure
+    // warning re-fires on a fresh batch.
+    clearFailures();
 
     try {
       const isValid = await validate();
@@ -429,11 +433,20 @@ const SubtitleTranslator = () => {
       for (let i = 0; i < multipleFiles.length; i++) {
         const currentFile = multipleFiles[i];
         await new Promise<void>((resolve) => {
-          readFile(currentFile, async (text) => {
-            await performTranslation(text, currentFile.name, i, multipleFiles.length);
-            await delay(1500);
-            resolve();
-          });
+          readFile(
+            currentFile,
+            async (text) => {
+              await performTranslation(text, currentFile.name, i, multipleFiles.length);
+              await delay(1500);
+              resolve();
+            },
+            // Decode/read failure: mark this file failed (so succeeded=total-failed is
+            // accurate) and unblock the loop.
+            () => {
+              failedFilesRef.current++;
+              resolve();
+            }
+          );
         });
       }
 
@@ -465,13 +478,13 @@ const SubtitleTranslator = () => {
     if (needsBilingualSuffix) {
       fileName = appendBilingualSuffix(fileName);
     }
-    downloadFile(translatedText, fileName);
-    return fileName;
+    void downloadFile(translatedText, fileName);
+    message.success(t("fileExported", { fileName }));
   };
 
   const handleExtractText = () => {
     if (!sourceText.trim()) {
-      message.error(tSubtitle("noSourceText"));
+      message.warning(tSubtitle("noSourceText"));
       return;
     }
     // 复用 sourceFileType useMemo,免重复 detect
@@ -664,7 +677,7 @@ const SubtitleTranslator = () => {
                         gap: token.marginXS,
                       }}>
                       {sourceText.trim() && sourceFileType === "error" && (
-                        <Alert type="warning" showIcon message={tSubtitle("unsupportedSub")} />
+                        <Alert type="warning" showIcon title={tSubtitle("unsupportedSub")} />
                       )}
                       <Segmented
                         block
@@ -752,6 +765,8 @@ const SubtitleTranslator = () => {
         count={failedCount}
         lines={failedLines}
         failedLangs={failedLangs}
+        reason={failedReason}
+        onClose={clearFailures}
         disabled={isTranslating}
         onRetry={() => (uploadMode === "single" ? runTranslation(performTranslation, sourceText, contextAware ? "subtitle" : undefined) : handleMultipleTranslate())}
       />
@@ -768,10 +783,7 @@ const SubtitleTranslator = () => {
                   charCount={resultStats.charCount}
                   lineCount={resultStats.lineCount}
                   onCopy={() => copyToClipboard(translatedText)}
-                  onExport={() => {
-                    const fileName = handleExportFile();
-                    message.success(`${t("exportedFile")}: ${fileName}`);
-                  }}
+                  onExport={handleExportFile}
                 />
               </Col>
             )}

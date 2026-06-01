@@ -77,8 +77,14 @@ export const google: TranslationService = async (params) => {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(requestBody),
     signal: params.signal,
-  })) as { data: { translations: Array<{ translatedText: string }> } };
-  return data.data.translations[0].translatedText;
+  })) as { data?: { translations?: Array<{ translatedText?: string }> } } | null;
+  // A 200-OK with an unexpected/empty body would throw a raw TypeError (no
+  // status → wrongly retried). Guard the shape and throw a definitive error.
+  const translatedText = data?.data?.translations?.[0]?.translatedText;
+  if (typeof translatedText !== "string") {
+    throw new Error("Invalid response format from Google Translate");
+  }
+  return translatedText;
 };
 
 export const deepl: TranslationService = async (params) => {
@@ -97,8 +103,12 @@ export const deepl: TranslationService = async (params) => {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(requestBody),
     signal: params.signal,
-  })) as { translations: Array<{ text: string }> };
-  return data.translations[0].text;
+  })) as { translations?: Array<{ text?: string }> } | null;
+  const translatedText = data?.translations?.[0]?.text;
+  if (typeof translatedText !== "string") {
+    throw new Error("Invalid response format from DeepL");
+  }
+  return translatedText;
 };
 
 export const deeplx: TranslationService = async (params) => {
@@ -136,8 +146,12 @@ export const azure: TranslationService = async (params) => {
     },
     body: JSON.stringify([{ Text: text }]),
     signal: params.signal,
-  })) as Array<{ translations: Array<{ text: string }> }>;
-  return data[0].translations[0].text;
+  })) as Array<{ translations?: Array<{ text?: string }> }> | null;
+  const translatedText = data?.[0]?.translations?.[0]?.text;
+  if (typeof translatedText !== "string") {
+    throw new Error("Invalid response format from Azure Translate");
+  }
+  return translatedText;
 };
 
 export const webgoogletranslate: TranslationService = async (params) => {

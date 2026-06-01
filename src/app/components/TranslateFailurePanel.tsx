@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Alert, Button, Modal, List, Space, App, Tag, theme } from "antd";
 import { ReloadOutlined, UnorderedListOutlined, CopyOutlined } from "@ant-design/icons";
 import { useTranslations } from "next-intl";
@@ -24,13 +24,22 @@ export default function TranslateFailurePanel({
   count,
   lines,
   failedLangs = [],
+  reason,
   onRetry,
+  onClose,
   disabled = false,
 }: {
   count: number;
   lines: string[];
   failedLangs?: string[];
+  /** Representative raw API error (e.g. "[422] reasoning_effort is not supported
+   *  with this model"). Shown verbatim under the partial-failure notice so the user
+   *  sees WHY — e.g. opting into thinking on a custom model the provider rejects. */
+  reason?: string;
   onRetry: () => void;
+  /** Dismiss the whole failure state (clears line + lang failures). Wired to each
+   *  Alert's close button so a handled failure can be put away without retrying. */
+  onClose?: () => void;
   disabled?: boolean;
 }) {
   const t = useTranslations("common");
@@ -41,7 +50,19 @@ export default function TranslateFailurePanel({
 
   const hasLineFailures = count > 0;
   const hasLangFailures = failedLangs.length > 0;
-  if (!hasLineFailures && !hasLangFailures) return null;
+  const hasFailures = hasLineFailures || hasLangFailures;
+
+  // Visibility: the inline Alert below can sit under a long result, off-screen. Fire a
+  // one-shot toast the moment failures appear so it's noticed regardless of scroll —
+  // antd auto-dismisses it, no lifecycle bookkeeping. The inline Alert (closable) stays
+  // as the place to read the API reason and retry / copy the failed lines.
+  useEffect(() => {
+    if (hasFailures) message.warning(hasLineFailures ? t("partialFailureTitle", { count }) : t("failedLanguagesTitle", { count: failedLangs.length }));
+    // Fire only on the transition INTO a failed state, not on later count tweaks.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasFailures]);
+
+  if (!hasFailures) return null;
 
   const copyAll = () => {
     copyToClipboard(lines.join("\n"));
@@ -61,9 +82,29 @@ export default function TranslateFailurePanel({
         <Alert
           type="warning"
           showIcon
+          closable={onClose ? { onClose } : false}
           className="!mt-4"
-          message={t("partialFailureTitle", { count })}
-          description={t("partialFailureDesc")}
+          title={t("partialFailureTitle", { count })}
+          description={
+            <Space orientation="vertical" size="small" style={{ width: "100%" }}>
+              <span>{t("partialFailureDesc")}</span>
+              {reason && (
+                <div
+                  className="font-mono"
+                  style={{
+                    fontSize: 12,
+                    color: token.colorTextSecondary,
+                    background: token.colorFillTertiary,
+                    borderRadius: token.borderRadiusSM,
+                    padding: "6px 10px",
+                    whiteSpace: "pre-wrap",
+                    wordBreak: "break-word",
+                  }}>
+                  {reason}
+                </div>
+              )}
+            </Space>
+          }
           action={
             <Space orientation="vertical" size="small">
               <Button size="small" type="primary" icon={<ReloadOutlined />} onClick={onRetry} disabled={disabled}>
@@ -83,10 +124,11 @@ export default function TranslateFailurePanel({
         <Alert
           type="warning"
           showIcon
+          closable={onClose ? { onClose } : false}
           className="!mt-4"
-          message={t("failedLanguagesTitle", { count: failedLangs.length })}
+          title={t("failedLanguagesTitle", { count: failedLangs.length })}
           description={
-            <Space direction="vertical" size="small" style={{ width: "100%" }}>
+            <Space orientation="vertical" size="small" style={{ width: "100%" }}>
               <span>{t("failedLanguagesDesc")}</span>
               <div>
                 {failedLangs.map((code) => (

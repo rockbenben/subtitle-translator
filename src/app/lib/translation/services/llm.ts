@@ -1,8 +1,8 @@
 // Translation services - LLM APIs (OpenAI, DeepSeek, Gemini, etc.)
 
-import type { ReasoningEffort, TranslateTextParams, TranslationService } from "../types";
+import type { ReasoningEffort, ThinkingDirective, TranslateTextParams, TranslationService } from "../types";
 import { DEFAULT_SYSTEM_PROMPT, DEFAULT_USER_PROMPT } from "../config";
-import { defaultConfigs, isThinkingModel, OPENAI_COMPAT_KEYS, OPENAI_COMPAT_PROVIDERS, type OpenAICompatProviderKey, type OpenAICompatProviderSpec } from "../registry";
+import { defaultConfigs, isCustomModel, isThinkingModel, OPENAI_COMPAT_KEYS, OPENAI_COMPAT_PROVIDERS, type OpenAICompatProviderKey, type OpenAICompatProviderSpec } from "../registry";
 import { getAIModelPrompt } from "../utils";
 
 import { fetchJSON, normalizeNumber, normalizePrompt, relayUrl, requireApiKey, requireUrl, completeOpenAICompatUrl, PROXY_ENDPOINTS, getOpenAICompatContent, getClaudeContent } from "./shared";
@@ -70,122 +70,123 @@ const resolveEndpoint = (key: OpenAICompatProviderKey, spec: OpenAICompatProvide
 // ═════════════════════════════════════════════════════════════════════════
 // Two-tier OpenAI-compat service generation:
 //   - TIER 1 (thinking-aware): registered in THINKING_BUILDERS below. Each
-//     builder returns the vendor-specific extra-body to inject when the user
-//     enables thinking. Factory wires the builder in at service creation.
-//   - TIER 2 (base / no builder): providers with no thinking-tagged SKUs in
-//     the registry (perplexity, mistral, cohere, qianfan). Factory returns a
-//     pass-through service with no extra body.
-// Adding a new thinking-capable provider = add a buildXxxExtraBody helper +
-// one entry in THINKING_BUILDERS. Service implementation is auto-derived.
+//     entry is `gated(service, shape)` — the shared gate + one effort→wire shape.
+//   - TIER 2 (base / no builder): providers with no thinking-tagged SKUs in the
+//     registry (perplexity). Factory returns a pass-through service.
+// Adding a thinking-capable provider = tag its SKU(s) in the registry + add one
+// `gated(...)` entry here. Service implementation is auto-derived.
 // ═════════════════════════════════════════════════════════════════════════
 
-// ── Thinking-extra builders ────────────────────────────────────────────────
-// Each builder maps the orchestrator-derived `reasoningEffort` (presence =
-// thinking on, undefined = off) to the vendor's wire-level thinking params.
-// Server-default-ON vendors (Moonshot, Gemini) re-check isThinkingModel
-// internally to distinguish "tagged + effort undefined → send explicit
-// disable" from "untagged → send nothing" — the orchestrator-level gate
-// collapses both into reasoningEffort=undefined.
-
-// DeepSeek V4: top-level `thinking: {type}` + `reasoning_effort`.
-// (Distinct from NVIDIA NIM which nests both inside `chat_template_kwargs`.)
-//
-// ⚠ DeepSeek V4 server-defaults thinking ON: omitting the field leaves it
-// enabled, so a thinking-OFF request must send an EXPLICIT `{type:"disabled"}`
-// — not `{}`. Skipping this silently billed reasoning tokens on every line (the
-// "10M tokens" MD-translation report). Mirrors buildMoonshotExtraBody; the
-// server-default-ON rule is tracked in registry's SERVER_DEFAULT_THINKING_ON.
-// Doc: api-docs.deepseek.com/zh-cn/guides/thinking_mode ("默认思考开关为 enabled").
-// Untagged custom SKUs (absent from the registry models list) can't toggle
-// thinking through the UI, so we send nothing and let the server default stand.
-export const buildDeepseekExtraBody = (model: string | undefined, reasoningEffort: ReasoningEffort | undefined): Record<string, unknown> => {
-  if (!isThinkingModel("deepseek", model || OPENAI_COMPAT_PROVIDERS.deepseek.defaultModel)) return {};
-  if (!reasoningEffort) return { thinking: { type: "disabled" } };
-  return { thinking: { type: "enabled" }, reasoning_effort: reasoningEffort };
-};
-
-// Binary thinking (on/off, no granularity) for vendors whose server default is
-// thinking ON: turning it OFF must send an EXPLICIT `{thinking:{type:"disabled"}}`,
-// never `{}` (omitting leaves thinking on → silent reasoning-token burn). Shared
-// by Moonshot (Kimi), Doubao (Seed), Zhipu (GLM) — identical wire shape, all
-// verified server-default-ON. isThinkingModel skips untagged custom SKUs that
-// would reject the param. Docs: volcengine.com/docs/82379 (Doubao),
-// docs.bigmodel.cn (Zhipu, glm-4.7 forced-thinking), platform.moonshot.cn (Kimi).
-const binaryThinkingBody = (service: OpenAICompatProviderKey, model: string | undefined, reasoningEffort: ReasoningEffort | undefined): Record<string, unknown> => {
-  if (!isThinkingModel(service, model || OPENAI_COMPAT_PROVIDERS[service].defaultModel)) return {};
-  return { thinking: { type: reasoningEffort ? "enabled" : "disabled" } };
-};
-
-// Aggregators (OpenRouter / Groq / SiliconFlow): pass `reasoning_effort` through
-// to whatever upstream model the user picked. We deliberately OMIT when off
-// rather than send "none" — "none" isn't universally accepted across arbitrary
-// upstream models, and each model's omit-default is out of our hands here.
-const buildReasoningEffortBody = (reasoningEffort: ReasoningEffort | undefined): Record<string, unknown> => {
-  if (!reasoningEffort) return {};
-  return { reasoning_effort: reasoningEffort };
-};
-
-// OpenAI GPT-5.x: `reasoning_effort` enum. Omit-default is MODEL-dependent
-// (gpt-5.4 → "none", gpt-5.5 → "medium"), so OFF must send an explicit "none" to
-// truly disable reasoning. "none" is valid for the 5.4/5.5 SKUs we list (the
-// legacy "minimal" is NOT). Doc: developers.openai.com/api/docs/models/gpt-5.4
-const buildOpenAIReasoningBody = (model: string | undefined, reasoningEffort: ReasoningEffort | undefined): Record<string, unknown> => {
-  if (!isThinkingModel("openai", model || OPENAI_COMPAT_PROVIDERS.openai.defaultModel)) return {};
-  return { reasoning_effort: reasoningEffort ?? "none" };
-};
-
-// Grok 4.3: `reasoning_effort` accepts none/low/medium/high; OMITTING defaults to
-// "low" (reasoning ON), so OFF must send "none". (An earlier note that only
-// low/high exist was wrong — docs.x.ai/docs/guides/reasoning lists all four.)
-const buildGrokExtraBody = (model: string | undefined, reasoningEffort: ReasoningEffort | undefined): Record<string, unknown> => {
-  if (!isThinkingModel("grok", model || OPENAI_COMPAT_PROVIDERS.grok.defaultModel)) return {};
-  return { reasoning_effort: reasoningEffort ?? "none" };
-};
-
-// Qwen3 (DashScope): `enable_thinking` bool + `thinking_budget` int. The
-// qwen3.6-plus series server-defaults thinking ON, so OFF must send
-// `enable_thinking:false` (omitting leaves it on). Doc: help.aliyun.com/zh/model-studio/deep-thinking
-const QWEN_THINKING_BUDGET: Record<ReasoningEffort, number> = { low: 1024, medium: 4096, high: 8192 };
-const buildQwenExtraBody = (model: string | undefined, reasoningEffort: ReasoningEffort | undefined): Record<string, unknown> => {
-  if (!isThinkingModel("qwen", model || OPENAI_COMPAT_PROVIDERS.qwen.defaultModel)) return {};
-  if (!reasoningEffort) return { enable_thinking: false };
-  return { enable_thinking: true, thinking_budget: QWEN_THINKING_BUDGET[reasoningEffort] };
-};
-
-// MiniMax & Hunyuan deliberately have NO thinking builder (and their models are
-// untagged in the registry, so no dead UI toggle):
-//   - MiniMax M2 thinking is intrinsic/unclosable; `enable_thinking` is NOT a
-//     hosted-API field (it's a local vLLM chat-template kwarg) → was a no-op.
-//   - Hunyuan's `enable_enhancement` is a WEB-SEARCH toggle, not thinking — the
-//     old builder silently turned on search. The OpenAI-compat path exposes no
-//     documented thinking field (only native `EnableThinking` / `/no_think`).
-// Follow-ups: MiniMax `reasoning_split:true` to keep `content` clean of <think>;
-// Hunyuan a13b `/no_think` prompt-prefix control.
-
-// ── Builder registry ───────────────────────────────────────────────────────
-// One entry per thinking-aware provider. Providers absent from this map go
-// through the base factory (no extra body). Type-checked against
-// OpenAICompatProviderKey so a renamed/removed provider triggers a compile
-// error here, preventing stale builders.
 type ExtraBodyBuilder = (params: TranslateTextParams) => Record<string, unknown>;
 
-const reasoningEffortBuilder: ExtraBodyBuilder = (p) => buildReasoningEffortBody(p.reasoningEffort);
+// An effort→wire-payload shape. `effort` is the orchestrator-derived reasoning
+// level: a value = thinking ON, undefined = OFF. For server-default-ON vendors the
+// OFF branch MUST return an EXPLICIT disable, never `{}` — omitting silently bills
+// reasoning tokens (the DeepSeek "10M tokens" MD-translation report).
+type EffortShape = (effort: ReasoningEffort | undefined) => Record<string, unknown>;
+
+// The gate every thinking-aware OpenAI-compat provider shares: inject a payload
+// ONLY for a registry-tagged (= known) model — untagged user-typed SKUs are left
+// alone because we don't know their protocol (forcing a param could break an
+// unrelated model). Factors the per-vendor `isThinkingModel(...) ? shape : {}`
+// boilerplate into one place so each provider only declares its wire shape.
+//
+// Custom (untagged) models on a thinking-capable provider: the user MAY opt into
+// thinking on an unlisted SKU (deriveThinkingParams now lets effort through for
+// custom-on-capable). When they do, we send the ENABLE shape; when they don't
+// (effort undefined = default off), we OMIT — never an explicit disable. Rationale
+// (verified 2026-05 audit): most providers 422/400 on reasoning params for models
+// that don't support them, so a proactive disable would break plain translations on
+// STRICT providers; omitting keeps them safe. A 422/400 when the user DID opt into
+// thinking on an unsupported SKU is their call ("选了 custom 就自己搞"). Listed-but-
+// untagged models (mistral-large-3) never reach here with an effort — deriveThinking
+// Params returns undefined for them. Tagged models keep full control (disable when off).
+const gated =
+  (service: OpenAICompatProviderKey, shape: EffortShape): ExtraBodyBuilder =>
+  (p) => {
+    const model = p.model || OPENAI_COMPAT_PROVIDERS[service].defaultModel;
+    const effort = p.reasoningEffort;
+    // Tagged model: 2-state (absence → disable, effort → enable).
+    if (isThinkingModel(service, model)) return shape(effort === "auto" ? undefined : effort);
+    // Custom model: 3-state Off/On/Auto. DEFAULT (absence → undefined) is Off → send
+    // the explicit disable; "auto" → omit (the escape for SKUs a STRICT provider would
+    // 422 on the disable); effort → enable. The disable/enable are the user's call —
+    // a 422 from an unsupported SKU surfaces as a translation error.
+    if (isCustomModel(service, model)) {
+      if (effort === "auto") return {};
+      return shape(effort); // undefined (default Off) → disable; effort → enable
+    }
+    // Listed-but-untagged model (e.g. mistral-large-3): known non-thinking → OMIT.
+    return {};
+  };
+
+// ── Shared wire shapes (reused across vendors with identical protocols) ──────
+// Binary `thinking: {type}` — Moonshot (Kimi), Doubao (Seed), Zhipu (GLM), MiMo.
+// Docs: volcengine.com/docs/82379, docs.bigmodel.cn, platform.moonshot.cn,
+// platform.xiaomimimo.com/docs/zh-CN/api/chat/openai-api.
+const thinkingType: EffortShape = (e) => ({ thinking: { type: e ? "enabled" : "disabled" } });
+// Binary `enable_thinking` boolean — SiliconFlow (default TRUE), Baidu ERNIE/Qianfan.
+const enableThinking: EffortShape = (e) => ({ enable_thinking: !!e });
+// `reasoning_effort` enum with explicit "none" off — OpenAI GPT-5.x (omit-default
+// medium on 5.5) + Grok (omit-default "low"). Also reused by Azure (custom service).
+const reasoningEffortOrNone: EffortShape = (e) => ({ reasoning_effort: e ?? "none" });
+// `reasoning_effort` binary high|none — Cohere (command-a-reasoning) + Mistral
+// (adjustable medium/small). Vendor exposes only two effective tiers, so any "on"
+// effort collapses to "high"; off sends an explicit "none" (both server-default-ON).
+const reasoningEffortBinary: EffortShape = (e) => ({ reasoning_effort: e ? "high" : "none" });
+// `reasoning_effort` graded, OMIT when off — Groq gpt-oss + Perplexity deep-research.
+// Reasoning is undisableable on these, so off can't send a real disable; we omit and
+// let the server keep its default. On forwards the chosen low/medium/high verbatim.
+const reasoningEffortGraded: EffortShape = (e) => (e ? { reasoning_effort: e } : {});
+// Qwen3 (DashScope): `enable_thinking` + graded `thinking_budget`.
+const QWEN_THINKING_BUDGET: Record<ReasoningEffort, number> = { low: 1024, medium: 4096, high: 8192 };
+const qwenThinking: EffortShape = (e) => (e ? { enable_thinking: true, thinking_budget: QWEN_THINKING_BUDGET[e] } : { enable_thinking: false });
+
+// DeepSeek V4: `thinking:{type}` + `reasoning_effort` (distinct from NVIDIA NIM,
+// which nests both inside `chat_template_kwargs`). Server-defaults thinking ON, so
+// OFF sends an explicit `{type:"disabled"}`. Always "high" when on — DeepSeek's
+// "max" tier is for heavy agentic work, not translation, so the UI dial is
+// effectively on/off. Exported for the "10M tokens" regression test.
+// Doc: api-docs.deepseek.com/zh-cn/guides/thinking_mode ("默认思考开关为 enabled").
+export const buildDeepseekExtraBody: EffortShape = (e) => (e ? { thinking: { type: "enabled" }, reasoning_effort: "high" } : { thinking: { type: "disabled" } });
+
+// MiniMax & Hunyuan deliberately have NO thinking builder (untagged → no dead UI
+// toggle): MiniMax M2.x thinking is intrinsic/unclosable — the only hosted knob,
+// `reasoning_split`, just switches output FORMAT (`reasoning_details` vs inline
+// `<think>`), it can't turn reasoning off; Hunyuan's `enable_enhancement` is a
+// WEB-SEARCH toggle, not thinking, and the OpenAI-compat path exposes no documented
+// thinking field (the native-API `EnableThinking` is hunyuan-a13b-only). NVIDIA NIM
+// omits too — vLLM defaults DeepSeek reasoning OFF (opt-in), so there's nothing to disable.
 
 const THINKING_BUILDERS: Partial<Record<OpenAICompatProviderKey, ExtraBodyBuilder>> = {
-  // Effort-style (granular), each server-default-ON → explicit disable when off
-  deepseek: (p) => buildDeepseekExtraBody(p.model, p.reasoningEffort),
-  openai: (p) => buildOpenAIReasoningBody(p.model, p.reasoningEffort),
-  grok: (p) => buildGrokExtraBody(p.model, p.reasoningEffort),
-  qwen: (p) => buildQwenExtraBody(p.model, p.reasoningEffort),
-  // Binary thinking (on/off), server-default-ON → explicit `{type:"disabled"}` when off
-  moonshot: (p) => binaryThinkingBody("moonshot", p.model, p.reasoningEffort),
-  doubao: (p) => binaryThinkingBody("doubao", p.model, p.reasoningEffort),
-  zhipu: (p) => binaryThinkingBody("zhipu", p.model, p.reasoningEffort),
-  // Aggregators: pass-through reasoning_effort, OMIT when off (see buildReasoningEffortBody)
-  openrouter: reasoningEffortBuilder,
-  groq: reasoningEffortBuilder,
-  siliconflow: reasoningEffortBuilder,
-  // (minimax / hunyuan intentionally absent — see builders note above)
+  // `reasoning_effort` enum, explicit "none" off (server-default-ON)
+  openai: gated("openai", reasoningEffortOrNone),
+  grok: gated("grok", reasoningEffortOrNone),
+  // DeepSeek V4: thinking:{type} + reasoning_effort (always "high" tier)
+  deepseek: gated("deepseek", buildDeepseekExtraBody),
+  // Qwen3: enable_thinking + graded thinking_budget
+  qwen: gated("qwen", qwenThinking),
+  // Binary thinking:{type} (server-default-ON)
+  moonshot: gated("moonshot", thinkingType),
+  doubao: gated("doubao", thinkingType),
+  zhipu: gated("zhipu", thinkingType),
+  mimo: gated("mimo", thinkingType),
+  // Binary enable_thinking bool (server-default-ON)
+  siliconflow: gated("siliconflow", enableThinking),
+  qianfan: gated("qianfan", enableThinking),
+  // Binary reasoning_effort high|none (server-default-ON): Cohere (command-a-reasoning),
+  // Mistral (adjustable medium/small; Magistral stays untagged = native always-on).
+  cohere: gated("cohere", reasoningEffortBinary),
+  mistral: gated("mistral", reasoningEffortBinary),
+  // OpenRouter: graded effort when on; universal `reasoning:{enabled:false}` off for
+  // tagged upstream reasoning SKUs (untagged free models omit via the gate).
+  openrouter: gated("openrouter", (e) => (e ? { reasoning_effort: e } : { reasoning: { enabled: false } })),
+  // Graded reasoning_effort, OMIT off (undisableable): Groq gpt-oss, Perplexity
+  // sonar-deep-research (research model, server-default medium; sonar-reasoning-pro
+  // stays intrinsic = untagged → gate returns {}).
+  perplexity: gated("perplexity", reasoningEffortGraded),
+  groq: gated("groq", reasoningEffortGraded),
+  // (minimax / hunyuan intentionally absent — see note above)
 };
 
 // Exposed for the SERVER_DEFAULT_THINKING_ON invariant test: the thinking extra
@@ -193,11 +194,37 @@ const THINKING_BUILDERS: Partial<Record<OpenAICompatProviderKey, ExtraBodyBuilde
 // disable payload). Returns {} for providers with no builder.
 export const buildThinkingExtraBody = (service: OpenAICompatProviderKey, params: TranslateTextParams): Record<string, unknown> => THINKING_BUILDERS[service]?.(params) ?? {};
 
+// Shared relay-hint message: browser-direct calls to a relay-capable provider
+// hit the same CORS wall and surface a raw `TypeError: Failed to fetch` (no
+// status → retry.ts would wrongly retry it 3×). The "enable 'API Relay'" marker
+// is what retry.ts matches to treat it as non-retryable, so retrying a doomed
+// CORS error is avoided. Hardcoded bilingual to match existing precedent.
+export const RELAY_HINT_MESSAGE = "Network error (possibly CORS). Please enable 'API Relay' in API Settings. / 网络错误（可能是 CORS 限制），请在 API 设置中开启「中转 API」。";
+
+// True when an error is the browser's CORS/network `TypeError: Failed to fetch`.
+const isFailedToFetch = (error: unknown): error is TypeError => error instanceof TypeError && error.message.includes("Failed to fetch");
+
+// Wrap a relay-capable provider's service so a `Failed to fetch` (CORS) error
+// with relay OFF is rewritten into the actionable relay hint. Applied generically
+// to every `allowRelay` provider — not just DeepSeek — so they all get the hint
+// (and the non-retryable classification) instead of a raw doomed retry.
+const withRelayHint = (service: TranslationService): TranslationService => async (params) => {
+  try {
+    return await service(params);
+  } catch (error) {
+    if (!params.useRelay && isFailedToFetch(error)) {
+      throw new Error(RELAY_HINT_MESSAGE);
+    }
+    throw error;
+  }
+};
+
 // Factory: generate a TranslationService from a provider spec key, optionally
-// wiring in a thinking extra-body builder.
+// wiring in a thinking extra-body builder. Relay-capable providers are wrapped
+// with the shared CORS → relay-hint rewriter.
 const makeOpenAICompat = (key: OpenAICompatProviderKey, extraBodyBuilder?: ExtraBodyBuilder): TranslationService => {
   const spec = OPENAI_COMPAT_PROVIDERS[key] as OpenAICompatProviderSpec;
-  return async (params) =>
+  const base: TranslationService = async (params) =>
     openAICompatRequest({
       params,
       serviceName: spec.label,
@@ -207,27 +234,22 @@ const makeOpenAICompat = (key: OpenAICompatProviderKey, extraBodyBuilder?: Extra
       extraHeaders: spec.extraHeaders,
       extraBody: extraBodyBuilder?.(params),
     });
+  return spec.allowRelay ? withRelayHint(base) : base;
 };
 
 // Auto-generate every OpenAI-compat service: each provider gets a base service,
 // thinking-aware ones additionally pick up their builder from the registry.
 const openAICompatServicesBase = Object.fromEntries(OPENAI_COMPAT_KEYS.map((k) => [k, makeOpenAICompat(k, THINKING_BUILDERS[k])])) as Record<OpenAICompatProviderKey, TranslationService>;
 
-// DeepSeek extra wrap: factory call + CORS/403 error rewriting that points
-// users at the "API Relay" toggle. The only provider whose direct-call
-// failures need user-facing remediation hints; everything else surfaces the
-// raw upstream error.
+// DeepSeek extra wrap: the generic relay-hint (CORS → "API Relay") already comes
+// from the factory; DeepSeek additionally rewrites a 403 (its direct endpoint
+// blocks some browser origins outright) into the same relay remediation hint.
 export const deepseek: TranslationService = async (params) => {
   try {
     return await openAICompatServicesBase.deepseek(params);
   } catch (error) {
-    if (!params.useRelay && error instanceof Error) {
-      if (error instanceof TypeError && error.message.includes("Failed to fetch")) {
-        throw new Error("Network error (possibly CORS). Please enable 'API Relay' in API Settings. / 网络错误（可能是 CORS 限制），请在 API 设置中开启「中转 API」。");
-      }
-      if (error.message.includes("[403]")) {
-        throw new Error("DeepSeek API returned 403 Forbidden. Please enable 'API Relay' in API Settings. / DeepSeek API 返回 403 禁止访问，请在 API 设置中开启「中转 API」。");
-      }
+    if (!params.useRelay && error instanceof Error && error.message.includes("[403]")) {
+      throw new Error("DeepSeek API returned 403 Forbidden. Please enable 'API Relay' in API Settings. / DeepSeek API 返回 403 禁止访问，请在 API 设置中开启「中转 API」。");
     }
     throw error;
   }
@@ -270,12 +292,17 @@ export const gemini: TranslationService = async (params) => {
   // enum (minimal/low/medium/high). Gemini is the ONLY provider whose server
   // defaults thinking ON, so for thinking-tagged models we MUST send an
   // explicit level even when the user picked Off (otherwise server keeps
-  // thinking on). For untagged models (user-supplied custom SKU), we omit
-  // thinkingConfig to preserve the server's per-model default behavior.
+  // thinking on). For a custom (unlisted) SKU we send the level ONLY on opt-in
+  // (effort set) and omit otherwise — mirrors gated(): off → server default kept
+  // (400-safe), on → user's call if the model rejects it.
   const generationConfig: Record<string, unknown> = {
     temperature: normalizeNumber(temperature, defaultConfigs.gemini.temperature),
   };
   if (isThinkingModel("gemini", effectiveModel)) {
+    generationConfig.thinkingConfig = { thinkingLevel: reasoningEffort && reasoningEffort !== "auto" ? reasoningEffort : "minimal" };
+  } else if (isCustomModel("gemini", effectiveModel) && reasoningEffort !== "auto") {
+    // Custom model 3-state: default Off (undefined) → disable (Gemini's "minimal");
+    // effort → that level; "auto" → omit (skip thinkingConfig, follow server default).
     generationConfig.thinkingConfig = { thinkingLevel: reasoningEffort ?? "minimal" };
   }
 
@@ -304,6 +331,24 @@ export const gemini: TranslationService = async (params) => {
   return text.trim();
 };
 
+// Azure mirrors OpenAI's reasoning behavior (deployments map to GPT-5 SKUs), so it
+// reuses the same `reasoningEffortOrNone` shape: gpt-5.5 / gpt-chat-latest omit→
+// "medium" (ON) means a tagged deployment must send explicit "none" when off. A
+// custom (unlisted) deployment instead sends the effort ONLY on opt-in and omits
+// otherwise — same custom-model policy as gated() (off → 400-safe omit, on → user's
+// call). (Azure is a custom service, not in OPENAI_COMPAT_KEYS, so it can't use gated.)
+export const buildAzureReasoningBody = (deployment: string | undefined, reasoningEffort: ThinkingDirective | undefined): Record<string, unknown> => {
+  const model = deployment || (defaultConfigs.azureopenai.model as string);
+  // Tagged: 2-state (undefined → "none" disable, effort → that effort).
+  if (isThinkingModel("azureopenai", model)) return reasoningEffortOrNone(reasoningEffort === "auto" ? undefined : reasoningEffort);
+  // Custom deployment 3-state: "auto" → omit; default Off (undefined) → "none"; effort → that effort.
+  if (isCustomModel("azureopenai", model)) {
+    if (reasoningEffort === "auto") return {};
+    return reasoningEffortOrNone(reasoningEffort);
+  }
+  return {}; // listed-but-untagged → omit
+};
+
 export const azureopenai: TranslationService = async (params) => {
   const { apiKey, url, model, apiVersion, temperature, reasoningEffort } = params;
   const { effectiveSystemPrompt, prompt } = preparePrompts(params);
@@ -324,10 +369,8 @@ export const azureopenai: TranslationService = async (params) => {
       { role: "user", content: prompt },
     ],
     temperature: normalizeNumber(temperature, defaultConfigs.azureopenai.temperature),
+    ...buildAzureReasoningBody(deployment, reasoningEffort),
   };
-  if (reasoningEffort) {
-    requestBody.reasoning_effort = reasoningEffort;
-  }
 
   const data = await fetchJSON(requestUrl, {
     method: "POST",
@@ -345,8 +388,11 @@ export const azureopenai: TranslationService = async (params) => {
 // which use top-level `reasoning_effort` / `thinking`). Orchestrator-level gate
 // in useTranslationState ensures reasoningEffort is only set for thinking-tagged
 // models the user picked an effort for.
-const buildNvidiaThinkingParams = (reasoningEffort: ReasoningEffort | undefined): Record<string, unknown> => {
-  if (!reasoningEffort) return {};
+const buildNvidiaThinkingParams = (reasoningEffort: ThinkingDirective | undefined): Record<string, unknown> => {
+  // NIM defaults reasoning OFF, so the default-Off (undefined) and "auto" both map to
+  // omit — omitting already yields "off", there's nothing to disable. Only a real
+  // effort enables.
+  if (!reasoningEffort || reasoningEffort === "auto") return {};
   return { chat_template_kwargs: { thinking: true, reasoning_effort: reasoningEffort } };
 };
 
@@ -438,12 +484,15 @@ export const llm: TranslationService = async (params) => {
   return getOpenAICompatContent(data, serviceName);
 };
 
-export const claude: TranslationService = async (params) => {
+export const claude: TranslationService = withRelayHint(async (params) => {
   const { apiKey, model, temperature, reasoningEffort, useRelay } = params;
   const { effectiveSystemPrompt, prompt } = preparePrompts(params);
 
   const key = requireApiKey("Claude", apiKey);
   const effectiveModel = model || defaultConfigs.claude.model!;
+  // Claude's server default is thinking OFF, so default-Off (undefined) and "auto"
+  // both = no thinking block (omitting already yields off). Only a real effort enables.
+  const effort: ReasoningEffort | undefined = reasoningEffort === "auto" ? undefined : reasoningEffort;
 
   // Anthropic requires budget_tokens < max_tokens. When thinking is on we
   // reserve 10K for reasoning + ~6K for the visible response, so max_tokens
@@ -460,16 +509,16 @@ export const claude: TranslationService = async (params) => {
     model: effectiveModel,
     system: [{ type: "text", text: effectiveSystemPrompt, cache_control: { type: "ephemeral" } }],
     messages: [{ role: "user", content: prompt }],
-    max_tokens: reasoningEffort ? 16384 : 8096,
+    max_tokens: effort ? 16384 : 8096,
   };
 
-  if (reasoningEffort) {
+  if (effort) {
     // Claude's "thinking level" is a token budget (integer), not enum. Map our
     // user-facing low/medium/high to concrete budgets. Per Anthropic docs
     // budget_tokens must be < max_tokens (we use 16384 above when thinking,
     // so cap budget at ~12000 to leave room for the visible response).
     const CLAUDE_BUDGET: Record<ReasoningEffort, number> = { low: 4096, medium: 10000, high: 12000 };
-    requestBody.thinking = { type: "enabled", budget_tokens: CLAUDE_BUDGET[reasoningEffort] };
+    requestBody.thinking = { type: "enabled", budget_tokens: CLAUDE_BUDGET[effort] };
   } else {
     requestBody.temperature = normalizeNumber(temperature, defaultConfigs.claude.temperature);
   }
@@ -491,5 +540,5 @@ export const claude: TranslationService = async (params) => {
     body: JSON.stringify(requestBody),
     signal: params.signal,
   });
-  return getClaudeContent(data, !!reasoningEffort);
-};
+  return getClaudeContent(data, !!effort);
+});
