@@ -8,6 +8,7 @@ import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
 import { AntdRegistry } from "@ant-design/nextjs-registry";
 import ThemesProvider from "@/app/ThemesProvider";
+import { SITE_URL } from "@/app/lib/seo";
 
 type Props = {
   children: React.ReactNode;
@@ -21,6 +22,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   const description = t("description");
 
   return {
+    metadataBase: new URL(SITE_URL),
     title,
     description,
     icons: {
