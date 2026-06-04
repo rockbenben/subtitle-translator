@@ -46,43 +46,16 @@ export const extractTranslatedLinesWithNumbers = (response: string, expectedCoun
     }
   }
 
-  const successCount = results.filter(Boolean).length;
-  if (successCount > 0) {
-    return results;
-  }
-
-  // Fallback: try unnumbered matching
-  return extractTranslatedLines(response, expectedCount);
-};
-
-/**
- * Extract translated lines from AI response without numbered markers
- */
-const UNNUMBERED_TRANSLATE_RE = /\[TRANSLATE\]([\s\S]*?)\[\/TRANSLATE\]/gi;
-
-export const extractTranslatedLines = (response: string, expectedCount: number): string[] => {
-  UNNUMBERED_TRANSLATE_RE.lastIndex = 0;
-  const translateRegex = UNNUMBERED_TRANSLATE_RE;
-  const matches: string[] = [];
-  let match;
-
-  while ((match = translateRegex.exec(response)) !== null) {
-    matches.push(cleanTranslatedContent(match[1].trim()));
-  }
-
-  // If match count is correct, return matched results
-  if (matches.length === expectedCount) {
-    return matches;
-  }
-
-  // Otherwise, try splitting by lines and take first N lines, cleaning each line
-  const lines = response
-    .split("\n")
-    .filter((line) => line.trim())
-    .slice(0, expectedCount)
-    .map((line) => cleanTranslatedContent(line));
-
-  return lines.length === expectedCount ? lines : new Array(expectedCount).fill("");
+  // Fail safe, not wrong: every returned line is placed at the index named by its
+  // [TRANSLATE_N] marker, so reordered-but-tagged output still maps correctly. When
+  // NO marker parses (the LLM — Gemini especially — stripped the tags, wrapped the
+  // reply in a code fence, or added a preamble), we must NOT guess by line position:
+  // a positional split silently misaligns subtitles against their timestamps whenever
+  // the model reorders lines or changes the line count. Returning empties instead lets
+  // the caller's retry (window-halving, cluster retry, 10s auto-retry) and final
+  // soft-fill-with-original kick in — a line left untranslated at the CORRECT timestamp
+  // beats a translation at the wrong one.
+  return results;
 };
 
 /**
