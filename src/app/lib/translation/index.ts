@@ -49,9 +49,9 @@ export const runReachabilityProbe = async (translationMethod: TranslationMethod,
  * fetch") as a string so the Test buttons can surface the real cause instead of a
  * generic "test failed". Wraps runReachabilityProbe (which throws).
  */
-export const testTranslation = async (translationMethod: TranslationMethod, config: Partial<TranslateTextParams>, systemPrompt?: string, userPrompt?: string): Promise<string | null> => {
+export const testTranslation = async (translationMethod: TranslationMethod, config: Partial<TranslateTextParams>, systemPrompt?: string, userPrompt?: string, signal?: AbortSignal): Promise<string | null> => {
   try {
-    const result = await runReachabilityProbe(translationMethod, config, systemPrompt, userPrompt);
+    const result = await runReachabilityProbe(translationMethod, config, systemPrompt, userPrompt, signal);
     // Probe target is zh, so result should contain Chinese \u2014 warn (not fail) if not.
     if (!/[\u4e00-\u9fa5]/.test(result)) {
       console.warn("Translation result does not contain Chinese characters, may not have actually translated:", result);
@@ -69,6 +69,10 @@ export const testTranslation = async (translationMethod: TranslationMethod, conf
 
 // Skip translation if text has no translatable characters
 const HAS_TRANSLATABLE_CONTENT = /[a-zA-Z\p{L}]/u;
+
+// Services whose responses HTML-encode characters (Google NMT backends) —
+// the only ones whose output should be entity-unescaped. See translateText.
+const HTML_ENCODING_METHODS: ReadonlySet<string> = new Set(["gtxFreeAPI", "google", "webgoogletranslate"]);
 
 /**
  * Translate text using the specified method
@@ -100,10 +104,15 @@ const translateText = async (params: TranslateTextParams): Promise<string> => {
     throw new Error(`No translation result received for method: ${translationMethod}`);
   }
 
+  // HTML-entity unescape ONLY for Google's NMT-backed services — they encode
+  // apostrophes/brackets in their responses. Other providers (LLMs, DeepL)
+  // return faithfully escaped content; unescaping it engine-wide changed
+  // document semantics (&lt;div&gt; in an HTML-escaped doc became a real tag)
+  // and cached the corrupted form.
+  const cleanedText = HTML_ENCODING_METHODS.has(translationMethod) ? cleanTranslatedText(translatedText) : translatedText;
   // Fire-and-forget cache write — failures swallowed in indexedDBStorage.set,
   // and the next read of this key is ≥1s later (retry interval) so the write
   // has plenty of time to settle. Awaiting would add 5-50ms per line for nothing.
-  const cleanedText = cleanTranslatedText(translatedText);
   if (useCache) {
     void setCachedTranslation(cacheKey, cleanedText);
   }

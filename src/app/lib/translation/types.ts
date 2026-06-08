@@ -22,6 +22,7 @@ export interface TranslateTextParams {
   url?: string;
   model?: string;
   apiVersion?: string;
+  folderId?: string; // Optional: Yandex AI Studio folder ID — per-tenant scope assembled into model URIs (gpt://<folderId>/<model>)
   temperature?: number;
   // Cap on model output tokens. Undefined / 0 = no cap (vendor default).
   // Primary use case: local Ollama small models that hallucinate into repeating
@@ -67,6 +68,8 @@ export interface TranslationConfig {
   region?: string;
   model?: string;
   apiVersion?: string;
+  /** Yandex AI Studio folder ID. See TranslateTextParams.folderId. */
+  folderId?: string;
   temperature?: number;
   /** See TranslateTextParams.maxTokens. Undefined / 0 = no cap. */
   maxTokens?: number;

@@ -200,16 +200,37 @@ export const languages: LanguageOption[] = [
 // 3. Update the appropriate Set below and the verification date.
 // 4. Run `yarn test` — registry.test.ts will catch any obvious mismatch.
 // ════════════════════════════════════════════════════════════════════════════
+// DeepLX (community free endpoint) — the JSONRPC backend speaks ONLY classic
+// DeepL's language set, NOT the next-gen 110+ list the official API gained in
+// 2025. The old assumption "DeepLX ≡ DeepL coverage" was empirically false:
+// live-probed every master code against the shipped default endpoint
+// (THIRD_PARTY_ENDPOINTS.deeplx, 2026-06-07) — everything outside this
+// allowlist returns HTTP 400 "Invalid target_lang" (incl. hi/vi/he/th/fa/ur/
+// bn/sw/fil/yue/ca/sr/hr...). zh-hant is EXCLUDED deliberately: the endpoint
+// answers 200 for ZH-HANT but silently returns Simplified script (verified
+// byte-identical to the ZH-HANS response) — silently-wrong output is worse
+// than a clean upfront block. The denylist below is derived as
+// master − allowlist so new master additions default to blocked until probed.
+const DEEPLX_SUPPORTED: ReadonlySet<string> = new Set([
+  "en", "zh", "es", "fr", "de", "ja", "ko", "ar", "ru", "pt-br", "pt-pt", "id", "it",
+  "pl", "uk", "nl", "ro", "el", "hu", "sv", "cs", "bg", "da", "fi", "nb", "sk", "lt",
+  "sl", "lv", "et", "tr",
+]);
+
 const UNSUPPORTED_LANGS: Record<string, Set<string>> = {
-  // DeepL & DeepLX — same coverage (DeepLX is a community proxy in front of DeepL).
+  // Official DeepL API (next-gen, 110+ languages via the project proxy).
   // Verified 2026-05-26 — denylist is complete, no other master codes missing.
   deepl: new Set(["kn", "am", "ug", "si", "lo"]),
-  deeplx: new Set(["kn", "am", "ug", "si", "lo"]),
+  // DeepLX: derived from the live-probed classic allowlist above — NOT the
+  // official DeepL list (see DEEPLX_SUPPORTED comment).
+  deeplx: new Set(languages.map((l) => l.value).filter((v) => v !== "auto" && !DEEPLX_SUPPORTED.has(v))),
 
   // Google Cloud Translation / GTX (Free). Both go through Google's NMT backend.
   // Only 2 codes from our master aren't on Google's official supported list:
   // `an` (Aragonese) and `wo` (Wolof). Most other niche codes (ace/scn/lmo/etc)
-  // are supported. Verified 2026-05-26.
+  // are supported. Verified 2026-05-26. `prs` (Dari) is NOT denied — Google's
+  // code for it is `fa-AF`; services/traditional.ts remaps before sending
+  // (live-verified 2026-06-07: prs → 400, fa-AF → 200, both directions).
   gtxFreeAPI: new Set(["an", "wo"]),
   google: new Set(["an", "wo"]),
 

@@ -6,12 +6,13 @@ export const DEFAULT_SYSTEM_PROMPT = "You are a professional translator. Respond
 export const DEFAULT_USER_PROMPT = "Please respect the original meaning, maintain the original format, and rewrite the following content in ${targetLanguage}.\n\n${content}";
 
 // Fields to preserve when resetting config to defaults (user credentials should not be lost).
-// apiVersion (Azure OpenAI) and region (Azure Translate) are effectively credential-adjacent —
-// users set them once per Azure deployment and don't expect a reset to forget them.
-const PRESERVE_FIELDS: (keyof TranslationConfig)[] = ["apiKey", "url", "apiVersion", "region"];
+// apiVersion (Azure OpenAI), region (Azure Translate), and folderId (Yandex) are effectively
+// credential-adjacent — users set them once per deployment/tenant and don't expect a reset
+// to forget them.
+const PRESERVE_FIELDS: (keyof TranslationConfig)[] = ["apiKey", "url", "apiVersion", "region", "folderId"];
 
 /**
- * Reset config to defaults while preserving user credential fields (apiKey, url, apiVersion, region).
+ * Reset config to defaults while preserving user credential fields (apiKey, url, apiVersion, region, folderId).
  * Used by the explicit "Reset" button.
  */
 export const resetConfigWithCredentials = (currentConfig: TranslationConfig | undefined, defaultConfig: TranslationConfig | undefined): TranslationConfig => {

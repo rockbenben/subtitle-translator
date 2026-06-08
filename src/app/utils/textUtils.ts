@@ -135,7 +135,8 @@ export const compressNewlines = (text: string, maxConsecutive: number = 2): stri
 // 3) 按段落重排：空行＝段落分隔；列表项与 ``` 围栏代码块逐行保留、不参与合并；其余连续行拼回整段；
 // 4) 折行拼接：两侧都是中日韩字符时不补空格（避免「中 文」），否则补一个空格（拼回英文折行）。
 const CLI_GUTTER_RE = /^([ \t]*)(?:[>▏▎▍▌▐█│┃┆┊║]\s?)+/;
-const CJK_CHAR_RE = /[　-〿㐀-鿿豈-﫿＀-￯]/;
+// 范围含平假名/片假名(U+3040–U+30FF):漏掉它们会让日文折行在拼接点插多余空格。
+const CJK_CHAR_RE = /[　-ヿ㐀-鿿豈-﫿＀-￯]/;
 const LIST_ITEM_RE = /^\s*(?:[-*+]|\d+[.)])\s+/;
 // markdown 表格行（以 | 开头）：与列表项同等保留整行、不并入段落。
 // | 已从 CLI_GUTTER_RE 移除——否则会吃掉表格行首竖线，整张表还会被并成一段。

@@ -44,13 +44,35 @@ const AZURE_LANG_MAP: Record<string, string> = {
 };
 const toAzureCode = (lang: string): string => AZURE_LANG_MAP[lang] ?? lang;
 
+// Google's NMT backend uses non-standard codes for some languages. Our master
+// list uses `prs` for Dari; Google rejects it (400) but accepts `fa-AF` —
+// live-verified 2026-06-07 against translate.googleapis.com in BOTH directions.
+// Applied to gtxFreeAPI and the official google service (same backend).
+const GOOGLE_LANG_MAP: Record<string, string> = {
+  prs: "fa-AF",
+};
+const toGoogleCode = (lang: string): string => GOOGLE_LANG_MAP[lang] ?? lang;
+
 export const gtxFreeAPI: TranslationService = async (params) => {
   const { text, targetLanguage, sourceLanguage } = params;
-  const apiEndpoint = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sourceLanguage}&tl=${targetLanguage}&dt=t&q=${encodeURIComponent(text)}`;
-  const response = await fetch(apiEndpoint, { signal: params.signal });
+  // POST with the text in the form body, NOT a GET query param: percent-encoded
+  // CJK inflates 9x (3 UTF-8 bytes → 9 chars), and the endpoint caps URLs at
+  // ~16KB — single lines over ~1,700 CJK chars (routine md-translator
+  // paragraphs) deterministically 400'd on the GET form. Live-verified
+  // 2026-06-07: 3,000-CJK-char POST → 200, same response shape.
+  const apiEndpoint = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${toGoogleCode(sourceLanguage)}&tl=${toGoogleCode(targetLanguage)}&dt=t`;
+  const response = await fetch(apiEndpoint, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: `q=${encodeURIComponent(text)}`,
+    signal: params.signal,
+  });
 
   if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`);
+    // Attach .status like fetchJSON does — without it, retry.ts's status-based
+    // classification never fires for the DEFAULT service and a deterministic
+    // 4xx burns the full retry budget (2-60s backoff) on every line.
+    throw Object.assign(new Error(`HTTP error! status: ${response.status}`), { status: response.status });
   }
 
   const data = await response.json();
@@ -68,8 +90,8 @@ export const google: TranslationService = async (params) => {
   const key = requireApiKey("Google Translate", apiKey);
   const requestBody = {
     q: text,
-    target: targetLanguage,
-    ...(sourceLanguage !== "auto" && { source: sourceLanguage }),
+    target: toGoogleCode(targetLanguage),
+    ...(sourceLanguage !== "auto" && { source: toGoogleCode(sourceLanguage) }),
   };
 
   const data = (await fetchJSON(`https://translation.googleapis.com/language/translate/v2?key=${key}`, {
@@ -370,9 +392,15 @@ export const translategemma: TranslationService = async (params) => {
     signal: params.signal,
   });
 
-  const responseText = (data as { choices?: Array<{ text?: string }> } | null)?.choices?.[0]?.text;
+  const choice = (data as { choices?: Array<{ text?: string; finish_reason?: string }> } | null)?.choices?.[0];
+  const responseText = choice?.text;
   if (typeof responseText !== "string") {
     throw new Error("Invalid response format from TranslateGemma");
+  }
+  // finish_reason === "length" 表示 max_tokens 截断 —— 抛错(让重试/失败面板
+  // 接管),否则截断的半截译文被当成功结果返回并缓存,用户无从察觉。
+  if (choice?.finish_reason === "length") {
+    throw new Error("TranslateGemma output truncated (max_tokens reached) — text too long for one batch");
   }
   return responseText.trim();
 };

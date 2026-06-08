@@ -48,9 +48,32 @@ export default function TranslateFailurePanel({
   const [modalOpen, setModalOpen] = useState(false);
   const { token } = theme.useToken();
 
-  const hasLineFailures = count > 0;
-  const hasLangFailures = failedLangs.length > 0;
+  // 两类失败面板各自独立关闭:onClose(=clearFailures)是全清,直接接到
+  // 单个 Alert 的关闭按钮会让"关掉行级提示"连带清空语言级失败码(用户还
+  // 没抄走)。本地 dismissed 状态先各自隐藏,两者都关掉才真正全清。
+  const [lineDismissed, setLineDismissed] = useState(false);
+  const [langDismissed, setLangDismissed] = useState(false);
+  const failureKey = `${count}|${failedLangs.join(",")}`;
+  const [prevFailureKey, setPrevFailureKey] = useState(failureKey);
+  if (failureKey !== prevFailureKey) {
+    // 新一轮失败 → 复位本地关闭状态
+    setPrevFailureKey(failureKey);
+    setLineDismissed(false);
+    setLangDismissed(false);
+  }
+
+  const hasLineFailures = count > 0 && !lineDismissed;
+  const hasLangFailures = failedLangs.length > 0 && !langDismissed;
   const hasFailures = hasLineFailures || hasLangFailures;
+
+  const dismissLine = () => {
+    setLineDismissed(true);
+    if (failedLangs.length === 0 || langDismissed) onClose?.();
+  };
+  const dismissLang = () => {
+    setLangDismissed(true);
+    if (count === 0 || lineDismissed) onClose?.();
+  };
 
   // Visibility: the inline Alert below can sit under a long result, off-screen. Fire a
   // one-shot toast the moment failures appear so it's noticed regardless of scroll —
@@ -82,7 +105,7 @@ export default function TranslateFailurePanel({
         <Alert
           type="warning"
           showIcon
-          closable={onClose ? { onClose } : false}
+          closable={onClose ? { onClose: dismissLine } : false}
           className="!mt-4"
           title={t("partialFailureTitle", { count })}
           description={
@@ -124,7 +147,7 @@ export default function TranslateFailurePanel({
         <Alert
           type="warning"
           showIcon
-          closable={onClose ? { onClose } : false}
+          closable={onClose ? { onClose: dismissLang } : false}
           className="!mt-4"
           title={t("failedLanguagesTitle", { count: failedLangs.length })}
           description={

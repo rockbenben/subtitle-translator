@@ -6,6 +6,7 @@ import { useLocalStorage } from "@/app/hooks/useLocalStorage";
 import useFileUpload from "@/app/hooks/useFileUpload";
 import { useLlmPresets } from "@/app/hooks/useLlmPresets";
 import { usePromptPresets } from "@/app/hooks/usePromptPresets";
+import { useGlossaryPresets } from "@/app/hooks/useGlossaryPresets";
 import { useTranslationProgress } from "@/app/hooks/useTranslationProgress";
 import {
   generateCacheSuffix,
@@ -22,6 +23,7 @@ import {
   DEFAULT_SYSTEM_PROMPT,
   DEFAULT_USER_PROMPT,
   translategemmaHealthCheck,
+  deleteCachedTranslation,
   type TranslateTextParams,
   type TranslationConfig,
 } from "@/app/lib/translation";
@@ -30,6 +32,7 @@ import {
   delay,
   extractTranslatedLinesWithNumbers,
   buildContextPrompt,
+  isBlankLine,
   exportTranslationSettings,
   createSettingsFileInput,
   validateTranslationInputs,
@@ -41,6 +44,7 @@ import {
   type TranslationSettings,
   type UserRetryConfig,
 } from "@/app/hooks/translation";
+import { isNetworkError } from "@/app/utils/errorUtils";
 import pLimit from "p-limit";
 import pRetry from "p-retry";
 import { useTranslations } from "next-intl";
@@ -126,10 +130,26 @@ const useTranslationState = () => {
   const effectiveSystemPrompt = systemPrompt.trim() ? systemPrompt : DEFAULT_SYSTEM_PROMPT;
   const effectiveUserPrompt = userPrompt.trim() ? userPrompt : DEFAULT_USER_PROMPT;
 
+  const {
+    glossaryEnabled,
+    setGlossaryEnabled,
+    glossaryPresets,
+    setGlossaryPresets,
+    activeGlossaryPresetId,
+    setActiveGlossaryPresetId,
+    activeGlossaryPreset,
+    createGlossaryPreset,
+    deleteGlossaryPreset,
+    renameGlossaryPreset,
+    updateGlossaryPreset,
+    buildTranslationSystemPrompt,
+    applyGlossary,
+  } = useGlossaryPresets(effectiveSystemPrompt);
+
   // Extracted concerns
   const { isTranslating, setIsTranslating, progressPercent, setProgressPercent, progressInfo, abortControllerRef, makeUpdateProgress, resetProgress } = useTranslationProgress();
 
-  const { llmPresets, setLlmPresets, activeLlmPresetId, saveLlmPreset, loadLlmPreset, deleteLlmPreset, renameLlmPreset, updateLlmPreset } = useLlmPresets({
+  const { llmPresets, setLlmPresets, activeLlmPresetId, setActiveLlmPresetId, saveLlmPreset, loadLlmPreset, deleteLlmPreset, renameLlmPreset, updateLlmPreset } = useLlmPresets({
     translationConfigs,
     setTranslationConfigs,
   });
@@ -164,8 +184,12 @@ const useTranslationState = () => {
         targetLanguages,
         multiLanguageMode,
         llmPresets,
+        activeLlmPresetId,
         promptPresets,
         activePromptPresetId,
+        glossaryPresets,
+        activeGlossaryPresetId,
+        glossaryEnabled,
         retryCount,
         requestTimeoutSec,
         removeChars,
@@ -188,8 +212,12 @@ const useTranslationState = () => {
       if (settings.targetLanguages !== undefined) setTargetLanguages(settings.targetLanguages);
       if (settings.multiLanguageMode !== undefined) setMultiLanguageMode(settings.multiLanguageMode);
       if (settings.llmPresets !== undefined) setLlmPresets(settings.llmPresets);
+      if (settings.activeLlmPresetId !== undefined) setActiveLlmPresetId(settings.activeLlmPresetId);
       if (settings.promptPresets !== undefined) setPromptPresets(settings.promptPresets);
       if (settings.activePromptPresetId !== undefined) setActivePromptPresetId(settings.activePromptPresetId);
+      if (settings.glossaryPresets !== undefined) setGlossaryPresets(settings.glossaryPresets);
+      if (settings.activeGlossaryPresetId !== undefined) setActiveGlossaryPresetId(settings.activeGlossaryPresetId);
+      if (settings.glossaryEnabled !== undefined) setGlossaryEnabled(settings.glossaryEnabled);
       if (settings.retryCount !== undefined) setRetryCount(settings.retryCount);
       if (settings.requestTimeoutSec !== undefined) setRequestTimeoutSec(settings.requestTimeoutSec);
       if (settings.removeChars !== undefined) setRemoveChars(settings.removeChars);
@@ -352,17 +380,23 @@ const useTranslationState = () => {
           try {
             await runReachabilityProbe(translationMethod, config, tempSystemPrompt, tempUserPrompt, probeController.signal);
           } catch (error) {
-            // Smart gate: HARD-BLOCK only when retrying wouldn't help — the same
+            // Smart gate: HARD-BLOCK when retrying wouldn't help — the same
             // errors the per-line translation gives up on (auth / CORS-needs-relay
-            // / abort/timeout, via isRetryableError). Transient reachable-but-busy
-            // failures (429 / 5xx / network blip) PROCEED: a single-shot probe must
-            // not be stricter than the resilient per-line pRetry + soft-fail, so a
-            // momentary blip can't block the whole job.
+            // / abort/timeout, via isRetryableError), PLUS status-less network
+            // errors (connection refused / unreachable, via isNetworkError).
+            // The network case is the probe's PRIMARY documented scenario
+            // ("server not running / wrong URL" per PREFLIGHT_PROBE_METHODS) but
+            // isRetryableError classifies status-less errors as retryable, so
+            // without the explicit check a dead LM Studio/Ollama or a blocked
+            // gtx endpoint sailed through to a fully doomed multi-minute run.
+            // Transient reachable-but-busy failures (429 / 5xx) still PROCEED:
+            // a single-shot probe must not be stricter than the per-line
+            // pRetry + soft-fail.
             //
             // deeplx is the exception — it's a flaky public proxy whose safety net
             // IS the auto-switch to the free GTX default, so ANY probe failure
             // (even transient) should fall back rather than proceed-and-soft-fail.
-            if (!isRetryableError(error) || translationMethod === "deeplx") {
+            if (!isRetryableError(error) || isNetworkError(error) || translationMethod === "deeplx") {
               const errorMessages: Record<string, string> = {
                 deeplx: t("deepLXUnavailable"),
                 deepl: t("deeplUnavailable"),
@@ -393,10 +427,20 @@ const useTranslationState = () => {
   };
 
   // Retry translation with config - throws on failure (no fallback to original text)
-  // Uses shared abortControllerRef to allow cancellation across concurrent requests
-  const translateSingle = async (text: string, cacheSuffix: string, config: TranslationRuntimeConfig, fullText?: string) => {
+  //
+  // `runController` is the abort controller of the run THIS call belongs to.
+  // It must be captured by the caller when its run starts and passed down —
+  // reading the live abortControllerRef here instead opened the ghost-task
+  // hole: p-limit never cancels queued tasks, so after an auth abort the dead
+  // run's queued tasks would dequeue under the NEXT run's fresh controller,
+  // pass the liveness check, fire real API requests for the discarded run,
+  // and on re-hitting the auth error abort the HEALTHY new run (which then
+  // exported blank lines with a success toast). Falls back to the live ref
+  // only for legacy callers that have no run scope.
+  const translateSingle = async (text: string, cacheSuffix: string, config: TranslationRuntimeConfig, fullText?: string, runController?: AbortController) => {
+    const run = runController ?? abortControllerRef.current;
     // Check if already aborted (e.g., by auth error in another concurrent request)
-    if (abortControllerRef.current?.signal.aborted) {
+    if (run?.signal.aborted) {
       throw new Error("Translation aborted");
     }
 
@@ -405,20 +449,20 @@ const useTranslationState = () => {
     const timeoutMs = requestTimeoutSec * 1000;
 
     // Create per-request abort controller with timeout
-    // Links to shared abort controller and auto-cleans up
+    // Links to this RUN's abort controller and auto-cleans up
     const createTimeoutController = () => {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
-      // If shared controller aborts, also abort this request
+      // If the run's controller aborts, also abort this request
       const onAbort = () => controller.abort();
-      abortControllerRef.current?.signal.addEventListener("abort", onAbort, { once: true });
+      run?.signal.addEventListener("abort", onAbort, { once: true });
 
       return {
         controller,
         cleanup: () => {
           clearTimeout(timeoutId);
-          abortControllerRef.current?.signal.removeEventListener("abort", onAbort);
+          run?.signal.removeEventListener("abort", onAbort);
         },
       };
     };
@@ -426,7 +470,7 @@ const useTranslationState = () => {
     // Build translate params - pick defined optional fields from config.
     // reasoningEffort is derived per-call from the thinkingEffort record
     // (presence of entry for current model = effort, absence = thinking off).
-    const optionalFields = ["useCache", "apiKey", "region", "url", "model", "apiVersion", "temperature", "maxTokens", "systemPrompt", "userPrompt", "sendSystemPrompt", "useRelay", "domains"] as const;
+    const optionalFields = ["useCache", "apiKey", "region", "url", "model", "apiVersion", "folderId", "temperature", "maxTokens", "systemPrompt", "userPrompt", "sendSystemPrompt", "useRelay", "domains"] as const;
     const extras: Record<string, unknown> = {};
     const configRecord = config as unknown as Record<string, unknown>;
     for (const key of optionalFields) {
@@ -455,8 +499,9 @@ const useTranslationState = () => {
     try {
       return await pRetry(
         async () => {
-          // Check abort before each attempt
-          if (abortControllerRef.current?.signal.aborted) {
+          // Check abort before each attempt — against THIS run's controller,
+          // not the live ref (a retry interval can span a run boundary).
+          if (run?.signal.aborted) {
             throw new Error("Translation aborted");
           }
 
@@ -469,9 +514,11 @@ const useTranslationState = () => {
           } catch (error) {
             cleanup();
 
-            // Check if this is an auth error - abort all concurrent requests
+            // Auth error → abort all concurrent requests OF THIS RUN. Aborting
+            // the live ref instead would let a ghost task from a dead run kill
+            // a healthy successor run.
             if (isAuthError(error)) {
-              abortControllerRef.current?.abort();
+              run?.abort();
             }
             throw error;
           }
@@ -499,13 +546,32 @@ const useTranslationState = () => {
     updateProgress: (current: number, total: number) => void,
     documentType: "subtitle" | "markdown" | "generic" = "subtitle",
     fullText?: string,
+    runController?: AbortController,
   ) => {
+    // This run's controller, captured ONCE — every liveness check below must
+    // use it, never the live abortControllerRef (see translateSingle's ghost-
+    // task note: a queued task from a dead run must not resurrect under the
+    // next run's fresh controller).
+    const run = runController ?? abortControllerRef.current ?? undefined;
     // Clamp to >= 1: `|| 20` only catches 0/null/undefined, not negatives.
     // A negative contextWindow (from corrupted localStorage or bad migration)
     // would make the main loop `i += -5` → infinite loop.
     const initialContextWindow = Math.max(1, Math.min(runtimeConfig.contextWindow || 20, contentLines.length));
     const translatedLines = new Array(contentLines.length);
     const MAX_CONTEXT_RETRIES = 2; // Maximum times to reduce context window
+
+    // Blank source lines (markdown paragraph separators in raw mode, ASS
+    // tag-only lines stripped to "", invisible-unicode-only lines like ZWSP
+    // separators) are not translation targets — pre-fill them with themselves
+    // so they never count as missing. Without this, every batch containing one
+    // returns "incomplete" forever: the gap-retry chain loops futilely and
+    // every run pays the 10s auto-retry penalty. isBlankLine (not bare trim)
+    // keeps this definition in lockstep with the extraction's blankSource.
+    // Slot-state convention from here on: `undefined` = not yet translated /
+    // failed (the retry machinery keys on it), any string (incl. "") = done.
+    for (let i = 0; i < contentLines.length; i++) {
+      if (isBlankLine(contentLines[i])) translatedLines[i] = contentLines[i];
+    }
 
     const translateSingleBatch = async (batchStart: number, batchEnd: number, contextWindow: number): Promise<boolean> => {
       const contextPadding = Math.min(MAX_CONTEXT_PADDING, Math.max(1, Math.floor(contextWindow / 2)));
@@ -530,21 +596,48 @@ const useTranslationState = () => {
           cacheSuffix,
           {
             ...runtimeConfig,
-            userPrompt: buildContextPrompt(contextWithMarkers, effectiveUserPrompt, batchEnd - batchStart, documentType),
+            // The built prompt retains the literal ${content} placeholder — the
+            // marker block (params.text) is inserted LAST by getAIModelPrompt's
+            // function-form replacement, after all template variables resolved.
+            userPrompt: buildContextPrompt(effectiveUserPrompt, batchEnd - batchStart, documentType),
           },
           fullText,
+          run,
         );
 
-        const translatedBatch = extractTranslatedLinesWithNumbers(result || "", batchEnd - batchStart);
+        // sourceLines slice lets the extraction's merge guard tell real gaps from
+        // blank-source slots (which legitimately come back empty).
+        const batchSources = contentLines.slice(batchStart, batchEnd);
+        const translatedBatch = extractTranslatedLinesWithNumbers(result || "", batchEnd - batchStart, batchSources);
+
+        // A response that failed extraction anywhere is useless to replay, but
+        // the cache layer already stored it (every 200 is a "success" there —
+        // extraction happens later, here). Purge it so retries with the same
+        // batch text (always, for ≤window whole-file batches) and future runs
+        // of the same file reach the live service instead of replaying the bad
+        // response forever — without this, one marker-dropped reply makes a
+        // short file permanently untranslatable until the cache is cleared.
+        const hasRealGap = translatedBatch.some((r, j) => r === "" && !isBlankLine(batchSources[j]));
+        if (hasRealGap && runtimeConfig.useCache !== false) {
+          await deleteCachedTranslation(contextWithMarkers, cacheSuffix);
+        }
         for (let j = 0; j < translatedBatch.length; j++) {
-          if (batchStart + j < contentLines.length && translatedBatch[j]) {
-            translatedLines[batchStart + j] = translatedBatch[j];
+          // `!== ""` not truthiness — a line legitimately translated to "0" must
+          // count as done. `=== undefined` write-once guard: never overwrite a
+          // decided slot (notably pre-filled blank-source lines, which a model
+          // may hallucinate content for).
+          if (batchStart + j < contentLines.length && translatedBatch[j] !== "" && translatedLines[batchStart + j] === undefined) {
+            // Apply the glossary leak-through to SUCCESSFUL translations only.
+            // Failed slots get soft-filled with the raw source later (see "Final
+            // soft-fail"), so a fully-failed line stays the untouched original
+            // instead of a half-localized mix like "斯派克, hi".
+            translatedLines[batchStart + j] = applyGlossary(translatedBatch[j], runtimeConfig.targetLanguage);
           }
         }
 
         // Reflect partial progress as soon as the batch returns, so the bar doesn't
         // sit at 0% for the full duration of each 50-line LLM call.
-        const doneSoFar = translatedLines.filter(Boolean).length;
+        const doneSoFar = translatedLines.filter((x) => x !== undefined).length;
         if (doneSoFar > 0) updateProgress(doneSoFar, contentLines.length);
 
         return !translatedLines.slice(batchStart, batchEnd).includes(undefined);
@@ -571,7 +664,7 @@ const useTranslationState = () => {
 
         const missing: number[] = [];
         for (let k = batchStart; k < batchEnd; k++) {
-          if (!translatedLines[k]) missing.push(k);
+          if (translatedLines[k] === undefined) missing.push(k);
         }
         if (missing.length === 0) return true;
 
@@ -579,7 +672,7 @@ const useTranslationState = () => {
         console.warn(`Batch ${batchStart + 1}-${batchEnd} incomplete (${missing.length} line(s) missing in ${gapClusters.length} gap(s)); reducing window to ${currentWindow}`);
 
         for (const [gs, ge] of gapClusters) {
-          if (abortControllerRef.current?.signal.aborted) return false;
+          if (run?.signal.aborted) return false;
           await translateSingleBatch(gs, ge, currentWindow);
         }
 
@@ -592,16 +685,31 @@ const useTranslationState = () => {
     // Helper: group contiguous failed indices into [start, end) clusters
     // (capped so a total blowout doesn't retry as one mega-batch). Reused
     // below by the batch-level fallback and the post-pass auto-retry.
+    //
+    // BRIDGING: indices separated only by decided-blank lines (pre-filled
+    // blank-source slots) count as contiguous. Without this, the merge guard's
+    // walk-back discard (sentence fragments around a stripped ASS tag-only
+    // line) produces a NON-contiguous failed set {k, k+2} that would retry as
+    // two isolated single-target batches — where the guard is structurally
+    // inert (its loop needs a following target slot), so a re-merged response
+    // would be committed verbatim and the #44 duplication ships after all.
+    // Bridged clusters retry the whole sentence in ONE batch (the blank slots
+    // ride along as targets; their pre-filled slots are write-once protected),
+    // letting the guard re-detect a merge in the retry response.
     const RETRY_MAX_CLUSTER_SIZE = 10;
     const RETRY_CONTEXT_WINDOW = 6; // ±3 neighbor lines wrapped as [CONTEXT]
     const clusterAscendingIndices = (sortedIndices: number[]): Array<[number, number]> => {
       if (sortedIndices.length === 0) return [];
+      const allBlankBetween = (from: number, to: number): boolean => {
+        for (let k = from; k < to; k++) if (!isBlankLine(contentLines[k])) return false;
+        return true;
+      };
       const out: Array<[number, number]> = [];
       let s = sortedIndices[0];
       let e = sortedIndices[0];
       for (let k = 1; k < sortedIndices.length; k++) {
         const idx = sortedIndices[k];
-        if (idx === e + 1 && e - s + 1 < RETRY_MAX_CLUSTER_SIZE) {
+        if ((idx === e + 1 || allBlankBetween(e + 1, idx)) && idx - s + 1 <= RETRY_MAX_CLUSTER_SIZE) {
           e = idx;
         } else {
           out.push([s, e + 1]);
@@ -621,19 +729,46 @@ const useTranslationState = () => {
     const clusterRetryFailures = async (rangeStart: number, rangeEnd: number): Promise<void> => {
       const failed: number[] = [];
       for (let i = rangeStart; i < rangeEnd; i++) {
-        if (!translatedLines[i]) failed.push(i);
+        if (translatedLines[i] === undefined) failed.push(i);
       }
       if (failed.length === 0) return;
 
+      // Circuit breaker: when the provider is wholesale-down (quota-exhausted
+      // 429, sustained outage), every cluster fails identically — without a
+      // breaker a 1000-line file would grind through ~100 sequential doomed
+      // pRetry cycles (~12-20 extra minutes + a request storm against an
+      // already rate-limited API) before the soft-fill finally runs. Three
+      // consecutive clusters with ZERO newly-filled slots = systemic failure,
+      // bail and let the soft-fill surface the failure panel. A breaker can't
+      // misfire on healthy-but-spotty runs: any cluster that fills even one
+      // slot resets the strike count.
+      const BREAKER_CONSECUTIVE_DRY = 3;
+      let consecutiveDry = 0;
+      // Indexed loop, NOT slice().filter(): translatedLines is sparse and
+      // filter/some skip holes — the exact trap that made the auto-retry gate
+      // dead code. Indexed reads see holes as undefined.
+      const countUndefined = (from: number, to: number): number => {
+        let n = 0;
+        for (let i = from; i < to; i++) if (translatedLines[i] === undefined) n++;
+        return n;
+      };
+
       for (const [cStart, cEnd] of clusterAscendingIndices(failed)) {
-        if (abortControllerRef.current?.signal.aborted) return;
+        if (run?.signal.aborted) return;
+        const undefinedBefore = countUndefined(cStart, cEnd);
         try {
           await translateSingleBatch(cStart, cEnd, RETRY_CONTEXT_WINDOW);
         } catch (err) {
           if (isAuthError(err)) throw err;
           // non-auth failures leave slots empty; final soft-fill handles them
         }
-        updateProgress(translatedLines.filter(Boolean).length, contentLines.length);
+        const undefinedAfter = countUndefined(cStart, cEnd);
+        consecutiveDry = undefinedAfter < undefinedBefore ? 0 : consecutiveDry + 1;
+        if (consecutiveDry >= BREAKER_CONSECUTIVE_DRY) {
+          console.warn(`Cluster retry circuit breaker: ${consecutiveDry} consecutive clusters filled nothing — provider looks down, skipping remaining retries`);
+          return;
+        }
+        updateProgress(translatedLines.filter((x) => x !== undefined).length, contentLines.length);
       }
     };
 
@@ -672,7 +807,7 @@ const useTranslationState = () => {
 
       batchTasks.push(
         batchLimit(async () => {
-          if (abortControllerRef.current?.signal.aborted) return;
+          if (run?.signal.aborted) return;
           // translateBatch handles context-window halving internally with
           // cluster-aware gap retry. If it still returns false, the post-pass
           // auto-retry (below, after Promise.all) handles it with a 10s
@@ -685,7 +820,7 @@ const useTranslationState = () => {
           // Small gap AFTER each batch — helps severely rate-limited providers.
           // pLimit already throttles concurrency; this adds an optional per-slot
           // pause when users configure delayTime.
-          if (interBatchDelay > 0 && !abortControllerRef.current?.signal.aborted) {
+          if (interBatchDelay > 0 && !run?.signal.aborted) {
             await delay(interBatchDelay);
           }
         }),
@@ -699,7 +834,12 @@ const useTranslationState = () => {
     // hiccup — not something pRetry's sub-7s backoff would recover. Wait
     // 10s to let rate-limit counters reset / the service stabilize, then
     // retry via the same cluster helper over the entire range.
-    if (translatedLines.some((x) => !x) && !abortControllerRef.current?.signal.aborted) {
+    // MUST be includes(), not some(): translatedLines is a sparse array — failed
+    // slots are HOLES (never assigned), and some()/filter()/map() skip holes
+    // entirely, so `some((x) => x === undefined)` is false in every possible
+    // state and the whole auto-retry layer becomes dead code. includes() treats
+    // holes as undefined (same idiom as the batch-completeness checks above).
+    if (translatedLines.includes(undefined) && !run?.signal.aborted) {
       console.log("Auto-retry remaining failed lines after 10s with clustered small-context retry...");
       await delay(10000);
       try {
@@ -718,7 +858,7 @@ const useTranslationState = () => {
     // place, so flagging them as failures would just confuse the UI.
     const failedLinesList: string[] = [];
     for (let i = 0; i < translatedLines.length; i++) {
-      if (!translatedLines[i]) {
+      if (translatedLines[i] === undefined) {
         const original = contentLines[i];
         translatedLines[i] = original;
         if (original && original.trim()) failedLinesList.push(original);
@@ -751,10 +891,22 @@ const useTranslationState = () => {
     try {
       if (!contentLines.length) return [];
 
-      // Initialize new abort controller for this translation batch
-      abortControllerRef.current = new AbortController();
+      // Initialize new abort controller for this translation batch. Capture it
+      // as THIS run's controller — every task closure below checks/aborts the
+      // captured controller, never the live ref, so queued p-limit tasks from a
+      // dead (auth-aborted) run can't resurrect under a successor run's fresh
+      // controller and a ghost's auth error can't kill the healthy new run.
+      const runController = new AbortController();
+      abortControllerRef.current = runController;
 
       const updateProgress = makeUpdateProgress(fileIndex, totalFiles);
+
+      const glossarySystemPrompt = buildTranslationSystemPrompt(currentTargetLang);
+      // Leak-through net for the chunk path (whole-text MT — no per-line soft-fill,
+      // so every line is a real translation). The context + line-by-line paths
+      // apply the glossary per successful line instead, so a failed-then-soft-filled
+      // line keeps the raw source. No-op when no term matches this target language.
+      const applyGlossaryToLines = (lines: string[]) => lines.map((line) => applyGlossary(line ?? "", currentTargetLang));
 
       const runtimeConfig: TranslationRuntimeConfig = {
         translationMethod: translationMethodArg,
@@ -762,7 +914,7 @@ const useTranslationState = () => {
         sourceLanguage,
         useCache,
         ...config,
-        systemPrompt: effectiveSystemPrompt,
+        systemPrompt: glossarySystemPrompt,
         userPrompt: effectiveUserPrompt,
       };
 
@@ -774,13 +926,14 @@ const useTranslationState = () => {
         targetLanguage: currentTargetLang,
         translationMethod: translationMethodArg,
         config,
-        systemPrompt: effectiveSystemPrompt,
+        systemPrompt: glossarySystemPrompt,
         userPrompt: effectiveUserPrompt,
       });
 
-      // Context-aware translation with LLM
+      // Context-aware translation with LLM. Glossary is applied per-line inside
+      // translateWithContext (success-only), so no blanket pass here.
       if (documentType && LLM_MODELS.includes(translationMethodArg) && contentLines.length > 1) {
-        return await translateWithContext(contentLines, runtimeConfig, cacheSuffix, updateProgress, documentType, fullText);
+        return await translateWithContext(contentLines, runtimeConfig, cacheSuffix, updateProgress, documentType, fullText, runController);
       }
 
       if (config?.chunkSize === undefined) {
@@ -798,15 +951,17 @@ const useTranslationState = () => {
 
         const promises = contentLines.map((line, index) =>
           limit(async () => {
-            if (abortControllerRef.current?.signal.aborted) return;
+            // Run-scoped liveness check (not the live ref) — see runController note.
+            if (runController.signal.aborted) return;
             try {
-              translatedLines[index] = await translateSingle(line, cacheSuffix, runtimeConfig, fullText);
+              // Glossary on success only; the catch below soft-fills the raw source.
+              translatedLines[index] = applyGlossary(await translateSingle(line, cacheSuffix, runtimeConfig, fullText, runController), currentTargetLang);
             } catch (error) {
-              // Auth error already tripped abortControllerRef inside translateSingle.
+              // Auth error already tripped THIS run's controller inside translateSingle.
               // After-abort throws ("Translation aborted") come from peers' pre-attempt
               // guard. Both must propagate so Promise.all kills the batch — translator
               // catch surfaces the real auth error / handles cascade silently.
-              if (isAuthError(error) || abortControllerRef.current?.signal.aborted) throw error;
+              if (isAuthError(error) || runController.signal.aborted) throw error;
               // Otherwise (network blip, 5xx, 4xx like a 422 thinking-param reject,
               // etc., after pRetry exhausted): soft-fail this line, keep peers running.
               lastErrorRef.current = (error as Error)?.message || String(error);
@@ -837,23 +992,50 @@ const useTranslationState = () => {
         return translatedLines;
       }
 
-      // Chunk-based translation
+      // Chunk-based translation (DeepL / DeepLX / Azure).
+      // Blank lines must NOT enter the wire text: the old code mapped each
+      // blank line to the delimiter itself AND joined with the delimiter, so
+      // one blank source line became TWO delimiters — the translated split
+      // gained an extra slot per blank line, the first non-blank line after
+      // each blank got "", and every later translation shifted down one slot
+      // (silent off-by-one corruption for ASS tag-only cues and md raw mode).
+      // Translate only non-blank lines; re-thread blanks by original index.
       const delimiter = translationMethodArg === "deeplx" ? "<>" : "\n";
-      const nonEmptyLines = contentLines.map((line) => (line.trim() ? line : delimiter));
-      const text = nonEmptyLines.join(delimiter);
+      const sourceIdx: number[] = [];
+      const nonBlankLines: string[] = [];
+      for (let i = 0; i < contentLines.length; i++) {
+        if (contentLines[i]?.trim()) {
+          sourceIdx.push(i);
+          // 内嵌换行扁平化为空格:ASS 的 \N 在 prepareAssForTranslation 中被转成
+          // 真实 \n,而 chunk 路径按行 join/split 对齐 —— 一行变多行会让其后
+          // 所有译文逐行错位。MT 路径丢失换行排版是可接受降级,错位不是。
+          nonBlankLines.push(contentLines[i].replace(/\r?\n/g, " "));
+        }
+      }
+      if (nonBlankLines.length === 0) return [...contentLines];
+
+      const text = nonBlankLines.join(delimiter);
       const chunkSize = config?.chunkSize || 5000;
       const chunks = splitTextIntoChunks(text, chunkSize, delimiter);
       const translatedChunks: string[] = [];
 
       for (let i = 0; i < chunks.length; i++) {
-        const translatedContent = await translateSingle(chunks[i], cacheSuffix, runtimeConfig, fullText);
+        const translatedContent = await translateSingle(chunks[i], cacheSuffix, runtimeConfig, fullText, runController);
         translatedChunks.push(translationMethodArg === "deeplx" ? (translatedContent || "").replace(/<>/g, "\n") : translatedContent || "");
         updateProgress(i + 1, chunks.length);
         if (i < chunks.length - 1) await delay(config?.delayTime || 200);
       }
 
-      const result = translatedChunks.join("\n").split("\n");
-      return result.map((line, index) => (contentLines[index]?.trim() ? line : contentLines[index] || line));
+      const translatedNonBlank = translatedChunks.join("\n").split("\n");
+      // Reassemble: translation k lands at its original index; blank source
+      // lines pass through verbatim. If the service changed the line count
+      // (merged/split lines), unmatched slots keep the source text — degraded
+      // but never SHIFTED against the original structure.
+      const out = [...contentLines];
+      for (let k = 0; k < sourceIdx.length; k++) {
+        out[sourceIdx[k]] = translatedNonBlank[k] ?? contentLines[sourceIdx[k]];
+      }
+      return applyGlossaryToLines(out);
     } catch (error) {
       console.error("Error translating content:", error);
       throw error;
@@ -869,6 +1051,19 @@ const useTranslationState = () => {
     setFailedReason("");
     lastErrorRef.current = null;
     runHadFailuresRef.current = false;
+  };
+
+  // 行级软失败上报 —— 供自带翻译循环的工具(JSONTranslator)使用:计入失败
+  // 面板 + 标记本轮失败,与 hook 内部软失败路径走同一通道。没有它,JSON 工具
+  // 的单节点瞬时失败只能 abort 整个语言(丢弃全部已完成节点)或静默吞掉。
+  const recordLineFailure = (line: string, reason?: string) => {
+    runHadFailuresRef.current = true;
+    setFailedCount((prev) => prev + 1);
+    setFailedLines((prev) => [...prev, line]);
+    if (reason) {
+      lastErrorRef.current = reason;
+      setFailedReason(reason);
+    }
   };
 
   // Let a component-level performTranslation flag a HARD failure it handled itself
@@ -946,6 +1141,7 @@ const useTranslationState = () => {
     failedReason,
     clearFailures,
     markRunHadFailures,
+    recordLineFailure,
     hadRunFailures,
     isTranslating,
     setIsTranslating,
@@ -977,6 +1173,19 @@ const useTranslationState = () => {
     deletePromptPreset,
     renamePromptPreset,
     updatePromptPreset,
+    glossaryEnabled,
+    setGlossaryEnabled,
+    glossaryPresets,
+    setGlossaryPresets,
+    activeGlossaryPresetId,
+    setActiveGlossaryPresetId,
+    activeGlossaryPreset,
+    createGlossaryPreset,
+    deleteGlossaryPreset,
+    renameGlossaryPreset,
+    updateGlossaryPreset,
+    buildTranslationSystemPrompt,
+    applyGlossary,
   };
 };
 

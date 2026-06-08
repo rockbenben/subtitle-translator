@@ -54,17 +54,27 @@ export const useExportFilename = (toolKey: string = "default"): ExportFilenameCo
     const dateStr = now.toISOString().slice(0, 10); // YYYY-MM-DD
     const timeStr = now.toTimeString().slice(0, 8).replace(/:/g, ""); // HHMMss
 
-    // Replace placeholders
+    // Replace placeholders。函数形式替换:文件名常含 $ 字符($&/$'/$$ 会被
+    // GetSubstitution 解释,产生损坏的下载名,$' 还会把后文吞进去)。
     if (customFileName.trim()) {
       let result = customFileName
-        .replace(/\{name\}/gi, baseName)
-        .replace(/\{lang\}/gi, langCode)
-        .replace(/\{ext\}/gi, ext)
-        .replace(/\{date\}/gi, dateStr)
-        .replace(/\{time\}/gi, timeStr);
+        .replace(/\{name\}/gi, () => baseName)
+        .replace(/\{lang\}/gi, () => langCode)
+        .replace(/\{ext\}/gi, () => ext)
+        .replace(/\{date\}/gi, () => dateStr)
+        .replace(/\{time\}/gi, () => timeStr);
 
-      // Ensure the result has an extension
-      if (!result.includes(".")) {
+      // Ensure the result has an extension — 检查【最后一段】而不是任意位置的
+      // 点:字幕发布组习惯的 "My.Show.S01E01" 基名会让 includes(".") 误判。
+      // 已以目标扩展名结尾则不再追加(".markdown" 等长扩展曾被 5 字符上限
+      // 误判成"非扩展名"而重复追加成 .markdown.markdown)。
+      // 长扩展名(markdown)走 endsWithTargetExt;泛化的"末段像扩展名"收窄到
+      // ≤4 字符,否则点分基名段(My.Show.S01E01 的 "S01E01" 6 字符)被误判成
+      // 扩展名,该补的扩展名反而不补,下载文件无扩展名。
+      const lastSegment = result.slice(result.lastIndexOf(".") + 1);
+      const endsWithTargetExt = result.toLowerCase().endsWith(`.${ext.toLowerCase()}`);
+      const looksLikeExt = result.includes(".") && /^[a-z0-9]{1,4}$/i.test(lastSegment);
+      if (!endsWithTargetExt && !looksLikeExt) {
         result = `${result}.${ext}`;
       }
 

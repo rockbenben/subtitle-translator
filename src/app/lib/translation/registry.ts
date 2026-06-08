@@ -88,8 +88,8 @@ export const PROVIDERS = {
     kind: "custom",
     category: "machine-translation",
     label: "DeepL",
-    docs: "https://developers.deepl.com/docs/api-reference/translate",
-    apiKeyUrl: "https://www.deepl.com/your-account/keys",
+    docs: "https://developers.deepl.com/api-reference/translate",
+    apiKeyUrl: "https://www.deepl.com/en/your-account/keys",
     defaults: { url: "", apiKey: "", chunkSize: 5000, delayTime: 200, batchSize: 20 },
   },
   deeplx: {
@@ -526,6 +526,45 @@ export const PROVIDERS = {
       { label: "Command A Translate", value: "command-a-translate-08-2025" },
     ],
   },
+  yandex: {
+    kind: "custom",
+    category: "llm",
+    label: "YandexGPT (AI Studio)",
+    // Yandex AI Studio's OpenAI-compat API (llm.api.cloud.yandex.net/v1) sends
+    // NO CORS headers (verified 2026-06: a preflight OPTIONS is parsed as a JSON
+    // request body → 400, no Access-Control-Allow-Origin), so browser-direct
+    // calls always fail. The service routes UNCONDITIONALLY through the
+    // Cloudflare relay (relayUrl("yandex") in services/llm.ts), same
+    // always-proxy posture as Nvidia NIM — no useRelay toggle whose OFF state
+    // would be permanently broken in browsers. The relay forwards
+    // `Authorization: Bearer <api-key>` to llm.api.cloud.yandex.net/v1/chat/completions.
+    //
+    // Model IDs are per-tenant URIs — gpt://<folder_id>/<model>/latest — so the
+    // config carries a dedicated `folderId` field (kind: "custom" because the
+    // openai-compat factory can't assemble per-user model URIs; same
+    // extra-credential pattern as Azure MT's `region`). The service builds the
+    // URI from folderId + the short SKU below; a full gpt:// URI pasted into
+    // the model field passes through verbatim (folderId then unused but still
+    // required by validation — keeping status logic model-value-independent).
+    docs: "https://aistudio.yandex.ru/docs/en/ai-studio/concepts/api.html",
+    apiKeyUrl: "https://aistudio.yandex.ru/platform/folders/",
+    defaults: { apiKey: "", folderId: "", model: "yandexgpt-5.1", temperature: 0.7, batchSize: 20, contextBatchSize: 3, contextWindow: 100 },
+    // Hosted SKUs per aistudio.yandex.ru/docs (generation/models, 2026-06).
+    // No thinking tags — the OpenAI-compat path documents no reasoning toggle
+    // (YandexGPT 5.1's Chain-of-Reasoning isn't exposed as a request param);
+    // sending reasoning_effort risks a 400, same rationale as GitHub Models.
+    models: [
+      { label: "YandexGPT Pro 5.1", value: "yandexgpt-5.1" },
+      { label: "YandexGPT Pro 5", value: "yandexgpt-5-pro" },
+      { label: "YandexGPT Lite 5", value: "yandexgpt-5-lite" },
+      { label: "Alice AI LLM", value: "aliceai-llm" },
+      { label: "DeepSeek V3.2", value: "deepseek-v32" },
+      { label: "Qwen3 235B", value: "qwen3-235b-a22b-fp8" },
+      { label: "Qwen3.6 35B", value: "qwen3.6-35b-a3b" },
+      { label: "GPT-OSS 120B", value: "gpt-oss-120b" },
+      { label: "GPT-OSS 20B", value: "gpt-oss-20b" },
+    ],
+  },
 
   // ===== Aggregators & Self-hosted (no relay — already cross-provider / CORS-friendly / user-controlled) =====
   openrouter: {
@@ -847,12 +886,14 @@ export const getConfigStatus = (method: string, config: TranslationConfig | unde
   }
 
   // apiKey-based services. apiKey is required when the field exists; some
-  // services additionally require URL (URL_ALSO_REQUIRED) or region (Azure).
+  // services additionally require URL (URL_ALSO_REQUIRED), region (Azure), or
+  // folderId (Yandex — per-tenant scope embedded in gpt:// model URIs).
   const apiKeyOk = config.apiKey === undefined || (typeof config.apiKey === "string" && config.apiKey.trim() !== "");
   const urlOk = !URL_ALSO_REQUIRED.has(method) || (typeof config.url === "string" && config.url.trim() !== "");
   const regionOk = config.region === undefined || (typeof config.region === "string" && config.region.trim() !== "");
+  const folderIdOk = config.folderId === undefined || (typeof config.folderId === "string" && config.folderId.trim() !== "");
 
-  if (!apiKeyOk || !urlOk || !regionOk) return "needs-config";
+  if (!apiKeyOk || !urlOk || !regionOk || !folderIdOk) return "needs-config";
   // apiKey === undefined here means a no-credential service we forgot to flag
   // in NO_CRED_REQUIRED — keep the safer "free" default rather than lying
   // about "configured" status. webgoogletranslate (internal) lands here.
@@ -985,8 +1026,15 @@ export const deriveThinkingParams = (method: string, config: TranslationConfig |
  * to avoid hinting at granularity that doesn't exist. Selecting On stores a
  * canonical "medium" — the value is irrelevant to wire output, but a defined
  * effort is what triggers the thinking branch in deriveThinkingParams + builders.
+ *
+ * deepseek belongs here because its own wire builder (buildDeepseekExtraBody)
+ * deliberately collapses every effort to reasoning_effort:"high" — a graded
+ * dial would silently bill the high tier whatever the user picked AND
+ * fragment the cache key three ways for byte-identical requests.
+ * grok is NOT here: xAI accepts two real tiers (low/high), so the dial stays
+ * graded and the wire builder maps medium→low (services/llm.ts).
  */
-export const BINARY_EFFORT_VENDORS: ReadonlySet<string> = new Set(["doubao", "zhipu", "moonshot", "mimo", "siliconflow", "cohere", "qianfan", "mistral"]);
+export const BINARY_EFFORT_VENDORS: ReadonlySet<string> = new Set(["deepseek", "doubao", "zhipu", "moonshot", "mimo", "siliconflow", "cohere", "qianfan", "mistral"]);
 
 /**
  * Providers whose API leaves reasoning/thinking ENABLED when the request omits
@@ -1035,7 +1083,20 @@ export const BINARY_EFFORT_VENDORS: ReadonlySet<string> = new Set(["doubao", "zh
  * "none"), qianfan (ernie-5.0-thinking → enable_thinking:false). groq gpt-oss is
  * unconditionally ON / undisableable → omit is the only option.
  */
-export const SERVER_DEFAULT_THINKING_ON: ReadonlySet<string> = new Set(["deepseek", "openai", "grok", "qwen", "doubao", "zhipu", "moonshot", "gemini", "mimo", "azureopenai", "siliconflow", "mistral"]);
+export const SERVER_DEFAULT_THINKING_ON: ReadonlySet<string> = new Set([
+  "deepseek",
+  "openai",
+  "grok",
+  "qwen",
+  "doubao",
+  "zhipu",
+  "moonshot",
+  "gemini",
+  "mimo",
+  "azureopenai",
+  "siliconflow",
+  "mistral",
+]);
 
 /**
  * Quick-pick endpoints for providers that surface multiple URL options (regional

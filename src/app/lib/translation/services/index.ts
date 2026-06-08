@@ -21,6 +21,7 @@ export const translationServices: Record<TranslationMethod, TranslationService> 
   claude: llm.claude,
   gemini: llm.gemini,
   azureopenai: llm.azureopenai,
+  yandex: llm.yandex,
   nvidia: llm.nvidia,
   llm: llm.llm,
 };

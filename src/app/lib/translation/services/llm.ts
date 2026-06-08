@@ -161,7 +161,11 @@ export const buildDeepseekExtraBody: EffortShape = (e) => (e ? { thinking: { typ
 const THINKING_BUILDERS: Partial<Record<OpenAICompatProviderKey, ExtraBodyBuilder>> = {
   // `reasoning_effort` enum, explicit "none" off (server-default-ON)
   openai: gated("openai", reasoningEffortOrNone),
-  grok: gated("grok", reasoningEffortOrNone),
+  // Grok: xAI's chat/completions accepts ONLY low/high (registry.ts documents
+  // the two-tier rule) — medium maps to low here. Sending "medium" verbatim
+  // (the old reasoningEffortOrNone shape) made the UI-offered Medium level a
+  // deterministic 4xx on every request.
+  grok: gated("grok", (e) => ({ reasoning_effort: e ? (e === "high" ? "high" : "low") : "none" })),
   // DeepSeek V4: thinking:{type} + reasoning_effort (always "high" tier)
   deepseek: gated("deepseek", buildDeepseekExtraBody),
   // Qwen3: enable_thinking + graded thinking_budget
@@ -248,7 +252,12 @@ export const deepseek: TranslationService = async (params) => {
   try {
     return await openAICompatServicesBase.deepseek(params);
   } catch (error) {
-    if (!params.useRelay && error instanceof Error && error.message.includes("[403]")) {
+    // 按 .status 数值判 403,不靠 message 里的 "[403]" 字面 —— 非 JSON 的
+    // 403 响应体(WAF/origin 拦截页是 HTML)formatHttpError 不会嵌 "[403]",
+    // 字面匹配漏掉的恰是最常见的浏览器源被拦场景。fetchJSON 已 Object.assign
+    // 附 status。
+    const status = (error as { status?: number } | null)?.status;
+    if (!params.useRelay && (status === 403 || (error instanceof Error && error.message.includes("[403]")))) {
       throw new Error("DeepSeek API returned 403 Forbidden. Please enable 'API Relay' in API Settings. / DeepSeek API 返回 403 禁止访问，请在 API 设置中开启「中转 API」。");
     }
     throw error;
@@ -298,12 +307,17 @@ export const gemini: TranslationService = async (params) => {
   const generationConfig: Record<string, unknown> = {
     temperature: normalizeNumber(temperature, defaultConfigs.gemini.temperature),
   };
+  // Pro-tier 3.x models accept only low/high thinking levels — "minimal" is a
+  // Flash-only state (the registry audit note concedes Pro "can't fully
+  // disable"). Sending "minimal" to a Pro SKU 400s its untouched DEFAULT
+  // config; "low" is the lowest level Pro actually accepts.
+  const disableLevel = (m: string): string => (/-pro\b|-pro-/.test(m) ? "low" : "minimal");
   if (isThinkingModel("gemini", effectiveModel)) {
-    generationConfig.thinkingConfig = { thinkingLevel: reasoningEffort && reasoningEffort !== "auto" ? reasoningEffort : "minimal" };
+    generationConfig.thinkingConfig = { thinkingLevel: reasoningEffort && reasoningEffort !== "auto" ? reasoningEffort : disableLevel(effectiveModel) };
   } else if (isCustomModel("gemini", effectiveModel) && reasoningEffort !== "auto") {
-    // Custom model 3-state: default Off (undefined) → disable (Gemini's "minimal");
+    // Custom model 3-state: default Off (undefined) → lowest accepted level;
     // effort → that level; "auto" → omit (skip thinkingConfig, follow server default).
-    generationConfig.thinkingConfig = { thinkingLevel: reasoningEffort ?? "minimal" };
+    generationConfig.thinkingConfig = { thinkingLevel: reasoningEffort ?? disableLevel(effectiveModel) };
   }
 
   const data = (await fetchJSON(`https://generativelanguage.googleapis.com/v1beta/models/${effectiveModel}:generateContent?key=${key}`, {
@@ -384,6 +398,45 @@ export const azureopenai: TranslationService = async (params) => {
   return getOpenAICompatContent(data, "Azure OpenAI");
 };
 
+// Yandex AI Studio — protocol-wise plain OpenAI-compat chat/completions, but a
+// custom service for two reasons the factory can't express:
+//   1. Model IDs are per-tenant URIs (gpt://<folder_id>/<model>/latest) assembled
+//      from the dedicated `folderId` config field at request time. A full gpt://
+//      URI typed into the model field passes through verbatim (power-user escape;
+//      also how configs imported from the pre-folderId era keep working).
+//   2. Requests route UNCONDITIONALLY through the Cloudflare relay — the upstream
+//      llm.api.cloud.yandex.net sends no CORS headers (verified 2026-06: preflight
+//      OPTIONS is parsed as a JSON body → 400), so browser-direct calls always
+//      fail. Same always-proxy posture as Nvidia NIM's default path; no useRelay
+//      toggle whose OFF state would be permanently broken.
+// Pure URI assembly, exported for unit tests (same pattern as buildAzureReasoningBody).
+export const buildYandexModelUri = (model: string | undefined, folderId: string | undefined): string => {
+  // Trim BEFORE the fallback: a whitespace-only model is truthy, so `model || default`
+  // would "fall back" to "" and ship a malformed `gpt://<folder>/` to the wire.
+  const shortModel = (model ?? "").trim() || (defaultConfigs.yandex.model as string);
+  // Full model URIs pass through verbatim: gpt:// (foundation models) and
+  // ds:// (DataSphere fine-tunes — Yandex's other model-URI scheme).
+  // Case-insensitive so a pasted "GPT://..." isn't double-wrapped.
+  const lower = shortModel.toLowerCase();
+  if (lower.startsWith("gpt://") || lower.startsWith("ds://")) return shortModel;
+  const folder = folderId?.trim();
+  // Defense-in-depth: validation.ts pre-flight blocks empty folderId for batch
+  // runs, but the Test button / direct service calls bypass it.
+  if (!folder) throw new Error("Yandex Folder ID is required. / 请填写 Yandex Folder ID。");
+  return `gpt://${folder}/${shortModel}`;
+};
+
+export const yandex: TranslationService = async (params) => {
+  const model = buildYandexModelUri(params.model, params.folderId);
+  return openAICompatRequest({
+    params: { ...params, model },
+    serviceName: "Yandex",
+    endpoint: relayUrl("yandex"),
+    defaultModel: model,
+    defaultTemperature: defaultConfigs.yandex.temperature as number,
+  });
+};
+
 // NVIDIA NIM wraps thinking params in `chat_template_kwargs` (vs native APIs
 // which use top-level `reasoning_effort` / `thinking`). Orchestrator-level gate
 // in useTranslationState ensures reasoningEffort is only set for thinking-tagged
@@ -449,12 +502,15 @@ export const llm: TranslationService = async (params) => {
     headers.Authorization = `Bearer ${apiKey}`;
   }
 
-  // sendSystemPrompt=false: omit system message for chat templates that reject
-  // the system role (Gemma family). Translation guidance survives in the user
-  // prompt. undefined defaults to include (preserves pre-toggle configs).
+  // sendSystemPrompt=false: omit the system ROLE for chat templates that
+  // reject it (Gemma family) — but the system prompt's CONTENT must survive,
+  // prepended to the user message. The glossary block lives ONLY in the system
+  // prompt (buildTranslationSystemPrompt), so dropping the message entirely
+  // silently disabled the glossary's primary mechanism for the exact audience
+  // the toggle exists for. undefined defaults to include (pre-toggle configs).
   const messages =
     sendSystemPrompt === false
-      ? [{ role: "user", content: prompt }]
+      ? [{ role: "user", content: `${effectiveSystemPrompt}\n\n${prompt}` }]
       : [
           { role: "system", content: effectiveSystemPrompt },
           { role: "user", content: prompt },

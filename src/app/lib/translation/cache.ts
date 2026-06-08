@@ -53,6 +53,13 @@ export const generateCacheSuffix = ({ sourceLanguage, targetLanguage, translatio
       // undefined and true hash identically — preserves caches from before
       // the toggle existed.
       ...(config?.sendSystemPrompt === false && { sendSystemPrompt: false }),
+      // URL = the backend selector for Custom (llm) and any allowCustomUrl
+      // provider. The Custom model field is DESIGNED to stay empty for
+      // single-model servers (LM Studio / llama.cpp), so without hashing the
+      // URL, pointing at a completely different backend replayed the old
+      // model's translations from cache with zero wire traffic. Hashed only
+      // when set — url-less providers keep their existing cache entries.
+      ...(typeof config?.url === "string" && config.url.trim() && { url: config.url.trim() }),
     };
     return `${base}_${SparkMD5.hash(JSON.stringify(payload))}`;
   }
@@ -70,10 +77,14 @@ export const generateCacheSuffix = ({ sourceLanguage, targetLanguage, translatio
 
   if (translationMethod === "translategemma") {
     // TranslateGemma is also non-LLM (specialized MT). The `model` name (e.g.
-    // translategemma-4b-it vs 9b-it) selects which weights load and is the
-    // only knob that varies — temperature is hardcoded to 0 (greedy) so it
-    // doesn't affect cache identity.
-    const payload = { model: config?.model || "" };
+    // translategemma-4b-it vs 9b-it) selects which weights load; temperature
+    // is hardcoded to 0 (greedy) so it doesn't affect cache identity. URL is
+    // hashed because it's the backend selector (URL_IS_PRIMARY_CRED) — two
+    // hosts can serve different weights under the same model string.
+    const payload = {
+      model: config?.model || "",
+      ...(typeof config?.url === "string" && config.url.trim() && { url: config.url.trim() }),
+    };
     return `${base}_${SparkMD5.hash(JSON.stringify(payload))}`;
   }
 
@@ -94,6 +105,19 @@ export const getCachedTranslation = async (cacheKey: string): Promise<string | n
 
 export const setCachedTranslation = async (cacheKey: string, translation: string): Promise<void> => {
   return translationCache.set(cacheKey, translation);
+};
+
+/**
+ * Purge one cached entry by its source text + suffix. Used by the context
+ * path when a batch response fails marker extraction: the cache layer caches
+ * every 200 response BEFORE extraction runs, so a marker-dropped/merged reply
+ * would otherwise be replayed verbatim to every retry with the same batch
+ * text (always, for ≤window whole-file batches) AND to every future run of
+ * the same file — making short files permanently untranslatable until the
+ * user manually clears the cache.
+ */
+export const deleteCachedTranslation = async (text: string, cacheSuffix: string): Promise<void> => {
+  return translationCache.delete(generateCacheKey(text, cacheSuffix));
 };
 
 export const clearTranslationCache = async (): Promise<number> => {

@@ -48,6 +48,11 @@ export const validateTranslationInputs = (opts: ValidateInputsOpts): ValidateInp
       // TranslateGemma's auto-source error).
       return { ok: false, errorMessage: "Azure region is required. / 请填写 Azure Region。" };
     }
+    if (config?.folderId !== undefined && !String(config.folderId ?? "").trim()) {
+      // Yandex: folder ID is the per-tenant scope assembled into gpt:// model
+      // URIs. Same bilingual-hardcoded pattern as the region message above.
+      return { ok: false, errorMessage: "Yandex Folder ID is required. / 请填写 Yandex Folder ID。" };
+    }
     return { ok: false, errorKey: "enterApiKey" };
   }
 
@@ -85,5 +90,10 @@ export const pingSignature = (method: string, config: TranslationConfig | undefi
     model: config?.model ?? "",
     region: config?.region ?? "",
     apiVersion: config?.apiVersion ?? "",
+    folderId: config?.folderId ?? "",
     useRelay: config?.useRelay ?? false,
+    // Request-shape field, not a prompt: flips a Gemma-served backend between
+    // 200 and a deterministic 400 ("system role not supported"), so a probe
+    // pass from the other toggle state must not be replayed.
+    sendSystemPrompt: config?.sendSystemPrompt ?? true,
   });

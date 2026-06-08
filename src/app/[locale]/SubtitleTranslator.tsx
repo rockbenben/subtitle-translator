@@ -16,7 +16,7 @@ import {
   detectSubtitleFormat,
   getOutputFileExtension,
   filterSubLines,
-  findTimeLineBefore,
+  findTimeLineIndexBefore,
   assHeader,
   prepareAssForTranslation,
   restoreAssAfterTranslation,
@@ -93,6 +93,7 @@ const SubtitleTranslator = () => {
     setFailedLangs,
     failedReason,
     clearFailures,
+    hadRunFailures,
     isTranslating,
     setIsTranslating,
     progressPercent,
@@ -142,7 +143,9 @@ const SubtitleTranslator = () => {
   // ASS/SRT 格式选项只在 SRT/VTT 源 + 双语时显示——ASS/LRC 源选项无法兑现,避免 UI 撒谎
   const showBilingualFormatChoice = needsBilingual && (sourceFileType === "srt" || sourceFileType === "vtt");
   const [contextAware, setContextAware] = useLocalStorage("subtitle-translator-contextAware", true); // 上下文感知翻译开关
-  const [collapseKeys, setCollapseKeys] = useLocalStorage<string[]>("subtitle-translator-collapseKeys", ["SubtitleTranslator"]);
+  // 面板 key 必须与下方 Collapse items 的 key("subtitle"/"advanced")一致 ——
+  // 旧默认值 "SubtitleTranslator" 不匹配任何面板,导出控件永远默认收起。
+  const [collapseKeys, setCollapseKeys] = useLocalStorage<string[]>("subtitle-translator-collapseKeys", ["subtitle"]);
   const [multiLangModalOpen, setMultiLangModalOpen] = useState(false);
   // 提取出的纯文本预览 — 只在 SubtitleTranslator 和 MDTranslator 用,
   // 不应该污染 TranslationProvider 的共享 state。
@@ -202,12 +205,22 @@ const SubtitleTranslator = () => {
     // Helper function to generate subtitle output based on bilingual mode
     // Defined outside the loop to avoid repeated function creation
     const generateSubtitle = (isBilingual: boolean, translatedLines: string[]): string => {
+      // removeChars 已在调用方对【原始译文】应用(restore ASS 标签之前)——
+      // 在这里(restore 之后)应用会损坏 \N 硬换行、{\anX} 标签和 verbatim
+      // 绘图坐标行。
       // null = "drop from final join" sentinel,用于 SRT/VTT 多行 cue 聚合后跳过补位行
       const outputLines: (string | null)[] = [...lines];
 
       contentIndices.forEach((index, i) => {
         if (fileType === "ass") {
           const originalLine = lines[index];
+          // verbatim 行(绘图模式 {\p1} 坐标等不可翻译行):双语装配会把坐标
+          // 串复制两份,第二份在 {\p0} 后被 libass 当字面文本渲染上屏 ——
+          // 原样单次输出,无双语配对(本就没有可翻译内容)。
+          if (tagMaps[i]?.verbatim !== undefined) {
+            outputLines[index] = originalLine;
+            return;
+          }
           const prefix = originalLine.substring(0, originalLine.split(",", assContentStartIndex).join(",").length + 1);
           if (isBilingual) {
             const translatedLine = translatedLines[i];
@@ -255,25 +268,29 @@ const SubtitleTranslator = () => {
       // (VTT 走 srt 分支时,后面再调 vttToSrt 把 .vtt 头/NOTE/时间码差异抹平)
       const shouldConvertToAssBilingual = isBilingual && bilingualFormat === "ass" && (fileType === "srt" || fileType === "vtt");
       if (shouldConvertToAssBilingual) {
-        finalSubtitle = `${assHeader}\n${buildAssBilingualBody(lines, contentIndices, translatedLines, isOriginalFirst)}`;
+        // 第 5 参传清理后的 contentLines:原始行带 VTT 内联标签(<c.color…>/卡拉
+        // OK 时间戳),ASS 渲染器会把它们字面画上屏。
+        finalSubtitle = `${assHeader}\n${buildAssBilingualBody(lines, contentIndices, translatedLines, isOriginalFirst, contentLines)}`;
       } else {
         // SRT/VTT 双语 + format=srt:按 cue 聚合,组内"所有原文" + "所有译文",
         // 避免多行 cue 出现"原-译-原-译"交错(逐行替换会留下的副作用)
         if (isBilingual && (fileType === "srt" || fileType === "vtt")) {
           type CueGroup = { firstIndex: number; origs: string[]; trans: string[] };
-          const cueGroups = new Map<string, CueGroup>();
+          // key = 时间码行号(非文本):时间码文本相同的两个独立 cue 不能合并
+          // —— 文本 key 会把后面 cue 的内容搬到前面、留下空壳 cue。
+          const cueGroups = new Map<number, CueGroup>();
 
           contentIndices.forEach((index, i) => {
-            const timeLine = findTimeLineBefore(lines, index);
-            if (!timeLine) return;
+            const timeIdx = findTimeLineIndexBefore(lines, index);
+            if (timeIdx === -1) return;
 
-            const existing = cueGroups.get(timeLine);
+            const existing = cueGroups.get(timeIdx);
             if (existing) {
               existing.origs.push(lines[index]);
               existing.trans.push(translatedLines[i]);
               outputLines[index] = null; // cue 内非首行,从输出中移除
             } else {
-              cueGroups.set(timeLine, { firstIndex: index, origs: [lines[index]], trans: [translatedLines[i]] });
+              cueGroups.set(timeIdx, { firstIndex: index, origs: [lines[index]], trans: [translatedLines[i]] });
             }
           });
 
@@ -293,14 +310,8 @@ const SubtitleTranslator = () => {
         finalSubtitle = vttToSrt(finalSubtitle);
       }
 
-      // Remove specified characters from the final subtitle text (after all formatting is done)
-      if (removeChars.trim()) {
-        const charsToRemove = splitBySpaces(removeChars);
-        charsToRemove.forEach((char) => {
-          finalSubtitle = finalSubtitle.replaceAll(char, "");
-        });
-      }
-
+      // removeChars 已在函数顶部对 translatedLines 逐行应用 —— 不再对装配后的
+      // 整个文件 replaceAll(那会摧毁时间码/ASS 字段)。
       return finalSubtitle;
     };
 
@@ -315,7 +326,18 @@ const SubtitleTranslator = () => {
       try {
         // Translate content using the specific target language
         const rawTranslatedLines = await translateBatch(cleanLines, translationMethod, currentTargetLang, fileIndex, totalFiles, contextAware ? "subtitle" : undefined);
-        const translatedLines = isAss ? restoreAssAfterTranslation(rawTranslatedLines, tagMaps) : rawTranslatedLines;
+        // removeChars 只清理【原始译文】,且必须在 ASS 标签/verbatim 还原【之前】
+        // 应用 —— restore 之后应用会损坏 \N 硬换行、{\anX} 标签和绘图坐标行。
+        const cleanedTranslated = removeChars.trim()
+          ? rawTranslatedLines.map((line) => {
+              let cleaned = line;
+              splitBySpaces(removeChars).forEach((char) => {
+                cleaned = cleaned.replaceAll(char, "");
+              });
+              return cleaned;
+            })
+          : rawTranslatedLines;
+        const translatedLines = isAss ? restoreAssAfterTranslation(cleanedTranslated, tagMaps) : cleanedTranslated;
 
         // Generate file name base
         const langLabel = currentTargetLang;
@@ -337,8 +359,9 @@ const SubtitleTranslator = () => {
           await downloadFile(translatedOnlySubtitle, translatedOnlyFileName);
           await downloadFile(bilingualSubtitle, bilingualFileName);
 
-          // Show success message for single file mode
-          if (!multiLanguageMode && multipleFiles.length <= 1) {
+          // Show success message for single file mode — 行级软失败时降级,
+          // 不跟失败面板唱反调
+          if (!multiLanguageMode && multipleFiles.length <= 1 && !hadRunFailures()) {
             message.success(t("fileExported", { fileName: `${translatedOnlyFileName}, ${bilingualFileName}` }));
           }
 
@@ -450,11 +473,13 @@ const SubtitleTranslator = () => {
         });
       }
 
-      // 部分/全失败时不报"已导出"(per-file error toast 已经告知细节),只在有成功时显示汇总
+      // 部分/全失败时不报"已导出"(per-file error toast 已经告知细节),只在有成功时显示汇总。
+      // hadRunFailures() 覆盖行级软失败:provider 整体故障时文件"导出成功"但内容
+      // 是原文副本 —— 绿色成功 toast 会跟失败面板自相矛盾,降级为 warning。
       const total = multipleFiles.length;
       const failed = failedFilesRef.current;
       const succeeded = total - failed;
-      if (failed === 0) {
+      if (failed === 0 && !hadRunFailures()) {
         message.success(t("translationExported"), 10);
       } else if (succeeded > 0) {
         message.warning(`${t("translationExported")} (${succeeded}/${total})`, 10);

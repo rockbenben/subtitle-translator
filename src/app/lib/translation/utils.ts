@@ -76,6 +76,21 @@ export const splitTextIntoChunks = (text: string, maxLength: number, delimiter: 
 /**
  * Build AI model prompt with variable substitution
  * @param fullText - Optional: complete text for ${fullText} variable (only processed when prompt contains ${fullText})
+ *
+ * Two invariants here are load-bearing (both shipped corrupted output before):
+ *
+ * 1. SUBSTITUTION ORDER — every template variable resolves BEFORE ${content}
+ *    is inserted, so tokens occurring literally inside user content are never
+ *    treated as variables. Previously a doc line containing `${fullText}`
+ *    injected the entire document into its own position (token blowup →
+ *    context-length failure), and `${targetLanguage}` inside content was
+ *    silently rewritten to a language name before translation.
+ *
+ * 2. FUNCTION-FORM REPLACEMENTS for user-controlled values — a string passed
+ *    as `.replace`/`.replaceAll`'s second arg undergoes GetSubstitution:
+ *    `$$` collapses to `$` (LaTeX `$$E=mc^2$$` → `$E=mc^2$`), `$'` deletes
+ *    itself + swallows context, $` duplicates the preceding text, `$&`
+ *    re-injects the match. `() => value` is inserted verbatim.
  */
 export const getAIModelPrompt = (content: string, userPrompt: string, targetLanguage: string, sourceLanguage: string, fullText?: string): string => {
   let prompt = userPrompt;
@@ -83,19 +98,15 @@ export const getAIModelPrompt = (content: string, userPrompt: string, targetLang
     prompt = prompt.replace(/from \${sourceLanguage} (to|into)/g, "into");
   }
 
-  const vars: Record<string, string> = {
-    "${sourceLanguage}": getLanguageName(sourceLanguage),
-    "${targetLanguage}": getLanguageName(targetLanguage),
-    "${content}": content,
-  };
+  prompt = prompt.replaceAll("${sourceLanguage}", getLanguageName(sourceLanguage));
+  prompt = prompt.replaceAll("${targetLanguage}", getLanguageName(targetLanguage));
+  // ${fullText} gate checked BEFORE content insertion — only the user's own
+  // template can opt in, never a literal token inside the document body.
   if (prompt.includes("${fullText}")) {
-    vars["${fullText}"] = fullText || content;
+    const full = fullText || content;
+    prompt = prompt.replaceAll("${fullText}", () => full);
   }
-
-  for (const [key, value] of Object.entries(vars)) {
-    prompt = prompt.replaceAll(key, value);
-  }
-  return prompt;
+  return prompt.replaceAll("${content}", () => content);
 };
 
 /**

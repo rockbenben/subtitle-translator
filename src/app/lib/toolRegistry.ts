@@ -92,9 +92,9 @@ type ToolEntry = {
  * Declaration order = homepage display order.
  */
 export const TOOL_REGISTRY = {
-  subtitleTranslator:   { path: "subtitle-translator",    category: "MultimediaApplication", group: "translate",  namespaces: ["SubtitleTranslator", "TranslationSettings"] },
-  mdTranslator:         { path: "md-translator",          category: "BusinessApplication",   group: "translate",  namespaces: ["MDTranslator", "TranslationSettings"] },
-  jsonTranslate:        { path: "json-translate",         category: "DeveloperApplication",  group: "translate",  namespaces: ["JSON", "TranslationSettings"] },
+  subtitleTranslator:   { path: "subtitle-translator",    category: "MultimediaApplication", group: "translate",  namespaces: ["SubtitleTranslator", "TranslationSettings", "TranslationGlossary"] },
+  mdTranslator:         { path: "md-translator",          category: "BusinessApplication",   group: "translate",  namespaces: ["MDTranslator", "TranslationSettings", "TranslationGlossary"] },
+  jsonTranslate:        { path: "json-translate",         category: "DeveloperApplication",  group: "translate",  namespaces: ["JSON", "TranslationSettings", "TranslationGlossary"] },
   textSplitter:         { path: "text-splitter",          category: "UtilitiesApplication",  group: "textParser", namespaces: ["TextSplitter"] },
   chineseConversion:    { path: "chinese-conversion",     category: "UtilitiesApplication",  group: "textParser", namespaces: ["ChineseConversion", "ProtectedRuleManager"] },
   novelProcessor:       { path: "novel-processor",        category: "UtilitiesApplication",  group: "textParser", namespaces: ["NovelProcessor", "ProtectedRuleManager"] },

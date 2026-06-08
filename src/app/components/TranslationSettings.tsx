@@ -167,7 +167,10 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
         ...(config as Partial<TranslateTextParams>),
         reasoningEffort: deriveThinkingParams(service, config),
       };
-      const testError = await testTranslation(service, testParams, isLLMModel ? systemPrompt : undefined, isLLMModel ? userPrompt : undefined);
+      // 30s 超时:黑洞端点否则让 Test 按钮永远转圈(同 ApiStatusBlock)。
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 30_000);
+      const testError = await testTranslation(service, testParams, isLLMModel ? systemPrompt : undefined, isLLMModel ? userPrompt : undefined, controller.signal).finally(() => clearTimeout(timeout));
       if (!testError) {
         message.success(`${currentService?.label || service} - ${t("testConfigSuccess")}`);
       } else {
@@ -319,7 +322,7 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
       )}
 
       {/* ========== Credentials group ========== */}
-      {(config?.url !== undefined || config?.apiKey !== undefined || config?.region !== undefined || config?.apiVersion !== undefined || config?.useRelay !== undefined) && (
+      {(config?.url !== undefined || config?.apiKey !== undefined || config?.region !== undefined || config?.folderId !== undefined || config?.apiVersion !== undefined || config?.useRelay !== undefined) && (
         <Section variant="neutral" style={{ marginTop: 16 }} noGap>
           <Text strong style={{ display: "block", marginBottom: 8 }}>
             {t("credentialsGroup")}
@@ -440,6 +443,19 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
                 />
               </Form.Item>
             )}
+            {config?.folderId !== undefined && (
+              // Yandex AI Studio: per-tenant folder ID, assembled into the model
+              // URI (gpt://<folderId>/<model>) by the service. Hardcoded label —
+              // single rare service, same precedent as "Azure Region" above.
+              <Form.Item label="Yandex Folder ID" required extra={`${tCommon("example")}: b1g8a2b3c4d5e6f7g8h9`}>
+                <Input
+                  placeholder={`${tCommon("enter")} Yandex Cloud Folder ID`}
+                  value={config?.folderId as string | undefined}
+                  onChange={(e) => handleConfigChange(service, "folderId", e.target.value)}
+                  aria-label="Yandex Folder ID"
+                />
+              </Form.Item>
+            )}
             {config?.apiVersion !== undefined && (
               <Form.Item label={`LLM API Version`} extra={`${tCommon("example")}: 2025-11-18`} style={{ marginBottom: config?.useRelay !== undefined ? 24 : 0 }}>
                 <Input value={config.apiVersion as string | undefined} onChange={(e) => handleConfigChange(service, "apiVersion", e.target.value)} aria-label="LLM API Version" />
@@ -474,7 +490,10 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
                     <AutoComplete
                       options={models}
                       value={config.model as string | undefined}
-                      onChange={(value) => handleConfigChange(service, "model", value)}
+                      // ?? "":clear(X)按钮触发 onChange(undefined),写入
+                      // model: undefined 会让整个 model 字段(连同 thinking
+                      // 控件)从 UI 消失 —— 字段可见性判定是 `!== undefined`。
+                      onChange={(value) => handleConfigChange(service, "model", value ?? "")}
                       allowClear
                       placeholder={service === "llm" ? `${tCommon("example")}: llama3.2, gpt-3.5-turbo, meta-llama/Llama-3.3-70B-Instruct-Turbo` : undefined}
                       showSearch={{
@@ -696,10 +715,17 @@ const TranslationSettings = () => {
   // plus the currently-selected one. getConfigStatus is the same predicate the
   // status block uses, so both surfaces agree (deeplx shows up free out of the
   // box, azureopenai stays hidden until URL+apiKey are both filled, etc).
+  //
+  // `?? getDefaultConfig(...)`: stored translationConfigs predate any newly
+  // ADDED provider (useLocalStorage returns the saved JSON as-is, no default
+  // merge), and getConfigStatus(method, undefined) defensively returns "free" —
+  // which would list every brand-new credentialed provider as configured for
+  // every existing user. Evaluating the registry default instead gives the
+  // truthful status (apiKey "" → needs-config → hidden).
   const activeServices = useMemo(
     () =>
       TRANSLATION_PROVIDERS.filter((s) => {
-        const status = getConfigStatus(s.value, translationConfigs?.[s.value]);
+        const status = getConfigStatus(s.value, translationConfigs?.[s.value] ?? getDefaultConfig(s.value));
         return status !== "needs-config" || s.value === translationMethod;
       }),
     [translationConfigs, translationMethod],

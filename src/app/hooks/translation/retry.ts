@@ -81,7 +81,11 @@ export const isRetryableError = (error: unknown): boolean => {
   if (isAbortError(error) || isCascadedAbort(error)) return false;
   const { status, message } = getErrorInfo(error);
   if (NON_RETRYABLE_MESSAGES.some((m) => message.includes(m))) return false;
-  return !status || status >= 500 || status === 429;
+  // 408 (Request Timeout) and 425 (Too Early) are the two canonical RETRYABLE
+  // 4xx statuses — proxies/load-balancers emit them for transient conditions.
+  // Without these, the .status hardening (fetchJSON now attaches status) would
+  // over-reach and fast-fail recoverable blips that used to be retried.
+  return !status || status >= 500 || status === 429 || status === 408 || status === 425;
 };
 
 /**

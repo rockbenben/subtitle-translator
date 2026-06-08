@@ -44,7 +44,12 @@ const ApiStatusBlock = ({ disabled = false }: ApiStatusBlockProps) => {
   // detect against the previous render's snapshot and reset synchronously.
   // React discards the in-progress render and immediately re-renders with
   // the cleared state — no useEffect cascading render needed.
-  const identity = `${translationMethod}|${config?.apiKey ?? ""}|${config?.url ?? ""}|${config?.model ?? ""}`;
+  // Covers every reachability-relevant field (same definition as pingSignature
+  // in validation.ts): region/apiVersion (Azure) and folderId (Yandex) change
+  // which tenant/deployment a test actually hit; useRelay changes the entire
+  // wire path — flipping it is the documented fix for browser-direct CORS
+  // failures, so a stale red "failed" badge must not survive the toggle.
+  const identity = `${translationMethod}|${config?.apiKey ?? ""}|${config?.url ?? ""}|${config?.model ?? ""}|${config?.region ?? ""}|${config?.apiVersion ?? ""}|${config?.folderId ?? ""}|${config?.useRelay ?? false}`;
   const [prevIdentity, setPrevIdentity] = useState(identity);
   if (prevIdentity !== identity) {
     setPrevIdentity(identity);
@@ -74,7 +79,15 @@ const ApiStatusBlock = ({ disabled = false }: ApiStatusBlockProps) => {
       ...(config as Partial<TranslateTextParams>),
       reasoningEffort: deriveThinkingParams(translationMethod, config),
     };
-    const error = await testTranslation(translationMethod, testParams, effectiveSystem, effectiveUser);
+    // 30s 超时:黑洞端点(防火墙吞包、挂死的本地服务)否则让状态块永远卡
+    // 在 "testing"。
+    const controller = new AbortController();
+    let timedOut = false;
+    const timeout = setTimeout(() => {
+      timedOut = true;
+      controller.abort();
+    }, 30_000);
+    const error = await testTranslation(translationMethod, testParams, effectiveSystem, effectiveUser, controller.signal).finally(() => clearTimeout(timeout));
     if (id !== testIdRef.current) return;
     if (!error) {
       setSessionStatus("connected");
@@ -82,8 +95,9 @@ const ApiStatusBlock = ({ disabled = false }: ApiStatusBlockProps) => {
     } else {
       // testTranslation returns the real failure reason — surface it so the user sees
       // WHY (401/403/CORS/timeout/…) instead of a generic "connection failed".
+      // 超时触发的 abort:报"超时"分类,而不是裸的 DOMException abort 文案。
       setSessionStatus("failed");
-      message.error(`${t("apiStatusFailed")}: ${error}`, 10);
+      message.error(`${t("apiStatusFailed")}: ${timedOut ? t("apiStatusTimeout") : error}`, 10);
     }
   };
 

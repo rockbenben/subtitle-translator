@@ -30,31 +30,41 @@ const useFileUpload = () => {
         const buffer = e.target?.result as ArrayBuffer;
         const uint8Array = new Uint8Array(buffer);
 
-        // Sample first 512KB for encoding detection (avoids converting full file to string)
-        const SAMPLE_SIZE = 512 * 1024;
-        const sample = uint8Array.subarray(0, Math.min(SAMPLE_SIZE, uint8Array.length));
-        // Build binary string where charCode === byte value (required by jschardet)
-        // Cannot use TextDecoder("latin1") because browsers map it to Windows-1252,
-        // which remaps bytes 0x80-0x9F to different code points and breaks detection
-        let sampleString = "";
-        for (let i = 0; i < sample.length; i += 8192) {
-          sampleString += String.fromCharCode.apply(null, sample.subarray(i, i + 8192) as unknown as number[]);
-        }
-
-        // 检测编码（基于样本），后续仍对完整内容进行解码
-        // Lazy load jschardet
-        const jschardet = (await import("jschardet")).default;
-        const detected = jschardet.detect(sampleString);
-
-        // 解码文件内容。jschardet 可能返回 TextDecoder 不认的标签（或乱码标签），
-        // new TextDecoder(label) 会抛 RangeError —— 回退到 utf-8 而不是让整个回调崩掉。
-        let decoder: TextDecoder;
+        // 解码策略:先用 UTF-8 fatal 模式对【全文】试解 —— UTF-8 是自验证编码,
+        // fatal 解码成功就几乎确定是 UTF-8。此前的"前 512KB 样本检测 + 全文按
+        // 检测结果解码"对开头长段纯 ASCII 的大文件会误判(ascii/windows-1252),
+        // 后部的 UTF-8 多字节字符整体 mojibake。真正的 legacy 编码(GBK/UTF-16
+        // 等)会让 fatal 解码抛错,才落到 jschardet 检测路径。
+        let text: string;
         try {
-          decoder = new TextDecoder(detected.encoding || "utf-8");
+          text = new TextDecoder("utf-8", { fatal: true }).decode(uint8Array);
         } catch {
-          decoder = new TextDecoder("utf-8");
+          // Sample first 512KB for encoding detection (avoids converting full file to string)
+          const SAMPLE_SIZE = 512 * 1024;
+          const sample = uint8Array.subarray(0, Math.min(SAMPLE_SIZE, uint8Array.length));
+          // Build binary string where charCode === byte value (required by jschardet)
+          // Cannot use TextDecoder("latin1") because browsers map it to Windows-1252,
+          // which remaps bytes 0x80-0x9F to different code points and breaks detection
+          let sampleString = "";
+          for (let i = 0; i < sample.length; i += 8192) {
+            sampleString += String.fromCharCode.apply(null, sample.subarray(i, i + 8192) as unknown as number[]);
+          }
+
+          // 检测编码（基于样本），后续仍对完整内容进行解码
+          // Lazy load jschardet
+          const jschardet = (await import("jschardet")).default;
+          const detected = jschardet.detect(sampleString);
+
+          // jschardet 可能返回 TextDecoder 不认的标签（或乱码标签），
+          // new TextDecoder(label) 会抛 RangeError —— 回退到 utf-8 而不是让整个回调崩掉。
+          let decoder: TextDecoder;
+          try {
+            decoder = new TextDecoder(detected.encoding || "utf-8");
+          } catch {
+            decoder = new TextDecoder("utf-8");
+          }
+          text = decoder.decode(uint8Array);
         }
-        const text = decoder.decode(uint8Array);
         callback(normalizeNewlines(text));
       } catch (error) {
         // jschardet 加载失败 / 解码异常等：别让 onload 静默 reject（否则下方 finally 之外

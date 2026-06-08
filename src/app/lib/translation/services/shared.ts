@@ -130,10 +130,25 @@ export const fetchJSON = async (url: string, init?: RequestInit): Promise<unknow
   const response = await fetch(url, init);
   if (!response.ok) {
     const data = await response.json().catch(() => null);
-    throw new Error(formatHttpError(data, response.status));
+    // Attach the HTTP status as a property: retry.ts's classification reads
+    // `(error as {status}).status` — without this, isAuthError's 401/403 branch
+    // and isRetryableError's `status >= 500 || status === 429` rule NEVER
+    // execute in production (only tests fabricated .status), so a relay-forwarded
+    // Yandex 401 ("Unauthenticated"/"Unknown api key" — no keyword match) evaded
+    // the auth-abort cascade and a deterministic 400 (bad folderId → invalid
+    // model URI) burned the full retry budget on every batch.
+    throw Object.assign(new Error(formatHttpError(data, response.status)), { status: response.status });
   }
   return response.json();
 };
+
+// Intrinsic-reasoning models (Perplexity sonar-reasoning-pro, DeepSeek-R1-style
+// SKUs on aggregators/self-hosted) inline their chain-of-thought as a leading
+// <think>…</think> block INSIDE message.content. That's reasoning, not
+// translation — without stripping, paragraphs of English CoT ship as the
+// translated line and get persisted in the cache. Anchored to the start so a
+// legitimate literal "<think>" later in translated text is never touched.
+const LEADING_THINK_BLOCK_RE = /^\s*<think>[\s\S]*?<\/think>\s*/i;
 
 export const getOpenAICompatContent = (data: unknown, serviceName: string): string => {
   const choice = (data as { choices?: Array<{ message?: { content?: string }; finish_reason?: string }> } | null)?.choices?.[0];
@@ -147,7 +162,7 @@ export const getOpenAICompatContent = (data: unknown, serviceName: string): stri
   if (choice?.finish_reason === "length") {
     throw new Error(`${serviceName} response truncated — max_tokens reached. Raise maxTokens or split input.`);
   }
-  return content.trim();
+  return content.replace(LEADING_THINK_BLOCK_RE, "").trim();
 };
 
 export const getClaudeContent = (data: unknown, hasThinkingBlock: boolean): string => {

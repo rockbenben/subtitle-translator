@@ -65,6 +65,10 @@ export const useLlmPresets = ({ translationConfigs, setTranslationConfigs }: Use
     llmPresets,
     setLlmPresets,
     activeLlmPresetId,
+    // Raw setter — used by settings import to restore the active selection
+    // (loadLlmPreset would also overwrite the llm config, which import has
+    // already set from the file).
+    setActiveLlmPresetId: setActiveId,
     saveLlmPreset,
     loadLlmPreset,
     deleteLlmPreset,

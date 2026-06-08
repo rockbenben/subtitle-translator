@@ -2,6 +2,7 @@
 
 import { downloadFile } from "@/app/utils";
 import type { TranslationConfig } from "@/app/lib/translation";
+import type { GlossaryPreset } from "@/app/lib/translation/glossary";
 
 export interface TranslationSettings {
   translationConfigs: Record<string, TranslationConfig>;
@@ -13,8 +14,12 @@ export interface TranslationSettings {
   targetLanguages: string[];
   multiLanguageMode: boolean;
   llmPresets?: Array<{ id: string; name: string; config: TranslationConfig }>;
+  activeLlmPresetId?: string;
   promptPresets?: Array<{ id: string; name: string; systemPrompt: string; userPrompt: string }>;
   activePromptPresetId?: string;
+  glossaryPresets?: GlossaryPreset[];
+  activeGlossaryPresetId?: string;
+  glossaryEnabled?: boolean;
   // 翻译行为调优项,跨设备同步时这些数值也要带上；默认使用缓存，不记忆
   retryCount?: number;
   requestTimeoutSec?: number;
@@ -56,6 +61,60 @@ const isTranslationSettings = (value: unknown): value is TranslationSettings => 
   );
 };
 
+// Per-field expected types. Import applies fields individually with
+// `!== undefined` gates, so a wrong-typed field (systemPrompt: null,
+// glossaryPresets: {} — hand-edited or corrupted files) would land in
+// localStorage as-is and persistently crash every consumer of that value
+// until storage is hand-cleared. Sanitizing drops the bad field — the import
+// simply skips it, keeping the user's existing value.
+const FIELD_KINDS: Record<keyof Omit<TranslationSettings, "translationMethod" | "translationConfigs" | "targetLanguages">, "string" | "boolean" | "number" | "array"> = {
+  systemPrompt: "string",
+  userPrompt: "string",
+  sourceLanguage: "string",
+  targetLanguage: "string",
+  multiLanguageMode: "boolean",
+  llmPresets: "array",
+  activeLlmPresetId: "string",
+  promptPresets: "array",
+  activePromptPresetId: "string",
+  glossaryPresets: "array",
+  activeGlossaryPresetId: "string",
+  glossaryEnabled: "boolean",
+  retryCount: "number",
+  requestTimeoutSec: "number",
+  removeChars: "string",
+  exportDate: "string",
+  version: "string",
+};
+
+const matchesKind = (value: unknown, kind: "string" | "boolean" | "number" | "array"): boolean => (kind === "array" ? Array.isArray(value) : typeof value === kind);
+
+const sanitizeSettings = (settings: TranslationSettings): TranslationSettings => {
+  const out = { ...settings } as Record<string, unknown>;
+  for (const [field, kind] of Object.entries(FIELD_KINDS)) {
+    if (out[field] !== undefined && !matchesKind(out[field], kind)) {
+      delete out[field];
+    }
+  }
+  // glossaryPresets 深度校验:Array.isArray 不够 —— terms 里混入非字符串
+  // from/to(手编文件/坏导出)会进 localStorage,后续 term.from.trim()
+  // 在每次翻译时抛 TypeError,工具持久性白屏直到手清存储。
+  if (Array.isArray(out.glossaryPresets)) {
+    out.glossaryPresets = (out.glossaryPresets as unknown[])
+      .filter((p): p is { id: string; name: string; terms: unknown } => typeof p === "object" && p !== null && typeof (p as { id?: unknown }).id === "string" && typeof (p as { name?: unknown }).name === "string")
+      .map((p) => ({
+        ...p,
+        terms: Array.isArray(p.terms)
+          ? (p.terms as unknown[]).filter(
+              (t): t is { from: string; to: string; targetLang: string } =>
+                typeof t === "object" && t !== null && typeof (t as { from?: unknown }).from === "string" && typeof (t as { to?: unknown }).to === "string" && typeof (t as { targetLang?: unknown }).targetLang === "string",
+            )
+          : [],
+      }));
+  }
+  return out as unknown as TranslationSettings;
+};
+
 /**
  * Create file input and read JSON settings file
  * Returns parsed settings, throws error on failure
@@ -86,8 +145,9 @@ export const createSettingsFileInput = (
             return;
           }
 
-          onSettingsLoaded(parsed);
-          resolve(parsed);
+          const sanitized = sanitizeSettings(parsed);
+          onSettingsLoaded(sanitized);
+          resolve(sanitized);
         } catch (parseError) {
           console.error("Parse error:", parseError);
           reject(new Error("Failed to parse settings file. / 无法解析设置文件。"));
