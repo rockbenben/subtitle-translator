@@ -567,57 +567,57 @@
   dependencies:
     "@tybys/wasm-util" "^0.10.1"
 
-"@next/env@16.2.6":
-  version "16.2.6"
-  resolved "https://registry.npmmirror.com/@next/env/-/env-16.2.6.tgz#93a173801cb088463070cc6a113c68e26c1838ea"
-  integrity sha512-gd8HoHN4ufj73WmR3JmVolrpJR47ILK6LouP5xElPglaVxir6e1a7VzvTvDWkOoPXT9rkkTzyCxBu4yeZfZwcw==
+"@next/env@16.2.7":
+  version "16.2.7"
+  resolved "https://registry.npmmirror.com/@next/env/-/env-16.2.7.tgz#994c91972bb4a40aed52d3767bc0a60660a6e846"
+  integrity sha512-tMJizPlj6ZYpBMMdK8S0LJufrP4QTdR6pcv9KQ/bVETPAmg0j1mlHE9G2c38UyGHxoBapgwuj7XjbGJ2RcDFOg==
 
-"@next/eslint-plugin-next@16.2.6":
-  version "16.2.6"
-  resolved "https://registry.npmmirror.com/@next/eslint-plugin-next/-/eslint-plugin-next-16.2.6.tgz#24f3b2945b2856a5559af5ad630b7cddf1f65329"
-  integrity sha512-Z8l6o4JWKUl755x4R+wogD86KPeU+Ckw4K+SYG4kHeOJtRenDeK+OSbGcqZpDtbwn9DsJVdir2UxmwXuinUbUw==
+"@next/eslint-plugin-next@16.2.7":
+  version "16.2.7"
+  resolved "https://registry.npmmirror.com/@next/eslint-plugin-next/-/eslint-plugin-next-16.2.7.tgz#e22c808d8206b1257f2a880657f1fb754c4b7454"
+  integrity sha512-VbS+QgMHqvIDMTIqD2xMBKK1otIpdAUKA8VLHFwR9h6OfU/mOm7w/69nQcvdmI8hCk99Wr2AsGLn/PJ/tMHw1w==
   dependencies:
     fast-glob "3.3.1"
 
-"@next/swc-darwin-arm64@16.2.6":
-  version "16.2.6"
-  resolved "https://registry.npmmirror.com/@next/swc-darwin-arm64/-/swc-darwin-arm64-16.2.6.tgz#0e19055594fbd2d198ce95cf5842bdbe57235d4e"
-  integrity sha512-ZJGkkcNfYgrrMkqOdZ7zoLa1TOy0qpcMfk/z4Mh/FKUz40gVO+HNQWqmLxf67Z5WB64DRp0dhEbyHfel+6sJUg==
+"@next/swc-darwin-arm64@16.2.7":
+  version "16.2.7"
+  resolved "https://registry.npmmirror.com/@next/swc-darwin-arm64/-/swc-darwin-arm64-16.2.7.tgz#457a13330258d3b833b314654f9aa9a9adfb9da9"
+  integrity sha512-vm1EDI/pVaBNNiychmxk3fft+OhQPVD9cIM/tReLZIQ3TfQ4kqI9DwKk00dzuS1ulC7icbrzCFrmRRlk9PfNdw==
 
-"@next/swc-darwin-x64@16.2.6":
-  version "16.2.6"
-  resolved "https://registry.npmmirror.com/@next/swc-darwin-x64/-/swc-darwin-x64-16.2.6.tgz#487086280b56017bb547f5975ef1a3d6235a070f"
-  integrity sha512-v/YLBHIY132Ced3puBJ7YJKw1lqsCrgcNo2aRJlCEyQrrCeRJlvGlnmxhPxNQI3KE3N1DN5r9TPNPvka3nq5RQ==
+"@next/swc-darwin-x64@16.2.7":
+  version "16.2.7"
+  resolved "https://registry.npmmirror.com/@next/swc-darwin-x64/-/swc-darwin-x64-16.2.7.tgz#37e8354b22b339b712e8ebe372be7e8616fa8375"
+  integrity sha512-O3IRSv1ZBL1zs0WrIgefTEcTKFVn+ryxBNe54erJ6KsD+2f/Mmt7g2jOYh8PSBdUwPtKQJuCsTMlZ7tIu2AcsQ==
 
-"@next/swc-linux-arm64-gnu@16.2.6":
-  version "16.2.6"
-  resolved "https://registry.npmmirror.com/@next/swc-linux-arm64-gnu/-/swc-linux-arm64-gnu-16.2.6.tgz#b28ffbc31ee527a3ad48f29c2fd7b7f75bbdf180"
-  integrity sha512-RPOvqlYBbcQjkz9VQQDZ2T2bARIjXZV1KFlt+V2Mr6SW/e4I9fcKsaA0hdyf2FHoTlsV2xnBd5Y912rP/1Ce6w==
+"@next/swc-linux-arm64-gnu@16.2.7":
+  version "16.2.7"
+  resolved "https://registry.npmmirror.com/@next/swc-linux-arm64-gnu/-/swc-linux-arm64-gnu-16.2.7.tgz#2d02d6b6e9d29552863c5eda23e9c747ab7486cd"
+  integrity sha512-Re6PZtjBDd0aMU+VcZcC/PrIvj4WhrjDYtMhhCVQamWN4L90EVP0pcEOBQD25prSlw7OzNw5QpHLWMilRLsRNw==
 
-"@next/swc-linux-arm64-musl@16.2.6":
-  version "16.2.6"
-  resolved "https://registry.npmmirror.com/@next/swc-linux-arm64-musl/-/swc-linux-arm64-musl-16.2.6.tgz#d2eac5600e7083527669fa8cb8758efbbf9c8210"
-  integrity sha512-URUTu1+dMkxJsPFgm+OeEvq9wf5sujw0EvgYy80TDGHTSLTnIHeqb0Eu8A3sC95IRgjejQL+kC4mw+4yPxiAXA==
+"@next/swc-linux-arm64-musl@16.2.7":
+  version "16.2.7"
+  resolved "https://registry.npmmirror.com/@next/swc-linux-arm64-musl/-/swc-linux-arm64-musl-16.2.7.tgz#f9d171041e8e7a0974979d184bbed65340623b55"
+  integrity sha512-qyogG9QtBzWxgJfeGBvOEHI3851gTfCF3wLZ5RDLTBJGAmE9p1qDwKCOdrBrvBzRvYDT+gUDp72pzlSEfAXgNA==
 
-"@next/swc-linux-x64-gnu@16.2.6":
-  version "16.2.6"
-  resolved "https://registry.npmmirror.com/@next/swc-linux-x64-gnu/-/swc-linux-x64-gnu-16.2.6.tgz#e70dc3469bf9bfef16da2ba240c07ef6cfe8ad55"
-  integrity sha512-DOj182mPV8G3UkrayLoREM5YEYI+Dk5wv7Ox9xl1fFibAELEsFD0lDPfHIeILlutMMfdyhlzYPELG3peuKaurw==
+"@next/swc-linux-x64-gnu@16.2.7":
+  version "16.2.7"
+  resolved "https://registry.npmmirror.com/@next/swc-linux-x64-gnu/-/swc-linux-x64-gnu-16.2.7.tgz#23da8f39ef473c4f6026fb9b7aac1cac25254711"
+  integrity sha512-Vhe4ZDuBpmMogrGi5D4R2Kq4JAQlj6+wvgaFYy31zfES0zPmt6TLA+cuYpM/OLrPZjo2MYQTHVqNUSCR6+fDZQ==
 
-"@next/swc-linux-x64-musl@16.2.6":
-  version "16.2.6"
-  resolved "https://registry.npmmirror.com/@next/swc-linux-x64-musl/-/swc-linux-x64-musl-16.2.6.tgz#49ecd2f622d0f3741654c59411f604dbbe1a38de"
-  integrity sha512-HKQ5SP/V/ub73UvF7n/zeJlxk2kLmtL7Wzrg4WfmkjmNos5onJ2tKu7yZOPdL18A6Svfn3max29ym+ry7NkK4g==
+"@next/swc-linux-x64-musl@16.2.7":
+  version "16.2.7"
+  resolved "https://registry.npmmirror.com/@next/swc-linux-x64-musl/-/swc-linux-x64-musl-16.2.7.tgz#188ff88c6807ce7f250436b09f792d7879ae8c97"
+  integrity sha512-srvian89JahFLw1YLBEuhvPJ0DO5lpUeJQMXy4xYo7g628ZlNgXdNkqoxSAv9OYrBfByh6vxISMwW/mRbzCY+g==
 
-"@next/swc-win32-arm64-msvc@16.2.6":
-  version "16.2.6"
-  resolved "https://registry.npmmirror.com/@next/swc-win32-arm64-msvc/-/swc-win32-arm64-msvc-16.2.6.tgz#8a6dfec005364e1cf4fa1724c3d7fa0093660406"
-  integrity sha512-LZXpTlPyS5v7HhSmnvsLGP3iIYgYOBnc8r8ArlT55sGHV89bR2HlDdBjWQ+PY6SJMmk8TuVGFuxalnP3k/0Dwg==
+"@next/swc-win32-arm64-msvc@16.2.7":
+  version "16.2.7"
+  resolved "https://registry.npmmirror.com/@next/swc-win32-arm64-msvc/-/swc-win32-arm64-msvc-16.2.7.tgz#10b57a146d9a3cb68790ce62c3f79fb3c6592c2b"
+  integrity sha512-GX3wvLpULFuRFJzwHaKfm7QZJ18F4ZSuxlPJ96BoBglCzBmdSjyeBKF+ZhWhvL/ckxNfLnNa7bsObO2ipYpszw==
 
-"@next/swc-win32-x64-msvc@16.2.6":
-  version "16.2.6"
-  resolved "https://registry.npmmirror.com/@next/swc-win32-x64-msvc/-/swc-win32-x64-msvc-16.2.6.tgz#4fb656ccfcf60cbf8ffedb40fc1b625987c82742"
-  integrity sha512-F0+4i0h9J6C4eE3EAPWsoCk7UW/dbzOjyzxY0qnDUOYFu6FFmdZ6l97/XdV3/Nz3VYyO7UWjyEJUXkGqcoXfMA==
+"@next/swc-win32-x64-msvc@16.2.7":
+  version "16.2.7"
+  resolved "https://registry.npmmirror.com/@next/swc-win32-x64-msvc/-/swc-win32-x64-msvc-16.2.7.tgz#8dd310e032fa8c297521de3f03047d6e4ffe8b08"
+  integrity sha512-J4WlM72NMk076Qsg0jTdK3SNXatlSdnjW7L7oNGLst1tAGjHrJh/FYi+pw9wyIjEtGRKDNzD0zuiY16oWYWVaw==
 
 "@nodelib/fs.scandir@2.1.5":
   version "2.1.5"
@@ -2260,12 +2260,12 @@ escape-string-regexp@^4.0.0:
   resolved "https://registry.yarnpkg.com/escape-string-regexp/-/escape-string-regexp-4.0.0.tgz#14ba83a5d373e3d311e5afca29cf5bfad965bf34"
   integrity sha512-TtpcNJ3XAzx3Gq8sWRzJaVajRs0uVxA2YAkdb1jm2YkPz4G6egUFAyA3n5vtEIZefPk5Wa4UXbKuS5fKkJWdgA==
 
-eslint-config-next@16.2.6:
-  version "16.2.6"
-  resolved "https://registry.npmmirror.com/eslint-config-next/-/eslint-config-next-16.2.6.tgz#1a04578efe6fde5cdb6265e98e88c9f61927e2c7"
-  integrity sha512-z2ELYSkyrrJ6cuunTU8vhsT/RpouPkjaSah06nVW6Rg2Hpg0Vs8s497/e5s8G8qtdp4ccsiovz5P1rv+5VSW2Q==
+eslint-config-next@16.2.7:
+  version "16.2.7"
+  resolved "https://registry.npmmirror.com/eslint-config-next/-/eslint-config-next-16.2.7.tgz#f8fa294af9d3bf87d53622915a0a18950ef97f7c"
+  integrity sha512-CQ2aNXkrsjaGA2oJBE1LYnlRdphIAQE9ZQfX9hSv1PNGPyiOMSaVeBfTIO29QxYz+ij/hZudK0cfpCG1HXWstg==
   dependencies:
-    "@next/eslint-plugin-next" "16.2.6"
+    "@next/eslint-plugin-next" "16.2.7"
     eslint-import-resolver-node "^0.3.6"
     eslint-import-resolver-typescript "^3.5.2"
     eslint-plugin-import "^2.32.0"
@@ -3349,26 +3349,26 @@ next-themes@^0.4.6:
   resolved "https://registry.npmmirror.com/next-themes/-/next-themes-0.4.6.tgz#8d7e92d03b8fea6582892a50a928c9b23502e8b6"
   integrity sha512-pZvgD5L0IEvX5/9GWyHMf3m8BKiVQwsCMHfoFosXtXBMnaS0ZnIJ9ST4b4NqLVKDEm8QBxoNNGNaBv2JNF6XNA==
 
-next@16.2.6:
-  version "16.2.6"
-  resolved "https://registry.npmmirror.com/next/-/next-16.2.6.tgz#4564833d2865efc598b7c63541b5771792d3d811"
-  integrity sha512-qOVgKJg1+At15NpeUP+eJgCHvTCgXsogweq87Ri/Ix7PkqQHg4sdaXmSFqKlgaIXE4kW0g25LE68W87UANlHtw==
+next@16.2.7:
+  version "16.2.7"
+  resolved "https://registry.npmmirror.com/next/-/next-16.2.7.tgz#c4f9e7f4aff6744afd827f7f9d883ca38a1fb4b0"
+  integrity sha512-eMJxgjRzBaj3olkP4cBamHDXL79A8FC6u1GcsO1D1Tsx8bw/LLXUJCaoajVxtnhD3A1IJqIT8IcRJjgBIPJq4w==
   dependencies:
-    "@next/env" "16.2.6"
+    "@next/env" "16.2.7"
     "@swc/helpers" "0.5.15"
     baseline-browser-mapping "^2.9.19"
     caniuse-lite "^1.0.30001579"
     postcss "8.4.31"
     styled-jsx "5.1.6"
   optionalDependencies:
-    "@next/swc-darwin-arm64" "16.2.6"
-    "@next/swc-darwin-x64" "16.2.6"
-    "@next/swc-linux-arm64-gnu" "16.2.6"
-    "@next/swc-linux-arm64-musl" "16.2.6"
-    "@next/swc-linux-x64-gnu" "16.2.6"
-    "@next/swc-linux-x64-musl" "16.2.6"
-    "@next/swc-win32-arm64-msvc" "16.2.6"
-    "@next/swc-win32-x64-msvc" "16.2.6"
+    "@next/swc-darwin-arm64" "16.2.7"
+    "@next/swc-darwin-x64" "16.2.7"
+    "@next/swc-linux-arm64-gnu" "16.2.7"
+    "@next/swc-linux-arm64-musl" "16.2.7"
+    "@next/swc-linux-x64-gnu" "16.2.7"
+    "@next/swc-linux-x64-musl" "16.2.7"
+    "@next/swc-win32-arm64-msvc" "16.2.7"
+    "@next/swc-win32-x64-msvc" "16.2.7"
     sharp "^0.34.5"
 
 node-addon-api@^7.0.0:
@@ -3600,10 +3600,10 @@ queue-microtask@^1.2.2:
   resolved "https://registry.yarnpkg.com/queue-microtask/-/queue-microtask-1.2.3.tgz#4929228bbc724dfac43e0efb058caf7b6cfb6243"
   integrity sha512-NuaNSa6flKT5JaSYQzJok04JzTL1CA6aGhv5rfLW3PgqA+M2ChpZQnAC8h8i4ZFkBS8X5RqkDBHA7r4hej3K9A==
 
-react-dom@19.2.6:
-  version "19.2.6"
-  resolved "https://registry.npmmirror.com/react-dom/-/react-dom-19.2.6.tgz#44a81b0bcca22da814c00847d09d01c8615529b7"
-  integrity sha512-0prMI+hvBbPjsWnxDLxlCGyM8PN6UuWjEUCYmZhO67xIV9Xasa/r/vDnq+Xyq4Lo27g8QSbO5YzARu0D1Sps3g==
+react-dom@19.2.7:
+  version "19.2.7"
+  resolved "https://registry.npmmirror.com/react-dom/-/react-dom-19.2.7.tgz#0450dc9ae9ddbff76ef196401cd8b8c7fb466ccc"
+  integrity sha512-t0BRVXvbiE/o20Hfw669rLbMCDWtYZLvmJigy2f0MxsXF+71pxhR3xOkspmsO8h3ZlNzyibAmtCa3l4lYKk6gQ==
   dependencies:
     scheduler "^0.27.0"
 
@@ -3617,10 +3617,10 @@ react-is@^18.2.0:
   resolved "https://registry.yarnpkg.com/react-is/-/react-is-18.3.1.tgz#e83557dc12eae63a99e003a46388b1dcbb44db7e"
   integrity sha512-/LLMVyas0ljjAtoYiPqYiL8VWXzUUdThrmU5+n20DZv+a+ClRoevUzw5JxU+Ieh5/c87ytoTBV9G1FiKfNJdmg==
 
-react@19.2.6:
-  version "19.2.6"
-  resolved "https://registry.npmmirror.com/react/-/react-19.2.6.tgz#3dadb8e12b2a7934c1d5317973e5dce1301f9a4d"
-  integrity sha512-sfWGGfavi0xr8Pg0sVsyHMAOziVYKgPLNrS7ig+ivMNb3wbCBw3KxtflsGBAwD3gYQlE/AEZsTLgToRrSCjb0Q==
+react@19.2.7:
+  version "19.2.7"
+  resolved "https://registry.npmmirror.com/react/-/react-19.2.7.tgz#1f47a1bfc06f8ec885752c6f4af14369a9f8260b"
+  integrity sha512-HNe9WslTbXmFK8o8cmwgAeJFSBvt1bPdHCVKtaaV+WlAN36mpT4hcRpwbf3fY56ar2oIXzsBpOAiIRHAdY0OlQ==
 
 reflect.getprototypeof@^1.0.6, reflect.getprototypeof@^1.0.9:
   version "1.0.10"
