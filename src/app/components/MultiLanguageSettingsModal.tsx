@@ -4,7 +4,7 @@ import { useState, useCallback } from "react";
 import { Modal, Input, Button, Flex, Space, App, Typography } from "antd";
 import { useTranslations, useLocale } from "next-intl";
 import { languages, LANGUAGE_PRESETS } from "@/app/lib/translation";
-import { getDocUrl } from "@/app/utils/localeUtils";
+import { getDocUrl, isChineseLocale } from "@/app/utils/localeUtils";
 
 const { TextArea } = Input;
 const { Text, Link } = Typography;
@@ -80,7 +80,8 @@ const MultiLanguageSettingsModal = ({ open, onClose, targetLanguages, setTargetL
     onClose();
   };
 
-  const langCodesUrl = getDocUrl("guide/translation/supported-languages.html", locale);
+  // 语言代码对照表在 api.html,锚点随文档语言不同(中文页中文锚、英文页英文锚)。
+  const langCodesUrl = getDocUrl(isChineseLocale(locale) ? "guide/translation/api.html#语言代码对照表" : "guide/translation/api.html#language-code-reference", locale);
 
   return (
     <Modal
