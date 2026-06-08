@@ -1,4 +1,34 @@
 {
+  "TranslationGlossary": {
+    "title": "Glossar",
+    "defaultName": "Mein Glossar",
+    "colFrom": "Quelle",
+    "colTo": "Übersetzung",
+    "langHint": "Begriffe werden je Zielsprache gespeichert",
+    "presetCreated": "Glossar erstellt",
+    "presetRenamed": "Glossar umbenannt",
+    "presetDeleted": "Glossar gelöscht",
+    "subtitle": "Legt feste Übersetzungen für Namen / Fachbegriffe je Zielsprache fest",
+    "enable": "Glossar aktivieren",
+    "presetSelect": "Glossar auswählen",
+    "presetEmptyHint": "Kein Glossar vorhanden — auf + klicken zum Erstellen",
+    "presetNew": "Neues Glossar",
+    "presetRename": "Umbenennen",
+    "presetDelete": "Löschen",
+    "presetDeleteConfirm": "Dieses Glossar löschen?",
+    "presetNamePlaceholder": "Glossarname (z. B. eine Serie)",
+    "edit": "Begriffe bearbeiten",
+    "drawerTitle": "Glossar bearbeiten",
+    "fromPlaceholder": "Quellbegriff (z. B. Spike)",
+    "toPlaceholder": "Übersetzung (z. B. Spike)",
+    "addTerm": "Begriff hinzufügen",
+    "termCount": "{count, plural, one {# Begriff} other {# Begriffe}}",
+    "noTermsForLang": "Keine Begriffe für diese Zielsprache vorhanden",
+    "importTsv": "TSV importieren",
+    "exportTsv": "TSV exportieren",
+    "importDone": "{count} importiert",
+    "nameRequired": "Glossarname erforderlich"
+  },
   "common": {
     "fileProcessFailed": "Datei konnte nicht verarbeitet werden – prüfen Sie die Kodierung oder versuchen Sie eine andere",
     "fileReadFailed": "Datei konnte nicht gelesen werden",
@@ -126,6 +156,7 @@
     "apiStatusTesting": "Teste",
     "apiStatusConnected": "✓ Verbunden",
     "apiStatusFailed": "Verbindung fehlgeschlagen",
+    "apiStatusTimeout": "Zeitüberschreitung der Verbindung",
     "testConnection": "Verbindung testen",
     "moreProviderSettings": "Weitere Provider-Einstellungen",
     "gtxFreeAPIUnavailable": "Der GTX Free-Dienst ist vorübergehend nicht erreichbar — möglicherweise eine Netzwerkbeschränkung. Versuche es später erneut oder wechsle zu einem anderen Übersetzungsdienst.",
@@ -242,7 +273,7 @@
         },
         {
           "q": "Untertitel: Maschinelle Übersetzung oder KI/LLM-Übersetzung verwenden? Was ist beste Qualität, was am günstigsten?",
-          "a": "Für günstig maschinelle Übersetzung, für Qualität KI/LLM. Maschinelle Übersetzung (MT) ist günstig oder kostenlos, klingt bei Dialogen aber flach: Google Free Tier kostet nichts (lange Eingaben werden gekürzt); DeepL ist Spitzenklasse für europäische Sprachen; Qwen-MT und Azure Translate sind ähnlich. Große KI-Sprachmodelle (LLM) rechnen pro Token ab, klingen aber merklich natürlicher — DeepSeek bietet das beste Preis-Leistungs-Verhältnis für Staffel-Batches; Claude Sonnet oder GPT-5 liefern die natürlichsten Dialoge; Gemini 3 Pro mit 1M-Token-Kontext bewältigt buchlange…"
+          "a": "Für günstig maschinelle Übersetzung, für Qualität KI/LLM. Maschinelle Übersetzung (MT) ist günstig oder kostenlos, klingt bei Dialogen aber flach: die kostenlose Google-Version kostet nichts (lange Eingaben werden gekürzt); DeepL ist Spitzenklasse für europäische Sprachen; Qwen-MT und Azure Translate sind ähnlich. Große KI-Sprachmodelle (LLM) rechnen pro Token ab, klingen aber merklich natürlicher — DeepSeek bietet das beste Preis-Leistungs-Verhältnis für Staffel-Batches; Claude Sonnet oder GPT-5 liefern die natürlichsten Dialoge; Gemini 3 Pro mit 1M-Token-Kontext bewältigt buchlange Untertitel. Die Engine-Konfiguration wird mit [JSON-Übersetzer](../json-translate) und [Markdown-Übersetzer](../md-translator) geteilt."
         },
         {
           "q": "Wie erstelle ich zweisprachige Untertitel für YouTube oder zum Sprachenlernen?",
@@ -510,7 +541,7 @@
   },
   "feedback": {
     "feedback1": "Feedback & Vorschläge",
-    "feedback2": "Wenn Sie Probleme haben oder Vorschläge, lassen Sie es mich wissen!Ihr Feedback beeinflusst die zukünftige Entwicklung und hilft uns, bessere Tools zu bau…",
+    "feedback2": "Wenn Sie bei der Nutzung auf Probleme stoßen oder Vorschläge und Ideen haben, lassen Sie es mich gerne jederzeit wissen! Ihr Feedback fließt direkt in die Entwicklung und Verbesserung künftiger Funktionen ein und hilft uns, gemeinsam Tools zu bauen, die den Bedürfnissen aller besser entsprechen.",
     "feedback3": "Bitte beschreiben Sie Ihren Anwendungsfall, das Problem oder Ihre Idee. Ich lese jede Nachricht und werde so schnell wie möglich antworten/optimieren.",
     "reaction0": "Gefällt mir",
     "reaction1": "Unterstützung",

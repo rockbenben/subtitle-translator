@@ -1,4 +1,34 @@
 {
+  "TranslationGlossary": {
+    "title": "Glossaire",
+    "defaultName": "Mon glossaire",
+    "colFrom": "Source",
+    "colTo": "Traduction",
+    "langHint": "Les termes sont enregistrés par langue cible",
+    "presetCreated": "Glossaire créé",
+    "presetRenamed": "Glossaire renommé",
+    "presetDeleted": "Glossaire supprimé",
+    "subtitle": "Fixez des traductions pour les noms propres / termes spécialisés, par langue cible",
+    "enable": "Activer le glossaire",
+    "presetSelect": "Sélectionner un glossaire",
+    "presetEmptyHint": "Aucun glossaire — cliquez sur + pour en créer un",
+    "presetNew": "Nouveau glossaire",
+    "presetRename": "Renommer",
+    "presetDelete": "Supprimer",
+    "presetDeleteConfirm": "Supprimer ce glossaire ?",
+    "presetNamePlaceholder": "Nom du glossaire (ex. une série)",
+    "edit": "Modifier les termes",
+    "drawerTitle": "Modifier le glossaire",
+    "fromPlaceholder": "Terme source (ex. Spike)",
+    "toPlaceholder": "Traduction (ex. Spike)",
+    "addTerm": "Ajouter un terme",
+    "termCount": "{count, plural, one {# terme} other {# termes}}",
+    "noTermsForLang": "Aucun terme pour cette langue cible",
+    "importTsv": "Importer TSV",
+    "exportTsv": "Exporter TSV",
+    "importDone": "{count} terme(s) importé(s)",
+    "nameRequired": "Nom du glossaire requis"
+  },
   "common": {
     "fileProcessFailed": "Échec du traitement du fichier — vérifiez son encodage ou essayez-en un autre",
     "fileReadFailed": "Échec de la lecture du fichier",
@@ -126,6 +156,7 @@
     "apiStatusTesting": "Test en cours",
     "apiStatusConnected": "✓ Connecté",
     "apiStatusFailed": "Échec de connexion",
+    "apiStatusTimeout": "Délai de connexion dépassé",
     "testConnection": "Tester la connexion",
     "moreProviderSettings": "Plus de paramètres Provider",
     "gtxFreeAPIUnavailable": "Le service GTX Free est temporairement inaccessible — il pourrait s'agir d'une restriction réseau. Réessayez plus tard ou changez de service de traduction.",
@@ -242,7 +273,7 @@
         },
         {
           "q": "Sous-titres : faut-il utiliser la traduction automatique ou la traduction IA?",
-          "a": "Pour le moins cher, traduction automatique ; pour la qualité, IA/LLM. La traduction automatique (MT) est gratuite ou bon marché mais plate pour les dialogues : Google free tier ne coûte rien (les entrées longues sont tronquées) ; DeepL est premium pour les langues européennes ; Qwen-MT et Azure Translate sont similaires. Les grands modèles IA (LLM) facturent au token mais le rendu est nettement plus naturel — DeepSeek est le meilleur rapport qualité-prix pour les saisons entières ; Claude Sonnet ou GPT-5 donnent les dialogues les plus naturels ; le contexte d'1M tokens de Gemini…"
+          "a": "Pour le moins cher, traduction automatique ; pour la qualité, IA/LLM. La traduction automatique (MT) est gratuite ou bon marché mais plate pour les dialogues : la version gratuite de Google ne coûte rien (les entrées longues sont tronquées) ; DeepL est premium pour les langues européennes ; Qwen-MT et Azure Translate sont similaires. Les grands modèles IA (LLM) facturent au token mais le rendu est nettement plus naturel — DeepSeek est le meilleur rapport qualité-prix pour les saisons entières ; Claude Sonnet ou GPT-5 donnent les dialogues les plus naturels ; le contexte d'1M tokens de Gemini 3 Pro gère les sous-titres très longs. La configuration des moteurs est partagée avec [Traducteur JSON](../json-translate) et [Traducteur Markdown](../md-translator)."
         },
         {
           "q": "Comment créer des sous-titres bilingues pour YouTube ou l'apprentissage des langues ?",
@@ -253,7 +284,7 @@
           "a": "Importez en lot les sous-titres d'une saison entière pour une traduction simultanée — sans limite stricte (la limite réelle dépend de la concurrence du moteur et de votre quota API). Chaque fichier est traduit et mis en cache indépendamment (IndexedDB), donc rafraîchir la page ne perd aucun fichier traduit. Pour une terminologie partagée entre épisodes (noms de personnages, lieux), placez un glossaire dans le System Prompt — tous les fichiers partagent le même contexte, garantissant des traductions cohérentes sur toute la saison."
         },
         {
-          "q": "Comment préserver les noms propres, marques et termes spécifiques dans les sous-titres pour qu'ils ne soient…",
+          "q": "Comment préserver les noms de personnes, marques et noms propres dans les sous-titres pour qu'ils ne soient pas traduits n'importe comment ?",
           "a": "Ajoutez un glossaire dans le System Prompt ; les moteurs IA/LLM le respecteront tous. Exemple : « Conserver tel quel : iPhone, OpenAI, Premiere, nom de personne John Smith. » Particulièrement recommandé pour les séries TV — tous les épisodes partagent le même dictionnaire terminologique, évitant qu'un protagoniste soit appelé d'une manière à l'épisode 1 et autrement à l'épisode 8. La traduction automatique (Google, DeepL, Qwen-MT) n'accepte pas la personnalisation par prompt, nécessitant un post-traitement manuel."
         },
         {
@@ -262,7 +293,7 @@
         },
         {
           "q": "Peut-on convertir les sous-titres en scripts en texte brut ? Ou exporter uniquement certaines lignes ?",
-          "a": "Le bouton « Extraire le texte » extrait le texte des dialogues sans timecodes ni numéros de cue (copie automatique dans le presse-papiers) — pratique pour les supports d'apprentissage des langues, les scripts de podcast, les données d'entraînement IA ou la transmission aux comédiens. Pour une édition ligne par ligne plus fine (filtrage par mot-clé, remplacement de termes en lot, ajout de préfixe/suffixe, tri/dédoublonnage), enchaînez avec [Text Toolbox](../text-toolbox) — ses fonctions de regex et d'opérations sur les lignes couvrent l'essentiel. Pour découper des sous-titres…"
+          "a": "Le bouton « Extraire le texte » extrait le texte des dialogues sans timecodes ni numéros de cue (copie automatique dans le presse-papiers) — pratique pour les supports d'apprentissage des langues, les scripts de podcast, les données d'entraînement IA ou la transmission aux comédiens de doublage. Pour une édition ligne par ligne plus fine (filtrage par mot-clé, remplacement de termes en lot, ajout de préfixe/suffixe, tri/dédoublonnage), enchaînez avec [Boîte à outils texte](../text-toolbox) — ses fonctions de regex et d'opérations sur les lignes couvrent l'essentiel. Pour découper des sous-titres très longs par durée ou par nombre de caractères, combinez avec [Découpeur de texte](../text-splitter)."
         },
         {
           "q": "Que faire si les timecodes sont décalés ou si des caractères illisibles (□□□) apparaissent ?",

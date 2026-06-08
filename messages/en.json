@@ -1,4 +1,34 @@
 {
+  "TranslationGlossary": {
+    "title": "Glossary",
+    "defaultName": "My glossary",
+    "colFrom": "Source",
+    "colTo": "Translation",
+    "langHint": "Terms are saved separately per target language",
+    "presetCreated": "Glossary created",
+    "presetRenamed": "Glossary renamed",
+    "presetDeleted": "Glossary deleted",
+    "subtitle": "Pin fixed translations for names / jargon, applied per target language",
+    "enable": "Enable glossary",
+    "presetSelect": "Select a glossary",
+    "presetEmptyHint": "No glossary yet — click + to create",
+    "presetNew": "New glossary",
+    "presetRename": "Rename",
+    "presetDelete": "Delete",
+    "presetDeleteConfirm": "Delete this glossary?",
+    "presetNamePlaceholder": "Glossary name (e.g. a show)",
+    "edit": "Edit terms",
+    "drawerTitle": "Edit glossary",
+    "fromPlaceholder": "Source term (e.g. Spike)",
+    "toPlaceholder": "Translation (e.g. Spike)",
+    "addTerm": "Add term",
+    "termCount": "{count, plural, one {# term} other {# terms}}",
+    "noTermsForLang": "No terms for this target language yet",
+    "importTsv": "Import TSV",
+    "exportTsv": "Export TSV",
+    "importDone": "Imported {count}",
+    "nameRequired": "Glossary name required"
+  },
   "common": {
     "fileProcessFailed": "Failed to process the file — check its encoding or try another",
     "fileReadFailed": "Failed to read the file",
@@ -126,6 +156,7 @@
     "apiStatusTesting": "Testing",
     "apiStatusConnected": "✓ Connected",
     "apiStatusFailed": "Connection Failed",
+    "apiStatusTimeout": "Connection timed out",
     "testConnection": "Test Connection",
     "moreProviderSettings": "More Provider Settings",
     "gtxFreeAPIUnavailable": "GTX Free service is temporarily unreachable — could be a network restriction. Please try again later, or switch to a different translation service.",
@@ -242,7 +273,7 @@
         },
         {
           "q": "Should I use machine translation or AI/LLM translation for subtitles? Which is best quality, which is cheapest?",
-          "a": "For cheap, use machine translation; for quality, use an AI/LLM. Machine translation (MT) is cheap or free but reads flat for dialogue: Google free tier costs nothing (long inputs get truncated); DeepL is top tier for European languages; Qwen-MT and Azure Translate are similar. AI/LLM bills per token but reads noticeably more natural — DeepSeek is the value pick for whole-season batches; Claude Sonnet or GPT-5 give the most natural dialogue; Gemini 3 Pro's 1M-token context handles book-length subtitles. Engine configs are shared with [JSON Translator](../json-translate)…"
+          "a": "For cheap, use machine translation; for quality, use an AI/LLM. Machine translation (MT) is cheap or free but reads flat for dialogue: Google free tier costs nothing (long inputs get truncated); DeepL is top tier for European languages; Qwen-MT and Azure Translate are similar. AI/LLM bills per token but reads noticeably more natural — DeepSeek is the value pick for whole-season batches; Claude Sonnet or GPT-5 give the most natural dialogue; Gemini 3 Pro's 1M-token context handles book-length subtitles. Engine configs are shared with [JSON Translator](../json-translate) and [Markdown Translator](../md-translator)."
         },
         {
           "q": "How do I create bilingual subtitles for YouTube or language learning?",

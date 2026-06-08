@@ -1,4 +1,34 @@
 {
+  "TranslationGlossary": {
+    "title": "Glossário",
+    "defaultName": "Meu glossário",
+    "colFrom": "Origem",
+    "colTo": "Tradução",
+    "langHint": "Os termos são salvos por idioma de destino",
+    "presetCreated": "Glossário criado",
+    "presetRenamed": "Glossário renomeado",
+    "presetDeleted": "Glossário excluído",
+    "subtitle": "Fixe traduções para nomes / jargões, aplicadas por idioma de destino",
+    "enable": "Ativar glossário",
+    "presetSelect": "Selecionar glossário",
+    "presetEmptyHint": "Nenhum glossário ainda — clique em + para criar",
+    "presetNew": "Novo glossário",
+    "presetRename": "Renomear",
+    "presetDelete": "Excluir",
+    "presetDeleteConfirm": "Excluir este glossário?",
+    "presetNamePlaceholder": "Nome do glossário (ex.: uma série)",
+    "edit": "Editar termos",
+    "drawerTitle": "Editar glossário",
+    "fromPlaceholder": "Termo de origem (ex.: Spike)",
+    "toPlaceholder": "Tradução (ex.: Spike)",
+    "addTerm": "Adicionar termo",
+    "termCount": "{count, plural, one {# termo} other {# termos}}",
+    "noTermsForLang": "Ainda não há termos para este idioma de destino",
+    "importTsv": "Importar TSV",
+    "exportTsv": "Exportar TSV",
+    "importDone": "{count} importados",
+    "nameRequired": "Nome do glossário obrigatório"
+  },
   "common": {
     "fileProcessFailed": "Falha ao processar o arquivo — verifique a codificação ou tente outro",
     "fileReadFailed": "Falha ao ler o arquivo",
@@ -113,6 +143,7 @@
     "apiStatusTesting": "Testando",
     "apiStatusConnected": "✓ Conectado",
     "apiStatusFailed": "Falha na conexão",
+    "apiStatusTimeout": "Tempo de conexão esgotado",
     "testConnection": "Testar conexão",
     "moreProviderSettings": "Mais configurações do Provider",
     "format": "Formatar",
@@ -242,7 +273,7 @@
         },
         {
           "q": "Legendas: usar tradução automática ou tradução IA/LLM? Qual a melhor qualidade, qual a mais barata?",
-          "a": "Para barato, tradução automática; para qualidade, IA/LLM. A tradução automática (MT) é barata ou grátis mas soa rasa em diálogos: Google versão gratuita custa zero (entradas longas são truncadas); DeepL é referência para idiomas europeus; Qwen-MT e Azure Translate são similares. Os grandes modelos IA (LLM) cobram por token mas soam notavelmente mais naturais — DeepSeek é o melhor custo-benefício para lotes de temporadas; Claude Sonnet ou GPT-5 dão os diálogos mais naturais; o contexto de 1M tokens do Gemini 3 Pro absorve legendas do tamanho de um livro. Configurações…"
+          "a": "Para barato, tradução automática; para qualidade, IA/LLM. A tradução automática (MT) é barata ou grátis mas soa rasa em diálogos: a versão gratuita do Google custa zero (textos longos são truncados); DeepL é referência para idiomas europeus; Qwen-MT e Azure Translate são similares. Os grandes modelos IA (LLM) cobram por token mas soam notavelmente mais naturais — DeepSeek é o melhor custo-benefício para lotes de temporadas; Claude Sonnet ou GPT-5 dão os diálogos mais naturais; o contexto de 1M tokens do Gemini 3 Pro absorve legendas do tamanho de um livro. As configurações do motor são compartilhadas com [Tradutor JSON](../json-translate) e [Tradutor Markdown](../md-translator)."
         },
         {
           "q": "Como criar legendas bilíngues para YouTube ou aprendizado de idiomas?",
@@ -262,7 +293,7 @@
         },
         {
           "q": "Posso converter legendas em roteiro de texto puro? Ou exportar só linhas específicas?",
-          "a": "O botão «Extrair Texto» extrai o texto dos diálogos sem timecodes nem números de cue (copiado automaticamente para a área de transferência) — útil para materiais de aprendizado de idiomas, scripts de podcast, dados de treinamento de IA ou entrega para dubladores. Para edição linha a linha mais refinada (filtrar por palavra-chave, substituir termos em lote, adicionar prefixo/sufixo, ordenar/deduplicar), combine com [Text Toolbox](../text-toolbox) — suas funções de regex e operações por linha cobrem a maioria das tarefas. Para dividir legendas muito longas por tempo ou caracteres…"
+          "a": "O botão «Extrair texto» extrai com um clique o texto dos diálogos sem timecodes nem numeração (copiado automaticamente para a área de transferência) — ideal para materiais de aprendizado de idiomas, reaproveitamento de roteiros de podcast, reprocessamento como insumo para IA ou entrega a dubladores. Para edição linha a linha mais refinada (filtrar por palavra-chave, substituir termos em lote, adicionar prefixos/sufixos, deduplicar e ordenar), após exportar é mais prático combinar com as funções de regex e operações por linha do [Manipulador de Texto](../text-toolbox); para dividir legendas muito longas por tempo ou número de caracteres, use o [Divisor de Texto](../text-splitter)."
         },
         {
           "q": "O que fazer se os timecodes não coincidirem ou aparecerem caracteres ilegíveis (□□□)?",

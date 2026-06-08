@@ -1,4 +1,34 @@
 {
+  "TranslationGlossary": {
+    "title": "Glossario",
+    "defaultName": "Il mio glossario",
+    "colFrom": "Origine",
+    "colTo": "Traduzione",
+    "langHint": "I termini sono salvati per lingua di destinazione",
+    "presetCreated": "Glossario creato",
+    "presetRenamed": "Glossario rinominato",
+    "presetDeleted": "Glossario eliminato",
+    "subtitle": "Imposta traduzioni fisse per nomi / termini tecnici, applicate per lingua di destinazione",
+    "enable": "Attiva glossario",
+    "presetSelect": "Seleziona un glossario",
+    "presetEmptyHint": "Nessun glossario — clicca + per crearne uno",
+    "presetNew": "Nuovo glossario",
+    "presetRename": "Rinomina",
+    "presetDelete": "Elimina",
+    "presetDeleteConfirm": "Eliminare questo glossario?",
+    "presetNamePlaceholder": "Nome del glossario (es. una serie TV)",
+    "edit": "Modifica termini",
+    "drawerTitle": "Modifica glossario",
+    "fromPlaceholder": "Termine sorgente (es. Spike)",
+    "toPlaceholder": "Traduzione (es. Spike)",
+    "addTerm": "Aggiungi termine",
+    "termCount": "{count, plural, one {# termine} other {# termini}}",
+    "noTermsForLang": "Nessun termine per questa lingua di destinazione",
+    "importTsv": "Importa TSV",
+    "exportTsv": "Esporta TSV",
+    "importDone": "{count} importati",
+    "nameRequired": "Nome del glossario obbligatorio"
+  },
   "common": {
     "fileProcessFailed": "Elaborazione del file non riuscita — controlla la codifica o prova un altro file",
     "fileReadFailed": "Lettura del file non riuscita",
@@ -113,6 +143,7 @@
     "apiStatusTesting": "Test in corso",
     "apiStatusConnected": "✓ Connesso",
     "apiStatusFailed": "Connessione fallita",
+    "apiStatusTimeout": "Connessione scaduta",
     "testConnection": "Testa connessione",
     "moreProviderSettings": "Altre impostazioni Provider",
     "format": "Formatta",
@@ -242,7 +273,7 @@
         },
         {
           "q": "Sottotitoli: usare traduzione automatica o traduzione IA/LLM? Qual è la migliore qualità, quale la più economica?",
-          "a": "Per economico, traduzione automatica; per qualità, IA/LLM. La traduzione automatica (MT) è economica o gratuita ma piatta nei dialoghi: Google free tier non costa nulla (gli input lunghi vengono troncati); DeepL è top per le lingue europee; Qwen-MT e Azure Translate sono simili. I grandi modelli IA (LLM) addebitano per token ma suonano notevolmente più naturali — DeepSeek è il miglior rapporto qualità-prezzo per batch di stagioni; Claude Sonnet o GPT-5 danno i dialoghi più naturali; il contesto da 1M token di Gemini 3 Pro gestisce sottotitoli di dimensioni di un libro.…"
+          "a": "Per economico, traduzione automatica; per qualità, IA/LLM. La traduzione automatica (MT) è economica o gratuita ma piatta nei dialoghi: la versione gratuita di Google non costa nulla (i testi lunghi vengono troncati); DeepL è top per le lingue europee; Qwen-MT e Azure Translate sono simili. I grandi modelli IA (LLM) addebitano per token ma suonano notevolmente più naturali — DeepSeek è il miglior rapporto qualità-prezzo per batch di stagioni; Claude Sonnet o GPT-5 danno i dialoghi più naturali; il contesto da 1M token di Gemini 3 Pro gestisce sottotitoli di dimensioni di un libro. La configurazione del motore è condivisa con [Traduttore JSON](../json-translate) e [Traduttore Markdown](../md-translator)."
         },
         {
           "q": "Come creare sottotitoli bilingue per YouTube o apprendimento linguistico?",
@@ -262,7 +293,7 @@
         },
         {
           "q": "Posso convertire i sottotitoli in script di solo testo? O esportare solo righe specifiche?",
-          "a": "Il pulsante «Estrai Testo» estrae il testo dei dialoghi senza timecode né numeri di cue (copiato automaticamente negli appunti) — utile per materiali di apprendimento delle lingue, script di podcast, dati di training IA o consegna ai doppiatori. Per un editing riga per riga più fine (filtrare per parola chiave, sostituzioni di termini in batch, aggiungere prefisso/suffisso, ordinare/deduplicare), combina con [Text Toolbox](../text-toolbox) — le sue funzioni di regex e operazioni sulle righe coprono la maggior parte dei casi. Per dividere sottotitoli molto lunghi…"
+          "a": "Il pulsante «Estrai testo» estrae con un clic il testo dei dialoghi senza timecode né numeri di sequenza (copiato automaticamente negli appunti) — ideale per materiali di apprendimento linguistico, reintegro di script di podcast, rielaborazione come input per l'IA o consegna ai doppiatori. Per un editing riga per riga più fine (filtrare per parola chiave, sostituire termini in batch, aggiungere prefissi/suffissi, deduplicare e ordinare), dopo l'esportazione è più comodo abbinare le funzioni di regex e di operazioni sulle righe di [Cassetta strumenti testo](../text-toolbox); per dividere sottotitoli molto lunghi per tempo o numero di caratteri, usa [Divisore testo](../text-splitter)."
         },
         {
           "q": "Cosa fare se i timecode non coincidono o appaiono caratteri illeggibili (□□□)?",

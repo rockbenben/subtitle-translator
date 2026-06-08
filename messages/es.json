@@ -1,4 +1,34 @@
 {
+  "TranslationGlossary": {
+    "title": "Glosario",
+    "defaultName": "Mi glosario",
+    "colFrom": "Origen",
+    "colTo": "Traducción",
+    "langHint": "Los términos se guardan por idioma de destino",
+    "presetCreated": "Glosario creado",
+    "presetRenamed": "Glosario renombrado",
+    "presetDeleted": "Glosario eliminado",
+    "subtitle": "Fija traducciones para nombres / términos técnicos, aplicadas por idioma destino",
+    "enable": "Activar glosario",
+    "presetSelect": "Seleccionar glosario",
+    "presetEmptyHint": "Sin glosarios aún — pulsa + para crear uno",
+    "presetNew": "Nuevo glosario",
+    "presetRename": "Renombrar",
+    "presetDelete": "Eliminar",
+    "presetDeleteConfirm": "¿Eliminar este glosario?",
+    "presetNamePlaceholder": "Nombre del glosario (p. ej. una serie)",
+    "edit": "Editar términos",
+    "drawerTitle": "Editar glosario",
+    "fromPlaceholder": "Término original (p. ej. Spike)",
+    "toPlaceholder": "Traducción (p. ej. Spike)",
+    "addTerm": "Añadir término",
+    "termCount": "{count, plural, one {# término} other {# términos}}",
+    "noTermsForLang": "Aún no hay términos para este idioma destino",
+    "importTsv": "Importar TSV",
+    "exportTsv": "Exportar TSV",
+    "importDone": "Importados {count}",
+    "nameRequired": "El nombre del glosario es obligatorio"
+  },
   "common": {
     "fileProcessFailed": "No se pudo procesar el archivo: comprueba su codificación o prueba con otro",
     "fileReadFailed": "No se pudo leer el archivo",
@@ -126,6 +156,7 @@
     "apiStatusTesting": "Probando",
     "apiStatusConnected": "✓ Conectado",
     "apiStatusFailed": "Fallo de conexión",
+    "apiStatusTimeout": "Tiempo de conexión agotado",
     "testConnection": "Probar conexión",
     "moreProviderSettings": "Más ajustes del Provider",
     "gtxFreeAPIUnavailable": "El servicio GTX Free está temporalmente inaccesible — podría ser una restricción de red. Inténtalo de nuevo más tarde o cambia a otro servicio de traducción.",
@@ -242,7 +273,7 @@
         },
         {
           "q": "Subtítulos: ¿usar traducción automática o traducción IA/LLM? ¿Cuál es la mejor calidad, cuál la más barata?",
-          "a": "Para lo barato, traducción automática; para calidad, IA/LLM. La traducción automática (MT) es barata o gratis pero plana en diálogos: Google free tier no cuesta nada (las entradas largas se truncan); DeepL es top para lenguas europeas; Qwen-MT y Azure Translate son similares. Los grandes modelos IA (LLM) facturan por token pero suenan notablemente más naturales — DeepSeek es la mejor relación calidad-precio para lotes de temporadas; Claude Sonnet o GPT-5 dan los diálogos más naturales; el contexto de 1M tokens de Gemini 3 Pro maneja subtítulos del tamaño de un libro.…"
+          "a": "Para lo barato, traducción automática; para calidad, IA/LLM. La traducción automática (MT) es barata o gratis pero plana en diálogos: la versión gratuita de Google no cuesta nada (los textos largos se truncan); DeepL es top para lenguas europeas; Qwen-MT y Azure Translate son similares. Los grandes modelos IA (LLM) facturan por token pero suenan notablemente más naturales — DeepSeek es la mejor relación calidad-precio para lotes de temporadas; Claude Sonnet o GPT-5 dan los diálogos más naturales; el contexto de 1M tokens de Gemini 3 Pro maneja subtítulos del tamaño de un libro. La configuración del motor se comparte con [Traductor JSON](../json-translate) y [Traductor Markdown](../md-translator)."
         },
         {
           "q": "¿Cómo crear subtítulos bilingües para YouTube o aprendizaje de idiomas?",

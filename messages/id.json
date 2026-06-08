@@ -1,4 +1,34 @@
 {
+  "TranslationGlossary": {
+    "title": "Glosarium",
+    "defaultName": "Glosarium saya",
+    "colFrom": "Sumber",
+    "colTo": "Terjemahan",
+    "langHint": "Istilah disimpan terpisah per bahasa target",
+    "presetCreated": "Glosarium dibuat",
+    "presetRenamed": "Nama glosarium diubah",
+    "presetDeleted": "Glosarium dihapus",
+    "subtitle": "Tetapkan terjemahan tetap untuk nama / istilah, diterapkan per bahasa target",
+    "enable": "Aktifkan glosarium",
+    "presetSelect": "Pilih glosarium",
+    "presetEmptyHint": "Belum ada glosarium — klik + untuk membuat",
+    "presetNew": "Glosarium baru",
+    "presetRename": "Ganti nama",
+    "presetDelete": "Hapus",
+    "presetDeleteConfirm": "Hapus glosarium ini?",
+    "presetNamePlaceholder": "Nama glosarium (mis. nama serial)",
+    "edit": "Edit istilah",
+    "drawerTitle": "Edit glosarium",
+    "fromPlaceholder": "Istilah sumber (mis. Spike)",
+    "toPlaceholder": "Terjemahan (mis. Spike)",
+    "addTerm": "Tambah istilah",
+    "termCount": "{count, plural, other {{count} istilah}}",
+    "noTermsForLang": "Belum ada istilah untuk bahasa target ini",
+    "importTsv": "Impor TSV",
+    "exportTsv": "Ekspor TSV",
+    "importDone": "{count} istilah diimpor",
+    "nameRequired": "Nama glosarium wajib diisi"
+  },
   "common": {
     "fileProcessFailed": "Gagal memproses file — periksa encoding-nya atau coba file lain",
     "fileReadFailed": "Gagal membaca file",
@@ -113,6 +143,7 @@
     "apiStatusTesting": "Menguji",
     "apiStatusConnected": "✓ Terhubung",
     "apiStatusFailed": "Koneksi gagal",
+    "apiStatusTimeout": "Waktu koneksi habis",
     "testConnection": "Uji koneksi",
     "moreProviderSettings": "Pengaturan Provider lain",
     "format": "Format",
@@ -242,7 +273,7 @@
         },
         {
           "q": "Subtitle: pakai mesin terjemahan atau terjemahan AI/LLM? Mana kualitas terbaik, mana paling murah?",
-          "a": "Untuk murah, mesin terjemahan; untuk kualitas, AI/LLM. Mesin terjemahan (MT) murah atau gratis tapi datar untuk dialog: Google free tier tidak berbiaya (input panjang akan terpotong); DeepL terbaik untuk bahasa Eropa; Qwen-MT dan Azure Translate serupa. Model AI besar (LLM) ditagih per token tapi terdengar jauh lebih natural — DeepSeek adalah nilai terbaik untuk batch satu musim penuh; Claude Sonnet atau GPT-5 memberikan dialog paling natural; konteks 1M token Gemini 3 Pro menangani subtitle sebesar buku. Konfigurasi mesin dibagi dengan [Penerjemah JSON](../json-translate)…"
+          "a": "Untuk biaya rendah pilih mesin terjemahan, untuk kualitas tinggi pilih AI/LLM. Mesin terjemahan (MT) murah atau gratis tetapi terasa datar untuk dialog: Google versi gratis tanpa biaya (teks panjang akan terpotong), DeepL terbaik untuk bahasa Eropa, Qwen-MT dan Azure Translate termasuk kategori yang sama. Model AI besar (LLM) ditagih per token tetapi hasil terjemahannya jauh lebih natural — DeepSeek pilihan utama untuk nilai terbaik (ideal untuk batch satu musim penuh); Claude Sonnet atau GPT-5 untuk kualitas dialog paling natural; gunakan konteks 1M token Gemini 3 Pro untuk subtitle yang sangat panjang. Konfigurasi mesin dibagikan dengan [Penerjemah JSON](../json-translate) dan [Penerjemah Markdown](../md-translator)."
         },
         {
           "q": "Bagaimana membuat subtitle dwibahasa untuk YouTube atau pembelajaran bahasa?",
@@ -510,7 +541,7 @@
   },
   "feedback": {
     "feedback1": "Umpan Balik & Saran",
-    "feedback2": "Jika Anda menemukan masalah atau memiliki saran, beri tahu saya!Umpan balik Anda memengaruhi pengembangan masa depan dan membantu kami membuat alat yang l…",
+    "feedback2": "Jika Anda menemukan masalah saat menggunakan alat ini, atau punya saran dan ide apa pun, jangan ragu untuk memberi tahu saya! Umpan balik Anda akan langsung memengaruhi pengembangan dan penyempurnaan fitur di masa depan, serta membantu kami bersama-sama membangun alat yang lebih sesuai dengan kebutuhan semua orang.",
     "feedback3": "Jelaskan kasus penggunaan, masalah, atau ide Anda. Saya membaca setiap pesan dan akan merespons/mengoptimalkan sesegera mungkin.",
     "reaction0": "Suka",
     "reaction1": "Dukung",
