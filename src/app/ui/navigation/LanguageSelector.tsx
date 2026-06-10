@@ -85,6 +85,7 @@ export function LanguageSelector() {
                   block
                   size={isMobile ? "middle" : "small"}
                   type={selected ? "primary" : "text"}
+                  aria-current={selected ? "true" : undefined}
                   style={{ justifyContent: "space-between", display: "flex", width: "100%", textAlign: "left" }}
                   onClick={() => {
                     handleLanguageChange(lang.key);
@@ -94,7 +95,7 @@ export function LanguageSelector() {
                     {lang.label}
                     <span style={{ opacity: 0.7, marginLeft: 6 }}>({lang.key})</span>
                   </span>
-                  {selected && <CheckOutlined />}
+                  {selected && <CheckOutlined aria-hidden />}
                 </Button>
               </Col>
             );

@@ -45,6 +45,7 @@ const PromptPresetPicker = () => {
         <Select
           style={{ flex: 1 }}
           placeholder={placeholder}
+          aria-label={t("presetSelect")}
           value={activePromptPresetId || undefined}
           onChange={(value) => loadPromptPreset(value)}
           allowClear

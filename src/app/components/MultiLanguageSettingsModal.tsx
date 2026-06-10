@@ -135,6 +135,7 @@ const MultiLanguageSettingsModal = ({ open, onClose, targetLanguages, setTargetL
         rows={3}
         style={{ fontFamily: "monospace" }}
         aria-label={t("multiLangSettingsTitle")}
+        spellCheck={false}
       />
     </Modal>
   );

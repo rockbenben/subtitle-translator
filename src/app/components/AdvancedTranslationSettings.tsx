@@ -91,10 +91,10 @@ const AdvancedTranslationSettings: React.FC<AdvancedTranslationSettingsProps> = 
       <Section variant="neutral" noGap>
         <Form layout="vertical">
           <Form.Item label={t("removeCharsAfterTranslation")} tooltip={t("removeCharsAfterTranslationTooltip")} className="!mb-3">
-            <Input placeholder={`${t("example")}: ♪ <i> </i>`} value={removeChars} onChange={(e) => setRemoveChars(e.target.value)} allowClear aria-label={t("removeCharsAfterTranslation")} />
+            <Input placeholder={`${t("example")}: ♪ <i> </i>`} value={removeChars} onChange={(e) => setRemoveChars(e.target.value)} allowClear aria-label={t("removeCharsAfterTranslation")} spellCheck={false} />
           </Form.Item>
           <Form.Item label={t("customExportFilename")} tooltip={t("customExportFilenameTooltip")} className="!mb-0">
-            <Input value={customFileName} placeholder="{name}_{lang}.{ext}" onChange={(e) => setCustomFileName(e.target.value)} allowClear aria-label={t("customExportFilename")} />
+            <Input value={customFileName} placeholder="{name}_{lang}.{ext}" onChange={(e) => setCustomFileName(e.target.value)} allowClear aria-label={t("customExportFilename")} spellCheck={false} />
           </Form.Item>
         </Form>
       </Section>

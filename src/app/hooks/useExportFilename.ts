@@ -64,17 +64,17 @@ export const useExportFilename = (toolKey: string = "default"): ExportFilenameCo
         .replace(/\{date\}/gi, () => dateStr)
         .replace(/\{time\}/gi, () => timeStr);
 
-      // Ensure the result has an extension — 检查【最后一段】而不是任意位置的
-      // 点:字幕发布组习惯的 "My.Show.S01E01" 基名会让 includes(".") 误判。
-      // 已以目标扩展名结尾则不再追加(".markdown" 等长扩展曾被 5 字符上限
-      // 误判成"非扩展名"而重复追加成 .markdown.markdown)。
-      // 长扩展名(markdown)走 endsWithTargetExt;泛化的"末段像扩展名"收窄到
-      // ≤4 字符,否则点分基名段(My.Show.S01E01 的 "S01E01" 6 字符)被误判成
-      // 扩展名,该补的扩展名反而不补,下载文件无扩展名。
-      const lastSegment = result.slice(result.lastIndexOf(".") + 1);
+      // Ensure the result has an extension. 是否"已带扩展名"必须基于【用户的
+      // pattern】判断,而不是展开后的结果末段:{name} 展开出的点分基名尾段
+      // ("My.Show" 的 "Show"、"s01.e05" 的 "e05")会被结果级启发式误判成扩展名,
+      // 于是该补的扩展名不补 —— 下载出无扩展名(字幕场景尤其常见,download 组
+      // 文件名几乎都点分)。pattern 已以 {ext} 占位符或字面 ".xxx"(1-4 位) 结尾
+      // 才算用户已指定扩展名;否则一律补 ext。endsWithTargetExt 仍保留:结果恰好
+      // 已以目标扩展名结尾(基名自带 / 重复 .markdown)时不重复追加。
+      const trimmedPattern = customFileName.trim();
+      const patternSpecifiesExt = /\{ext\}$/i.test(trimmedPattern) || /\.[a-z0-9]{1,4}$/i.test(trimmedPattern);
       const endsWithTargetExt = result.toLowerCase().endsWith(`.${ext.toLowerCase()}`);
-      const looksLikeExt = result.includes(".") && /^[a-z0-9]{1,4}$/i.test(lastSegment);
-      if (!endsWithTargetExt && !looksLikeExt) {
+      if (!endsWithTargetExt && !patternSpecifiesExt) {
         result = `${result}.${ext}`;
       }
 

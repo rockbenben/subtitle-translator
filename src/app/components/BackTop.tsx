@@ -8,6 +8,8 @@ import { VerticalAlignTopOutlined } from "@ant-design/icons";
  * viewport. AntD's FloatButton.BackTop handles scroll detection and
  * smooth-scroll on click.
  */
-const BackTop = () => <FloatButton.BackTop icon={<VerticalAlignTopOutlined />} visibilityHeight={400} />;
+// aria-label is forwarded to the underlying <button>; without it antd's icon
+// falls back to the raw glyph name ("vertical-align-top") for screen readers.
+const BackTop = () => <FloatButton.BackTop icon={<VerticalAlignTopOutlined />} visibilityHeight={400} aria-label="Back to top" />;
 
 export default BackTop;

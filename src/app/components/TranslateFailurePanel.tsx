@@ -87,16 +87,16 @@ export default function TranslateFailurePanel({
 
   if (!hasFailures) return null;
 
+  // copyToClipboard 自带「已复制」提示，不再叠加 message.success（原来会把按钮文案
+  // 当成功提示再弹一次，一次点击出现两个 toast）。
   const copyAll = () => {
     copyToClipboard(lines.join("\n"));
-    message.success(t("copyAllFailed"));
   };
 
   const copyAllLangs = () => {
     // Space-separated matches what users will paste back into the
     // Quick Entry via Language Codes field (which accepts comma OR space).
     copyToClipboard(failedLangs.join(" "));
-    message.success(t("copyAllFailedLanguages"));
   };
 
   return (

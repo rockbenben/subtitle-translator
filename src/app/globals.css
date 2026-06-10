@@ -108,6 +108,31 @@ body::after {
   border-radius: 2px;
 }
 
+/* Skip-to-content link — visually hidden until keyboard-focused, then pinned
+   to the top-left so keyboard/SR users can jump past the nav to <main>. */
+.skip-link {
+  position: absolute;
+  left: 8px;
+  top: -48px;
+  z-index: 1000;
+  padding: 8px 16px;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+  border-radius: 0 0 4px 4px;
+  text-decoration: none;
+  transition: top 0.18s ease;
+}
+.skip-link:focus,
+.skip-link:focus-visible {
+  top: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .skip-link {
+    transition: none;
+  }
+}
+
 /* PageCard hover — subtle lift + bottom rule that draws in from the left.
    Replaces antd's default hover shadow with something more editorial. */
 .ant-card.ant-card-hoverable {

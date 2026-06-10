@@ -177,7 +177,17 @@ const LanguageSelector = ({ sourceLanguage, targetLanguage, targetLanguages, mul
               <Flex
                 align="center"
                 gap={4}
+                role="button"
+                tabIndex={0}
+                aria-expanded={expanded}
+                aria-label={t(g.labelKey)}
                 onClick={() => toggleGroup(g.key)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    toggleGroup(g.key);
+                  }
+                }}
                 style={{
                   cursor: searchValue.trim() ? "default" : "pointer",
                   padding: "4px 4px",
