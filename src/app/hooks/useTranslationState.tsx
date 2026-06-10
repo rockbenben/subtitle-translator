@@ -27,6 +27,8 @@ import {
   type TranslateTextParams,
   type TranslationConfig,
 } from "@/app/lib/translation";
+import { buildGlossaryPromptBlock, buildStrictGlossaryPromptBlock, filterTermsMatchingText, findGlossaryViolations, type GlossaryTerm } from "@/app/lib/translation/glossary";
+import SparkMD5 from "spark-md5";
 import {
   getRetryConfig,
   delay,
@@ -65,6 +67,10 @@ type TranslationRuntimeConfig = TranslationConfig & {
   sourceLanguage: string;
   useCache?: boolean;
   fullText?: string; // Complete text for ${fullText} variable
+  // Internal: set ONLY by enforceGlossaryOnLine's one-shot retry. Replaces the
+  // standard per-request glossary block with the STRICT variant listing just
+  // the violated terms. Never forwarded to services (not in optionalFields).
+  strictGlossaryTerms?: GlossaryTerm[];
 };
 
 const useTranslationState = () => {
@@ -142,9 +148,9 @@ const useTranslationState = () => {
     deleteGlossaryPreset,
     renameGlossaryPreset,
     updateGlossaryPreset,
-    buildTranslationSystemPrompt,
+    getGlossaryTerms,
     applyGlossary,
-  } = useGlossaryPresets(effectiveSystemPrompt);
+  } = useGlossaryPresets();
 
   // Extracted concerns
   const { isTranslating, setIsTranslating, progressPercent, setProgressPercent, progressInfo, abortControllerRef, makeUpdateProgress, resetProgress } = useTranslationProgress();
@@ -487,6 +493,28 @@ const useTranslationState = () => {
     if (effort) extras.reasoningEffort = effort;
     if (fullText !== undefined) extras.fullText = fullText;
 
+    // Per-request glossary composition. The wire prompt carries ONLY the terms
+    // this text actually contains — a 500-term glossary must not ride along on
+    // (and dilute) every request. Cache stays correct without a per-request
+    // suffix: the block is a deterministic function of {text, full term set},
+    // and the cache key already covers both (text via generateCacheKey, full
+    // set via the caller's cacheSuffix).
+    if (LLM_MODELS.includes(config.translationMethod)) {
+      // Appending to an empty base would otherwise drop the default prompt:
+      // services treat a non-empty systemPrompt as "user configured" verbatim.
+      const base = config.systemPrompt?.trim() ? config.systemPrompt : DEFAULT_SYSTEM_PROMPT;
+      if (config.strictGlossaryTerms?.length) {
+        extras.systemPrompt = base + buildStrictGlossaryPromptBlock(config.strictGlossaryTerms);
+      } else {
+        const matched = filterTermsMatchingText(getGlossaryTerms(config.targetLanguage), text);
+        if (matched.length > 0) extras.systemPrompt = base + buildGlossaryPromptBlock(matched);
+      }
+    } else if (config.translationMethod === "qwenMt") {
+      // Qwen-MT: native terminology intervention instead of a prompt block.
+      const matched = filterTermsMatchingText(getGlossaryTerms(config.targetLanguage), text);
+      if (matched.length > 0) extras.glossaryTerms = matched.map((t) => ({ source: t.source.trim(), target: t.target.trim() }));
+    }
+
     const translateParams: TranslateTextParams = {
       text,
       cacheSuffix,
@@ -536,6 +564,47 @@ const useTranslationState = () => {
       console.error(`All ${retryCount} translation attempts failed for: "${textPreview}".`, error);
       throw error; // No fallback to original text - fail explicitly
     }
+  };
+
+  // 错译校验 + 一次定向重试(仅 LLM)。Leak-through 只能修「漏翻」(术语原文
+  // 残留);当源行含术语、而 leak-through 后的译文里仍没有指定译法时,模型把
+  // 术语译成了别的词 —— 用只列违规术语的 STRICT 块单行重译一次,二者取违规
+  // 更少的(平手保留首译:它来自带上下文的批次请求)。MT 直接返回 leak-through
+  // 结果(同请求重发只会得到同样的输出;qwenMt 的防错译靠原生 terms)。
+  const enforceGlossaryOnLine = async (
+    sourceLine: string,
+    rawTranslated: string,
+    cacheSuffix: string,
+    config: TranslationRuntimeConfig,
+    fullText?: string,
+    runController?: AbortController,
+  ): Promise<string> => {
+    const first = applyGlossary(rawTranslated ?? "", config.targetLanguage);
+    if (!LLM_MODELS.includes(config.translationMethod)) return first;
+    const terms = getGlossaryTerms(config.targetLanguage);
+    if (terms.length === 0) return first;
+    const violations = findGlossaryViolations(sourceLine, first, terms);
+    if (violations.length === 0) return first;
+    try {
+      // 重试键按违规集哈希分流:不能与首次请求同键(否则缓存只会重放刚才的
+      // 违规响应),不同违规集(首译输出非确定)也不互相串。
+      const retrySuffix = `${cacheSuffix}_gv${SparkMD5.hash(JSON.stringify(violations.map((v) => [v.source, v.target])))}`;
+      const retried = await translateSingle(sourceLine, retrySuffix, { ...config, strictGlossaryTerms: violations }, fullText, runController);
+      const second = applyGlossary(retried ?? "", config.targetLanguage);
+      if (findGlossaryViolations(sourceLine, second, terms).length < violations.length) return second;
+      return first;
+    } catch {
+      // 重试失败(网络/abort/auth 级联)绝不拖垮已成功的首译 —— 保留首译,
+      // auth 中止由 translateSingle 内部已传播给本 run 的 controller。
+      return first;
+    }
+  };
+
+  // translateSingle + leak-through + 错译重试的单行复合入口 —— 自带翻译循环的
+  // 工具(JSONTranslator)与 hook 内逐行路径共用,避免各调用点漏掉 enforcement。
+  const translateSingleWithGlossary = async (text: string, cacheSuffix: string, config: TranslationRuntimeConfig, fullText?: string, runController?: AbortController): Promise<string> => {
+    const raw = await translateSingle(text, cacheSuffix, config, fullText, runController);
+    return enforceGlossaryOnLine(text, raw ?? "", cacheSuffix, config, fullText, runController);
   };
 
   // Context-aware translation with auto-adjustment of context window
@@ -627,11 +696,12 @@ const useTranslationState = () => {
           // decided slot (notably pre-filled blank-source lines, which a model
           // may hallucinate content for).
           if (batchStart + j < contentLines.length && translatedBatch[j] !== "" && translatedLines[batchStart + j] === undefined) {
-            // Apply the glossary leak-through to SUCCESSFUL translations only.
-            // Failed slots get soft-filled with the raw source later (see "Final
+            // Glossary enforcement on SUCCESSFUL translations only: leak-through
+            // + mistranslation check with one strict single-line retry. Failed
+            // slots get soft-filled with the raw source later (see "Final
             // soft-fail"), so a fully-failed line stays the untouched original
             // instead of a half-localized mix like "斯派克, hi".
-            translatedLines[batchStart + j] = applyGlossary(translatedBatch[j], runtimeConfig.targetLanguage);
+            translatedLines[batchStart + j] = await enforceGlossaryOnLine(batchSources[j], translatedBatch[j], cacheSuffix, runtimeConfig, fullText, run);
           }
         }
 
@@ -901,20 +971,21 @@ const useTranslationState = () => {
 
       const updateProgress = makeUpdateProgress(fileIndex, totalFiles);
 
-      const glossarySystemPrompt = buildTranslationSystemPrompt(currentTargetLang);
       // Leak-through net for the chunk path (whole-text MT — no per-line soft-fill,
       // so every line is a real translation). The context + line-by-line paths
       // apply the glossary per successful line instead, so a failed-then-soft-filled
       // line keeps the raw source. No-op when no term matches this target language.
       const applyGlossaryToLines = (lines: string[]) => lines.map((line) => applyGlossary(line ?? "", currentTargetLang));
 
+      // systemPrompt stays the BASE prompt — translateSingle appends the
+      // per-request glossary block (filtered to the terms each text contains).
       const runtimeConfig: TranslationRuntimeConfig = {
         translationMethod: translationMethodArg,
         targetLanguage: currentTargetLang,
         sourceLanguage,
         useCache,
         ...config,
-        systemPrompt: glossarySystemPrompt,
+        systemPrompt: effectiveSystemPrompt,
         userPrompt: effectiveUserPrompt,
       };
 
@@ -926,8 +997,12 @@ const useTranslationState = () => {
         targetLanguage: currentTargetLang,
         translationMethod: translationMethodArg,
         config,
-        systemPrompt: glossarySystemPrompt,
+        systemPrompt: effectiveSystemPrompt,
         userPrompt: effectiveUserPrompt,
+        // Full term set for the target language — the per-request filtered
+        // block is a pure function of {text, this set}, so hashing the set
+        // keeps the key deterministic while the wire prompt varies per line.
+        glossaryTerms: getGlossaryTerms(currentTargetLang),
       });
 
       // Context-aware translation with LLM. Glossary is applied per-line inside
@@ -955,7 +1030,7 @@ const useTranslationState = () => {
             if (runController.signal.aborted) return;
             try {
               // Glossary on success only; the catch below soft-fills the raw source.
-              translatedLines[index] = applyGlossary(await translateSingle(line, cacheSuffix, runtimeConfig, fullText, runController), currentTargetLang);
+              translatedLines[index] = await translateSingleWithGlossary(line, cacheSuffix, runtimeConfig, fullText, runController);
             } catch (error) {
               // Auth error already tripped THIS run's controller inside translateSingle.
               // After-abort throws ("Translation aborted") come from peers' pre-attempt
@@ -1009,7 +1084,11 @@ const useTranslationState = () => {
           // 内嵌换行扁平化为空格:ASS 的 \N 在 prepareAssForTranslation 中被转成
           // 真实 \n,而 chunk 路径按行 join/split 对齐 —— 一行变多行会让其后
           // 所有译文逐行错位。MT 路径丢失换行排版是可接受降级,错位不是。
-          nonBlankLines.push(contentLines[i].replace(/\r?\n/g, " "));
+          const flat = contentLines[i].replace(/\r?\n/g, " ");
+          // deeplx 用 "<>" 作分隔符 —— 源文本里若含字面 "<>"(SQL/Pascal 不等号、
+          // Java/C# 菱形 `List<>`),会被当成额外分隔符,split 后槽位多出一格,
+          // 其后所有行错位、末行丢失。拆成 "< >" 中和掉(同换行扁平化的降级取舍)。
+          nonBlankLines.push(delimiter === "<>" ? flat.replace(/<>/g, "< >") : flat);
         }
       }
       if (nonBlankLines.length === 0) return [...contentLines];
@@ -1184,8 +1263,8 @@ const useTranslationState = () => {
     deleteGlossaryPreset,
     renameGlossaryPreset,
     updateGlossaryPreset,
-    buildTranslationSystemPrompt,
-    applyGlossary,
+    getGlossaryTerms,
+    translateSingleWithGlossary,
   };
 };
 

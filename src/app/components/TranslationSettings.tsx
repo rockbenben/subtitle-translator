@@ -1,8 +1,8 @@
 "use client";
 
-import { Fragment, useMemo, useState } from "react";
-import { Form, Input, InputNumber, AutoComplete, Card, Typography, Button, Space, Flex, Tooltip, App, Switch, Select, Modal, Popconfirm, Tag, Alert, theme } from "antd";
-import { SaveOutlined, PlusOutlined, DeleteOutlined } from "@ant-design/icons";
+import { Fragment, useMemo, useState, type KeyboardEvent } from "react";
+import { Form, Input, InputNumber, AutoComplete, Card, Typography, Button, Space, Flex, Tooltip, App, Switch, Select, Modal, Popconfirm, Tag, theme } from "antd";
+import { SaveOutlined, PlusOutlined, DeleteOutlined, InfoCircleOutlined } from "@ant-design/icons";
 import {
   TRANSLATION_PROVIDERS,
   LLM_MODELS,
@@ -23,6 +23,7 @@ import {
   migrateConfig,
   categorizedOptions,
   completeOpenAICompatUrl,
+  supportsGlossary,
   type ReasoningEffort,
   type TranslateTextParams,
 } from "@/app/lib/translation";
@@ -30,6 +31,7 @@ import { useTranslationContext } from "@/app/components/TranslationContext";
 import { useTranslations } from "next-intl";
 import Section from "@/app/components/styled/Section";
 import GlobalPromptsPanel from "@/app/components/GlobalPromptsPanel";
+import GlossaryManager from "@/app/components/glossaryManager/GlossaryManager";
 import { useIsMobile } from "@/app/hooks/useIsMobile";
 
 const { Text, Link } = Typography;
@@ -299,8 +301,15 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
       styles={isMobile ? { body: { padding: 12 } } : undefined}>
       {isMobile && <div style={{ marginBottom: 12 }}>{actionButtons}</div>}
       {/* Custom (OpenAI-compatible) discoverability hint — many users miss that
-          this provider accepts ANY OpenAI-compatible endpoint, not just Ollama */}
-      {service === "llm" && <Alert type="info" showIcon title={t("customApiHelp")} style={{ marginBottom: 16 }} />}
+          this provider accepts ANY OpenAI-compatible endpoint, not just Ollama.
+          Rendered as muted helper text, not an Alert: colorInfo is the vermilion
+          brand accent, so an info Alert reads like a warning for a casual hint. */}
+      {service === "llm" && (
+        <Text type="secondary" style={{ display: "block", marginBottom: 16, fontSize: 13 }}>
+          <InfoCircleOutlined style={{ marginInlineEnd: 6 }} />
+          {t("customApiHelp")}
+        </Text>
+      )}
       {/* llm provider-only preset picker — sits above the grouped sections */}
       {service === "llm" && (
         <div style={{ marginBottom: 0 }}>
@@ -371,6 +380,9 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
                         return (
                           <Tag
                             key={ep.url}
+                            role="button"
+                            tabIndex={0}
+                            aria-pressed={isActive}
                             style={{
                               cursor: "pointer",
                               margin: 0,
@@ -382,7 +394,13 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
                                   }
                                 : {}),
                             }}
-                            onClick={() => handleConfigChange(service, "url", ep.url)}>
+                            onClick={() => handleConfigChange(service, "url", ep.url)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" || e.key === " ") {
+                                e.preventDefault();
+                                handleConfigChange(service, "url", ep.url);
+                              }
+                            }}>
                             {ep.label}
                           </Tag>
                         );
@@ -408,6 +426,7 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
                       : undefined
                   }
                   aria-label={`API ${t("url")}`}
+                  spellCheck={false}
                 />
               </Form.Item>
             )}
@@ -440,6 +459,7 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
                   value={config?.region as string | undefined}
                   onChange={(e) => handleConfigChange(service, "region", e.target.value)}
                   aria-label="Azure Region"
+                  spellCheck={false}
                 />
               </Form.Item>
             )}
@@ -453,12 +473,13 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
                   value={config?.folderId as string | undefined}
                   onChange={(e) => handleConfigChange(service, "folderId", e.target.value)}
                   aria-label="Yandex Folder ID"
+                  spellCheck={false}
                 />
               </Form.Item>
             )}
             {config?.apiVersion !== undefined && (
               <Form.Item label={`LLM API Version`} extra={`${tCommon("example")}: 2025-11-18`} style={{ marginBottom: config?.useRelay !== undefined ? 24 : 0 }}>
-                <Input value={config.apiVersion as string | undefined} onChange={(e) => handleConfigChange(service, "apiVersion", e.target.value)} aria-label="LLM API Version" />
+                <Input value={config.apiVersion as string | undefined} onChange={(e) => handleConfigChange(service, "apiVersion", e.target.value)} aria-label="LLM API Version" spellCheck={false} />
               </Form.Item>
             )}
             {config?.useRelay !== undefined && (
@@ -763,7 +784,24 @@ const TranslationSettings = () => {
           <Space wrap size={[4, 4]}>
             <Text type="secondary">{t("configuredServices")}:</Text>
             {activeServices.map((s) => (
-              <CheckableTag key={s.value} checked={s.value === translationMethod} onChange={() => setTranslationMethod(s.value)}>
+              <CheckableTag
+                key={s.value}
+                checked={s.value === translationMethod}
+                onChange={() => setTranslationMethod(s.value)}
+                // antd's CheckableTagProps omits DOM passthrough props, but the
+                // component spreads {...restProps} onto its <span> — so these
+                // forward at runtime; the cast just bridges the narrow types.
+                {...({
+                  role: "button",
+                  tabIndex: 0,
+                  "aria-pressed": s.value === translationMethod,
+                  onKeyDown: (e: KeyboardEvent<HTMLSpanElement>) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      setTranslationMethod(s.value);
+                    }
+                  },
+                } as Record<string, unknown>)}>
                 {s.label}
               </CheckableTag>
             ))}
@@ -772,6 +810,12 @@ const TranslationSettings = () => {
       </Space>
 
       <ServiceSettingsForm key={translationMethod} service={translationMethod} />
+
+      {/* 术语表独立成卡(此前藏在 LLM-only prompts 面板底部),按服务能力
+          展示:LLM 全系走 prompt 注入、qwenMt 走原生 terms;无模型内术语
+          通道的纯 MT(GLOSSARY_UNSUPPORTED denylist)不出现 —— 入口出现
+          却只有事后漏翻兜底,等于虚假承诺。 */}
+      {supportsGlossary(translationMethod) && <GlossaryManager />}
 
       {isLLMModel && <GlobalPromptsPanel />}
     </div>

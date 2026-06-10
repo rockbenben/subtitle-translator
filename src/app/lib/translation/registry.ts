@@ -136,12 +136,12 @@ export const PROVIDERS = {
     // (notably LM Studio's OpenAI-compat layer).
     label: "TranslateGemma",
     docs: "https://huggingface.co/collections/google/translategemma",
-    // No apiKey field — TranslateGemma is a model (weights), not a hosted
-    // service. Users self-host on LM Studio / llama.cpp / Ollama / vLLM,
-    // none of which require an API key by default. (Users behind an auth
-    // proxy should use Custom (OpenAI-compatible) instead — that path
-    // exposes apiKey + URL together. Importing apiKey via JSON here won't
-    // work because migrateConfig strips fields not in defaults.)
+    // Optional apiKey — TranslateGemma is a model (weights) self-hosted on
+    // LM Studio / llama.cpp / Ollama / vLLM, usually keyless. But gated setups
+    // DO need a key: LM Studio's "require API key" toggle, vLLM `--api-key`, or
+    // an auth reverse proxy. URL stays the primary credential (URL_IS_PRIMARY_CRED),
+    // apiKey is offered as optional — the service attaches `Authorization: Bearer`
+    // only when it's set, so leaving it blank keeps the keyless local flow intact.
     // No temperature field — Google's model card uses greedy decoding
     // (`do_sample=False`); the model wasn't trained for sampling and
     // non-zero values degrade output. Service hardcodes temperature=0
@@ -152,7 +152,7 @@ export const PROVIDERS = {
     // llama.cpp :8080); shipping any one as the default would mislead users on
     // the other two. Empty default → status starts as "needs-config" and forces
     // an explicit endpoint pick from the chips below.
-    defaults: { url: "", model: "translategemma-4b-it", batchSize: 10, delayTime: 200 },
+    defaults: { url: "", apiKey: "", model: "translategemma-4b-it", batchSize: 10, delayTime: 200 },
     endpoints: [
       // Same local-server order as Custom (OpenAI-compatible) — LM Studio first
       // (matches the input's example placeholder), then Ollama / llama.cpp.
@@ -795,6 +795,18 @@ export const OPENAI_COMPAT_PROVIDERS = Object.fromEntries(Object.entries(PROVIDE
 export const LLM_MODELS: string[] = Object.entries(PROVIDERS)
   .filter(([, p]) => p.category !== "machine-translation")
   .map(([k]) => k);
+
+/**
+ * 不支持术语表的服务(denylist)——没有任何「模型内」术语执行通道的纯 MT:
+ * 既不吃 systemPrompt 术语块(LLM 全系),也没有原生术语参数(qwenMt 的
+ * translation_options.terms)。这些服务只有事后的漏翻兜底网,UI 展示术语表
+ * 入口会让用户误以为有完整执行能力。其余服务默认支持;新增无术语通道的 MT
+ * 服务时在这里登记。
+ */
+export const GLOSSARY_UNSUPPORTED: ReadonlySet<string> = new Set(["gtxFreeAPI", "google", "deepl", "deeplx", "azure", "translategemma", "webgoogletranslate"]);
+
+/** Whether the glossary feature should surface (and enforce) for a method. */
+export const supportsGlossary = (method: string): boolean => method in PROVIDERS && !GLOSSARY_UNSUPPORTED.has(method);
 
 /**
  * Services where URL is the primary credential — apiKey is optional/absent

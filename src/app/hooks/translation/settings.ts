@@ -97,8 +97,9 @@ const sanitizeSettings = (settings: TranslationSettings): TranslationSettings =>
     }
   }
   // glossaryPresets 深度校验:Array.isArray 不够 —— terms 里混入非字符串
-  // from/to(手编文件/坏导出)会进 localStorage,后续 term.from.trim()
-  // 在每次翻译时抛 TypeError,工具持久性白屏直到手清存储。
+  // source/target(手编文件、坏导出、改名前 {from,to} 形状的旧文件)会进
+  // localStorage,后续 term.source.trim() 在每次翻译时抛 TypeError,工具
+  // 持久性白屏直到手清存储。不合形状的词条直接丢弃(不做 from/to 迁移)。
   if (Array.isArray(out.glossaryPresets)) {
     out.glossaryPresets = (out.glossaryPresets as unknown[])
       .filter((p): p is { id: string; name: string; terms: unknown } => typeof p === "object" && p !== null && typeof (p as { id?: unknown }).id === "string" && typeof (p as { name?: unknown }).name === "string")
@@ -106,8 +107,8 @@ const sanitizeSettings = (settings: TranslationSettings): TranslationSettings =>
         ...p,
         terms: Array.isArray(p.terms)
           ? (p.terms as unknown[]).filter(
-              (t): t is { from: string; to: string; targetLang: string } =>
-                typeof t === "object" && t !== null && typeof (t as { from?: unknown }).from === "string" && typeof (t as { to?: unknown }).to === "string" && typeof (t as { targetLang?: unknown }).targetLang === "string",
+              (t): t is { source: string; target: string; targetLang: string } =>
+                typeof t === "object" && t !== null && typeof (t as { source?: unknown }).source === "string" && typeof (t as { target?: unknown }).target === "string" && typeof (t as { targetLang?: unknown }).targetLang === "string",
             )
           : [],
       }));

@@ -505,9 +505,10 @@ export const llm: TranslationService = async (params) => {
   // sendSystemPrompt=false: omit the system ROLE for chat templates that
   // reject it (Gemma family) — but the system prompt's CONTENT must survive,
   // prepended to the user message. The glossary block lives ONLY in the system
-  // prompt (buildTranslationSystemPrompt), so dropping the message entirely
-  // silently disabled the glossary's primary mechanism for the exact audience
-  // the toggle exists for. undefined defaults to include (pre-toggle configs).
+  // prompt (per-request composition in translateSingle), so dropping the
+  // message entirely silently disabled the glossary's primary mechanism for
+  // the exact audience the toggle exists for. undefined defaults to include
+  // (pre-toggle configs).
   const messages =
     sendSystemPrompt === false
       ? [{ role: "user", content: `${effectiveSystemPrompt}\n\n${prompt}` }]

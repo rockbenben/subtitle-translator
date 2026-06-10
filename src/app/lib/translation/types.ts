@@ -43,6 +43,11 @@ export interface TranslateTextParams {
   // would 422 (the user picks Auto to omit instead).
   reasoningEffort?: ThinkingDirective;
   domains?: string; // Optional: domains setting for Qwen-MT
+  // Active glossary terms in the provider's native wire shape. Currently only
+  // Qwen-MT consumes them (translation_options.terms — in-model terminology
+  // intervention); LLM services get the glossary via the systemPrompt block
+  // instead, composed by the orchestrator before the params are built.
+  glossaryTerms?: Array<{ source: string; target: string }>;
   fullText?: string; // Optional: complete text for ${fullText} variable
   signal?: AbortSignal; // Optional: for request cancellation
 }

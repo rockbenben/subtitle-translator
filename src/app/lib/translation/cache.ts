@@ -1,6 +1,7 @@
 import SparkMD5 from "spark-md5";
 import { DEFAULT_SYSTEM_PROMPT, DEFAULT_USER_PROMPT } from "./config";
 import { LLM_MODELS, deriveThinkingParams } from "./registry";
+import type { GlossaryTerm } from "./glossary";
 import type { TranslationConfig } from "./types";
 import { normalizePrompt } from "./services/shared";
 import { translationCache } from "@/app/lib/storage/indexedDBStorage";
@@ -21,6 +22,21 @@ export type CacheSuffixInput = {
    * give every line a unique key and effectively disable caching.
    */
   userPrompt?: string;
+  /**
+   * Active glossary terms for the run's target language. They alter upstream
+   * output two ways: LLMs get a per-request prompt block (a deterministic
+   * function of {text, full term set} — hashing the FULL set keeps the key
+   * stable while the wire prompt varies per line), qwenMt gets native
+   * translation_options.terms. Incomplete terms never reach the wire, so they
+   * don't enter the hash; absent/empty hashes identical to pre-glossary keys.
+   */
+  glossaryTerms?: GlossaryTerm[];
+};
+
+// Stable, trimmed wire-relevant projection of the term list for hashing.
+const hashableTerms = (terms?: GlossaryTerm[]): string[][] | undefined => {
+  const complete = (terms ?? []).filter((t) => t.source.trim() && t.target.trim()).map((t) => [t.source.trim(), t.target.trim()]);
+  return complete.length > 0 ? complete : undefined;
 };
 
 /**
@@ -28,8 +44,9 @@ export type CacheSuffixInput = {
  * config affects output (LLM-style and Qwen-MT), hashes the relevant fields
  * into the suffix so config changes invalidate stale entries automatically.
  */
-export const generateCacheSuffix = ({ sourceLanguage, targetLanguage, translationMethod, config, systemPrompt, userPrompt }: CacheSuffixInput): string => {
+export const generateCacheSuffix = ({ sourceLanguage, targetLanguage, translationMethod, config, systemPrompt, userPrompt, glossaryTerms }: CacheSuffixInput): string => {
   const base = `${targetLanguage}_${sourceLanguage}_${translationMethod}`;
+  const terms = hashableTerms(glossaryTerms);
 
   if (LLM_MODELS.includes(translationMethod)) {
     const payload = {
@@ -60,6 +77,9 @@ export const generateCacheSuffix = ({ sourceLanguage, targetLanguage, translatio
       // model's translations from cache with zero wire traffic. Hashed only
       // when set — url-less providers keep their existing cache entries.
       ...(typeof config?.url === "string" && config.url.trim() && { url: config.url.trim() }),
+      // Glossary terms steer the per-request prompt block. Key absent when no
+      // complete terms — pre-glossary cache entries stay valid.
+      ...(terms && { glossaryTerms: terms }),
     };
     return `${base}_${SparkMD5.hash(JSON.stringify(payload))}`;
   }
@@ -68,9 +88,12 @@ export const generateCacheSuffix = ({ sourceLanguage, targetLanguage, translatio
     // Qwen-MT is non-LLM but `model` (flash/turbo) and `domains` (free-form
     // domain hint) both alter upstream output. trim() matches what the service
     // does before sending, so " medical" and "medical" share an entry.
+    // Glossary terms ride translation_options.terms (native terminology
+    // intervention) — same key-absent-when-empty contract as the LLM branch.
     const payload = {
       model: config?.model || "",
       domains: (config?.domains || "").trim(),
+      ...(terms && { glossaryTerms: terms }),
     };
     return `${base}_${SparkMD5.hash(JSON.stringify(payload))}`;
   }

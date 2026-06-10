@@ -2,9 +2,9 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Select, Input, Button, Tag, Space, Flex, Typography, Tooltip, App, theme } from "antd";
-import { ApiOutlined, ThunderboltOutlined } from "@ant-design/icons";
+import { ApiOutlined, BookOutlined, ThunderboltOutlined } from "@ant-design/icons";
 import { useTranslations } from "next-intl";
-import { categorizedOptions, deriveThinkingParams, findMethodLabel, getConfigStatus, testTranslation, URL_IS_PRIMARY_CRED, DEFAULT_SYSTEM_PROMPT, DEFAULT_USER_PROMPT, type TranslateTextParams } from "@/app/lib/translation";
+import { categorizedOptions, deriveThinkingParams, findMethodLabel, getConfigStatus, supportsGlossary, testTranslation, URL_IS_PRIMARY_CRED, DEFAULT_SYSTEM_PROMPT, DEFAULT_USER_PROMPT, type TranslateTextParams } from "@/app/lib/translation";
 import { useTranslationContext } from "@/app/components/TranslationContext";
 import { useIsMobile } from "@/app/hooks/useIsMobile";
 
@@ -19,10 +19,11 @@ interface ApiStatusBlockProps {
 
 const ApiStatusBlock = ({ disabled = false }: ApiStatusBlockProps) => {
   const t = useTranslations("common");
+  const tGlossary = useTranslations("TranslationGlossary");
   const { message } = App.useApp();
   const { token } = theme.useToken();
   const isMobile = useIsMobile();
-  const { translationMethod, setTranslationMethod, getSelectedConfig, handleConfigChange, systemPrompt, userPrompt, setApiSettingsOpen } = useTranslationContext();
+  const { translationMethod, setTranslationMethod, getSelectedConfig, handleConfigChange, systemPrompt, userPrompt, setApiSettingsOpen, glossaryEnabled, activeGlossaryPreset } = useTranslationContext();
 
   const config = getSelectedConfig();
   const methodLabel = findMethodLabel(translationMethod);
@@ -221,15 +222,41 @@ const ApiStatusBlock = ({ disabled = false }: ApiStatusBlockProps) => {
         </Space.Compact>
       )}
 
-      <Flex justify="space-between" align="center" style={{ marginTop: token.marginXS }}>
-        <Button
-          size="small"
-          icon={<ThunderboltOutlined />}
-          onClick={handleTest}
-          loading={sessionStatus === "testing"}
-          disabled={disabled || status === "needs-config" || status === "testing"}>
-          {t("testConnection")}
-        </Button>
+      <Flex justify="space-between" align="center" wrap gap={4} style={{ marginTop: token.marginXS }}>
+        <Space size="small" wrap>
+          <Button
+            size="small"
+            icon={<ThunderboltOutlined />}
+            onClick={handleTest}
+            loading={sessionStatus === "testing"}
+            disabled={disabled || status === "needs-config" || status === "testing"}>
+            {t("testConnection")}
+          </Button>
+          {/* 术语表主页面入口 —— 此前唯一入口埋在设置抽屉深处,终端用户反馈
+              "非常隐蔽"。启用时显示词条数(绿),未启用显示灰色入口;点击都
+              进设置抽屉(术语表卡片就在 provider 表单下方)。仅在当前服务
+              有模型内术语通道时展示(supportsGlossary denylist 之外)。 */}
+          {supportsGlossary(translationMethod) && (
+          <Tag
+            color={glossaryEnabled && activeGlossaryPreset ? "success" : "default"}
+            role="button"
+            tabIndex={0}
+            aria-label={tGlossary("title")}
+            style={{ cursor: "pointer", margin: 0 }}
+            onClick={() => setApiSettingsOpen(true)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                setApiSettingsOpen(true);
+              }
+            }}>
+            <BookOutlined style={{ marginInlineEnd: 4 }} />
+            {glossaryEnabled && activeGlossaryPreset
+              ? `${tGlossary("title")} · ${(activeGlossaryPreset.terms ?? []).filter((term) => term.source.trim() && term.target.trim()).length}`
+              : tGlossary("title")}
+          </Tag>
+          )}
+        </Space>
         <Button
           type="link"
           size="small"

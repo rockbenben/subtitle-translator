@@ -5,11 +5,18 @@ import { Switch, Button, Space, Typography, Tag, App } from "antd";
 import { EditOutlined } from "@ant-design/icons";
 import { useTranslations } from "next-intl";
 import { useTranslationContext } from "@/app/components/TranslationContext";
+import PageCard from "@/app/components/styled/PageCard";
 import GlossaryPresetPicker from "./GlossaryPresetPicker";
 import GlossaryDrawer from "./GlossaryDrawer";
 
 const { Text } = Typography;
 
+/**
+ * Standalone glossary card. Rendered for EVERY service (not just LLM ones):
+ * the prompt layer needs an LLM, but Qwen-MT consumes native terms and the
+ * leak-through net applies to all MT output — hiding the glossary behind the
+ * LLM-only prompts panel made it unreachable for exactly those users.
+ */
 const GlossaryManager = () => {
   const t = useTranslations("TranslationGlossary");
   const { message } = App.useApp();
@@ -27,25 +34,33 @@ const GlossaryManager = () => {
     }
   };
 
+  const completeCount = (activeGlossaryPreset?.terms ?? []).filter((term) => term.source.trim() && term.target.trim()).length;
+
   return (
-    <div style={{ marginTop: 16 }}>
-      <Space style={{ width: "100%", justifyContent: "space-between", marginBottom: 8 }} wrap>
-        <Space wrap>
+    <PageCard
+      title={
+        <Space size="small">
           <Switch checked={glossaryEnabled} onChange={handleToggle} aria-label={t("enable")} />
-          <Text strong>{t("title")}</Text>
-          {activeGlossaryPreset && <Tag>{t("termCount", { count: (activeGlossaryPreset.terms ?? []).filter((term) => term.from.trim() && term.to.trim()).length })}</Tag>}
-          <Text type="secondary">{t("subtitle")}</Text>
+          <span>{t("title")}</span>
+          {activeGlossaryPreset && <Tag>{t("termCount", { count: completeCount })}</Tag>}
         </Space>
-        {/* Disabled unless a preset actually exists (a dangling active id from an
-            imported settings file resolves to undefined → editing would no-op). */}
-        <Button icon={<EditOutlined />} disabled={!activeGlossaryPreset} onClick={() => setDrawerOpen(true)}>{t("edit")}</Button>
-      </Space>
+      }
+      // Disabled unless a preset actually exists (a dangling active id from an
+      // imported settings file resolves to undefined → editing would no-op).
+      extra={
+        <Button icon={<EditOutlined />} disabled={!activeGlossaryPreset} onClick={() => setDrawerOpen(true)}>
+          {t("edit")}
+        </Button>
+      }>
+      <Text type="secondary" style={{ display: "block", marginBottom: 12 }}>
+        {t("subtitle")}
+      </Text>
       <GlossaryPresetPicker />
       {/* Remount only on open/close, so the drawer re-reads the current target
           language each time it OPENS, without discarding the user's in-drawer
           language selection when the main target language changes while it's open. */}
       <GlossaryDrawer key={drawerOpen ? "open" : "closed"} open={drawerOpen} onClose={() => setDrawerOpen(false)} />
-    </div>
+    </PageCard>
   );
 };
 

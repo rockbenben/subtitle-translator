@@ -146,8 +146,17 @@ export const deeplx: TranslationService = async (params) => {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(requestBody),
     signal: params.signal,
-  })) as { data: string };
-  return data.data;
+  })) as { data?: string } | null;
+  // Self-hosted DeepLX forks / proxies can 200 with a non-string `data` (array,
+  // object) or a null body. Guard like the sibling MT services above, else a
+  // truthy non-string slips past index.ts's `!translatedText` check into the
+  // cache + downstream string ops, and a null body throws a status-less
+  // TypeError that gets wrongly retried.
+  const translatedText = data?.data;
+  if (typeof translatedText !== "string") {
+    throw new Error("Invalid response format from DeepLX");
+  }
+  return translatedText;
 };
 
 export const azure: TranslationService = async (params) => {
@@ -199,7 +208,7 @@ export const webgoogletranslate: TranslationService = async (params) => {
 };
 
 export const qwenMt: TranslationService = async (params) => {
-  const { text, targetLanguage, sourceLanguage, apiKey, url, model, domains } = params;
+  const { text, targetLanguage, sourceLanguage, apiKey, url, model, domains, glossaryTerms } = params;
 
   const key = requireApiKey("Qwen-MT", apiKey);
   const apiUrl = completeOpenAICompatUrl(url?.trim() || defaultConfigs.qwenMt.url!);
@@ -219,13 +228,20 @@ export const qwenMt: TranslationService = async (params) => {
   const sourceLangCode = getQwenMtLangCode(sourceLanguage);
   const targetLangCode = getQwenMtLangCode(targetLanguage);
 
-  const translationOptions: Record<string, string> = {
+  const translationOptions: Record<string, unknown> = {
     source_lang: sourceLangCode,
     target_lang: targetLangCode,
   };
 
   if (domains && domains.trim()) {
     translationOptions.domains = domains.trim();
+  }
+
+  // Native terminology intervention — the model applies the terms in-context
+  // (prevents mistranslation, unlike the post-hoc leak-through which only
+  // fixes verbatim leftovers). Omit entirely when empty.
+  if (glossaryTerms && glossaryTerms.length > 0) {
+    translationOptions.terms = glossaryTerms;
   }
 
   const data = await fetchJSON(apiUrl, {

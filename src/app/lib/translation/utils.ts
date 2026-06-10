@@ -1,4 +1,5 @@
 import { languages, isMethodSupportedForLanguage, REQUIRES_EXPLICIT_SOURCE } from "./languages-data";
+import { findMethodLabel } from "./registry";
 import type { TranslationMethod } from "./types";
 
 // Pre-computed lookup maps for O(1) language access
@@ -21,26 +22,30 @@ export const checkLanguageSupport = (translationMethod: TranslationMethod, sourc
     return { supported: false, errorMessage: "Invalid language code provided" };
   }
 
+  // Curated display name ("TranslateGemma", "Qwen-MT", …) — never the raw
+  // uppercased internal key ("TRANSLATEGEMMA", "QWENMT") in user-facing copy.
+  const methodLabel = findMethodLabel(translationMethod);
+
   // Methods that need explicit source (no auto-detect mode in the model). Keep
   // this check ahead of UNSUPPORTED_LANGS so the user sees a fix-the-source
   // hint instead of the misleading "doesn't support Auto" wording.
   if (sourceLanguage === "auto" && REQUIRES_EXPLICIT_SOURCE.has(translationMethod)) {
     return {
       supported: false,
-      errorMessage: `${translationMethod.toUpperCase()} requires an explicit source language (no auto-detect). Please select a specific source language. / ${translationMethod.toUpperCase()} 不支持自动检测源语言，请明确选择一个源语言。`,
+      errorMessage: `${methodLabel} requires an explicit source language (no auto-detect). Please select a specific source language. / ${methodLabel} 不支持自动检测源语言，请明确选择一个源语言。`,
     };
   }
 
   if (!isMethodSupportedForLanguage(translationMethod, sourceLanguage)) {
     return {
       supported: false,
-      errorMessage: `${translationMethod.toUpperCase()} doesn't support ${sourceName}. Please pick another language or translation method.`,
+      errorMessage: `${methodLabel} doesn't support ${sourceName}. Please pick another language or translation method.`,
     };
   }
   if (!isMethodSupportedForLanguage(translationMethod, targetLanguage)) {
     return {
       supported: false,
-      errorMessage: `${translationMethod.toUpperCase()} doesn't support ${targetName}. Please pick another language or translation method.`,
+      errorMessage: `${methodLabel} doesn't support ${targetName}. Please pick another language or translation method.`,
     };
   }
 

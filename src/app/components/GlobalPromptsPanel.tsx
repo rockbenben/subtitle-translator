@@ -5,7 +5,6 @@ import { useTranslations } from "next-intl";
 import { useTranslationContext } from "@/app/components/TranslationContext";
 import PageCard from "@/app/components/styled/PageCard";
 import PromptPresetPicker from "@/app/components/PromptPresetPicker";
-import GlossaryManager from "@/app/components/glossaryManager/GlossaryManager";
 import { useIsMobile } from "@/app/hooks/useIsMobile";
 
 const { Text } = Typography;
@@ -46,7 +45,6 @@ const GlobalPromptsPanel = () => {
           <TextArea value={userPrompt} onChange={(e) => setUserPrompt(e.target.value)} autoSize={{ minRows: 3, maxRows: 16 }} aria-label={t("userPrompt")} />
         </Form.Item>
       </Form>
-      <GlossaryManager />
     </PageCard>
   );
 };
