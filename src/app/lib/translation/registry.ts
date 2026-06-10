@@ -713,6 +713,17 @@ export const PROVIDERS = {
       { label: "GPT-5.4 Nano", value: "gpt-5.4-nano", thinking: true },
     ],
   },
+  litellm: {
+    kind: "openai-compat",
+    category: "aggregator",
+    label: "LiteLLM",
+    endpoint: "http://localhost:4000/v1/chat/completions",
+    defaultModel: "",
+    defaultTemperature: 0.7,
+    docs: "https://docs.litellm.ai/docs/",
+    allowCustomUrl: true,
+    models: [],
+  },
   llm: {
     kind: "custom",
     category: "aggregator",
