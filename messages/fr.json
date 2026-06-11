@@ -166,6 +166,7 @@
     "testConnection": "Tester la connexion",
     "moreProviderSettings": "Plus de paramètres Provider",
     "gtxFreeAPIUnavailable": "Le service GTX Free est temporairement inaccessible — il pourrait s'agir d'une restriction réseau. Réessayez plus tard ou changez de service de traduction.",
+    "edgeFreeAPIUnavailable": "Le service Edge Free est temporairement inaccessible — il pourrait s'agir d'une restriction réseau. Réessayez plus tard ou changez de service de traduction.",
     "translategemmaUnavailable": "Le service TranslateGemma est temporairement inaccessible, vérifiez que votre serveur local (LM Studio / llama.cpp / Ollama) est en cours d'exécution et que l'URL est correcte.",
     "networkUnavailable": "Le service de traduction est temporairement inaccessible — cela peut être un problème réseau ou un incident côté service. Réessayez plus tard ou changez de service de traduction.",
     "translationTimeout": "La requête de traduction a expiré — il pourrait s'agir d'un réseau lent ou le service met trop de temps à répondre. Réessayez plus tard ou changez de service de traduction.",
@@ -183,7 +184,19 @@
     "selectedCount": "{count} sélectionnées",
     "recentLanguages": "Récentes",
     "langGroupAmericasOceania": "Amériques et Océanie",
-    "relatedTools": "Outils associés"
+    "relatedTools": "Outils associés",
+    "errorHint400": "Requête invalide — souvent un nom de modèle ou un code de langue erroné, ou un paramètre non pris en charge",
+    "errorHint401": "Clé API invalide ou expirée",
+    "errorHint402": "Solde insuffisant — rechargez auprès de votre fournisseur",
+    "errorHint403": "Accès interdit — la clé peut être invalide, manquer de permissions, ou votre région peut être bloquée",
+    "errorHint404": "Endpoint ou modèle introuvable — vérifiez l'URL et le nom du modèle",
+    "errorHint408": "Délai de requête dépassé, veuillez réessayer",
+    "errorHint413": "Texte trop volumineux — réduisez la taille des blocs ou divisez le texte",
+    "errorHint422": "Paramètre non pris en charge par ce modèle — souvent les options de raisonnement",
+    "errorHint429": "Limite de requêtes dépassée, veuillez réessayer plus tard",
+    "errorHint456": "Quota de traduction épuisé pour cette période",
+    "errorHint5xx": "Erreur serveur, veuillez réessayer plus tard",
+    "rateLimitCooldown": "Limite de requêtes atteinte — courte pause, nouvelle tentative automatique"
   },
   "SubtitleTranslator": {
     "clientDescription": "Téléchargez des sous-titres ou collez le contenu. Sélectionnez la langue cible pour une traduction rapide. Supporte le traitement par lot et conserve la chronologie.",

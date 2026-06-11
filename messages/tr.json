@@ -166,6 +166,7 @@
     "replaceText": "Metni değiştir ",
     "generateJson": "JSON Oluştur",
     "gtxFreeAPIUnavailable": "GTX Free hizmetine geçici olarak ulaşılamıyor — ağ kısıtlaması olabilir. Lütfen daha sonra tekrar deneyin veya başka bir çeviri hizmetine geçin.",
+    "edgeFreeAPIUnavailable": "Edge Free hizmetine geçici olarak ulaşılamıyor — ağ kısıtlaması olabilir. Lütfen daha sonra tekrar deneyin veya başka bir çeviri hizmetine geçin.",
     "translategemmaUnavailable": "TranslateGemma hizmetine geçici olarak ulaşılamıyor, yerel sunucunuzun (LM Studio / llama.cpp / Ollama) çalıştığından ve URL'nin doğru olduğundan emin olun.",
     "networkUnavailable": "Çeviri hizmetine geçici olarak ulaşılamıyor — ağ sorunu veya hizmette geçici bir aksaklık olabilir. Lütfen daha sonra tekrar deneyin veya başka bir çeviri hizmetine geçin.",
     "translationTimeout": "Çeviri isteği zaman aşımına uğradı — yavaş bir ağ veya hizmet yanıt vermekte gecikiyor olabilir. Lütfen daha sonra tekrar deneyin veya başka bir çeviri hizmetine geçin.",
@@ -183,7 +184,19 @@
     "selectedCount": "{count} seçildi",
     "recentLanguages": "Son kullanılanlar",
     "langGroupAmericasOceania": "Amerika & Okyanusya",
-    "relatedTools": "İlgili Araçlar"
+    "relatedTools": "İlgili Araçlar",
+    "errorHint400": "Geçersiz istek — genellikle yanlış model adı veya dil kodu ya da desteklenmeyen parametre",
+    "errorHint401": "API anahtarı geçersiz veya süresi dolmuş",
+    "errorHint402": "Hesap bakiyesi yetersiz — sağlayıcınızdan bakiye yükleyin",
+    "errorHint403": "Erişim yasak — anahtar geçersiz olabilir, izni eksik olabilir veya bölgeniz engellenmiş olabilir",
+    "errorHint404": "Endpoint veya model bulunamadı — URL ve model adını kontrol edin",
+    "errorHint408": "İstek zaman aşımına uğradı, lütfen tekrar deneyin",
+    "errorHint413": "Metin çok büyük — blok boyutunu küçültün veya metni bölün",
+    "errorHint422": "Bu model bir parametreyi desteklemiyor — genellikle düşünme/akıl yürütme seçenekleri",
+    "errorHint429": "İstek sınırı aşıldı, lütfen daha sonra tekrar deneyin",
+    "errorHint456": "Bu dönemin çeviri kotası tükendi",
+    "errorHint5xx": "Sunucu hatası, lütfen daha sonra tekrar deneyin",
+    "rateLimitCooldown": "İstek sınırına ulaşıldı — kısa bir duraklamadan sonra otomatik olarak yeniden denenecek"
   },
   "SubtitleTranslator": {
     "clientDescription": "Altyazı yükleyin veya içerik yapıştırın. Hızlı çeviri için hedef dili seçin. Toplu işlemeyi destekler ve zaman çizelgesini korur.",

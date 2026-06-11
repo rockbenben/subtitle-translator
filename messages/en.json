@@ -166,6 +166,7 @@
     "testConnection": "Test Connection",
     "moreProviderSettings": "More Provider Settings",
     "gtxFreeAPIUnavailable": "GTX Free service is temporarily unreachable — could be a network restriction. Please try again later, or switch to a different translation service.",
+    "edgeFreeAPIUnavailable": "Edge Free service is temporarily unreachable — could be a network restriction. Please try again later, or switch to a different translation service.",
     "translategemmaUnavailable": "TranslateGemma service is temporarily unreachable, please make sure your local server (LM Studio / llama.cpp / Ollama) is running and the URL is correct.",
     "networkUnavailable": "Translation service is temporarily unreachable — could be a network issue or the service is having a hiccup. Please try again later, or switch to a different translation service.",
     "translationTimeout": "Translation request timed out — could be a slow network or the service is taking too long to respond. Please try again later, or switch to a different translation service.",
@@ -183,7 +184,19 @@
     "selectedCount": "{count} selected",
     "recentLanguages": "Recent",
     "langGroupAmericasOceania": "Americas & Oceania",
-    "relatedTools": "Related Tools"
+    "relatedTools": "Related Tools",
+    "errorHint400": "Invalid request — often a wrong model name or language code, or an unsupported parameter",
+    "errorHint401": "API key is invalid or expired",
+    "errorHint402": "Insufficient account balance — top up with your provider",
+    "errorHint403": "Access forbidden — the key may be invalid, lack permission, or your region may be blocked",
+    "errorHint404": "Endpoint or model not found — check the URL and model name",
+    "errorHint408": "Request timed out, please retry",
+    "errorHint413": "Input too large — reduce the chunk size or split the text",
+    "errorHint422": "A parameter isn't supported by this model — often thinking/reasoning options",
+    "errorHint429": "Rate limit exceeded, please retry later",
+    "errorHint456": "Translation quota exhausted for this billing period",
+    "errorHint5xx": "Server error, please retry later",
+    "rateLimitCooldown": "Rate limited — pausing briefly, will retry automatically"
   },
   "SubtitleTranslator": {
     "clientDescription": "Upload subtitles or paste content. Select target language for fast translation. Supports batch processing and retains timelines.",

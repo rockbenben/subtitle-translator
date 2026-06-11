@@ -166,6 +166,7 @@
     "replaceText": "Ganti Teks ",
     "generateJson": "Hasilkan JSON",
     "gtxFreeAPIUnavailable": "Layanan GTX Free sementara tidak dapat dijangkau — mungkin pembatasan jaringan. Silakan coba lagi nanti atau beralih ke layanan terjemahan lain.",
+    "edgeFreeAPIUnavailable": "Layanan Edge Free sementara tidak dapat dijangkau — mungkin pembatasan jaringan. Silakan coba lagi nanti atau beralih ke layanan terjemahan lain.",
     "translategemmaUnavailable": "Layanan TranslateGemma sementara tidak dapat dijangkau, pastikan server lokal Anda (LM Studio / llama.cpp / Ollama) sedang berjalan dan URL sudah benar.",
     "networkUnavailable": "Layanan terjemahan sementara tidak dapat dijangkau — bisa jadi masalah jaringan atau gangguan sementara pada layanan. Silakan coba lagi nanti atau beralih ke layanan terjemahan lain.",
     "translationTimeout": "Permintaan terjemahan habis waktu — bisa jadi jaringan lambat atau layanan terlalu lama merespons. Silakan coba lagi nanti atau beralih ke layanan terjemahan lain.",
@@ -183,7 +184,19 @@
     "selectedCount": "{count} dipilih",
     "recentLanguages": "Terbaru",
     "langGroupAmericasOceania": "Amerika & Oseania",
-    "relatedTools": "Alat Terkait"
+    "relatedTools": "Alat Terkait",
+    "errorHint400": "Permintaan tidak valid — sering karena nama model atau kode bahasa salah, atau parameter tidak didukung",
+    "errorHint401": "Kunci API tidak valid atau kedaluwarsa",
+    "errorHint402": "Saldo akun tidak mencukupi — isi ulang di penyedia layanan Anda",
+    "errorHint403": "Akses dilarang — kunci mungkin tidak valid, kurang izin, atau wilayah Anda diblokir",
+    "errorHint404": "Endpoint atau model tidak ditemukan — periksa URL dan nama model",
+    "errorHint408": "Permintaan kehabisan waktu, silakan coba lagi",
+    "errorHint413": "Teks terlalu besar — kurangi ukuran potongan atau bagi teksnya",
+    "errorHint422": "Parameter tidak didukung oleh model ini — sering kali opsi thinking/penalaran",
+    "errorHint429": "Batas permintaan terlampaui, silakan coba lagi nanti",
+    "errorHint456": "Kuota terjemahan periode ini telah habis",
+    "errorHint5xx": "Kesalahan server, silakan coba lagi nanti",
+    "rateLimitCooldown": "Batas permintaan tercapai — jeda sejenak, akan dicoba ulang otomatis"
   },
   "SubtitleTranslator": {
     "clientDescription": "Unggah subtitle atau tempel konten. Pilih bahasa target untuk terjemahan cepat. Mendukung pemrosesan batch dan mempertahankan timeline.",

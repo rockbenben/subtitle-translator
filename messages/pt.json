@@ -166,6 +166,7 @@
     "replaceText": "Substituir texto ",
     "generateJson": "Gerar JSON",
     "gtxFreeAPIUnavailable": "O serviço GTX Free está temporariamente inacessível — pode ser uma restrição de rede. Tente novamente mais tarde ou troque para outro serviço de tradução.",
+    "edgeFreeAPIUnavailable": "O serviço Edge Free está temporariamente inacessível — pode ser uma restrição de rede. Tente novamente mais tarde ou troque para outro serviço de tradução.",
     "translategemmaUnavailable": "O serviço TranslateGemma está temporariamente inacessível, verifique se o seu servidor local (LM Studio / llama.cpp / Ollama) está em execução e o URL está correto.",
     "networkUnavailable": "O serviço de tradução está temporariamente inacessível — pode ser um problema de rede ou o serviço está com algum problema momentâneo. Tente novamente mais tarde ou troque para outro serviço de tradução.",
     "translationTimeout": "A solicitação de tradução expirou — pode ser uma rede lenta ou o serviço está demorando muito para responder. Tente novamente mais tarde ou troque para outro serviço de tradução.",
@@ -183,7 +184,19 @@
     "selectedCount": "{count} selecionadas",
     "recentLanguages": "Recentes",
     "langGroupAmericasOceania": "Américas e Oceânia",
-    "relatedTools": "Ferramentas relacionadas"
+    "relatedTools": "Ferramentas relacionadas",
+    "errorHint400": "Requisição inválida — geralmente nome de modelo ou código de idioma incorreto, ou parâmetro não suportado",
+    "errorHint401": "Chave de API inválida ou expirada",
+    "errorHint402": "Saldo insuficiente — recarregue na plataforma do provedor",
+    "errorHint403": "Acesso proibido — a chave pode ser inválida, sem permissão, ou sua região pode estar bloqueada",
+    "errorHint404": "Endpoint ou modelo não encontrado — verifique a URL e o nome do modelo",
+    "errorHint408": "Tempo de requisição esgotado, tente novamente",
+    "errorHint413": "Texto muito grande — reduza o tamanho do bloco ou divida o texto",
+    "errorHint422": "Parâmetro não suportado por este modelo — geralmente opções de raciocínio",
+    "errorHint429": "Limite de requisições excedido, tente novamente mais tarde",
+    "errorHint456": "Cota de tradução esgotada neste período",
+    "errorHint5xx": "Erro do servidor, tente novamente mais tarde",
+    "rateLimitCooldown": "Limite de requisições atingido — pausando brevemente, repetiremos automaticamente"
   },
   "SubtitleTranslator": {
     "clientDescription": "Envie legendas ou cole conteúdo. Selecione o idioma de destino para tradução rápida. Suporta processamento em lote e preserva a linha do tempo.",

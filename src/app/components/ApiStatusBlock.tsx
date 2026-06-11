@@ -4,7 +4,8 @@ import { useState, useRef, useEffect } from "react";
 import { Select, Input, Button, Tag, Space, Flex, Typography, Tooltip, App, theme } from "antd";
 import { ApiOutlined, BookOutlined, ThunderboltOutlined } from "@ant-design/icons";
 import { useTranslations } from "next-intl";
-import { categorizedOptions, deriveThinkingParams, findMethodLabel, getConfigStatus, supportsGlossary, testTranslation, URL_IS_PRIMARY_CRED, DEFAULT_SYSTEM_PROMPT, DEFAULT_USER_PROMPT, type TranslateTextParams } from "@/app/lib/translation";
+import { categorizedOptions, findMethodLabel, getConfigStatus, supportsGlossary, testTranslationWithTimeout, URL_IS_PRIMARY_CRED, DEFAULT_SYSTEM_PROMPT, DEFAULT_USER_PROMPT } from "@/app/lib/translation";
+import { describeError } from "@/app/utils";
 import { useTranslationContext } from "@/app/components/TranslationContext";
 import { useIsMobile } from "@/app/hooks/useIsMobile";
 
@@ -23,7 +24,7 @@ const ApiStatusBlock = ({ disabled = false }: ApiStatusBlockProps) => {
   const { message } = App.useApp();
   const { token } = theme.useToken();
   const isMobile = useIsMobile();
-  const { translationMethod, setTranslationMethod, getSelectedConfig, handleConfigChange, systemPrompt, userPrompt, setApiSettingsOpen, glossaryEnabled, activeGlossaryPreset } = useTranslationContext();
+  const { translationMethod, setTranslationMethod, getSelectedConfig, handleConfigChange, systemPrompt, userPrompt, setApiSettingsOpen, glossaryEnabled, activeGlossaryPreset, requestTimeoutSec } = useTranslationContext();
 
   const config = getSelectedConfig();
   const methodLabel = findMethodLabel(translationMethod);
@@ -74,31 +75,19 @@ const ApiStatusBlock = ({ disabled = false }: ApiStatusBlockProps) => {
     setSessionStatus("testing");
     const effectiveSystem = systemPrompt?.trim() ? systemPrompt : DEFAULT_SYSTEM_PROMPT;
     const effectiveUser = userPrompt?.trim() ? userPrompt : DEFAULT_USER_PROMPT;
-    // Mirror orchestrator's gate so this status-block Test exercises the same
-    // wire payload as actual translation (effort level — undefined = off).
-    const testParams: Partial<TranslateTextParams> = {
-      ...(config as Partial<TranslateTextParams>),
-      reasoningEffort: deriveThinkingParams(translationMethod, config),
-    };
-    // 30s 超时:黑洞端点(防火墙吞包、挂死的本地服务)否则让状态块永远卡
-    // 在 "testing"。
-    const controller = new AbortController();
-    let timedOut = false;
-    const timeout = setTimeout(() => {
-      timedOut = true;
-      controller.abort();
-    }, 30_000);
-    const error = await testTranslation(translationMethod, testParams, effectiveSystem, effectiveUser, controller.signal).finally(() => clearTimeout(timeout));
+    // 共用入口统一处理超时(= requestTimeoutSec,与正式翻译同源)与
+    // thinking 参数派生 —— 原则与实现都在 testTranslationWithTimeout。
+    const { error, timedOut } = await testTranslationWithTimeout(translationMethod, config, requestTimeoutSec, effectiveSystem, effectiveUser);
     if (id !== testIdRef.current) return;
     if (!error) {
       setSessionStatus("connected");
       message.success(t("apiStatusConnected"));
     } else {
-      // testTranslation returns the real failure reason — surface it so the user sees
-      // WHY (401/403/CORS/timeout/…) instead of a generic "connection failed".
+      // testTranslation returns the caught error object — describeError keeps the
+      // raw reason (401/403/CORS/…) and appends the status-mapped i18n hint.
       // 超时触发的 abort:报"超时"分类,而不是裸的 DOMException abort 文案。
       setSessionStatus("failed");
-      message.error(`${t("apiStatusFailed")}: ${timedOut ? t("apiStatusTimeout") : error}`, 10);
+      message.error(`${t("apiStatusFailed")}: ${timedOut ? t("apiStatusTimeout") : describeError(error, t)}`, 10);
     }
   };
 

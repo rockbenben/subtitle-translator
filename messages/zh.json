@@ -166,6 +166,7 @@
     "replaceText": "替换文本",
     "generateJson": "生成 JSON",
     "gtxFreeAPIUnavailable": "GTX Free 服务暂时连不上，可能是网络限制。稍后再试，或换一个翻译服务。",
+    "edgeFreeAPIUnavailable": "Edge Free 服务暂时连不上，可能是网络限制。稍后再试，或换一个翻译服务。",
     "translategemmaUnavailable": "TranslateGemma 服务暂时连不上，请确认本地服务器（LM Studio / llama.cpp / Ollama）已启动且 URL 正确。",
     "networkUnavailable": "翻译服务暂时连不上，可能是网络或服务的临时问题。稍后再试，或换一个翻译服务。",
     "translationTimeout": "翻译请求超时，可能是网络较慢或翻译服务响应慢。稍后再试，或换一个翻译服务。",
@@ -183,7 +184,19 @@
     "selectedCount": "已选 {count} 种",
     "recentLanguages": "最近使用",
     "langGroupAmericasOceania": "美洲及大洋洲",
-    "relatedTools": "相关工具"
+    "relatedTools": "相关工具",
+    "errorHint400": "请求无效，常见原因：模型名或语言代码有误、参数不被支持",
+    "errorHint401": "API 密钥无效或已过期",
+    "errorHint402": "账户余额不足，请前往服务商充值",
+    "errorHint403": "访问被禁止，可能是密钥无效、权限不足或所在地区受限",
+    "errorHint404": "接口地址或模型不存在，请检查 URL 与模型名",
+    "errorHint408": "请求超时，请重试",
+    "errorHint413": "文本过大，请减小分块或拆分文本",
+    "errorHint422": "参数不被该模型支持，常见于思考/推理选项",
+    "errorHint429": "请求过于频繁，请稍后重试",
+    "errorHint456": "本期翻译配额已用尽",
+    "errorHint5xx": "服务器错误，请稍后重试",
+    "rateLimitCooldown": "请求过于频繁，已自动暂停片刻后重试"
   },
   "SubtitleTranslator": {
     "clientDescription": "上传字幕文件或粘贴内容，选择目标语言即可快速翻译。支持批量处理，自动保留时间轴。",

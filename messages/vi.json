@@ -166,6 +166,7 @@
     "replaceText": "Thay thế văn bản ",
     "generateJson": "Tạo JSON",
     "gtxFreeAPIUnavailable": "Dịch vụ GTX Free tạm thời không kết nối được — có thể do hạn chế mạng. Vui lòng thử lại sau hoặc chuyển sang dịch vụ dịch khác.",
+    "edgeFreeAPIUnavailable": "Dịch vụ Edge Free tạm thời không kết nối được — có thể do hạn chế mạng. Vui lòng thử lại sau hoặc chuyển sang dịch vụ dịch khác.",
     "translategemmaUnavailable": "Dịch vụ TranslateGemma tạm thời không kết nối được, hãy đảm bảo máy chủ cục bộ của bạn (LM Studio / llama.cpp / Ollama) đang chạy và URL chính xác.",
     "networkUnavailable": "Dịch vụ dịch tạm thời không kết nối được — có thể là sự cố mạng hoặc dịch vụ đang gặp trục trặc tạm thời. Vui lòng thử lại sau hoặc chuyển sang dịch vụ dịch khác.",
     "translationTimeout": "Yêu cầu dịch đã hết thời gian — có thể là mạng chậm hoặc dịch vụ phản hồi quá lâu. Vui lòng thử lại sau hoặc chuyển sang dịch vụ dịch khác.",
@@ -183,7 +184,19 @@
     "selectedCount": "Đã chọn {count}",
     "recentLanguages": "Gần đây",
     "langGroupAmericasOceania": "Châu Mỹ và Châu Đại Dương",
-    "relatedTools": "Công cụ liên quan"
+    "relatedTools": "Công cụ liên quan",
+    "errorHint400": "Yêu cầu không hợp lệ — thường do sai tên mô hình hoặc mã ngôn ngữ, hoặc tham số không được hỗ trợ",
+    "errorHint401": "Khóa API không hợp lệ hoặc đã hết hạn",
+    "errorHint402": "Số dư tài khoản không đủ — vui lòng nạp thêm tại nhà cung cấp",
+    "errorHint403": "Truy cập bị cấm — khóa có thể không hợp lệ, thiếu quyền, hoặc khu vực của bạn bị chặn",
+    "errorHint404": "Không tìm thấy endpoint hoặc mô hình — kiểm tra URL và tên mô hình",
+    "errorHint408": "Yêu cầu hết thời gian chờ, vui lòng thử lại",
+    "errorHint413": "Văn bản quá lớn — giảm kích thước khối hoặc chia nhỏ văn bản",
+    "errorHint422": "Tham số không được mô hình này hỗ trợ — thường là tùy chọn suy luận",
+    "errorHint429": "Vượt quá giới hạn yêu cầu, vui lòng thử lại sau",
+    "errorHint456": "Đã hết hạn mức dịch của kỳ này",
+    "errorHint5xx": "Lỗi máy chủ, vui lòng thử lại sau",
+    "rateLimitCooldown": "Đạt giới hạn yêu cầu — tạm dừng một lát rồi tự động thử lại"
   },
   "SubtitleTranslator": {
     "clientDescription": "Tải lên phụ đề hoặc dán nội dung. Chọn ngôn ngữ đích để dịch nhanh. Hỗ trợ xử lý hàng loạt và giữ nguyên dòng thời gian.",

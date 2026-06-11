@@ -10,7 +10,7 @@ import { useLocalStorage } from "@/app/hooks/useLocalStorage";
 import { useTextStats } from "@/app/hooks/useTextStats";
 import { useExportFilename } from "@/app/hooks/useExportFilename";
 
-import { splitTextIntoLines, downloadFile, splitBySpaces, getErrorMessage, isAbortError, isCascadedAbort, isNetworkError, getFileTypePresetConfig } from "@/app/utils";
+import { splitTextIntoLines, downloadFile, splitBySpaces, describeError, isAbortError, isCascadedAbort, isNetworkError, getFileTypePresetConfig } from "@/app/utils";
 import {
   LRC_TIME_REGEX_GLOBAL,
   detectSubtitleFormat,
@@ -414,8 +414,8 @@ const SubtitleTranslator = () => {
         const content = friendly
           ? `${friendly} (${langLabel})`
           : needsBilingual
-            ? `${getErrorMessage(error)} ${tSubtitle("bilingualError")}`
-            : `${getErrorMessage(error)} ${langLabel} ${t("translationError")}`;
+            ? `${describeError(error, t)} ${tSubtitle("bilingualError")}`
+            : `${describeError(error, t)} ${langLabel} ${t("translationError")}`;
 
         // Shared key: failed languages roll into one toast instead of stacking N high
         // — the TranslateFailurePanel keeps the full per-lang list.
@@ -836,6 +836,7 @@ const SubtitleTranslator = () => {
         </div>
       )}
 
+      {/* projection: 银幕式进度 — 最新译行作为"字幕"实时放映,字幕翻译页专属 */}
       <TranslationProgressModal
         open={isTranslating}
         percent={progressPercent}
@@ -843,6 +844,8 @@ const SubtitleTranslator = () => {
         targetLanguageCount={targetLanguages.length}
         currentCount={progressInfo.current}
         totalCount={progressInfo.total}
+        projection
+        latestLine={progressInfo.latest}
       />
 
       <MultiLanguageSettingsModal

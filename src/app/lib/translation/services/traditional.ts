@@ -4,7 +4,7 @@ import type { TranslationService } from "../types";
 import { defaultConfigs } from "../registry";
 import { isMethodSupportedForLanguage } from "../languages-data";
 import { getLanguageName } from "../utils";
-import { fetchJSON, requireApiKey, requireUrl, completeOpenAICompatUrl, PROXY_ENDPOINTS, THIRD_PARTY_ENDPOINTS, getOpenAICompatContent } from "./shared";
+import { fetchJSON, formatHttpError, parseRetryAfterMs, requireApiKey, requireUrl, completeOpenAICompatUrl, PROXY_ENDPOINTS, THIRD_PARTY_ENDPOINTS, getOpenAICompatContent } from "./shared";
 
 // DeepL source language: Chinese variants → ZH, Portuguese variants → PT, fil → TL
 const DEEPL_SOURCE_MAP: Record<string, string> = {
@@ -53,36 +53,198 @@ const GOOGLE_LANG_MAP: Record<string, string> = {
 };
 const toGoogleCode = (lang: string): string => GOOGLE_LANG_MAP[lang] ?? lang;
 
-export const gtxFreeAPI: TranslationService = async (params) => {
+// translate-pa is the API gateway behind Google's own website-translation
+// widget (Translate Element / te_lib). The legacy translate_a/single?client=gtx
+// family fell behind Google's anti-abuse wall in 2026-06: every request 302s
+// to google.com/sorry, which the browser surfaces as a CORS error. translate-pa
+// is a proper CORS gateway (ACAO reflects Origin, OPTIONS preflight allows
+// content-type + x-goog-api-key) and answers 200 even from IPs that
+// translate_a walls — all live-verified 2026-06-10, incl. sl=auto.
+const GTX_ENDPOINT = "https://translate-pa.googleapis.com/v1/translateHtml";
+// Public API key embedded in Google's te_lib loader — same "shared free
+// backend" semantics as the old client=gtx param, not a user secret.
+const GTX_PUBLIC_KEY = "AIzaSyATBXajvzQLTDHEQbcpq0Ihe0vWDHmO520";
+
+// translateHtml parses input as HTML: raw & / < are treated as markup and can
+// derail the translation (live-verified: "5 < 6" mistranslated). Escape on the
+// way in; the output keeps entities (&lt; stays &lt;), which index.ts's
+// HTML_ENCODING_METHODS pipeline already decodes for gtxFreeAPI.
+const escapeHtml = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+// Shared error shape for the raw-fetch free services (gtx both gateways, edge):
+// .status drives retry.ts's classification + the errorHint i18n keys — without
+// it a deterministic 4xx burns the full retry budget (2-60s backoff) per line.
+// 429 透传 Retry-After 给共享冷却闸(同 fetchJSON 的契约)。
+const httpStatusError = (response: Response): Error => {
+  const error = Object.assign(new Error(formatHttpError(null, response.status)), { status: response.status });
+  if (response.status === 429) {
+    const retryAfterMs = parseRetryAfterMs(response.headers.get("retry-after"));
+    if (retryAfterMs !== undefined) Object.assign(error, { retryAfterMs });
+  }
+  return error;
+};
+
+// Legacy translate_a gateway (the pre-2026-06 default). Google's anti-abuse
+// wall 302s it to google.com/sorry for many IPs now, but the wall is
+// IP-reputation-based — some regions/IPs still pass, so it stays selectable
+// as an endpoint preset. POST with the text in the form body, NOT a GET query
+// param: percent-encoded CJK inflates 9x and the endpoint caps URLs at ~16KB.
+//
+// STRICTLY ONE LINE PER REQUEST. This protocol was only ever validated
+// single-line in this codebase (the pre-chunk line path sent one line per
+// request), and whether dt=t preserves \n across a multi-line body is
+// unverifiable from behind the abuse wall — don't bet line alignment on it.
+// The chunk path's multi-line blocks are split back into parallel per-line
+// requests here (same flood profile as the historical batchSize-100 line path).
+const gtxLegacy = async (endpoint: string, params: Parameters<TranslationService>[0]): Promise<string> => {
   const { text, targetLanguage, sourceLanguage } = params;
-  // POST with the text in the form body, NOT a GET query param: percent-encoded
-  // CJK inflates 9x (3 UTF-8 bytes → 9 chars), and the endpoint caps URLs at
-  // ~16KB — single lines over ~1,700 CJK chars (routine md-translator
-  // paragraphs) deterministically 400'd on the GET form. Live-verified
-  // 2026-06-07: 3,000-CJK-char POST → 200, same response shape.
-  const apiEndpoint = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${toGoogleCode(sourceLanguage)}&tl=${toGoogleCode(targetLanguage)}&dt=t`;
-  const response = await fetch(apiEndpoint, {
+  const apiEndpoint = `${endpoint}?client=gtx&sl=${toGoogleCode(sourceLanguage)}&tl=${toGoogleCode(targetLanguage)}&dt=t`;
+
+  const requestOne = async (line: string): Promise<string> => {
+    const response = await fetch(apiEndpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: `q=${encodeURIComponent(line)}`,
+      signal: params.signal,
+    });
+    if (!response.ok) throw httpStatusError(response);
+
+    const data = await response.json();
+    // Legacy shape: data[0] = Array<[translated, original, ...]>. A non-array
+    // root (auth wall) falls back to "" instead of throwing TypeError on .map.
+    const segments = Array.isArray(data?.[0]) ? data[0] : [];
+    return segments.map((part: unknown) => (Array.isArray(part) && typeof part[0] === "string" ? part[0] : "")).join("");
+  };
+
+  const lines = text.split("\n");
+  if (lines.length === 1) return requestOne(text);
+  // Blank lines pass through untouched — preserves count for the chunk
+  // path's join/split realignment. A failed line rejects the whole chunk;
+  // the chunk path soft-fails it as a unit (same as any other MT error).
+  const results = await Promise.all(lines.map((line) => (line.trim() ? requestOne(line) : Promise.resolve(line))));
+  return results.join("\n");
+};
+
+export const gtxFreeAPI: TranslationService = async (params) => {
+  const { text, targetLanguage, sourceLanguage, url } = params;
+  // Gateway switch by URL shape: /translate_a/ → legacy form protocol
+  // (official legacy host or a user-hosted mirror); anything else → the
+  // translate-pa array protocol (official default or a same-protocol mirror).
+  const endpoint = url?.trim() || GTX_ENDPOINT;
+  if (endpoint.includes("/translate_a/")) return gtxLegacy(endpoint, params);
+
+  // HTML semantics collapse \n to spaces (live-verified), which would wreck
+  // the multi-line chunk path. translateHtml natively takes an ARRAY of texts,
+  // so send one element per line and rejoin. Blank elements 400
+  // ("invalid argument") — skip them and re-insert by position.
+  const lines = text.split("\n");
+  const sentIndices: number[] = [];
+  const payload: string[] = [];
+  lines.forEach((line, i) => {
+    if (line.trim()) {
+      sentIndices.push(i);
+      payload.push(escapeHtml(line));
+    }
+  });
+  if (payload.length === 0) return text;
+
+  const response = await fetch(endpoint, {
     method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: `q=${encodeURIComponent(text)}`,
+    headers: { "Content-Type": "application/json+protobuf", "X-Goog-API-Key": GTX_PUBLIC_KEY },
+    body: JSON.stringify([[payload, toGoogleCode(sourceLanguage), toGoogleCode(targetLanguage)], "te_lib"]),
     signal: params.signal,
   });
-
-  if (!response.ok) {
-    // Attach .status like fetchJSON does — without it, retry.ts's status-based
-    // classification never fires for the DEFAULT service and a deterministic
-    // 4xx burns the full retry budget (2-60s backoff) on every line.
-    throw Object.assign(new Error(`HTTP error! status: ${response.status}`), { status: response.status });
-  }
+  if (!response.ok) throw httpStatusError(response);
 
   const data = await response.json();
-  // GTX wraps translations in data[0] as Array<[translated, original, ...]>.
-  // Empty input or auth wall returns a non-array root — fall back to "" instead
-  // of throwing TypeError on .map.
-  const segments = Array.isArray(data?.[0]) ? data[0] : [];
-  return segments
-    .map((part: unknown) => (Array.isArray(part) && typeof part[0] === "string" ? part[0] : ""))
-    .join("");
+  // Response: data[0] = translations array, parallel to the request payload
+  // (data[1] = detected source langs, only present with sl=auto). A non-array
+  // root (auth wall / shape drift) falls back to "" per line instead of
+  // throwing TypeError downstream.
+  const translated = Array.isArray(data?.[0]) ? data[0] : [];
+  const out = [...lines];
+  sentIndices.forEach((lineIdx, j) => {
+    out[lineIdx] = typeof translated[j] === "string" ? translated[j] : "";
+  });
+  return out.join("\n");
+};
+
+// ===== Edge API (Free) — Microsoft Edge's built-in translator backend =====
+// Same engine as Azure Translator, fronted by Edge's free auth endpoint:
+// GET edge.microsoft.com/translate/auth issues a ~10-min JWT accepted by
+// api-edge.cognitive.microsofttranslator.com. CORS fully open (ACAO *) on
+// both endpoints, \n preserved, raw & / < untouched (plain-text mode), and
+// our master codes (zh / zh-hant) accepted as-is — live-verified 2026-06-10.
+const EDGE_AUTH_ENDPOINT = "https://edge.microsoft.com/translate/auth";
+const EDGE_TRANSLATE_ENDPOINT = "https://api-edge.cognitive.microsofttranslator.com/translate?api-version=3.0";
+
+// Token cache: refresh at 8 min (2-min safety margin on the ~10-min JWT).
+// The in-flight promise is shared (single-flight) so a 100-line batch fires ONE
+// auth request, not 100 — both on cold start AND on a 401 storm (the whole
+// concurrent batch sees the same expired token at once and asks to refresh).
+let edgeTokenCache: { value: string; expiresAt: number } | null = null;
+let edgeTokenInflight: Promise<string> | null = null;
+
+// `staleToken` (optional) = the token the caller just saw rejected (401/403).
+// We hand back the cache only if it has already moved PAST that token; otherwise
+// we refresh. A concurrent refresh is joined rather than duplicated, so 100 lines
+// 401-ing on the same token collapse to a single auth fetch.
+const getEdgeToken = (signal: AbortSignal | undefined, staleToken?: string): Promise<string> => {
+  if (edgeTokenCache && edgeTokenCache.value !== staleToken && Date.now() < edgeTokenCache.expiresAt) {
+    return Promise.resolve(edgeTokenCache.value);
+  }
+  if (edgeTokenInflight) return edgeTokenInflight;
+  const inflight = (async () => {
+    // signal: ties the auth fetch to the initiating line's abort/timeout so a
+    // hung auth endpoint can't wedge the run. Peers awaiting this promise see
+    // an AbortError on cancel — handled as a cascaded abort by the translator.
+    const response = await fetch(EDGE_AUTH_ENDPOINT, { signal });
+    if (!response.ok) {
+      throw Object.assign(new Error(formatHttpError(null, response.status)), { status: response.status });
+    }
+    const value = (await response.text()).trim();
+    edgeTokenCache = { value, expiresAt: Date.now() + 8 * 60_000 };
+    return value;
+  })().finally(() => {
+    edgeTokenInflight = null;
+  });
+  edgeTokenInflight = inflight;
+  return inflight;
+};
+
+export const edgeFreeAPI: TranslationService = async (params) => {
+  const { text, targetLanguage, sourceLanguage } = params;
+  // Edge backend = Azure Translator → reuse the Azure code remaps (ckb → ku).
+  const target = toAzureCode(targetLanguage);
+  const source = sourceLanguage !== "auto" ? toAzureCode(sourceLanguage) : null;
+  const endpoint = `${EDGE_TRANSLATE_ENDPOINT}&to=${target}${source ? `&from=${source}` : ""}`;
+
+  const doRequest = async (token: string) =>
+    fetch(endpoint, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify([{ Text: text }]),
+      signal: params.signal,
+    });
+
+  const token = await getEdgeToken(params.signal);
+  let response = await doRequest(token);
+  // Expired/revoked JWT mid-run → ONE transparent refresh+retry. Without it a
+  // 401 classifies as an auth error and fast-aborts the whole batch, killing
+  // every run longer than the ~10-min token lifetime. Passing the rejected
+  // `token` as stale makes the refresh single-flight across the whole batch.
+  if (response.status === 401 || response.status === 403) {
+    response = await doRequest(await getEdgeToken(params.signal, token));
+  }
+
+  if (!response.ok) throw httpStatusError(response);
+
+  const data = (await response.json()) as Array<{ translations?: Array<{ text?: string }> }> | null;
+  const translatedText = data?.[0]?.translations?.[0]?.text;
+  if (typeof translatedText !== "string") {
+    throw new Error("Invalid response format from Edge Translate");
+  }
+  return translatedText;
 };
 
 export const google: TranslationService = async (params) => {
@@ -315,35 +477,14 @@ ${text.trim()}<end_of_turn>
 `;
 };
 
-/**
- * Lightweight reachability check for the local TranslateGemma server. Hits
- * the OpenAI-spec /models listing endpoint (sibling of /chat/completions on
- * every OpenAI-compat server) instead of running an actual inference. Catches
- * the common "server not running" case (connection refused in <100ms) without
- * waiting for first-request model loading (5-30s on cold start). Used by
- * validate's pre-flight.
- *
- * Edge case it doesn't catch: server up but the configured model isn't loaded
- * — that surfaces during the actual translation as a clearer model-specific
- * error from the runtime, which is acceptable.
- *
- * URL handling preserves the user's path prefix so it works for non-/v1/
- * deployments (e.g. self-hosted vLLM at /api/v3/chat/completions → probes
- * /api/v3/models, not /api/v3/chat/completions/v1/models).
- */
-export const translategemmaHealthCheck = async (url: string, signal?: AbortSignal): Promise<boolean> => {
-  try {
-    const baseUrl = url.trim().replace(/\/(chat\/)?completions\/?$/, "");
-    const response = await fetch(`${baseUrl}/models`, {
-      method: "GET",
-      signal: signal ?? AbortSignal.timeout(5000),
-    });
-    return response.ok;
-  } catch {
-    return false;
-  }
-};
-
+// NOTE: the former GET /models health check was removed deliberately — some
+// LM Studio builds don't route GET /v1/models at all ("Unexpected endpoint or
+// method... Returning 200 anyway", with no CORS headers on the fallback), so
+// the probe hard-blocked translation while the server and Test both worked.
+// translategemma now goes through the same runReachabilityProbe as every other
+// probed method (a real /v1/completions request — identical wire path to the
+// Test button).
+//
 // ⚠️ DO NOT switch this to /v1/chat/completions with structured `content`.
 //
 // Empirically tested 2026-05-06 against LM Studio + translategemma-4b-it:

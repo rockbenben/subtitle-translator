@@ -217,6 +217,17 @@ const DEEPLX_SUPPORTED: ReadonlySet<string> = new Set([
   "sl", "lv", "et", "tr",
 ]);
 
+// Azure Translator denylist — used by both `azure` (official, keyed) and
+// `edgeFreeAPI` (Edge's free front to the same engine). One Set, two entries.
+const AZURE_UNSUPPORTED = new Set([
+  "jv",
+  // 2026-05 additions:
+  "ace", "an", "ay", "br", "ceb", "eo", "gn", "la", "lb", "lmo",
+  "oc", "om", "pag", "pam", "qu", "sa", "scn", "su", "ts", "wo", "yi",
+  // 2026-05-26 additions (Transliterate-only, no Text Translation):
+  "be", "tg",
+]);
+
 const UNSUPPORTED_LANGS: Record<string, Set<string>> = {
   // Official DeepL API (next-gen, 110+ languages via the project proxy).
   // Verified 2026-05-26 — denylist is complete, no other master codes missing.
@@ -237,15 +248,11 @@ const UNSUPPORTED_LANGS: Record<string, Set<string>> = {
   // Azure Translator. Pre-existing `jv` (Javanese) plus 21 from the 2026-05
   // expansion, plus `be` and `tg` (added 2026-05-26 — both languages appear
   // only in Azure's Transliterate API table, NOT in Text Translation, which
-  // is the API we hit).
-  azure: new Set([
-    "jv",
-    // 2026-05 additions:
-    "ace", "an", "ay", "br", "ceb", "eo", "gn", "la", "lb", "lmo",
-    "oc", "om", "pag", "pam", "qu", "sa", "scn", "su", "ts", "wo", "yi",
-    // 2026-05-26 additions (Transliterate-only, no Text Translation):
-    "be", "tg",
-  ]),
+  // is the API we hit). Shared with edgeFreeAPI below — Edge's free endpoint
+  // (api-edge.cognitive.microsofttranslator.com) is the same Azure Translator
+  // engine behind Edge's free auth, so coverage is identical.
+  azure: AZURE_UNSUPPORTED,
+  edgeFreeAPI: AZURE_UNSUPPORTED,
 
   // Qwen-MT plus/flash/turbo. 41 codes denied; 80 of our master supported
   // (Qwen-MT claims 92 in total — the gap is Arabic dialects + a few codes

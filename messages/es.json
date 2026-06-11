@@ -166,6 +166,7 @@
     "testConnection": "Probar conexión",
     "moreProviderSettings": "Más ajustes del Provider",
     "gtxFreeAPIUnavailable": "El servicio GTX Free está temporalmente inaccesible — podría ser una restricción de red. Inténtalo de nuevo más tarde o cambia a otro servicio de traducción.",
+    "edgeFreeAPIUnavailable": "El servicio Edge Free está temporalmente inaccesible — podría ser una restricción de red. Inténtalo de nuevo más tarde o cambia a otro servicio de traducción.",
     "translategemmaUnavailable": "El servicio TranslateGemma está temporalmente inaccesible, asegúrate de que tu servidor local (LM Studio / llama.cpp / Ollama) esté en ejecución y la URL sea correcta.",
     "networkUnavailable": "El servicio de traducción está temporalmente inaccesible — podría ser un problema de red o el servicio está teniendo un percance. Inténtalo de nuevo más tarde o cambia a otro servicio de traducción.",
     "translationTimeout": "La solicitud de traducción agotó el tiempo de espera — podría ser una red lenta o el servicio está tardando demasiado en responder. Inténtalo de nuevo más tarde o cambia a otro servicio de traducción.",
@@ -183,7 +184,19 @@
     "selectedCount": "{count} seleccionados",
     "recentLanguages": "Recientes",
     "langGroupAmericasOceania": "Américas y Oceanía",
-    "relatedTools": "Herramientas relacionadas"
+    "relatedTools": "Herramientas relacionadas",
+    "errorHint400": "Solicitud no válida — a menudo un nombre de modelo o código de idioma incorrecto, o un parámetro no compatible",
+    "errorHint401": "La clave de API no es válida o ha caducado",
+    "errorHint402": "Saldo insuficiente — recargue con su proveedor",
+    "errorHint403": "Acceso prohibido — la clave puede ser inválida, carecer de permisos o su región puede estar bloqueada",
+    "errorHint404": "Endpoint o modelo no encontrado — compruebe la URL y el nombre del modelo",
+    "errorHint408": "La solicitud expiró, vuelva a intentarlo",
+    "errorHint413": "Texto demasiado grande — reduzca el tamaño del bloque o divida el texto",
+    "errorHint422": "Un parámetro no es compatible con este modelo — a menudo opciones de razonamiento",
+    "errorHint429": "Límite de solicitudes superado, inténtelo más tarde",
+    "errorHint456": "Cuota de traducción agotada para este período",
+    "errorHint5xx": "Error del servidor, inténtelo más tarde",
+    "rateLimitCooldown": "Límite de solicitudes alcanzado — pausa breve, se reintentará automáticamente"
   },
   "SubtitleTranslator": {
     "clientDescription": "Sube subtítulos o pega contenido. Selecciona idioma destino para traducción rápida. Soporta procesamiento por lotes y conserva línea de tiempo.",

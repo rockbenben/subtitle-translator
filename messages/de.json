@@ -166,6 +166,7 @@
     "testConnection": "Verbindung testen",
     "moreProviderSettings": "Weitere Provider-Einstellungen",
     "gtxFreeAPIUnavailable": "Der GTX Free-Dienst ist vorübergehend nicht erreichbar — möglicherweise eine Netzwerkbeschränkung. Versuche es später erneut oder wechsle zu einem anderen Übersetzungsdienst.",
+    "edgeFreeAPIUnavailable": "Der Edge Free-Dienst ist vorübergehend nicht erreichbar — möglicherweise eine Netzwerkbeschränkung. Versuche es später erneut oder wechsle zu einem anderen Übersetzungsdienst.",
     "translategemmaUnavailable": "Der TranslateGemma-Dienst ist vorübergehend nicht erreichbar, stelle sicher, dass dein lokaler Server (LM Studio / llama.cpp / Ollama) läuft und die URL korrekt ist.",
     "networkUnavailable": "Der Übersetzungsdienst ist vorübergehend nicht erreichbar — möglicherweise ein Netzwerkproblem oder der Dienst hat einen kurzen Aussetzer. Versuche es später erneut oder wechsle zu einem anderen Übersetzungsdienst.",
     "translationTimeout": "Die Übersetzungsanfrage hat das Zeitlimit überschritten — möglicherweise ein langsames Netzwerk oder der Dienst braucht zu lange zum Antworten. Versuche es später erneut oder wechsle zu einem anderen Übersetzungsdienst.",
@@ -183,7 +184,19 @@
     "selectedCount": "{count} ausgewählt",
     "recentLanguages": "Zuletzt verwendet",
     "langGroupAmericasOceania": "Amerika & Ozeanien",
-    "relatedTools": "Ähnliche Tools"
+    "relatedTools": "Ähnliche Tools",
+    "errorHint400": "Ungültige Anfrage — oft ein falscher Modellname oder Sprachcode oder ein nicht unterstützter Parameter",
+    "errorHint401": "API-Schlüssel ungültig oder abgelaufen",
+    "errorHint402": "Guthaben nicht ausreichend — bitte beim Anbieter aufladen",
+    "errorHint403": "Zugriff verboten — der Schlüssel ist möglicherweise ungültig, hat keine Berechtigung oder Ihre Region ist gesperrt",
+    "errorHint404": "Endpoint oder Modell nicht gefunden — URL und Modellnamen prüfen",
+    "errorHint408": "Zeitüberschreitung der Anfrage, bitte erneut versuchen",
+    "errorHint413": "Text zu groß — Blockgröße verringern oder Text aufteilen",
+    "errorHint422": "Parameter wird von diesem Modell nicht unterstützt — oft Thinking-/Reasoning-Optionen",
+    "errorHint429": "Anfragelimit überschritten, bitte später erneut versuchen",
+    "errorHint456": "Übersetzungskontingent für diesen Zeitraum aufgebraucht",
+    "errorHint5xx": "Serverfehler, bitte später erneut versuchen",
+    "rateLimitCooldown": "Anfragelimit erreicht — kurze Pause, automatischer neuer Versuch"
   },
   "SubtitleTranslator": {
     "clientDescription": "Untertiteldatei hochladen oder Inhalt einfügen, Zielsprache wählen für schnelle Übersetzung. Unterstützt Stapelverarbeitung und behält Zeitachse bei.",

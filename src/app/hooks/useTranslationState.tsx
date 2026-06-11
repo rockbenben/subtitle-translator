@@ -22,7 +22,6 @@ import {
   PREFLIGHT_PROBE_METHODS,
   DEFAULT_SYSTEM_PROMPT,
   DEFAULT_USER_PROMPT,
-  translategemmaHealthCheck,
   deleteCachedTranslation,
   type TranslateTextParams,
   type TranslationConfig,
@@ -39,6 +38,7 @@ import {
   createSettingsFileInput,
   validateTranslationInputs,
   pingSignature,
+  rateLimitGate,
   DEFAULT_RETRY_COUNT,
   DEFAULT_RETRY_TIMEOUT,
   isAuthError,
@@ -46,7 +46,7 @@ import {
   type TranslationSettings,
   type UserRetryConfig,
 } from "@/app/hooks/translation";
-import { isNetworkError } from "@/app/utils/errorUtils";
+import { describeError, isNetworkError } from "@/app/utils/errorUtils";
 import pLimit from "p-limit";
 import pRetry from "p-retry";
 import { useTranslations } from "next-intl";
@@ -366,15 +366,16 @@ const useTranslationState = () => {
       // so editing the key never probes mid-typing.
       const sig = pingSignature(translationMethod, config);
       if (!validatedProbes.current.has(sig)) {
-        if (translationMethod === "translategemma") {
-          // Local LM Studio reachability (GET /v1/models) — has its own built-in
-          // 5s timeout for a fast fail when the server isn't running. Failure =
-          // hard-block (a local health check has no transient nuance).
-          if ((await translategemmaHealthCheck(String(config.url ?? ""))) !== true) {
-            message.open({ type: "error", content: t("translategemmaUnavailable"), duration: 10 });
-            return false;
-          }
-        } else {
+        {
+          // translategemma 不再有专属健康检查(曾 GET {base}/models):部分
+          // LM Studio 版本根本不路由该端点("Unexpected endpoint... Returning
+          // 200 anyway",且 fallback 响应无 CORS 头),服务器明明活着、Test
+          // 也通过,翻译却被探测硬阻断 —— "Test 与翻译走不同请求"的分裂
+          // 已经第二次咬人(第一次是 URL 规范化不一致)。现在与其它方法
+          // 一样走真实翻译探测(runReachabilityProbe → /v1/completions),
+          // 和 Test 按钮完全同一条 wire 路径,超时同样吃 requestTimeoutSec
+          // (兼容 JIT 装载模型的慢冷启)。
+          //
           // Bound the probe: unlike per-line translation it has no timeout of its
           // own, so a hanging / black-hole endpoint (esp. a user-typed llm URL)
           // could stall the whole run at "validating" forever. Use the user's
@@ -408,6 +409,8 @@ const useTranslationState = () => {
                 deepl: t("deeplUnavailable"),
                 llm: t("llmUnavailable"),
                 gtxFreeAPI: t("gtxFreeAPIUnavailable"),
+                edgeFreeAPI: t("edgeFreeAPIUnavailable"),
+                translategemma: t("translategemmaUnavailable"),
               };
               if (translationMethod === "deeplx") setTranslationMethod(DEFAULT_API);
               // ⚠ Footgun: setState is async; below this line `translationMethod` in
@@ -533,6 +536,13 @@ const useTranslationState = () => {
             throw new Error("Translation aborted");
           }
 
+          // 共享 429 冷却闸:该服务正被限流时,所有并发行在【发请求前】统一
+          // 等冷却结束,而不是各自按 pRetry 独立节奏继续轰炸(重试羊群会让
+          // 限流永不解除,直到每行烧光重试预算软失败)。等待先于超时计时器
+          // 创建 —— 闸内等待不占用请求超时额度。中途 abort 抛
+          // "Translation aborted",走既有级联中止链路。
+          await rateLimitGate.wait(config.translationMethod, run?.signal);
+
           const { controller, cleanup } = createTimeoutController();
 
           try {
@@ -547,6 +557,16 @@ const useTranslationState = () => {
             // a healthy successor run.
             if (isAuthError(error)) {
               run?.abort();
+            }
+            // 429 → 触发该服务的全局冷却(尊重服务器 Retry-After,否则
+            // 1s→2s→…→60s 升级)。trip 仅在【开启】一轮冷却时返回 true
+            // (同一波并发 429 只第一个生效),据此弹一次降速提示 —— 用户
+            // 能看出"为什么变慢了",而不是面对一个静默卡住的进度条。
+            if ((error as { status?: number })?.status === 429) {
+              const startedCooldown = rateLimitGate.trip(config.translationMethod, (error as { retryAfterMs?: number }).retryAfterMs);
+              if (startedCooldown) {
+                message.warning({ content: t("rateLimitCooldown"), key: "rate-limit-cooldown", duration: 5 });
+              }
             }
             throw error;
           }
@@ -612,7 +632,7 @@ const useTranslationState = () => {
     contentLines: string[],
     runtimeConfig: TranslationRuntimeConfig,
     cacheSuffix: string,
-    updateProgress: (current: number, total: number) => void,
+    updateProgress: (current: number, total: number, latest?: string) => void,
     documentType: "subtitle" | "markdown" | "generic" = "subtitle",
     fullText?: string,
     runController?: AbortController,
@@ -706,15 +726,21 @@ const useTranslationState = () => {
         }
 
         // Reflect partial progress as soon as the batch returns, so the bar doesn't
-        // sit at 0% for the full duration of each 50-line LLM call.
+        // sit at 0% for the full duration of each 50-line LLM call. The last
+        // non-blank line of this batch feeds the live preview (projection screen).
         const doneSoFar = translatedLines.filter((x) => x !== undefined).length;
-        if (doneSoFar > 0) updateProgress(doneSoFar, contentLines.length);
+        const latestLine = translatedLines
+          .slice(batchStart, batchEnd)
+          .filter((x): x is string => x !== undefined && x.trim() !== "")
+          .at(-1);
+        if (doneSoFar > 0) updateProgress(doneSoFar, contentLines.length, latestLine);
 
         return !translatedLines.slice(batchStart, batchEnd).includes(undefined);
       } catch (error) {
         if (isAuthError(error)) throw error;
-        // Real soft-failure (non-auth) — keep the message so the panel can show WHY.
-        lastErrorRef.current = (error as Error)?.message || String(error);
+        // Real soft-failure (non-auth) — keep the reason (+ status-mapped i18n
+        // hint) so the failure panel can show WHY in the user's language.
+        lastErrorRef.current = describeError(error, t);
         console.warn(`Batch ${batchStart + 1}-${batchEnd} translation error:`, error);
         return false;
       }
@@ -1039,13 +1065,13 @@ const useTranslationState = () => {
               if (isAuthError(error) || runController.signal.aborted) throw error;
               // Otherwise (network blip, 5xx, 4xx like a 422 thinking-param reject,
               // etc., after pRetry exhausted): soft-fail this line, keep peers running.
-              lastErrorRef.current = (error as Error)?.message || String(error);
+              lastErrorRef.current = describeError(error, t);
               translatedLines[index] = line;
               if (line && line.trim()) failedLinesList.push(line);
             }
             completedCount++;
             if (completedCount % progressStep === 0 || completedCount === contentLines.length) {
-              updateProgress(completedCount, contentLines.length);
+              updateProgress(completedCount, contentLines.length, translatedLines[index]);
             }
             if (baseDelay > 0 && completedCount < contentLines.length) {
               await delay(baseDelay);
@@ -1098,11 +1124,41 @@ const useTranslationState = () => {
       const chunks = splitTextIntoChunks(text, chunkSize, delimiter);
       const translatedChunks: string[] = [];
 
+      // 进度按【行】累计上报,不按块:块数对用户无意义(30 行字幕 1 块会显示
+      // "1 / 1"),且 projection 弹窗把 current/total 渲染为 "CUE x / y"。
+      const totalChunkLines = nonBlankLines.length;
+      let chunkLinesDone = 0;
+      // Soft-fail per chunk — mirror the line path's semantics exactly: auth
+      // errors and post-abort cascades propagate (kill the run), anything else
+      // keeps that chunk's SOURCE text and rolls into TranslateFailurePanel.
+      // Without this, one chunk exhausting retries threw away every chunk that
+      // had already succeeded (all-or-nothing for the DEFAULT free service).
+      const failedChunkLines: string[] = [];
+
       for (let i = 0; i < chunks.length; i++) {
-        const translatedContent = await translateSingle(chunks[i], cacheSuffix, runtimeConfig, fullText, runController);
-        translatedChunks.push(translationMethodArg === "deeplx" ? (translatedContent || "").replace(/<>/g, "\n") : translatedContent || "");
-        updateProgress(i + 1, chunks.length);
+        let processed: string;
+        try {
+          const translatedContent = await translateSingle(chunks[i], cacheSuffix, runtimeConfig, fullText, runController);
+          processed = translationMethodArg === "deeplx" ? (translatedContent || "").replace(/<>/g, "\n") : translatedContent || "";
+        } catch (error) {
+          if (isAuthError(error) || runController.signal.aborted) throw error;
+          lastErrorRef.current = describeError(error, t);
+          // 软填原文 —— deeplx 的源块含 "<>" 分隔符,同样要还原成 \n 保持行对齐
+          processed = translationMethodArg === "deeplx" ? chunks[i].replace(/<>/g, "\n") : chunks[i];
+          failedChunkLines.push(...processed.split("\n").filter((l) => l.trim()));
+        }
+        translatedChunks.push(processed);
+        chunkLinesDone += chunks[i].split(delimiter).length;
+        // 末行喂给实时预览(projection 银幕)—— 同 line/batch 路径的 latest 语义
+        updateProgress(chunkLinesDone, totalChunkLines, processed.split("\n").filter((l) => l.trim()).at(-1));
         if (i < chunks.length - 1) await delay(config?.delayTime || 200);
+      }
+
+      if (failedChunkLines.length > 0) {
+        runHadFailuresRef.current = true;
+        setFailedCount((prev) => prev + failedChunkLines.length);
+        setFailedLines((prev) => [...prev, ...failedChunkLines]);
+        if (lastErrorRef.current) setFailedReason(lastErrorRef.current);
       }
 
       const translatedNonBlank = translatedChunks.join("\n").split("\n");

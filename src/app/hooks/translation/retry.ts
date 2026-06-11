@@ -131,3 +131,87 @@ export const getRetryConfig = (translationMethod: string, userConfig?: UserRetry
 export const delay = (ms: number): Promise<void> => {
   return new Promise((resolve) => setTimeout(resolve, ms));
 };
+
+// ─── Shared 429 cooldown gate ────────────────────────────────────────────────
+// Per-method, module-level: when any request hits 429, ALL of that method's
+// queued lines + in-flight retries pause until the cooldown ends — instead of
+// 100 concurrent lines each retrying on independent pRetry schedules (a
+// thundering herd that keeps the provider rate-limiting until every line's
+// retry budget burns out). This is what lets gtxFreeAPI keep its fast
+// batchSize=100 default: full speed while the provider allows it, automatic
+// duty-cycling the moment it doesn't.
+//
+// Escalation: a burst that starts within ESCALATION_WINDOW of the previous
+// cooldown's END means the provider is still limiting → double the cooldown
+// (1s → 2s → … → 60s cap); a burst long after resets to base. Within-burst
+// trips (the 100 concurrent 429s that arrive together) neither extend nor
+// escalate — see trip(). A server-sent Retry-After overrides the heuristic.
+// Module-level (session-scoped) by design: rate-limit state IS cross-run
+// reality, a new run against a still-limited provider should start slow.
+type GateState = { until: number; cooldownMs: number };
+const gateStates = new Map<string, GateState>();
+
+// 业界惯例对齐(Google API client / AWS SDK / OpenAI cookbook):base ~1s、
+// factor 2、cap 60s、优先尊重 Retry-After。1s 起步 = 快速试探恢复;真没
+// 恢复会沿 1→2→4→…→60s 自动爬升,不会反复轰炸。
+export const RATE_LIMIT_BASE_COOLDOWN_MS = 1_000;
+export const RATE_LIMIT_MAX_COOLDOWN_MS = 60_000;
+const ESCALATION_WINDOW_MS = 30_000;
+// 放行抖动:冷却结束时所有等待者若同刻恢复,等于再来一次满并发突发,大概率
+// 立刻二次 429。每个等待者随机多等 0–1s,把恢复瞬间摊开(AWS "full jitter"
+// 的同款动机,作用在共享闸的出口侧)。冷却期外到达的请求不付此开销。
+export const RATE_LIMIT_RESUME_JITTER_MS = 1_000;
+
+// Same rejection message as the run-abort path ("Translation aborted") so the
+// existing classification chain (isCascadedAbort → silent, non-retryable)
+// handles a mid-wait cancel without new plumbing.
+const abortableDelay = (ms: number, signal?: AbortSignal): Promise<void> =>
+  new Promise((resolve, reject) => {
+    if (signal?.aborted) return reject(new Error("Translation aborted"));
+    const onAbort = () => {
+      clearTimeout(timer);
+      reject(new Error("Translation aborted"));
+    };
+    const timer = setTimeout(() => {
+      signal?.removeEventListener("abort", onAbort);
+      resolve();
+    }, ms);
+    signal?.addEventListener("abort", onAbort, { once: true });
+  });
+
+export const rateLimitGate = {
+  /**
+   * Block until the method's active cooldown (if any) has passed. Loops after
+   * waking: a fresh burst can start a NEW cooldown between this waiter's
+   * wake-up and its dispatch. Rejects with "Translation aborted" when the
+   * run's signal fires mid-wait.
+   */
+  async wait(method: string, signal?: AbortSignal): Promise<void> {
+    for (;;) {
+      const remaining = (gateStates.get(method)?.until ?? 0) - Date.now();
+      if (remaining <= 0) return;
+      await abortableDelay(remaining + Math.random() * RATE_LIMIT_RESUME_JITTER_MS, signal);
+    }
+  },
+
+  /**
+   * Record a 429. Returns true when this call STARTED a cooldown — callers can
+   * surface ONE user-facing notice per burst. Returns false for within-burst
+   * duplicates (concurrent 429s landing while already cooling down): counting
+   * those would escalate base × 2^100 on the first burst.
+   */
+  trip(method: string, retryAfterMs?: number): boolean {
+    const now = Date.now();
+    const prev = gateStates.get(method);
+    if (prev && now < prev.until) return false;
+    const escalated = prev && now - prev.until < ESCALATION_WINDOW_MS ? Math.min(prev.cooldownMs * 2, RATE_LIMIT_MAX_COOLDOWN_MS) : RATE_LIMIT_BASE_COOLDOWN_MS;
+    const cooldownMs = retryAfterMs ?? escalated;
+    gateStates.set(method, { until: now + cooldownMs, cooldownMs });
+    return true;
+  },
+
+  /** Test hook — clears all cooldown state. */
+  _reset(): void {
+    gateStates.clear();
+  },
+};

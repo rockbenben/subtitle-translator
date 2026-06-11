@@ -116,7 +116,7 @@ const MultiLanguageSettingsModal = ({ open, onClose, targetLanguages, setTargetL
             onClick={() => {
               // Merge into the textarea: parse current → union with preset → write back.
               const existing = inputValue
-                .replace(/,/g, ",")
+                .replace(/，/g, ",")
                 .split(/[\s,]+/)
                 .map((s) => s.trim().toLowerCase())
                 .filter(Boolean);

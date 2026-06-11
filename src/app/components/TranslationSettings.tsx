@@ -10,9 +10,8 @@ import {
   DEFAULT_USER_PROMPT,
   BINARY_EFFORT_VENDORS,
   URL_IS_PRIMARY_CRED,
-  deriveThinkingParams,
   getConfigStatus,
-  testTranslation,
+  testTranslationWithTimeout,
   clearTranslationCache,
   getDefaultConfig,
   isThinkingModel,
@@ -25,9 +24,9 @@ import {
   completeOpenAICompatUrl,
   supportsGlossary,
   type ReasoningEffort,
-  type TranslateTextParams,
 } from "@/app/lib/translation";
 import { useTranslationContext } from "@/app/components/TranslationContext";
+import { describeError } from "@/app/utils";
 import { useTranslations } from "next-intl";
 import Section from "@/app/components/styled/Section";
 import GlobalPromptsPanel from "@/app/components/GlobalPromptsPanel";
@@ -63,6 +62,7 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
     loadLlmPreset,
     deleteLlmPreset,
     updateLlmPreset,
+    requestTimeoutSec,
   } = useTranslationContext();
 
   const [testingService, setTestingService] = useState<string | null>(null);
@@ -163,21 +163,15 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
 
     try {
       setTestingService(service);
-      // Mirror orchestrator's gate so the Test button exercises the same wire
-      // payload as actual translation (effort level — undefined = thinking off).
-      const testParams: Partial<TranslateTextParams> = {
-        ...(config as Partial<TranslateTextParams>),
-        reasoningEffort: deriveThinkingParams(service, config),
-      };
-      // 30s 超时:黑洞端点否则让 Test 按钮永远转圈(同 ApiStatusBlock)。
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 30_000);
-      const testError = await testTranslation(service, testParams, isLLMModel ? systemPrompt : undefined, isLLMModel ? userPrompt : undefined, controller.signal).finally(() => clearTimeout(timeout));
+      // 共用入口统一处理超时(= requestTimeoutSec,与正式翻译同源)与
+      // thinking 参数派生 —— 原则与实现都在 testTranslationWithTimeout。
+      const { error: testError, timedOut } = await testTranslationWithTimeout(service, config, requestTimeoutSec, isLLMModel ? systemPrompt : undefined, isLLMModel ? userPrompt : undefined);
       if (!testError) {
         message.success(`${currentService?.label || service} - ${t("testConfigSuccess")}`);
       } else {
-        // Surface the real reason (401/403/CORS/timeout/…), not a generic "test failed".
-        message.error(`${t("testConfigFail")}: ${testError}`, 10);
+        // Surface the real reason + the status-mapped i18n hint, not a generic
+        // "test failed". 超时单独归类(与 ApiStatusBlock 一致)。
+        message.error(`${t("testConfigFail")}: ${timedOut ? tCommon("translationTimeout") : describeError(testError, tCommon)}`, 10);
       }
     } catch (error) {
       // Pre-flight errors (e.g. deriveThinkingParams) — testTranslation itself no longer throws.
@@ -302,8 +296,8 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
       {isMobile && <div style={{ marginBottom: 12 }}>{actionButtons}</div>}
       {/* Custom (OpenAI-compatible) discoverability hint — many users miss that
           this provider accepts ANY OpenAI-compatible endpoint, not just Ollama.
-          Rendered as muted helper text, not an Alert: colorInfo is the vermilion
-          brand accent, so an info Alert reads like a warning for a casual hint. */}
+          Rendered as muted helper text, not an Alert: colorInfo is the brand
+          accent, so an info Alert reads louder than a casual hint warrants. */}
       {service === "llm" && (
         <Text type="secondary" style={{ display: "block", marginBottom: 16, fontSize: 13 }}>
           <InfoCircleOutlined style={{ marginInlineEnd: 6 }} />

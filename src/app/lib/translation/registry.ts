@@ -75,6 +75,30 @@ export const PROVIDERS = {
     kind: "custom",
     category: "machine-translation",
     label: "GTX API (Free)",
+    // chunkSize 触发 useTranslationState 的 chunk 路径:整批行按 \n 拼成
+    // ~5000 字符块,每块一个请求(translateHtml 原生接受文本数组,120 行 /
+    // 12.5KB 单请求实测 200)。相比旧的每行一请求 ×100 并发,请求数降
+    // 50-100x,免费共享端点的 IP 限流压力随之消失;残余 429 仍由共享冷却闸
+    // (hooks/translation/retry.ts rateLimitGate)全局暂停后自动恢复。
+    // batchSize 只服务 line 路径兜底(chunk 路径是顺序循环,不读它)。
+    //
+    // url 可切换网关,服务实现按 URL 形状分流协议(见 services/traditional.ts):
+    //   - 含 /translate_a/ → legacy 表单协议(被 Google 反滥用墙拦截的旧端点,
+    //     但墙按 IP 信誉放行,部分地区/IP 仍可用,保留作备选)
+    //   - 其余(默认 translate-pa,或用户自建同协议镜像)→ translateHtml 数组协议
+    defaults: { url: "https://translate-pa.googleapis.com/v1/translateHtml", chunkSize: 5000, delayTime: 200, batchSize: 100 },
+    endpoints: [
+      { label: "translate-pa (Default)", url: "https://translate-pa.googleapis.com/v1/translateHtml" },
+      { label: "Legacy gtx", url: "https://translate.googleapis.com/translate_a/single" },
+    ],
+  },
+  edgeFreeAPI: {
+    kind: "custom",
+    category: "machine-translation",
+    // 微软 Edge 浏览器内置翻译的免费后端(Azure Translator 引擎 + Edge 的
+    // 免费 JWT auth 端点)。与 gtxFreeAPI 同为零配置免费服务,互为备胎:
+    // Google 反滥用墙收紧时用户可一键切到 Edge,反之亦然。
+    label: "Edge API (Free)",
     defaults: { batchSize: 100 },
   },
   google: {
@@ -803,7 +827,7 @@ export const LLM_MODELS: string[] = Object.entries(PROVIDERS)
  * 入口会让用户误以为有完整执行能力。其余服务默认支持;新增无术语通道的 MT
  * 服务时在这里登记。
  */
-export const GLOSSARY_UNSUPPORTED: ReadonlySet<string> = new Set(["gtxFreeAPI", "google", "deepl", "deeplx", "azure", "translategemma", "webgoogletranslate"]);
+export const GLOSSARY_UNSUPPORTED: ReadonlySet<string> = new Set(["gtxFreeAPI", "edgeFreeAPI", "google", "deepl", "deeplx", "azure", "translategemma", "webgoogletranslate"]);
 
 /** Whether the glossary feature should surface (and enforce) for a method. */
 export const supportsGlossary = (method: string): boolean => method in PROVIDERS && !GLOSSARY_UNSUPPORTED.has(method);
@@ -823,7 +847,8 @@ export const URL_IS_PRIMARY_CRED: ReadonlySet<string> = new Set(["llm", "transla
 /**
  * Services that work with zero user configuration because they fall back to a
  * public/shared endpoint when no credentials are supplied:
- *   - gtxFreeAPI: hits Google's free translate.googleapis.com directly
+ *   - gtxFreeAPI: hits Google's translate-pa gateway with the public te_lib key
+ *   - edgeFreeAPI: hits Microsoft Edge's free translator (auto-issued JWT)
  *   - deeplx: empty URL falls back to our public THIRD_PARTY_ENDPOINTS.deeplx
  *
  * Effect:
@@ -833,7 +858,7 @@ export const URL_IS_PRIMARY_CRED: ReadonlySet<string> = new Set(["llm", "transla
  * Do NOT add services here unless an empty config is genuinely functional
  * end-to-end without any user setup.
  */
-export const NO_CRED_REQUIRED: ReadonlySet<string> = new Set(["gtxFreeAPI", "deeplx"]);
+export const NO_CRED_REQUIRED: ReadonlySet<string> = new Set(["gtxFreeAPI", "edgeFreeAPI", "deeplx"]);
 
 /**
  * Methods that get a live pre-flight reachability probe in validate() before bulk
@@ -841,9 +866,10 @@ export const NO_CRED_REQUIRED: ReadonlySet<string> = new Set(["gtxFreeAPI", "dee
  * principle: probe a method IFF its dominant failure mode would NOT already
  * fast-fail on its own AND probing it is free.
  *
- *   - gtxFreeAPI, deeplx: free public proxies — when down/rate-limited they throw
- *     NETWORK / 5xx errors, which don't trip the per-line auth-abort cascade, so
- *     without a probe a dead service slow-fails line-by-line. Probing is free.
+ *   - gtxFreeAPI, edgeFreeAPI, deeplx: free public proxies — when down/rate-limited
+ *     they throw NETWORK / 5xx errors, which don't trip the per-line auth-abort
+ *     cascade, so without a probe a dead service slow-fails line-by-line. Probing
+ *     is free.
  *   - llm, translategemma: self-hosted (Ollama / LM Studio / vLLM) — "server not
  *     running" / wrong URL is a NETWORK error (no auth-abort), and the probe hits
  *     the user's own machine, so it's free.
@@ -862,7 +888,7 @@ export const NO_CRED_REQUIRED: ReadonlySet<string> = new Set(["gtxFreeAPI", "dee
  * PROCEEDS (not blocks) on transient 429/5xx from these — the probe only
  * HARD-blocks definitive failures.
  */
-export const PREFLIGHT_PROBE_METHODS: ReadonlySet<string> = new Set(["deepl", "deeplx", "llm", "gtxFreeAPI", "translategemma"]);
+export const PREFLIGHT_PROBE_METHODS: ReadonlySet<string> = new Set(["deepl", "deeplx", "llm", "gtxFreeAPI", "edgeFreeAPI", "translategemma"]);
 
 /**
  * Services that require a non-empty URL **in addition to** apiKey. Compare with

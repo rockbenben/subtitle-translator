@@ -92,13 +92,11 @@ export const completeOpenAICompatUrl = (url: string): string => {
   return cleaned;
 };
 
-const ERROR_HINTS: Record<number, string> = {
-  401: " (API Key invalid or expired / API 密钥无效或已过期)",
-  403: " (Access forbidden / 访问被禁止)",
-  429: " (Rate limit exceeded, please retry later / 请求过于频繁，请稍后重试)",
-};
-const getHint = (code: number): string => ERROR_HINTS[code] ?? (code >= 500 && code < 600 ? " (Server error, please retry later / 服务器错误，请稍后重试)" : "");
-
+// 注意:这里【不再】拼接用户提示文案。每个状态码代表的可行动问题由展示层
+// 的 describeError(utils/errorUtils.ts)按错误对象的 .status 查 i18n 键
+// (common.errorHint*)生成 —— 纯 TS 的 service 层拿不到 locale,文案烤进
+// message 只能双语硬编码,搬到显示侧后 18 语种全覆盖。本函数只负责把
+// 响应体里的真实错误信息提炼成 `[status] message` 形态。
 export const formatHttpError = (data: unknown, status: number): string => {
   const obj = data as Record<string, unknown> | null;
   const errorObj = obj?.error as Record<string, unknown> | string | undefined;
@@ -108,17 +106,30 @@ export const formatHttpError = (data: unknown, status: number): string => {
     const msg = errorObj.message;
     const code = (typeof errorObj.code === "number" ? errorObj.code : null) ?? status;
     if (typeof msg === "string" && msg.trim()) {
-      return `[${code}] ${msg}${getHint(code)}`;
+      return `[${code}] ${msg}`;
     }
   }
 
   // Top-level: { error: "..." } or { message: "..." }
   const topLevel = (typeof errorObj === "string" ? errorObj : null) ?? (typeof obj?.message === "string" ? (obj.message as string) : null);
   if (topLevel?.trim()) {
-    return `[${status}] ${topLevel}${getHint(status)}`;
+    return `[${status}] ${topLevel}`;
   }
 
-  return `HTTP error! status: ${status}${getHint(status)}`;
+  return `HTTP error! status: ${status}`;
+};
+
+/**
+ * Parse a Retry-After header (delta-seconds or HTTP-date form) to milliseconds.
+ * Returns undefined for absent/unparsable/non-positive values. Clamped to 120s —
+ * a buggy or hostile header must not park the cooldown gate for hours.
+ */
+export const parseRetryAfterMs = (header: string | null): number | undefined => {
+  if (!header) return undefined;
+  const seconds = Number(header);
+  const ms = Number.isFinite(seconds) ? seconds * 1000 : new Date(header).getTime() - Date.now();
+  if (!Number.isFinite(ms) || ms <= 0) return undefined;
+  return Math.min(ms, 120_000);
 };
 
 /**
@@ -137,7 +148,14 @@ export const fetchJSON = async (url: string, init?: RequestInit): Promise<unknow
     // Yandex 401 ("Unauthenticated"/"Unknown api key" — no keyword match) evaded
     // the auth-abort cascade and a deterministic 400 (bad folderId → invalid
     // model URI) burned the full retry budget on every batch.
-    throw Object.assign(new Error(formatHttpError(data, response.status)), { status: response.status });
+    const error = Object.assign(new Error(formatHttpError(data, response.status)), { status: response.status });
+    // 429: surface the server's own Retry-After so the shared cooldown gate
+    // (hooks/translation/retry.ts) waits exactly as told instead of guessing.
+    if (response.status === 429) {
+      const retryAfterMs = parseRetryAfterMs(response.headers.get("retry-after"));
+      if (retryAfterMs !== undefined) Object.assign(error, { retryAfterMs });
+    }
+    throw error;
   }
   return response.json();
 };

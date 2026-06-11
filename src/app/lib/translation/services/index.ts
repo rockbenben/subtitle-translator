@@ -6,6 +6,7 @@ import * as llm from "./llm";
 export const translationServices: Record<TranslationMethod, TranslationService> = {
   // Traditional APIs
   gtxFreeAPI: traditional.gtxFreeAPI,
+  edgeFreeAPI: traditional.edgeFreeAPI,
   google: traditional.google,
   deepl: traditional.deepl,
   deeplx: traditional.deeplx,
