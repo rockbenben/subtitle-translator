@@ -740,13 +740,20 @@ export const PROVIDERS = {
   litellm: {
     kind: "openai-compat",
     category: "aggregator",
+    // 自建 LiteLLM 代理 — 单个 OpenAI-compat 网关背后聚合 100+ 上游 provider。
+    // 与 Custom (llm) 的差别只在独立配置槽位:常驻 LiteLLM、偶尔切其他自建
+    // 端点的用户不必来回改 Custom 的 URL。
+    // URL 即凭证(URL_IS_PRIMARY_CRED):defaults.url 留空,chips 给本地默认
+    // 地址;apiKey 可选(代理可配 master/virtual key,纯本地常为免鉴权)。
+    // defaultModel 留空:可用模型完全取决于用户的代理配置,无从假设。
+    // loopback HTTP 是 secure-context 豁免(浏览器混合内容规则放行 127.0.0.1)。
     label: "LiteLLM",
-    endpoint: "http://localhost:4000/v1/chat/completions",
+    endpoint: "http://127.0.0.1:4000/v1/chat/completions",
     defaultModel: "",
     defaultTemperature: 0.7,
     docs: "https://docs.litellm.ai/docs/",
     allowCustomUrl: true,
-    models: [],
+    endpoints: [{ label: "Local (Default)", url: "http://127.0.0.1:4000/v1/chat/completions" }],
   },
   llm: {
     kind: "custom",
@@ -845,15 +852,15 @@ export const supportsGlossary = (method: string): boolean => method in PROVIDERS
 
 /**
  * Services where URL is the primary credential — apiKey is optional/absent
- * because the runtime is typically self-hosted (LM Studio, llama.cpp, vLLM)
- * and doesn't require auth. Affects:
+ * because the runtime is typically self-hosted (LM Studio, llama.cpp, vLLM,
+ * LiteLLM proxy) and doesn't require auth. Affects:
  *   - UI: URL field shows as required (red *), apiKey hidden / not-required
  *   - Validation: URL emptiness blocks translation; missing apiKey is OK
  *   - Status: empty URL → "needs-config"; otherwise → "configured" (not "free")
  *
  * Add new services here when they fit this profile (URL required, apiKey optional).
  */
-export const URL_IS_PRIMARY_CRED: ReadonlySet<string> = new Set(["llm", "translategemma"]);
+export const URL_IS_PRIMARY_CRED: ReadonlySet<string> = new Set(["llm", "litellm", "translategemma"]);
 
 /**
  * Services that work with zero user configuration because they fall back to a
@@ -881,9 +888,11 @@ export const NO_CRED_REQUIRED: ReadonlySet<string> = new Set(["gtxFreeAPI", "edg
  *     they throw NETWORK / 5xx errors, which don't trip the per-line auth-abort
  *     cascade, so without a probe a dead service slow-fails line-by-line. Probing
  *     is free.
- *   - llm, translategemma: self-hosted (Ollama / LM Studio / vLLM) — "server not
- *     running" / wrong URL is a NETWORK error (no auth-abort), and the probe hits
- *     the user's own machine, so it's free.
+ *   - llm, litellm, translategemma: self-hosted (Ollama / LM Studio / vLLM /
+ *     LiteLLM proxy) — "server not running" / wrong URL is a NETWORK error (no
+ *     auth-abort), and the probe hits the user's own machine, so it's free.
+ *     (litellm 的 probe 经代理转发到上游,严格说花一次微量补全;但代理挂掉/
+ *     地址错是它的主导故障,与 llm 同款,不 probe 就逐行慢失败。)
  *   - deepl: free tier returns 456 (quota) which is non-auth (no abort); the
  *     fast-fail is worth the tiny quota the probe spends.
  *
@@ -894,12 +903,12 @@ export const NO_CRED_REQUIRED: ReadonlySet<string> = new Set(["gtxFreeAPI", "edg
  * spend the user's tokens/quota on a "Hello world" health check every cold run.
  *
  * Invariants (registry.test.ts): NO_CRED_REQUIRED ⊆ this set (free methods are
- * always cheap to probe), and the only LLM-category method here is the
- * self-hosted `llm` (no paid cloud LLM is probed). validate()'s smart gate still
+ * always cheap to probe), and the only LLM-category methods here are the
+ * self-hosted `llm` / `litellm` (no paid cloud LLM is probed). validate()'s smart gate still
  * PROCEEDS (not blocks) on transient 429/5xx from these — the probe only
  * HARD-blocks definitive failures.
  */
-export const PREFLIGHT_PROBE_METHODS: ReadonlySet<string> = new Set(["deepl", "deeplx", "llm", "gtxFreeAPI", "edgeFreeAPI", "translategemma"]);
+export const PREFLIGHT_PROBE_METHODS: ReadonlySet<string> = new Set(["deepl", "deeplx", "llm", "litellm", "gtxFreeAPI", "edgeFreeAPI", "translategemma"]);
 
 /**
  * Services that require a non-empty URL **in addition to** apiKey. Compare with

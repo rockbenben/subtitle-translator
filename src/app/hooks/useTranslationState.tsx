@@ -408,6 +408,7 @@ const useTranslationState = () => {
                 deeplx: t("deepLXUnavailable"),
                 deepl: t("deeplUnavailable"),
                 llm: t("llmUnavailable"),
+                litellm: t("llmUnavailable"),
                 gtxFreeAPI: t("gtxFreeAPIUnavailable"),
                 edgeFreeAPI: t("edgeFreeAPIUnavailable"),
                 translategemma: t("translategemmaUnavailable"),

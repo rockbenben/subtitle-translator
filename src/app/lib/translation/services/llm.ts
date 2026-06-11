@@ -2,7 +2,7 @@
 
 import type { ReasoningEffort, ThinkingDirective, TranslateTextParams, TranslationService } from "../types";
 import { DEFAULT_SYSTEM_PROMPT, DEFAULT_USER_PROMPT } from "../config";
-import { defaultConfigs, isCustomModel, isThinkingModel, OPENAI_COMPAT_KEYS, OPENAI_COMPAT_PROVIDERS, type OpenAICompatProviderKey, type OpenAICompatProviderSpec } from "../registry";
+import { defaultConfigs, isCustomModel, isThinkingModel, OPENAI_COMPAT_KEYS, OPENAI_COMPAT_PROVIDERS, URL_IS_PRIMARY_CRED, type OpenAICompatProviderKey, type OpenAICompatProviderSpec } from "../registry";
 import { getAIModelPrompt } from "../utils";
 
 import { fetchJSON, normalizeNumber, normalizePrompt, relayUrl, requireApiKey, requireUrl, completeOpenAICompatUrl, PROXY_ENDPOINTS, getOpenAICompatContent, getClaudeContent } from "./shared";
@@ -30,13 +30,24 @@ const openAICompatRequest = async (cfg: OpenAICompatRequestConfig): Promise<stri
   const { params, serviceName, endpoint, defaultModel, defaultTemperature, extraHeaders, extraBody } = cfg;
   const { apiKey, model, temperature } = params;
   const { effectiveSystemPrompt, prompt } = preparePrompts(params);
-  const key = requireApiKey(serviceName, apiKey);
+  // URL_IS_PRIMARY_CRED methods (litellm): URL is the credential, apiKey is
+  // optional — self-hosted gateways commonly run keyless, so skip requireApiKey
+  // and omit Authorization when no key is set. Consulted directly from the same
+  // set that drives UI + validation; no parallel flag to keep in sync.
+  const key = URL_IS_PRIMARY_CRED.has(params.translationMethod) ? apiKey?.trim() : requireApiKey(serviceName, apiKey);
+  // Model optional when BOTH user model and spec default are empty (only
+  // litellm: defaultModel "" by design). Omit the field — same semantics as
+  // the hand-written `llm` Custom service — so server-side defaults apply
+  // (`litellm --model X` / general_settings.completion_model). Sending "" is
+  // equivalent only on gateways that falsy-test it; omission is spec-clean.
+  // Every other provider has a non-empty defaultModel → field always present.
+  const effectiveModel = model || defaultModel;
 
   const data = await fetchJSON(endpoint, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${key}`,
+      ...(key ? { Authorization: `Bearer ${key}` } : {}),
       ...extraHeaders,
     },
     body: JSON.stringify({
@@ -44,7 +55,7 @@ const openAICompatRequest = async (cfg: OpenAICompatRequestConfig): Promise<stri
         { role: "system", content: effectiveSystemPrompt },
         { role: "user", content: prompt },
       ],
-      model: model || defaultModel,
+      ...(effectiveModel ? { model: effectiveModel } : {}),
       temperature: normalizeNumber(temperature, defaultTemperature),
       stream: false,
       // No max_tokens — cloud models don't repeat-loop. Only `llm` Custom exposes it.
