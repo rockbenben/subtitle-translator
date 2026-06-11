@@ -142,6 +142,15 @@ const LIST_ITEM_RE = /^\s*(?:[-*+]|\d+[.)])\s+/;
 // | 已从 CLI_GUTTER_RE 移除——否则会吃掉表格行首竖线，整张表还会被并成一段。
 const TABLE_ROW_RE = /^\s*\|/;
 const CODE_FENCE_RE = /^\s*```/;
+// markdown 标记行：整行保留、不并入段落（否则 "## 标题" 会粘进正文，CJK 无空格粘连后不可恢复）。
+// 标题：# 后必须有空格 + 实际内容（CommonMark ATX 规则；裸 "#####" 横幅不算标题，落到 BANNER）。
+const HEADING_RE = /^\s*#{1,6}\s+\S/;
+// 分割线/横幅：整行仅由 -*_= 与空白组成（≥3 个符号）。覆盖 markdown HR（---、***、_ _ _、- - -）
+// 与 CLI 横幅（====）。必须在 LIST_ITEM 之前判断——"- - -" 否则会被 "- " 吃成列表项。
+const HR_BANNER_RE = /^\s*(?:[-*_=][ \t]*){3,}$/;
+// 整行粗体标签（**步骤:** 之类的 LLM 伪小标题）：行内除首尾 ** 外无其它星号，允许尾随冒号。
+// 句中粗体（"the **bold** continues"）整行不匹配，仍正常参与折行合并。
+const BOLD_LABEL_RE = /^\s*\*\*[^*]+\*\*[:：]?\s*$/;
 
 const isCJKChar = (ch: string): boolean => !!ch && CJK_CHAR_RE.test(ch);
 
@@ -188,6 +197,12 @@ export const cleanCliText = (raw: string): string => {
     } else if (!line.trim()) {
       flush(); // 空行＝段落分隔
       out.push("");
+    } else if (HEADING_RE.test(line) || HR_BANNER_RE.test(line) || BOLD_LABEL_RE.test(line)) {
+      // markdown 标记行整行保留（标题/分割线/粗体标签）。HR_BANNER 须先于
+      // LIST_ITEM——"- - -" 是 HR 不是列表项。这些行自身是完整结构，后续
+      // 折行不应并入，所以直接 out.push 而非进 buffer（与表格行同款处理）。
+      flush();
+      out.push(line.trimEnd());
     } else if (LIST_ITEM_RE.test(line)) {
       // 列表项＝新逻辑行起点：先 flush 上一块，再把本项压入 buffer，
       // 其后被硬折的续行会经下面的 else 分支并入本项（修复多行列表项被拆成游离段落）。
