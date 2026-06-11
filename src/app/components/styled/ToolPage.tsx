@@ -4,6 +4,7 @@ import React from "react";
 import { Typography, theme } from "antd";
 import { QuestionCircleOutlined } from "@ant-design/icons";
 import { useTranslations } from "next-intl";
+import { TOOL_KEYS, groupOf, type ToolKey } from "@/app/lib/toolRegistry";
 
 const { Title, Paragraph, Link } = Typography;
 
@@ -27,9 +28,10 @@ interface ToolPageProps {
 }
 
 /**
- * Editorial tool-page shell — display-serif title, vermilion accent, narrow
- * description column. Smaller scale than the home hero so it doesn't compete
- * with the tool surface below.
+ * Interlingua tool-page shell — mono index crumb ("02 / 17 — 文本翻译"),
+ * heavy grotesk title, Klein-blue accent rule, narrow description column.
+ * Smaller scale than the home hero so it doesn't compete with the tool
+ * surface below.
  *
  * Reads the H1 from `tools.<toolKey>.title` so the nav short name, the
  * Schema.org `name`, and the in-tool H1 stay in lock-step.
@@ -37,19 +39,43 @@ interface ToolPageProps {
 const ToolPage = ({ icon, toolKey, description, guideUrl, withPrivacyNotice = true, children }: ToolPageProps) => {
   const t = useTranslations("common");
   const tTools = useTranslations("tools");
+  const tNav = useTranslations("navigation");
   const { token } = theme.useToken();
+
+  // Registry index → "02 / 17" chapter marker. Tools not in the registry
+  // (shouldn't happen — invariant-tested) just skip the crumb.
+  const registryIndex = TOOL_KEYS.indexOf(toolKey as ToolKey);
+  const crumb =
+    registryIndex >= 0
+      ? `${String(registryIndex + 1).padStart(2, "0")} / ${TOOL_KEYS.length} — ${tNav(groupOf(toolKey as ToolKey))}`
+      : null;
 
   return (
     <>
       <header style={{ marginBottom: token.marginLG }}>
+        {crumb && (
+          <div
+            className="font-mono"
+            aria-hidden
+            style={{
+              fontSize: 11,
+              letterSpacing: "0.18em",
+              textTransform: "uppercase",
+              color: token.colorTextTertiary,
+              marginBottom: 6,
+            }}>
+            <span style={{ color: token.colorPrimary }}>{crumb.slice(0, 2)}</span>
+            {crumb.slice(2)}
+          </div>
+        )}
         <Title
           level={1}
           className="font-display"
           style={{
             fontSize: "clamp(26px, 3.4vw, 38px)",
-            fontWeight: 600,
-            lineHeight: 1.2,
-            letterSpacing: "-0.02em",
+            fontWeight: 700,
+            lineHeight: 1.15,
+            letterSpacing: "-0.025em",
             marginTop: 0,
             marginBottom: token.marginXS,
             display: "flex",

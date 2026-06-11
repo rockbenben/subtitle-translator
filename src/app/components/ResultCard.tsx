@@ -52,7 +52,7 @@ interface ResultCardProps {
 }
 
 /**
- * Output-side surface. Distinguished from the input side by a 2px vermilion
+ * Output-side surface. Distinguished from the input side by a 2px accent
  * (`token.colorPrimary`) top strip — continuation of the ToolPage brand mark;
  * signals "this is the output region" at a glance.
  *

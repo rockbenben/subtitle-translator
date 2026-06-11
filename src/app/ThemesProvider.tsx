@@ -14,63 +14,80 @@ export default function ThemesProvider({ children }: { children: ReactNode }) {
   );
 }
 
-const VERMILION = "#E54D2E";
+/* ─────────────────────────────────────────────────────────────
+   Interlingua — Swiss-international design system.
+   Paper / ink / one Klein-blue accent. Square corners, hairline
+   rules, mono meta. Light is the canonical "paper" face; dark is
+   the inverted "ink plate" with a periwinkle-shifted accent
+   (pure Klein blue is illegible on near-black).
+   Single source of truth here, mirrored as CSS vars in globals.css.
+   ───────────────────────────────────────────────────────────── */
+const BLUE_LIGHT = "#1D35F5"; // Klein blue — light-mode accent
+const BLUE_DARK = "#7A8CFF"; // periwinkle — dark-mode accent (AA on ink)
+const INK = "#141310";
+const PAPER = "#F4F2EC";
 
-// Editorial-tuned state colors — desaturated, warm-shifted to sit alongside
-// vermilion without screaming. colorError is a cooler red so users can
-// distinguish "danger" from the warm primary brand accent.
-const MOSS = "#6B8E5A"; // success
-const GOLD = "#C9A961"; // warning
-const BRICK = "#C12B2B"; // error (cooler than vermilion to stay readable as "danger")
+// Rational state palette — kept slightly desaturated so the single blue
+// accent stays the loudest voice. Error is warm red, clearly apart from blue.
+const stateLight = { colorSuccess: "#1E8A5A", colorWarning: "#B07D10", colorError: "#D02B1F" };
+const stateDark = { colorSuccess: "#4CC38A", colorWarning: "#D9A514", colorError: "#F2604F" };
 
 const sharedTokens = {
-  colorPrimary: VERMILION,
-  colorInfo: VERMILION,
-  colorSuccess: MOSS,
-  colorWarning: GOLD,
-  colorError: BRICK,
-
   fontFamily: 'var(--font-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif',
   fontFamilyCode: 'var(--font-mono), ui-monospace, "SF Mono", Menlo, Consolas, monospace',
 
-  borderRadius: 4,
-  borderRadiusLG: 6,
-  borderRadiusSM: 3,
-  borderRadiusXS: 2,
+  // Square corners everywhere — the Swiss signature. Hairlines do the
+  // separating, not rounded boxes.
+  borderRadius: 0,
+  borderRadiusLG: 0,
+  borderRadiusSM: 0,
+  borderRadiusXS: 0,
 
-  motionDurationMid: "0.25s",
+  motionDurationMid: "0.2s",
   motionEaseInOut: "cubic-bezier(0.65, 0, 0.35, 1)",
 
   fontSize: 14,
   controlHeight: 36,
-};
-
-const darkTokens = {
-  ...sharedTokens,
-  colorBgBase: "#0E0F12",
-  colorBgContainer: "#16181D",
-  colorBgElevated: "#1B1E24",
-  colorBgLayout: "transparent",
-  colorTextBase: "#F2EEE6",
-  colorBorder: "rgba(245, 240, 230, 0.10)",
-  colorBorderSecondary: "rgba(245, 240, 230, 0.06)",
-  colorSplit: "rgba(245, 240, 230, 0.08)",
-  colorPrimaryBg: "rgba(229, 77, 46, 0.10)",
-  colorPrimaryBgHover: "rgba(229, 77, 46, 0.16)",
+  // Flat system: kill antd's default elevation language.
+  boxShadow: "none" as const,
+  boxShadowSecondary: "0 6px 24px rgba(20, 19, 16, 0.10)",
+  boxShadowTertiary: "none" as const,
+  wireframe: false,
 };
 
 const lightTokens = {
   ...sharedTokens,
-  colorBgBase: "#FBF8F2",
-  colorBgContainer: "#FFFFFF",
+  ...stateLight,
+  colorPrimary: BLUE_LIGHT,
+  colorInfo: BLUE_LIGHT,
+  colorBgBase: PAPER,
+  colorBgContainer: "#FCFBF7",
   colorBgElevated: "#FFFFFF",
   colorBgLayout: "transparent",
-  colorTextBase: "#1A1814",
-  colorBorder: "rgba(26, 24, 20, 0.10)",
-  colorBorderSecondary: "rgba(26, 24, 20, 0.06)",
-  colorSplit: "rgba(26, 24, 20, 0.08)",
-  colorPrimaryBg: "rgba(229, 77, 46, 0.08)",
-  colorPrimaryBgHover: "rgba(229, 77, 46, 0.14)",
+  colorTextBase: INK,
+  colorBorder: "rgba(20, 19, 16, 0.30)",
+  colorBorderSecondary: "rgba(20, 19, 16, 0.12)",
+  colorSplit: "rgba(20, 19, 16, 0.12)",
+  colorPrimaryBg: "rgba(29, 53, 245, 0.06)",
+  colorPrimaryBgHover: "rgba(29, 53, 245, 0.12)",
+};
+
+const darkTokens = {
+  ...sharedTokens,
+  ...stateDark,
+  colorPrimary: BLUE_DARK,
+  colorInfo: BLUE_DARK,
+  colorBgBase: "#121110",
+  colorBgContainer: "#191815",
+  colorBgElevated: "#201F1B",
+  colorBgLayout: "transparent",
+  colorTextBase: "#F0EDE4",
+  colorBorder: "rgba(240, 237, 228, 0.28)",
+  colorBorderSecondary: "rgba(240, 237, 228, 0.10)",
+  colorSplit: "rgba(240, 237, 228, 0.10)",
+  colorPrimaryBg: "rgba(122, 140, 255, 0.10)",
+  colorPrimaryBgHover: "rgba(122, 140, 255, 0.18)",
+  boxShadowSecondary: "0 6px 24px rgba(0, 0, 0, 0.45)",
 };
 
 function AntdConfigProvider({ children }: { children: ReactNode }) {
@@ -118,20 +135,33 @@ function AntdConfigProvider({ children }: { children: ReactNode }) {
             trackBg: "transparent",
             itemHoverBg: "transparent",
           },
+          // Swiss primary button: solid ink slab on paper, inverted paper slab
+          // on ink. Hover snaps to the accent — color IS the hover state, no
+          // shadow, no lift.
           Button: {
             primaryShadow: "none",
             defaultShadow: "none",
+            colorPrimary: isDark ? "#F0EDE4" : INK,
+            colorPrimaryHover: tokens.colorPrimary,
+            colorPrimaryActive: isDark ? "#5F73F2" : "#1626B8",
+            primaryColor: isDark ? "#141310" : "#F4F2EC",
+            fontWeight: 600,
           },
           Card: {
-            colorBorderSecondary: tokens.colorBorder,
+            colorBorderSecondary: tokens.colorBorderSecondary,
+            headerFontSize: 15,
           },
           Input: {
-            // Refined focus: soft vermilion halo + accent border, replacing
-            // antd's default hard 2px outline ring. Matches the editorial
-            // tone of the rest of the site (subtle, warm, intentional).
+            // Hairline focus: accent border + soft halo, no hard 2px ring.
             activeShadow: `0 0 0 3px ${tokens.colorPrimaryBg}`,
             activeBorderColor: tokens.colorPrimary,
             hoverBorderColor: tokens.colorBorder,
+          },
+          Tag: {
+            borderRadiusSM: 0,
+          },
+          Modal: {
+            borderRadiusLG: 0,
           },
         },
       }}>

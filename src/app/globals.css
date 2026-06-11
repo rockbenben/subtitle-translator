@@ -1,31 +1,35 @@
 @import "tailwindcss";
 
 /* ─────────────────────────────────────────────────────────────
-   Editorial Dark — design tokens
-   Surface, ink, accent. Vermilion (#E54D2E) is the seal-stamp
-   accent — single-source-of-truth here, mirrored in
-   ThemesProvider's antd token overrides.
+   Interlingua — design tokens
+   Paper, ink, one Klein-blue accent. Swiss-international system:
+   visible graph grid, hairline rules, square corners, mono meta.
+   Single-source-of-truth here, mirrored in ThemesProvider's antd
+   token overrides.
    ───────────────────────────────────────────────────────────── */
 :root {
-  --bg-dark: #0e0f12;
-  --bg-light: #fbf8f2;
-  --ink-dark: #f2eee6;
-  --ink-light: #1a1814;
-  --accent: #e54d2e;
-  --accent-soft: rgba(229, 77, 46, 0.1);
-  --rule-dark: rgba(245, 240, 230, 0.1);
-  --rule-light: rgba(26, 24, 20, 0.12);
+  --bg-dark: #121110;
+  --bg-light: #f4f2ec;
+  --ink-dark: #f0ede4;
+  --ink-light: #141310;
+  --accent: #1d35f5; /* Klein blue (light mode) */
+  --accent-soft: rgba(29, 53, 245, 0.08);
+  --rule-dark: rgba(240, 237, 228, 0.1);
+  --rule-light: rgba(20, 19, 16, 0.12);
 }
 
 html.dark {
   color-scheme: dark;
+  /* Periwinkle shift — pure Klein blue is illegible on ink. */
+  --accent: #7a8cff;
+  --accent-soft: rgba(122, 140, 255, 0.12);
 }
 html.light {
   color-scheme: light;
 }
 
-/* Pre-paint body bg so the dark canvas is up before AntD CSS-in-JS lands.
-   Avoids the white flash on cold reload that's especially visible with
+/* Pre-paint body bg so the canvas is up before AntD CSS-in-JS lands.
+   Avoids the flash on cold reload that's especially visible with
    defaultTheme="dark". */
 html,
 body {
@@ -44,9 +48,9 @@ body {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   Atmospheric backdrop — warm vermilion spotlight (upper-left)
-   + cool counter-light (lower-right). Fixed, behind everything.
-   AntD Layout is set to transparent bg so this shows through.
+   Graph-paper grid — the Interlingua backdrop. Fixed, faint,
+   behind everything; AntD Layout is transparent so it shows
+   through. A flat drafting surface, not an atmosphere.
    ───────────────────────────────────────────────────────────── */
 body::before {
   content: "";
@@ -54,41 +58,30 @@ body::before {
   inset: 0;
   pointer-events: none;
   z-index: 0;
-  background:
-    radial-gradient(ellipse 90% 60% at 8% -10%, rgba(229, 77, 46, 0.09), transparent 60%),
-    radial-gradient(ellipse 60% 80% at 105% 110%, rgba(120, 100, 220, 0.05), transparent 65%);
+  background-image:
+    linear-gradient(to right, rgba(240, 237, 228, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(240, 237, 228, 0.03) 1px, transparent 1px);
+  background-size: 72px 72px;
 }
 html.light body::before {
-  background:
-    radial-gradient(ellipse 90% 60% at 8% -10%, rgba(229, 77, 46, 0.06), transparent 55%),
-    radial-gradient(ellipse 60% 80% at 105% 110%, rgba(120, 100, 220, 0.035), transparent 65%);
-}
-
-/* Subtle 2.5% grain — gives surfaces a "printed" feel. */
-body::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-  opacity: 0.025;
-  mix-blend-mode: overlay;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/></filter><rect width='200' height='200' filter='url(%23n)' opacity='0.9'/></svg>");
+  background-image:
+    linear-gradient(to right, rgba(20, 19, 16, 0.035) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(20, 19, 16, 0.035) 1px, transparent 1px);
 }
 
 /* ─────────────────────────────────────────────────────────────
-   Typography utilities — display class is the editorial voice.
-   Fraunces (Latin) + Source Han Serif (CJK) fallback chain.
+   Typography utilities — grotesk display voice + tracked mono
+   meta. CJK falls back to the system sans stack.
    ───────────────────────────────────────────────────────────── */
+/* Display voice = the same grotesk, pushed heavy and tight at usage sites
+   (weight 700-800, negative tracking). One family, two registers. */
 .font-display {
-  font-family: var(--font-display), "Source Han Serif SC", "Songti SC", STSong, SimSun, serif;
-  font-feature-settings: "ss01", "ss02";
+  font-family: var(--font-sans), "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
   letter-spacing: -0.02em;
 }
 
 .font-mono {
-  font-family: var(--font-mono), "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-  font-feature-settings: "ss03", "cv11";
+  font-family: var(--font-mono), ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -101,11 +94,10 @@ body::after {
   min-height: 44px;
 }
 
-/* Refined focus ring — vermilion, not OS Highlight, since we now own a brand color. */
+/* Focus ring — the accent, not OS Highlight. Square, like everything else. */
 :focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
-  border-radius: 2px;
 }
 
 /* Skip-to-content link — visually hidden until keyboard-focused, then pinned
@@ -119,7 +111,6 @@ body::after {
   background: var(--accent);
   color: #fff;
   font-weight: 600;
-  border-radius: 0 0 4px 4px;
   text-decoration: none;
   transition: top 0.18s ease;
 }
@@ -133,14 +124,11 @@ body::after {
   }
 }
 
-/* PageCard hover — subtle lift + bottom rule that draws in from the left.
-   Replaces antd's default hover shadow with something more editorial. */
+/* Card hover — flat Swiss: no lift, no shadow. The accent rule draws in
+   along the bottom edge and the border sharpens. Color is the motion. */
 .ant-card.ant-card-hoverable {
   position: relative;
-  transition:
-    transform 0.28s cubic-bezier(0.65, 0, 0.35, 1),
-    border-color 0.28s ease,
-    box-shadow 0.28s ease;
+  transition: border-color 0.22s ease;
   overflow: hidden;
 }
 .ant-card.ant-card-hoverable::after {
@@ -153,17 +141,16 @@ body::after {
   background: var(--accent);
   transform: scaleX(0);
   transform-origin: left;
-  transition: transform 0.32s cubic-bezier(0.65, 0, 0.35, 1);
+  transition: transform 0.3s cubic-bezier(0.65, 0, 0.35, 1);
 }
 .ant-card.ant-card-hoverable:hover {
-  transform: translateY(-2px);
-  border-color: rgba(229, 77, 46, 0.4) !important;
+  border-color: var(--accent) !important;
 }
 .ant-card.ant-card-hoverable:hover::after {
   transform: scaleX(1);
 }
 
-/* Sharp scrollbars — editorial doesn't do rounded scroll thumbs. */
+/* Square scrollbars — drafting-table hardware, not pill thumbs. */
 @media (pointer: fine) {
   ::-webkit-scrollbar {
     width: 10px;
@@ -177,13 +164,13 @@ body::after {
     border-radius: 0;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: rgba(245, 240, 230, 0.22);
+    background: rgba(240, 237, 228, 0.22);
   }
   html.light ::-webkit-scrollbar-thumb {
     background: var(--rule-light);
   }
   html.light ::-webkit-scrollbar-thumb:hover {
-    background: rgba(26, 24, 20, 0.28);
+    background: rgba(20, 19, 16, 0.28);
   }
 }
 
@@ -230,6 +217,13 @@ body::after {
   }
 }
 
+/* Blinking block caret — projection screen (subtitle progress preview). */
+@keyframes caret-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .editorial-rise,
   .editorial-rule {
@@ -239,7 +233,8 @@ body::after {
   .ant-card.ant-card-hoverable {
     transition: none;
   }
-  [style*="loading-pulse"] {
+  [style*="loading-pulse"],
+  [style*="caret-blink"] {
     animation: none !important;
     opacity: 0.7 !important;
   }
