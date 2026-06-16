@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap');
+  :root { --bg:#15171C; --ink:#ECEAE3; --muted:#9AA1AB; --line:#2A2F38;
+    --teal:#2BD4C4; --teal-t:#7CE9DE; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html, body { width:1200px; height:630px; }
+  body { background:var(--bg); color:var(--ink); display:flex; overflow:hidden;
+    position:relative; font-family:'Schibsted Grotesk',system-ui,sans-serif; }
+  body::before { content:""; position:absolute; inset:0;
+    background:radial-gradient(900px 520px at 88% 28%, rgba(43,212,196,.10), transparent 60%); }
+  .left { flex:1; padding:60px 36px 56px 78px; display:flex; flex-direction:column;
+    justify-content:center; gap:24px; position:relative; z-index:1; }
+  .eyebrow { font-family:'JetBrains Mono',monospace; font-size:17px; font-weight:500;
+    letter-spacing:.26em; text-transform:uppercase; color:var(--muted);
+    display:flex; align-items:center; gap:13px; }
+  .eyebrow .cc { width:26px; height:17px; border-radius:4px; border:2px solid var(--teal);
+    position:relative; display:inline-block; }
+  .eyebrow .cc::after { content:""; position:absolute; left:4px; right:4px; bottom:3px;
+    height:3px; background:var(--teal); border-radius:2px; }
+  .title { font-weight:800; font-size:82px; line-height:.98; letter-spacing:-.035em; }
+  .title .hl { color:var(--teal); }
+  .pills { display:flex; gap:12px; margin-top:2px; }
+  .pill { display:flex; align-items:center; gap:9px; padding:11px 20px;
+    border:1px solid rgba(43,212,196,.28); background:rgba(43,212,196,.08);
+    border-radius:999px; font-size:21px; font-weight:700; color:var(--teal-t); }
+  .pill .dot { width:8px; height:8px; border-radius:50%; background:var(--teal); }
+  .desc { font-family:'JetBrains Mono',monospace; font-size:16px; color:var(--muted);
+    line-height:1.6; max-width:42ch; }
+  .url { font-family:'JetBrains Mono',monospace; font-size:19px; font-weight:500;
+    color:var(--ink); display:flex; align-items:center; gap:12px; margin-top:2px; }
+  .url::before { content:""; width:26px; height:2px; background:var(--teal); }
+
+  .right { width:486px; flex:none; display:flex; align-items:center;
+    padding-right:60px; position:relative; z-index:1; }
+  .player { width:100%; aspect-ratio:16/10; border-radius:16px; position:relative;
+    overflow:hidden; border:1px solid #2c3340;
+    background:linear-gradient(150deg,#243042 0%,#1b2330 45%,#141a24 100%);
+    box-shadow:0 40px 80px -30px rgba(0,0,0,.7); }
+  .player::before { content:""; position:absolute; inset:0;
+    background:radial-gradient(420px 260px at 32% 30%, rgba(120,160,200,.22), transparent 60%); }
+  .play { position:absolute; top:42%; left:50%; transform:translate(-50%,-50%);
+    width:84px; height:84px; border-radius:50%; background:rgba(20,24,30,.45);
+    border:2px solid rgba(255,255,255,.55); display:flex; align-items:center; justify-content:center; }
+  .play i { width:0; height:0; margin-left:6px;
+    border-left:26px solid rgba(255,255,255,.92); border-top:16px solid transparent; border-bottom:16px solid transparent; }
+  .caption { position:absolute; left:0; right:0; bottom:46px; text-align:center; padding:0 30px; }
+  .caption .o { font-size:20px; color:#c8cdd4; font-weight:500;
+    text-shadow:0 2px 8px rgba(0,0,0,.8); margin-bottom:8px; }
+  .caption .t { font-size:28px; color:#fff; font-weight:700; text-shadow:0 2px 10px rgba(0,0,0,.85);
+    font-family:'Noto Sans SC','Microsoft YaHei',sans-serif; }
+  .bar { position:absolute; left:24px; right:24px; bottom:22px; height:5px;
+    border-radius:3px; background:rgba(255,255,255,.18); }
+  .bar::after { content:""; position:absolute; left:0; top:0; bottom:0; width:38%;
+    background:var(--teal); border-radius:3px; }
+</style>
+</head>
+<body>
+  <div class="left">
+    <div class="eyebrow"><span class="cc"></span> Tools&nbsp;By&nbsp;AI · Subtitle&nbsp;Translator</div>
+    <div class="title">Translate a season<br>in <span class="hl">seconds</span></div>
+    <div class="pills">
+      <span class="pill"><span class="dot"></span>Free</span>
+      <span class="pill"><span class="dot"></span>No signup</span>
+      <span class="pill"><span class="dot"></span>In&#8209;browser</span>
+    </div>
+    <div class="desc">SRT · ASS · VTT · LRC · 120+ languages · bilingual output · batch a full season at once.</div>
+    <div class="url">tools.newzone.top</div>
+  </div>
+  <div class="right">
+    <div class="player">
+      <div class="play"><i></i></div>
+      <div class="caption">
+        <div class="o">We need to move. Now.</div>
+        <div class="t">我们得走了，就现在。</div>
+      </div>
+      <div class="bar"></div>
+    </div>
+  </div>
+</body>
+</html>

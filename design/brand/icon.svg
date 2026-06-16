@@ -1,0 +1,13 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Subtitle Translator mark — a caption frame. The screen stays; the dialogue at the
+       bottom is translated (teal). Reads instantly as "subtitles" at any size. -->
+  <rect width="512" height="512" fill="#15171C"/>
+
+  <!-- screen / video frame -->
+  <rect x="78" y="132" width="356" height="248" rx="22" fill="#1A1D23" stroke="#2A2F38" stroke-width="8"/>
+
+  <!-- caption line 1 (translated) -->
+  <rect x="138" y="288" width="236" height="28" rx="8" fill="#2BD4C4"/>
+  <!-- caption line 2 (translated, shorter) -->
+  <rect x="176" y="330" width="160" height="24" rx="8" fill="#2BD4C4"/>
+</svg>

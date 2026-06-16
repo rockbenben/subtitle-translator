@@ -1,0 +1,19 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Subtitle Translator — an .srt cue: the index + timecode stay locked (muted),
+       the dialogue is translated. Bilingual output: original (muted) over translation (teal). -->
+  <rect width="512" height="512" fill="#15171C"/>
+
+  <!-- screen / video frame -->
+  <rect x="64" y="120" width="384" height="272" rx="24" fill="#1A1D23" stroke="#2A2F38" stroke-width="8"/>
+
+  <!-- cue header: index "1" + locked timecode -->
+  <rect x="96" y="156" width="30" height="30" rx="7" fill="#3A4048"/>
+  <rect x="140" y="162" width="150" height="18" rx="6" fill="#565D67"/>
+
+  <!-- bilingual captions at the bottom -->
+  <!-- original (preserved, muted) -->
+  <rect x="120" y="290" width="272" height="22" rx="7" fill="#5B6470"/>
+  <!-- translation (teal) -->
+  <rect x="120" y="324" width="232" height="26" rx="7" fill="#2BD4C4"/>
+  <rect x="120" y="324" width="80" height="26" rx="7" fill="#2BD4C4"/>
+</svg>
