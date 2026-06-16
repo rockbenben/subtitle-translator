@@ -196,6 +196,8 @@
     "errorHint429": "Limite de requisições excedido, tente novamente mais tarde",
     "errorHint456": "Cota de tradução esgotada neste período",
     "errorHint5xx": "Erro do servidor, tente novamente mais tarde",
+    "errorHintRelay": "Erro de rede (possivelmente CORS) — ative o \"Relay da API\" nas configurações de API",
+    "errorHintRelay403": "A API retornou 403 Forbidden — ative o \"Relay da API\" nas configurações de API",
     "rateLimitCooldown": "Limite de requisições atingido — pausando brevemente, repetiremos automaticamente"
   },
   "SubtitleTranslator": {
@@ -208,12 +210,17 @@
     "bilingualFormatTooltip": "ASS: estilos de fonte/cor separados para original e tradução. SRT: texto simples, ambas as linhas empilhadas na mesma cue.",
     "translationFirst": "Tradução Acima",
     "originalFirst": "Tradução Abaixo",
-    "unsupportedSub": "Formato não reconhecido. Certifique-se de que o arquivo seja SRT, ASS, VTT ou LRC.",
+    "unsupportedSub": "Formato não reconhecido. Certifique-se de que o arquivo seja SRT, ASS, VTT, SBV ou LRC.",
     "noFileUploaded": "Por favor, envie um arquivo de legenda primeiro.",
     "noSourceText": "Por favor, envie arquivo ou cole texto.",
     "noExtractedText": "Nenhum conteúdo extraído, verifique o formato do arquivo.",
     "textExtracted": "Texto de legenda extraído, ",
-    "bilingualError": "Tags de estilo complexas detectadas. Modo bilíngue pode causar erros de formatação. Recomendado desativar 'Legendas Bilíngues'."
+    "bilingualError": "Tags de estilo complexas detectadas. Modo bilíngue pode causar erros de formatação. Recomendado desativar 'Legendas Bilíngues'.",
+    "reviewTitle": "Revisão bilíngue",
+    "reviewColSource": "Original",
+    "reviewColTarget": "Tradução",
+    "reviewApplyDownload": "Aplicar e baixar",
+    "reviewDownloaded": "Legenda revisada baixada"
   },
   "TranslationSettings": {
     "resetConfigSuccess": "Configuração redefinida para os padrões",
@@ -255,6 +262,7 @@
     "delayTime": "Atraso",
     "useRelay": "Relay da API",
     "useRelayTooltip": "Ative o relay da API em caso de erros CORS ou 403",
+    "useRelayOverridden": "Um URL personalizado está definido — as solicitações vão diretamente para ele e este botão não tem efeito; limpe o URL para reativá-lo",
     "reasoningEffort": "Esforço de raciocínio",
     "reasoningEffortExtra": "Off desativa o pensamento (padrão); ativá-lo geralmente é mais preciso, mas mais lento e consome mais tokens. Modelos personalizados também oferecem Auto = seguir o padrão integrado do modelo (use apenas se Off causar erro de API).",
     "presetSelect": "Selecionar predefinição",
@@ -282,13 +290,13 @@
   "tools": {
     "subtitleTranslator": {
       "title": "Tradutor Legendas",
-      "description": "Tradução em lote SRT, ASS, VTT, LRC. 120+ idiomas.",
+      "description": "Tradução em lote SRT, ASS, VTT, SBV, LRC. 120+ idiomas.",
       "metaTitle": "Tradutor de Legendas | Lote SRT/VTT/ASS + Bilíngue",
-      "metaDescription": "Tradutor IA de legendas para SRT, ASS, VTT, LRC. 25+ motores: DeepSeek, Claude, GPT, DeepL. 120+ idiomas, timecodes preservados, bilíngue.",
+      "metaDescription": "Tradutor IA de legendas para SRT, ASS, VTT, SBV, LRC. 25+ motores: DeepSeek, Claude, GPT, DeepL. 120+ idiomas, timecodes preservados, bilíngue.",
       "faq": [
         {
-          "q": "Quais formatos de legenda são suportados? É possível traduzir SRT, ASS, VTT e LRC?",
-          "a": "Quatro formatos suportados: SRT, ASS, VTT e LRC. SRT/VTT para YouTube, players HTML5 e painéis de criadores (exporte legendas do YouTube com yt-dlp); ASS para Aegisub e fansubs de anime, tags de posição no início de linha (\\\\an8) restauradas após a tradução; LRC para letras musicais. A codificação do arquivo (UTF-8 / UTF-16 / GBK / Shift-JIS) é detectada automaticamente via jschardet. Tags inline complexas de efeitos ASS (cores, animação, karaokê) são simplificadas durante a tradução."
+          "q": "Quais formatos de legenda são suportados? É possível traduzir SRT, ASS, VTT, SBV e LRC?",
+          "a": "Cinco formatos suportados: SRT, ASS, VTT, SBV e LRC. SRT/VTT para YouTube, players HTML5 e painéis de criadores (exporte legendas do YouTube com yt-dlp); ASS/SSA para Aegisub e fansubs de anime, tags de posição no início de linha (\\\\an8) restauradas após a tradução; SBV é o formato de exportação nativo do editor de legendas do YouTube Studio; LRC para letras musicais. A codificação do arquivo (UTF-8 / UTF-16 / GBK / Shift-JIS) é detectada automaticamente via jschardet. Tags inline complexas de efeitos ASS (cores, animação, karaokê) são simplificadas durante a tradução."
         },
         {
           "q": "Legendas: usar tradução automática ou tradução IA/LLM? Qual a melhor qualidade, qual a mais barata?",
@@ -326,7 +334,7 @@
       "howto": [
         {
           "name": "Começar a partir de vídeo ou arquivo de legenda",
-          "text": "Carregue SRT/ASS/VTT/LRC. Extração: YouTube via yt-dlp, outras plataformas com ferramentas dedicadas. Formato e codificação UTF-8/UTF-16/GBK detectados automaticamente."
+          "text": "Carregue SRT/ASS/VTT/SBV/LRC. Extração: YouTube via yt-dlp, outras plataformas com ferramentas dedicadas. Formato e codificação UTF-8/UTF-16/GBK detectados automaticamente."
         },
         {
           "name": "Escolher motor e modo de saída",
@@ -338,7 +346,7 @@
         }
       ],
       "features": [
-        "Compatível com SRT, ASS, VTT, LRC, tags de posição ASS (\\\\an8 etc.) preservadas",
+        "Compatível com SRT, ASS, VTT, SBV, LRC, tags de posição ASS (\\\\an8 etc.) preservadas",
         "Timecodes intactos — apenas o texto é traduzido, timing original preservado",
         "Detecção automática de codificação UTF-8/UTF-16/GBK",
         "Posição de legenda bilíngue: acima (aprendizado) ou abaixo (visualização)",
@@ -409,6 +417,10 @@
     "dataParserImgPrompt": {
       "title": "Gerador Dados IMGPrompt",
       "description": "Gerar dados JSON IMGPrompt em lote"
+    },
+    "textDiff": {
+      "title": "Text Diff",
+      "description": "Compare dois textos ou arquivos lado a lado e localize a primeira diferença."
     }
   },
   "navigation": {

@@ -196,6 +196,8 @@
     "errorHint429": "请求过于频繁，请稍后重试",
     "errorHint456": "本期翻译配额已用尽",
     "errorHint5xx": "服务器错误，请稍后重试",
+    "errorHintRelay": "网络错误（可能是 CORS 限制），请在 API 设置中开启「中转 API」",
+    "errorHintRelay403": "接口返回 403 禁止访问，请在 API 设置中开启「中转 API」",
     "rateLimitCooldown": "请求过于频繁，已自动暂停片刻后重试"
   },
   "SubtitleTranslator": {
@@ -208,12 +210,17 @@
     "bilingualFormatTooltip": "ASS:原文与译文可分设字体/颜色样式。SRT:纯文本,原文与译文叠在同一时间段。",
     "translationFirst": "译文在上",
     "originalFirst": "译文在下",
-    "unsupportedSub": "无法识别字幕格式，请确保文件为 SRT、ASS、VTT 或 LRC 格式。",
+    "unsupportedSub": "无法识别字幕格式，请确保文件为 SRT、ASS、VTT、SBV 或 LRC 格式。",
     "noFileUploaded": "请先上传字幕文件。",
     "noSourceText": "请上传字幕文件或粘贴文本。",
     "noExtractedText": "未提取到字幕内容，请检查文件格式。",
     "textExtracted": "已提取字幕文本，",
-    "bilingualError": "检测到复杂样式标签，双语模式可能导致格式错乱，建议关闭「双语字幕」。"
+    "bilingualError": "检测到复杂样式标签，双语模式可能导致格式错乱，建议关闭「双语字幕」。",
+    "reviewTitle": "对照校对",
+    "reviewColSource": "原文",
+    "reviewColTarget": "译文",
+    "reviewApplyDownload": "应用并下载",
+    "reviewDownloaded": "已下载校对后字幕"
   },
   "TranslationSettings": {
     "resetConfigSuccess": "已恢复默认配置",
@@ -255,6 +262,7 @@
     "delayTime": "延迟时间",
     "useRelay": "中转 API",
     "useRelayTooltip": "如遇到 CORS 或 403 错误，请开启中转 API",
+    "useRelayOverridden": "已填写自定义 URL，请求将直达该地址，此开关暂不生效；清空 URL 后恢复",
     "reasoningEffort": "推理强度",
     "reasoningEffortExtra": "Off 关闭思考（默认）；开启后通常更准确，但更慢、更耗 token。自定义模型还有 Auto = 跟随模型自带默认，仅当 Off 导致接口报错时改用。",
     "presetSelect": "选择预设",
@@ -282,13 +290,13 @@
   "tools": {
     "subtitleTranslator": {
       "title": "字幕翻译器",
-      "description": "批量翻译 SRT、ASS、VTT、LRC 字幕，支持 120+ 语言",
-      "metaTitle": "字幕翻译器 - SRT/ASS/VTT/LRC 批量 AI 翻译与双语字幕生成",
-      "metaDescription": "AI 字幕翻译，SRT/ASS/VTT/LRC 批量互转，接入 DeepSeek、Claude、GPT 等 25+ 引擎，保留时间轴一键导出双语字幕。",
+      "description": "批量翻译 SRT、ASS、VTT、SBV、LRC 字幕，支持 120+ 语言",
+      "metaTitle": "字幕翻译器 - SRT/ASS/VTT/SBV/LRC 批量 AI 翻译与双语字幕生成",
+      "metaDescription": "AI 字幕翻译，SRT/ASS/VTT/SBV/LRC 批量互转，接入 DeepSeek、Claude、GPT 等 25+ 引擎，保留时间轴一键导出双语字幕。",
       "faq": [
         {
-          "q": "支持哪些字幕格式？SRT、ASS、VTT、LRC 都能翻译吗？",
-          "a": "支持 SRT、ASS、VTT、LRC 四种格式。SRT/VTT 适配 YouTube、B 站、HTML5 播放器（YouTube 用 yt-dlp 导出、B 站在创作中心下载）；ASS 适配 Aegisub 和动漫字幕组，行首位置标签（如 \\\\an8）翻译后自动还原；LRC 适配音乐歌词文件。文件编码（UTF-8/UTF-16/GBK/Shift-JIS）通过 jschardet 自动识别。复杂的 ASS 内联特效标签（颜色、动画、卡拉 OK）会被简化。"
+          "q": "支持哪些字幕格式？SRT、ASS、VTT、SBV、LRC 都能翻译吗？",
+          "a": "支持 SRT、ASS、VTT、SBV、LRC 五种格式。SRT/VTT 适配 YouTube、B 站、HTML5 播放器（YouTube 用 yt-dlp 导出、B 站在创作中心下载）；ASS/SSA 适配 Aegisub 和动漫字幕组，行首位置标签（如 \\\\an8）翻译后自动还原；SBV 适配 YouTube 字幕后台（创作者字幕编辑器的导出格式）；LRC 适配音乐歌词文件。文件编码（UTF-8/UTF-16/GBK/Shift-JIS）通过 jschardet 自动识别。复杂的 ASS 内联特效标签（颜色、动画、卡拉 OK）会被简化。"
         },
         {
           "q": "字幕翻译用机器翻译还是 AI 翻译？哪个质量好、哪个便宜？",
@@ -326,7 +334,7 @@
       "howto": [
         {
           "name": "从视频或字幕文件开始",
-          "text": "上传 SRT/ASS/VTT/LRC 字幕文件。YouTube 视频字幕用 yt-dlp 导出，B 站视频可在创作中心下载自己的字幕，其他平台字幕从合法来源获取。工具通过 jschardet 自动识别 UTF-8/UTF-16/GBK/Shift-JIS 等编码。"
+          "text": "上传 SRT/ASS/VTT/SBV/LRC 字幕文件。YouTube 视频字幕用 yt-dlp 导出，B 站视频可在创作中心下载自己的字幕，其他平台字幕从合法来源获取。工具通过 jschardet 自动识别 UTF-8/UTF-16/GBK/Shift-JIS 等编码。"
         },
         {
           "name": "选择引擎并配置输出",
@@ -338,7 +346,7 @@
         }
       ],
       "features": [
-        "支持 SRT、ASS、VTT、LRC 四种字幕格式，ASS 位置标签（\\\\an8 等）翻译后保留",
+        "支持 SRT、ASS、VTT、SBV、LRC 五种字幕格式，ASS 位置标签（\\\\an8 等）翻译后保留",
         "时间轴零修改（仅翻译文本，时间码原样保留）",
         "UTF-8/UTF-16/GBK 编码自动检测",
         "双语字幕译文位置可选（上方学习 / 下方观看）",
@@ -369,6 +377,10 @@
     "textToolbox": {
       "title": "多功能文本处理",
       "description": "集成正则匹配、排序、过滤等功能，进行文本批量处理"
+    },
+    "textDiff": {
+      "title": "文本对照",
+      "description": "在线对比两段文本或文件，双栏高亮差异并精确定位首处不同，支持 CSV/INI"
     },
     "dataBatch": {
       "title": "数据批处理",

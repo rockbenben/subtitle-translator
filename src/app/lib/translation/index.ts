@@ -17,7 +17,7 @@ export * from "./cache";
 export * from "./languages-data";
 export * from "./utils";
 export { translationServices } from "./services";
-export { completeOpenAICompatUrl } from "./services/shared";
+export { completeOpenAICompatUrl, RELAY_HINT_MARKER } from "./services/shared";
 
 /**
  * Core reachability probe: runs one real "Hello, world!" translation and THROWS

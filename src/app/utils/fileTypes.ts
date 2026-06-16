@@ -15,7 +15,7 @@ const fileTypes = {
     extensions: [".json"],
   },
   subtitle: {
-    extensions: [".srt", ".ass", ".vtt", ".lrc"],
+    extensions: [".srt", ".ass", ".ssa", ".vtt", ".sbv", ".lrc"],
   },
   data: {
     extensions: [".csv", ".tsv", ".xml"],

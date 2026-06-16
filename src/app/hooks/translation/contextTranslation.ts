@@ -28,6 +28,32 @@ const INVISIBLE_BLANK_RE = /[\u200B\u200C\u200D\u2060\uFEFF]/g;
 export const isBlankLine = (line: string | undefined): boolean => !(line ?? "").replace(INVISIBLE_BLANK_RE, "").trim();
 
 /**
+ * Cross-run skip: pre-fill lines that already have a per-line cache hit so a
+ * re-run ("再来一次") only re-translates the still-missing lines instead of
+ * re-rolling the whole batch. (Context mode caches per BATCH; when a batch had
+ * any failed line its batch entry is purged — issue#44 — so without a per-line
+ * cache the next run re-translates every line in that batch, including the ones
+ * that had succeeded.) Mutates `translatedLines` in place, write-once: only a
+ * still-`undefined` slot whose source line is non-blank can be filled, so blank
+ * pre-fills and already-decided slots are never clobbered. `cacheGet` returns
+ * the cached translation for a source line (null = miss); a rejected lookup is
+ * treated as a miss so the line just translates normally. Lookups run parallel.
+ */
+export const prefillFromLineCache = async (contentLines: string[], translatedLines: (string | undefined)[], cacheGet: (text: string) => Promise<string | null>): Promise<void> => {
+  await Promise.all(
+    contentLines.map(async (line, i) => {
+      if (translatedLines[i] !== undefined || isBlankLine(line)) return;
+      try {
+        const hit = await cacheGet(line);
+        if (hit !== null) translatedLines[i] = hit;
+      } catch {
+        /* treat cache error as a miss — the line translates normally */
+      }
+    }),
+  );
+};
+
+/**
  * Single pre-compiled regex matches every `[TRANSLATE_N]…[/TRANSLATE_N]` (and
  * the `TRANSLTranslate` typo variant — see MARKER_CLEANUP_RE) in one pass.
  * Previously this used `new RegExp(...)` inside a loop of `expectedCount`
@@ -38,7 +64,10 @@ export const isBlankLine = (line: string | undefined): boolean => !(line ?? "").
  *   $1 — line number (matched against expectedCount to bucket into results)
  *   $2 — translated content
  */
-const NUMBERED_TRANSLATE_RE = /\[TRANSLATE_(\d+)\]([\s\S]*?)\[\/(?:TRANSLATE|TRANSLTranslate)_\d+\]/gi;
+// 闭合标签的编号用 \1 回引锁定与开标签一致:源文本里字面出现的外来闭合标签
+// (教程行 "Use [/TRANSLATE_2] to close")编号对不上,不会提前终结惰性匹配
+// 把译文截断成功提交;编号错位的闭合标签按提取失败走重试(fail-safe 方向)。
+const NUMBERED_TRANSLATE_RE = /\[TRANSLATE_(\d+)\]([\s\S]*?)\[\/(?:TRANSLATE|TRANSLTranslate)_\1\]/gi;
 
 /**
  * Extract translated lines with numbered markers from AI response
@@ -165,6 +194,13 @@ export const buildContextPrompt = (baseUserPrompt: string, batchSize: number, do
   // Function-form replacement + the trailing literal ${content}: the actual
   // marker block is substituted by getAIModelPrompt LAST, after every template
   // variable has already been resolved (see utils.ts getAIModelPrompt).
+  //
+  // The format example below uses the literal X placeholder, NOT a concrete
+  // digit. A digit (e.g. `[TRANSLATE_0]translation[/TRANSLATE_0]`) is parseable by
+  // NUMBERED_TRANSLATE_RE: a model that echoes the format example (acknowledged
+  // "模型回显残渣") would have that echo win slot 0 under the first-wins rule,
+  // shipping the literal word "translation" on line 0 — flagged success + cached.
+  // `[TRANSLATE_X]` can't match `\d+`, so an echo is inert. Keep it non-numeric.
   return baseUserPrompt.replace(
     "${content}",
     () => `Context: This is ${
@@ -174,7 +210,7 @@ export const buildContextPrompt = (baseUserPrompt: string, batchSize: number, do
 CRITICAL REQUIREMENTS:
 1. You MUST translate ALL ${batchSize} lines marked with [TRANSLATE_X] tags
 2. Do NOT skip any numbers from 0 to ${batchSize - 1}
-3. Keep the exact format: [TRANSLATE_0]translation[/TRANSLATE_0]
+3. Keep the exact format: [TRANSLATE_X]translation[/TRANSLATE_X] (X = the line number)
 4. NEVER merge lines: when one sentence spans several marked lines, translate each line's fragment separately under its own number — do NOT combine multiple lines' content into a single tag; a tag may be empty ONLY if its source line is empty
 5. ${ctx.notes}
 

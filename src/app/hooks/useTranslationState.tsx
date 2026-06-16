@@ -23,10 +23,13 @@ import {
   DEFAULT_SYSTEM_PROMPT,
   DEFAULT_USER_PROMPT,
   deleteCachedTranslation,
+  getCachedTranslation,
+  setCachedTranslation,
+  generateCacheKey,
   type TranslateTextParams,
   type TranslationConfig,
 } from "@/app/lib/translation";
-import { buildGlossaryPromptBlock, buildStrictGlossaryPromptBlock, filterTermsMatchingText, findGlossaryViolations, type GlossaryTerm } from "@/app/lib/translation/glossary";
+import { applyGlossaryToText, buildGlossaryPromptBlock, buildStrictGlossaryPromptBlock, filterTermsMatchingText, findGlossaryViolations, type GlossaryTerm } from "@/app/lib/translation/glossary";
 import SparkMD5 from "spark-md5";
 import {
   getRetryConfig,
@@ -34,6 +37,7 @@ import {
   extractTranslatedLinesWithNumbers,
   buildContextPrompt,
   isBlankLine,
+  prefillFromLineCache,
   exportTranslationSettings,
   createSettingsFileInput,
   validateTranslationInputs,
@@ -148,12 +152,31 @@ const useTranslationState = () => {
     deleteGlossaryPreset,
     renameGlossaryPreset,
     updateGlossaryPreset,
-    getGlossaryTerms,
-    applyGlossary,
+    getGlossaryTerms: getLiveGlossaryTerms,
   } = useGlossaryPresets();
 
+  // run 内词汇表快照:cacheSuffix 在批次开始把词表哈希进缓存键,而 wire prompt
+  // /违规检测/leak-through 逐请求实时读 —— 运行中切换或编辑词汇表会把【新词表
+  // 引导的译文】缓存进【旧词表哈希】的键,切回旧词表后命中缓存重放错误术语
+  // (IndexedDB 持久污染,只能清缓存解除)。runTranslation 开始建快照、结束
+  // 失效:run 内首次读取某语言即固化,同一 run 里 prompt、违规检测、
+  // leak-through 与缓存键看到同一份词表。非 run 路径(JSON 工具自带循环,
+  // 不走 runTranslation)保持实时读,行为同前。
+  const glossarySnapshotRef = useRef<Map<string, GlossaryTerm[]> | null>(null);
+  const getGlossaryTerms = (targetLang: string): GlossaryTerm[] => {
+    const snap = glossarySnapshotRef.current;
+    if (!snap) return getLiveGlossaryTerms(targetLang);
+    let terms = snap.get(targetLang);
+    if (terms === undefined) {
+      terms = getLiveGlossaryTerms(targetLang);
+      snap.set(targetLang, terms);
+    }
+    return terms;
+  };
+  const applyGlossary = (text: string, targetLang: string): string => applyGlossaryToText(text, getGlossaryTerms(targetLang));
+
   // Extracted concerns
-  const { isTranslating, setIsTranslating, progressPercent, setProgressPercent, progressInfo, abortControllerRef, makeUpdateProgress, resetProgress } = useTranslationProgress();
+  const { isTranslating, setIsTranslating, progressPercent, setProgressPercent, progressInfo, abortControllerRef, disposedRef, makeUpdateProgress, resetProgress } = useTranslationProgress();
 
   const { llmPresets, setLlmPresets, activeLlmPresetId, setActiveLlmPresetId, saveLlmPreset, loadLlmPreset, deleteLlmPreset, renameLlmPreset, updateLlmPreset } = useLlmPresets({
     translationConfigs,
@@ -449,8 +472,12 @@ const useTranslationState = () => {
   // only for legacy callers that have no run scope.
   const translateSingle = async (text: string, cacheSuffix: string, config: TranslationRuntimeConfig, fullText?: string, runController?: AbortController) => {
     const run = runController ?? abortControllerRef.current;
-    // Check if already aborted (e.g., by auth error in another concurrent request)
-    if (run?.signal.aborted) {
+    // Check if already aborted (e.g., by auth error in another concurrent request).
+    // disposedRef:provider 已卸载(浏览器后退)—— 这里是所有翻译路径(含
+    // JSONTranslator 自带循环,它不经 translateBatch 且常无 run controller)
+    // 的咽喉,据此拒绝继续发请求。"Translation aborted" 走既有级联中止链路
+    // (isCascadedAbort → 各工具静默 continue)。
+    if (disposedRef.current || run?.signal.aborted) {
       throw new Error("Translation aborted");
     }
 
@@ -533,7 +560,9 @@ const useTranslationState = () => {
         async () => {
           // Check abort before each attempt — against THIS run's controller,
           // not the live ref (a retry interval can span a run boundary).
-          if (run?.signal.aborted) {
+          // disposedRef:重试间隔(可达 30s)可能跨越 provider 卸载,而
+          // JSON 工具的调用常无 run controller 可被卸载时 abort。
+          if (disposedRef.current || run?.signal.aborted) {
             throw new Error("Translation aborted");
           }
 
@@ -633,7 +662,7 @@ const useTranslationState = () => {
     contentLines: string[],
     runtimeConfig: TranslationRuntimeConfig,
     cacheSuffix: string,
-    updateProgress: (current: number, total: number, latest?: string) => void,
+    updateProgress: (current: number, total: number) => void,
     documentType: "subtitle" | "markdown" | "generic" = "subtitle",
     fullText?: string,
     runController?: AbortController,
@@ -663,7 +692,25 @@ const useTranslationState = () => {
       if (isBlankLine(contentLines[i])) translatedLines[i] = contentLines[i];
     }
 
+    // Cross-run skip: pre-fill lines that already succeeded in a previous run
+    // (per-line cache below) so "再来一次" only re-translates the still-failed
+    // lines instead of re-rolling whole batches whose batch-cache was purged
+    // after a partial failure (issue#44 purge). Write-once inside the helper.
+    if (runtimeConfig.useCache !== false) {
+      await prefillFromLineCache(contentLines, translatedLines, (text) => getCachedTranslation(generateCacheKey(text, cacheSuffix)));
+    }
+
     const translateSingleBatch = async (batchStart: number, batchEnd: number, contextWindow: number): Promise<boolean> => {
+      // Every target slot already decided (pre-filled from cache or an earlier
+      // batch) → skip the model call entirely; sending it would re-translate
+      // already-good lines and burn tokens for a result the write-once guard
+      // would discard anyway.
+      let hasPending = false;
+      for (let k = batchStart; k < batchEnd; k++) {
+        if (translatedLines[k] === undefined) { hasPending = true; break; }
+      }
+      if (!hasPending) return true;
+
       const contextPadding = Math.min(MAX_CONTEXT_PADDING, Math.max(1, Math.floor(contextWindow / 2)));
       const contextStart = Math.max(0, batchStart - contextPadding);
       const contextEnd = Math.min(contentLines.length, batchEnd + contextPadding);
@@ -723,18 +770,17 @@ const useTranslationState = () => {
             // soft-fail"), so a fully-failed line stays the untouched original
             // instead of a half-localized mix like "斯派克, hi".
             translatedLines[batchStart + j] = await enforceGlossaryOnLine(batchSources[j], translatedBatch[j], cacheSuffix, runtimeConfig, fullText, run);
+            // Cache the finalized line by its source text so a future run skips
+            // it (see prefillFromLineCache above). Survives the batch-level purge
+            // because it's keyed by the single line, not the batch window.
+            if (runtimeConfig.useCache !== false) void setCachedTranslation(generateCacheKey(batchSources[j], cacheSuffix), translatedLines[batchStart + j]);
           }
         }
 
         // Reflect partial progress as soon as the batch returns, so the bar doesn't
-        // sit at 0% for the full duration of each 50-line LLM call. The last
-        // non-blank line of this batch feeds the live preview (projection screen).
+        // sit at 0% for the full duration of each 50-line LLM call.
         const doneSoFar = translatedLines.filter((x) => x !== undefined).length;
-        const latestLine = translatedLines
-          .slice(batchStart, batchEnd)
-          .filter((x): x is string => x !== undefined && x.trim() !== "")
-          .at(-1);
-        if (doneSoFar > 0) updateProgress(doneSoFar, contentLines.length, latestLine);
+        if (doneSoFar > 0) updateProgress(doneSoFar, contentLines.length);
 
         return !translatedLines.slice(batchStart, batchEnd).includes(undefined);
       } catch (error) {
@@ -947,6 +993,11 @@ const useTranslationState = () => {
       }
     }
 
+    // Run 已被 unmount 中止(导航离开;auth 级联在 Promise.all 处就已 reject,
+    // 到不了这里):不做软填 —— 软填出的「大半是原文」数组会被工具层当正常
+    // 结果装配、下载、报成功。规范成级联标记,工具层 isCascadedAbort 静默。
+    if (disposedRef.current || run?.signal.aborted) throw new Error("Translation aborted");
+
     // ─── Final soft-fail ────────────────────────────────────────────────
     // Slots still empty after auto-retry get filled with the original text
     // so the output is usable. Only non-whitespace originals count as real
@@ -988,6 +1039,10 @@ const useTranslationState = () => {
     try {
       if (!contentLines.length) return [];
 
+      // Provider 已卸载:不再开启新 run(多语言/多文件循环每轮都会走到这里
+      // 新建 controller,单靠卸载时 abort 旧 controller 拦不住后续轮次)。
+      if (disposedRef.current) throw new Error("Translation aborted");
+
       // Initialize new abort controller for this translation batch. Capture it
       // as THIS run's controller — every task closure below checks/aborts the
       // captured controller, never the live ref, so queued p-limit tasks from a
@@ -997,12 +1052,6 @@ const useTranslationState = () => {
       abortControllerRef.current = runController;
 
       const updateProgress = makeUpdateProgress(fileIndex, totalFiles);
-
-      // Leak-through net for the chunk path (whole-text MT — no per-line soft-fill,
-      // so every line is a real translation). The context + line-by-line paths
-      // apply the glossary per successful line instead, so a failed-then-soft-filled
-      // line keeps the raw source. No-op when no term matches this target language.
-      const applyGlossaryToLines = (lines: string[]) => lines.map((line) => applyGlossary(line ?? "", currentTargetLang));
 
       // systemPrompt stays the BASE prompt — translateSingle appends the
       // per-request glossary block (filtered to the terms each text contains).
@@ -1054,16 +1103,26 @@ const useTranslationState = () => {
         const promises = contentLines.map((line, index) =>
           limit(async () => {
             // Run-scoped liveness check (not the live ref) — see runController note.
-            if (runController.signal.aborted) return;
+            // 必须 throw 级联标记而非裸 return:静默 return 会留下数组空洞,而
+            // Promise.all 照样 resolve(排队任务在 abort 后才启动时没有任何任务
+            // reject)—— 稀疏数组流回工具层,generateSubtitle 把空洞拼成字面
+            // "undefined" 写进自动下载的文件。throw 让 Promise.all reject,
+            // 工具层 isCascadedAbort 静默跳过装配/下载。
+            if (runController.signal.aborted) throw new Error("Translation aborted");
             try {
               // Glossary on success only; the catch below soft-fills the raw source.
               translatedLines[index] = await translateSingleWithGlossary(line, cacheSuffix, runtimeConfig, fullText, runController);
             } catch (error) {
               // Auth error already tripped THIS run's controller inside translateSingle.
-              // After-abort throws ("Translation aborted") come from peers' pre-attempt
-              // guard. Both must propagate so Promise.all kills the batch — translator
-              // catch surfaces the real auth error / handles cascade silently.
-              if (isAuthError(error) || runController.signal.aborted) throw error;
+              // It must propagate raw so Promise.all kills the batch and the translator
+              // catch surfaces the real reason.
+              if (isAuthError(error)) throw error;
+              // run 已中止(auth 级联 / provider 卸载的 unmount abort):在飞请求
+              // 死于裸 AbortError —— 原样上抛会被工具层按 isAbortError 当"超时"
+              // 弹红 toast(卸载场景还弹在用户切去的页面上)。统一改抛级联标记,
+              // isCascadedAbort → 工具层静默;peers 的 "Translation aborted" 本就
+              // 是这个形态。
+              if (runController.signal.aborted) throw new Error("Translation aborted");
               // Otherwise (network blip, 5xx, 4xx like a 422 thinking-param reject,
               // etc., after pRetry exhausted): soft-fail this line, keep peers running.
               lastErrorRef.current = describeError(error, t);
@@ -1072,7 +1131,7 @@ const useTranslationState = () => {
             }
             completedCount++;
             if (completedCount % progressStep === 0 || completedCount === contentLines.length) {
-              updateProgress(completedCount, contentLines.length, translatedLines[index]);
+              updateProgress(completedCount, contentLines.length);
             }
             if (baseDelay > 0 && completedCount < contentLines.length) {
               await delay(baseDelay);
@@ -1135,23 +1194,33 @@ const useTranslationState = () => {
       // Without this, one chunk exhausting retries threw away every chunk that
       // had already succeeded (all-or-nothing for the DEFAULT free service).
       const failedChunkLines: string[] = [];
+      // 软填(保留原文)的行号集合 —— 术语表 leak-through 只能套在【成功译文】
+      // 上:对软填的源文套术语表会产出 "斯派克, hi" 式半本地化混合体,这正是
+      // context/line 路径注释里明令禁止、失败面板又声称"保留了原文"的腐败输出。
+      const failedK = new Set<number>();
+      let chunkStartK = 0;
 
       for (let i = 0; i < chunks.length; i++) {
+        const chunkLineCount = chunks[i].split(delimiter).length;
         let processed: string;
         try {
           const translatedContent = await translateSingle(chunks[i], cacheSuffix, runtimeConfig, fullText, runController);
           processed = translationMethodArg === "deeplx" ? (translatedContent || "").replace(/<>/g, "\n") : translatedContent || "";
         } catch (error) {
-          if (isAuthError(error) || runController.signal.aborted) throw error;
+          if (isAuthError(error)) throw error;
+          // 同 line 路径:run 已中止时把裸 AbortError 规范成级联标记,
+          // 工具层静默而不是误报"超时"。
+          if (runController.signal.aborted) throw new Error("Translation aborted");
           lastErrorRef.current = describeError(error, t);
           // 软填原文 —— deeplx 的源块含 "<>" 分隔符,同样要还原成 \n 保持行对齐
           processed = translationMethodArg === "deeplx" ? chunks[i].replace(/<>/g, "\n") : chunks[i];
           failedChunkLines.push(...processed.split("\n").filter((l) => l.trim()));
+          for (let k = chunkStartK; k < chunkStartK + chunkLineCount; k++) failedK.add(k);
         }
         translatedChunks.push(processed);
-        chunkLinesDone += chunks[i].split(delimiter).length;
-        // 末行喂给实时预览(projection 银幕)—— 同 line/batch 路径的 latest 语义
-        updateProgress(chunkLinesDone, totalChunkLines, processed.split("\n").filter((l) => l.trim()).at(-1));
+        chunkStartK += chunkLineCount;
+        chunkLinesDone += chunkLineCount;
+        updateProgress(chunkLinesDone, totalChunkLines);
         if (i < chunks.length - 1) await delay(config?.delayTime || 200);
       }
 
@@ -1167,11 +1236,16 @@ const useTranslationState = () => {
       // lines pass through verbatim. If the service changed the line count
       // (merged/split lines), unmatched slots keep the source text — degraded
       // but never SHIFTED against the original structure.
+      // Glossary leak-through net (whole-text MT has no in-model glossary
+      // channel) applies to SUCCESSFUL translations only — failed-chunk and
+      // unmatched slots keep the raw source untouched, same convention as the
+      // context/line paths. No-op when no term matches this target language.
       const out = [...contentLines];
       for (let k = 0; k < sourceIdx.length; k++) {
-        out[sourceIdx[k]] = translatedNonBlank[k] ?? contentLines[sourceIdx[k]];
+        const translated = translatedNonBlank[k];
+        out[sourceIdx[k]] = failedK.has(k) || translated === undefined ? contentLines[sourceIdx[k]] : applyGlossary(translated, currentTargetLang);
       }
-      return applyGlossaryToLines(out);
+      return out;
     } catch (error) {
       console.error("Error translating content:", error);
       throw error;
@@ -1215,6 +1289,10 @@ const useTranslationState = () => {
   // this directly after the loop to gate their success toast against the failure panel.
   const hadRunFailures = () => runHadFailuresRef.current;
 
+  // 翻译进行中组件被卸载(用户导航离开)—— 工具层的批量循环靠它跳过失效的
+  // 汇总 toast(antd message 挂在应用根上,会弹在用户切去的页面)和后续文件。
+  const isDisposed = () => disposedRef.current;
+
   // Translation handlers
   // Returns true when the run fully succeeded (no line- OR lang-level failures), so a
   // caller that owns its own success messaging (e.g. MD single-file) can show a
@@ -1232,12 +1310,17 @@ const useTranslationState = () => {
     // 自行开关。Progress modal 在 validate 的 test ping 阶段也保持可见,体验连续。
     setIsTranslating(true);
     resetProgress();
+    glossarySnapshotRef.current = new Map();
     try {
       const isValid = await validate();
       if (!isValid) return false;
       await performTranslation(sourceText, undefined, undefined, undefined, documentType);
-      return !runHadFailuresRef.current;
+      // disposed = 用户翻译中途导航离开:级联标记被工具层静默 continue 后
+      // 这里会正常走到 —— 不挡的话调用方在用户已切去的页面上弹"成功"toast
+      // (antd message 挂在应用根上,跨页面可见)。
+      return !runHadFailuresRef.current && !disposedRef.current;
     } finally {
+      glossarySnapshotRef.current = null;
       setIsTranslating(false);
     }
   };
@@ -1279,8 +1362,10 @@ const useTranslationState = () => {
     markRunHadFailures,
     recordLineFailure,
     hadRunFailures,
+    isDisposed,
     isTranslating,
     setIsTranslating,
+    resetProgress,
     apiSettingsOpen,
     setApiSettingsOpen,
     progressPercent,

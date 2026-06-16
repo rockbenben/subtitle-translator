@@ -175,24 +175,39 @@ export const parseGlossaryTsv = (content: string, fallbackLang: string, validLan
     .map(({ source, target, langRaw }) => ({ source, target, targetLang: validLangs.has(langRaw) ? langRaw : fallbackLang }));
 
 /**
- * Merge imported terms into an existing list. Only languages PRESENT in the
- * import are touched: within each, imported rows overlay same-source terms
- * (trimmed, case-SENSITIVE — 'Polish'/'polish' are legal distinct pairs) and
- * collapse file-internal duplicates; untouched languages keep their rows
- * verbatim (including editor-state duplicates) — merge, don't wipe.
+ * Merge imported terms into an existing list. Only rows whose (targetLang,
+ * source) key actually appears IN THE IMPORT are overlaid (trimmed,
+ * case-SENSITIVE — 'Polish'/'polish' are legal distinct pairs); file-internal
+ * duplicates collapse last-wins. Every other existing row — untouched
+ * languages and not-imported keys alike, including editor-state duplicate
+ * rows — stays verbatim: merge, don't wipe.
  */
 export const mergeImportedTerms = (existing: GlossaryTerm[], imported: GlossaryTerm[]): GlossaryTerm[] => {
-  const touched = new Set(imported.map((t) => t.targetLang));
-  // Empty-source rows are half-filled editor drafts — they have no merge key
-  // (an empty key would collapse SEPARATE drafts into one, eating a typed
-  // target), so pass them through verbatim alongside untouched languages.
-  // Imported rows always have a non-empty source (parseGlossaryTsv filters).
-  const passthrough = existing.filter((t) => !touched.has(t.targetLang) || !t.source.trim());
-  const byKey = new Map<string, GlossaryTerm>();
+  // 只替换「key 出现在导入文件里」的现存行;其余现存行 —— 未触及语言、
+  // 同语言但未被导入的 key、空 source 草稿行(无合并键,空键会把多条独立
+  // 草稿吃成一条;parseGlossaryTsv 保证导入行 source 非空)—— 一律原样保留。
+  // ⚠ 不能按「导入触及的语言」整体折叠现存行(旧实现的 Map last-wins):
+  // 编辑器允许同语言同 source 的重复行且引擎按【首条】生效 —— 导入一个
+  // 毫不相关的文件就会静默删掉一条重复行、并把生效译法从首条翻转成末条。
+  const importedByKey = new Map<string, GlossaryTerm>();
   const key = (t: GlossaryTerm) => `${t.targetLang}\u0000${t.source.trim()}`;
-  for (const t of existing) if (touched.has(t.targetLang) && t.source.trim()) byKey.set(key(t), t);
-  for (const t of imported) byKey.set(key(t), t);
-  return [...passthrough, ...byKey.values()];
+  // 导入文件内部去重(同 key 末行覆盖前行,与旧行为一致)。
+  for (const t of imported) importedByKey.set(key(t), t);
+  // 原位替换:被导入覆盖的 key 在其【首次出现】的位置换成导入行(同 key 的
+  // 后续重复行随之移除 —— 导入对该 key 拥有完整权威);导入未提及的现存行
+  // 位置与数量都不动。
+  const consumed = new Set<string>();
+  const kept = existing.flatMap((t) => {
+    if (!t.source.trim()) return [t];
+    const k = key(t);
+    const imp = importedByKey.get(k);
+    if (!imp) return [t];
+    if (consumed.has(k)) return [];
+    consumed.add(k);
+    return [imp];
+  });
+  const appended = [...importedByKey.values()].filter((t) => !consumed.has(key(t)));
+  return [...kept, ...appended];
 };
 
 // ICU-safety: the leak-through must never rewrite inside {...} spans. The JSON

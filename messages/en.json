@@ -196,6 +196,8 @@
     "errorHint429": "Rate limit exceeded, please retry later",
     "errorHint456": "Translation quota exhausted for this billing period",
     "errorHint5xx": "Server error, please retry later",
+    "errorHintRelay": "Network error (possibly CORS) — enable \"API Relay\" in API Settings",
+    "errorHintRelay403": "The API returned 403 Forbidden — enable \"API Relay\" in API Settings",
     "rateLimitCooldown": "Rate limited — pausing briefly, will retry automatically"
   },
   "SubtitleTranslator": {
@@ -208,12 +210,17 @@
     "bilingualFormatTooltip": "ASS: separate font/color styling for original and translation. SRT: plain text, both lines stacked in the same cue.",
     "translationFirst": "Translation Above",
     "originalFirst": "Translation Below",
-    "unsupportedSub": "Unrecognized format. Please ensure file is SRT, ASS, VTT, or LRC.",
+    "unsupportedSub": "Unrecognized format. Please ensure file is SRT, ASS, VTT, SBV, or LRC.",
     "noFileUploaded": "Please upload a subtitle file first.",
     "noSourceText": "Please upload subtitle file or paste text.",
     "noExtractedText": "No subtitle content extracted, please check file format.",
     "textExtracted": "Subtitle text extracted, ",
-    "bilingualError": "Complex style tags detected. Bilingual mode may cause formatting issues. Recommended to disable 'Bilingual Subtitles'."
+    "bilingualError": "Complex style tags detected. Bilingual mode may cause formatting issues. Recommended to disable 'Bilingual Subtitles'.",
+    "reviewTitle": "Bilingual Review",
+    "reviewColSource": "Source",
+    "reviewColTarget": "Translation",
+    "reviewApplyDownload": "Apply & download",
+    "reviewDownloaded": "Reviewed subtitle downloaded"
   },
   "TranslationSettings": {
     "resetConfigSuccess": "Configuration reset to defaults",
@@ -255,6 +262,7 @@
     "delayTime": "Delay Time",
     "useRelay": "API Relay",
     "useRelayTooltip": "Enable API relay if you encounter CORS or 403 errors",
+    "useRelayOverridden": "A custom URL is set — requests go directly to it and this switch has no effect; clear the URL to re-enable",
     "reasoningEffort": "Reasoning Effort",
     "reasoningEffortExtra": "Off disables thinking (default); enabling is usually more accurate but slower and uses more tokens. Custom models also offer Auto = follow the model's built-in default (use only if Off triggers an API error).",
     "presetSelect": "Select Preset",
@@ -282,13 +290,13 @@
   "tools": {
     "subtitleTranslator": {
       "title": "Subtitle Translator",
-      "description": "Batch translate SRT, ASS, VTT, LRC subtitles. 120+ languages.",
+      "description": "Batch translate SRT, ASS, VTT, SBV, LRC subtitles. 120+ languages.",
       "metaTitle": "Free Subtitle Translator | Batch SRT/VTT/ASS + Bilingual",
-      "metaDescription": "AI subtitle translator for SRT, ASS, VTT, LRC. 25+ engines: DeepSeek, Claude, GPT, DeepL. 120+ languages, preserved timecodes, bilingual.",
+      "metaDescription": "AI subtitle translator for SRT, ASS, VTT, SBV, LRC. 25+ engines: DeepSeek, Claude, GPT, DeepL. 120+ languages, preserved timecodes, bilingual.",
       "faq": [
         {
-          "q": "Which subtitle formats are supported? Can it translate SRT, ASS, VTT, and LRC?",
-          "a": "Four formats supported: SRT, ASS, VTT, and LRC. SRT/VTT fit YouTube, HTML5 players, and creator dashboards (export YouTube captions with yt-dlp); ASS fits Aegisub and anime fansubs, with line-leading position tags (e.g. \\\\an8) auto-restored after translation; LRC fits music lyrics. File encoding (UTF-8 / UTF-16 / GBK / Shift-JIS) is auto-detected via jschardet. Complex inline ASS effect tags (colors, animation, karaoke) are simplified during translation."
+          "q": "Which subtitle formats are supported? Can it translate SRT, ASS, VTT, SBV, and LRC?",
+          "a": "Five formats supported: SRT, ASS, VTT, SBV, and LRC. SRT/VTT fit YouTube, HTML5 players, and creator dashboards (export YouTube captions with yt-dlp); ASS/SSA fits Aegisub and anime fansubs, with line-leading position tags (e.g. \\\\an8) auto-restored after translation; SBV is the native export format of YouTube Studio's caption editor; LRC fits music lyrics. File encoding (UTF-8 / UTF-16 / GBK / Shift-JIS) is auto-detected via jschardet. Complex inline ASS effect tags (colors, animation, karaoke) are simplified during translation."
         },
         {
           "q": "Should I use machine translation or AI/LLM translation for subtitles? Which is best quality, which is cheapest?",
@@ -326,7 +334,7 @@
       "howto": [
         {
           "name": "Start from video or subtitle file",
-          "text": "Upload SRT/ASS/VTT/LRC subtitle file. Export YouTube subtitles via yt-dlp, Twitch VODs via creator dashboard, or use legitimate sources for streaming platforms."
+          "text": "Upload SRT/ASS/VTT/SBV/LRC subtitle file. Export YouTube subtitles via yt-dlp, Twitch VODs via creator dashboard, or use legitimate sources for streaming platforms."
         },
         {
           "name": "Choose engine and output mode",
@@ -338,7 +346,7 @@
         }
       ],
       "features": [
-        "Supports SRT, ASS, VTT, LRC subtitle formats, preserving ASS position tags (\\\\an8 etc.) after translation",
+        "Supports SRT, ASS, VTT, SBV, LRC subtitle formats, preserving ASS position tags (\\\\an8 etc.) after translation",
         "Timecodes untouched — tool only translates text, original timing preserved",
         "UTF-8/UTF-16/GBK encoding auto-detection",
         "Bilingual subtitle position: above (learning) or below (viewing)",
@@ -409,6 +417,10 @@
     "dataParserImgPrompt": {
       "title": "IMGPrompt Data Gen",
       "description": "Batch generate IMGPrompt JSON data"
+    },
+    "textDiff": {
+      "title": "Text Diff",
+      "description": "Compare two texts or files side by side and pinpoint the first difference."
     }
   },
   "navigation": {

@@ -196,6 +196,8 @@
     "errorHint429": "リクエストが多すぎます。しばらくしてから再試行してください",
     "errorHint456": "今期の翻訳クォータを使い切りました",
     "errorHint5xx": "サーバーエラーです。しばらくしてから再試行してください",
+    "errorHintRelay": "ネットワークエラー（CORS 制限の可能性があります）。API 設定で「API 中継」を有効にしてください",
+    "errorHintRelay403": "API が 403 Forbidden を返しました。API 設定で「API 中継」を有効にしてください",
     "rateLimitCooldown": "レート制限に達したため少し待機し、自動的に再試行します"
   },
   "SubtitleTranslator": {
@@ -208,12 +210,17 @@
     "bilingualFormatTooltip": "ASS:原文と訳文に別々のフォント/色を適用可能。SRT:プレーンテキスト、同じキューに重ねて表示。",
     "translationFirst": "訳文を上に",
     "originalFirst": "訳文を下に",
-    "unsupportedSub": "字幕形式を認識できません。ファイルがSRT、ASS、VTT、またはLRC形式であることを確認してください。",
+    "unsupportedSub": "字幕形式を認識できません。ファイルがSRT、ASS、VTT、SBV、またはLRC形式であることを確認してください。",
     "noFileUploaded": "先に字幕ファイルをアップロードしてください。",
     "noSourceText": "字幕ファイルをアップロードするか、テキストを貼り付けてください。",
     "noExtractedText": "字幕内容が抽出されませんでした。ファイル形式を確認してください。",
     "textExtracted": "字幕テキストを抽出しました、",
-    "bilingualError": "複雑なスタイルタグが検出されました。対訳モードでは書式が崩れる可能性があるため、「対訳字幕」をオフにすることをお勧めします。"
+    "bilingualError": "複雑なスタイルタグが検出されました。対訳モードでは書式が崩れる可能性があるため、「対訳字幕」をオフにすることをお勧めします。",
+    "reviewTitle": "対訳レビュー",
+    "reviewColSource": "原文",
+    "reviewColTarget": "訳文",
+    "reviewApplyDownload": "適用してダウンロード",
+    "reviewDownloaded": "レビュー済み字幕をダウンロードしました"
   },
   "TranslationSettings": {
     "resetConfigSuccess": "設定をデフォルトに戻しました",
@@ -255,6 +262,7 @@
     "delayTime": "遅延時間",
     "useRelay": "API 中継",
     "useRelayTooltip": "CORS や 403 エラーが発生した場合は API 中継を有効にしてください",
+    "useRelayOverridden": "カスタム URL が設定されているため、リクエストはその URL に直接送信され、このスイッチは無効です。URL を消去すると再び有効になります",
     "reasoningEffort": "推論強度",
     "reasoningEffortExtra": "Off で思考モードを無効化（既定）。有効にすると通常は精度が向上しますが、応答が遅くなりトークン消費が増えます。カスタムモデルには Auto もあり、モデル本来の既定に従います（Off で API エラーになる場合のみ使用）。",
     "presetSelect": "プリセットを選択",
@@ -282,13 +290,13 @@
   "tools": {
     "subtitleTranslator": {
       "title": "字幕翻訳機",
-      "description": "SRT、ASS、VTT、LRC字幕を一括翻訳、120以上の言語に対応",
-      "metaTitle": "字幕翻訳 - SRT/ASS/VTT/LRC 一括 AI 翻訳とバイリンガル字幕",
-      "metaDescription": "AI 字幕翻訳、SRT/ASS/VTT/LRC 一括変換、DeepSeek/Claude/GPT 25+ エンジン、タイムコード保持で二言語字幕。",
+      "description": "SRT、ASS、VTT、SBV、LRC字幕を一括翻訳、120以上の言語に対応",
+      "metaTitle": "字幕翻訳 - SRT/ASS/VTT/SBV/LRC 一括 AI 翻訳とバイリンガル字幕",
+      "metaDescription": "AI 字幕翻訳、SRT/ASS/VTT/SBV/LRC 一括変換、DeepSeek/Claude/GPT 25+ エンジン、タイムコード保持で二言語字幕。",
       "faq": [
         {
-          "q": "対応している字幕フォーマットは？SRT、ASS、VTT、LRC すべて翻訳できますか？",
-          "a": "SRT、ASS、VTT、LRC の 4 形式に対応。SRT/VTT は YouTube、HTML5 プレイヤー、クリエイターダッシュボード向け（YouTube 字幕は yt-dlp で書き出し）；ASS は Aegisub とアニメ字幕グループ向けで、行頭の位置タグ（\\\\an8 など）は翻訳後に自動復元；LRC は音楽歌詞ファイル向け。ファイルエンコーディング（UTF-8/UTF-16/GBK/Shift-JIS）は jschardet で自動判定。複雑な ASS インライン特効タグ（色、アニメーション、カラオケ）は簡略化されます。"
+          "q": "対応している字幕フォーマットは？SRT、ASS、VTT、SBV、LRC すべて翻訳できますか？",
+          "a": "SRT、ASS、VTT、SBV、LRC の 5 形式に対応。SRT/VTT は YouTube、HTML5 プレイヤー、クリエイターダッシュボード向け（YouTube 字幕は yt-dlp で書き出し）；ASS/SSA は Aegisub とアニメ字幕グループ向けで、行頭の位置タグ（\\\\an8 など）は翻訳後に自動復元；SBV は YouTube Studio の字幕エディタが書き出すネイティブ形式；LRC は音楽歌詞ファイル向け。ファイルエンコーディング（UTF-8/UTF-16/GBK/Shift-JIS）は jschardet で自動判定。複雑な ASS インライン特効タグ（色、アニメーション、カラオケ）は簡略化されます。"
         },
         {
           "q": "字幕翻訳には機械翻訳と AI 翻訳のどちらを使う？品質と価格はどう違う？",
@@ -326,7 +334,7 @@
       "howto": [
         {
           "name": "動画または字幕ファイルから開始",
-          "text": "SRT/ASS/VTT/LRC 字幕をアップロード。YouTube は yt-dlp で抽出、ニコ動は配信者ダッシュボードから、他プラットフォームは正規ルートから取得。jschardet で UTF-8/UTF-16/Shift-JIS/GBK エンコーディングを自動検出。"
+          "text": "SRT/ASS/VTT/SBV/LRC 字幕をアップロード。YouTube は yt-dlp で抽出、ニコ動は配信者ダッシュボードから、他プラットフォームは正規ルートから取得。jschardet で UTF-8/UTF-16/Shift-JIS/GBK エンコーディングを自動検出。"
         },
         {
           "name": "エンジンと出力モードを選択",
@@ -338,7 +346,7 @@
         }
       ],
       "features": [
-        "SRT、ASS、VTT、LRC 4 形式対応、ASS 位置タグ（\\\\an8 等）を翻訳後も保持",
+        "SRT、ASS、VTT、SBV、LRC 4 形式対応、ASS 位置タグ（\\\\an8 等）を翻訳後も保持",
         "タイムコード無変更 — テキストのみ翻訳、元の時間情報を完全保持",
         "UTF-8/UTF-16/Shift-JIS 自動エンコード検出",
         "バイリンガル訳文位置：上（学習）または下（視聴）",
@@ -409,6 +417,10 @@
     "dataParserImgPrompt": {
       "title": "IMGPromptデータ生成",
       "description": "IMGPrompt JSONデータを一括生成"
+    },
+    "textDiff": {
+      "title": "テキスト差分",
+      "description": "2つのテキストまたはファイルを並べて比較し、最初の差異を特定します。"
     }
   },
   "navigation": {

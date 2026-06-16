@@ -1,6 +1,38 @@
+// ============================================================================
+// Endpoint configuration & URL resolution
+//
+// The editable hosts a fork / self-hoster repoints live at the TOP of this block
+// (LLM_RELAY_BASE, THIRD_PARTY_ENDPOINTS, PROXY_ENDPOINTS) — change one there and
+// every service picks it up. BELOW them sit the helpers that turn a raw/partial
+// user-supplied URL into the address actually fetched (relayUrl,
+// completeOpenAICompatUrl, resolveRelayableEndpoint). Ordered so each line only
+// depends on what's above it: env flag → relay base + builder → endpoint maps →
+// URL-completion helper → the precedence rule that ties them together.
+// ============================================================================
+
 // Use local API for: dev mode OR Docker (USE_LOCAL_API=true)
 // Use remote API for: static export (production without USE_LOCAL_API)
 export const useLocalApi = process.env.NODE_ENV === "development" || process.env.NEXT_PUBLIC_USE_LOCAL_API === "true";
+
+// Cloudflare Worker that proxies all OpenAI-compatible providers + Claude,
+// strips CORS, forwards Authorization/x-api-key/anthropic-version headers, and
+// routes by provider name under /api/{provider}. Users toggle this via the
+// per-provider "useRelay" switch in API Settings when the browser can't reach
+// the upstream directly.
+export const LLM_RELAY_BASE = "https://llm-proxy.api2026.workers.dev";
+
+/** Build the relay URL for a given provider key (e.g. `relayUrl("openai")`). */
+export const relayUrl = (provider: string): string => `${LLM_RELAY_BASE}/api/${provider}`;
+
+// Third-party proxy services (community-maintained endpoints)
+// These are external proxy/relay services that provide:
+//   - Free or alternative access to paid APIs
+//   - CORS-friendly endpoints for browser-based applications
+//   - Regional access optimization or rate limit workarounds
+export const THIRD_PARTY_ENDPOINTS = {
+  deeplx: "https://deeplx-serverless.api2026.workers.dev/translate",
+  deepseekRelay: relayUrl("deepseek"),
+} as const;
 
 // Proxy endpoints for services that need CORS bypass
 // These services are proxied through Next.js API routes (dev) or EdgeOne (prod)
@@ -12,49 +44,6 @@ export const PROXY_ENDPOINTS = {
   deepl: useLocalApi ? "/api/deepl" : "https://api-edgeone.newzone.top/api/deepl",
   nvidia: useLocalApi ? "/api/nvidia" : "https://api-edgeone.newzone.top/api/nvidia",
 } as const;
-
-// Cloudflare Worker that proxies all OpenAI-compatible providers + Claude,
-// strips CORS, forwards Authorization/x-api-key/anthropic-version headers, and
-// routes by provider name under /api/{provider}. Users toggle this via the
-// per-provider "useRelay" switch in API Settings when the browser can't reach
-// the upstream directly.
-export const LLM_RELAY_BASE = "https://llm-proxy.aishort.top";
-
-/** Build the relay URL for a given provider key (e.g. `relayUrl("openai")`). */
-export const relayUrl = (provider: string): string => `${LLM_RELAY_BASE}/api/${provider}`;
-
-// Third-party proxy services (community-maintained endpoints)
-// These are external proxy/relay services that provide:
-//   - Free or alternative access to paid APIs
-//   - CORS-friendly endpoints for browser-based applications
-//   - Regional access optimization or rate limit workarounds
-export const THIRD_PARTY_ENDPOINTS = {
-  deeplx: "https://deeplx.aishort.top/translate",
-  deepseekRelay: relayUrl("deepseek"),
-} as const;
-
-export const normalizePrompt = (value: string | undefined, fallback: string): string => (typeof value === "string" && value.trim() ? value : fallback);
-
-export const normalizeNumber = (value: unknown, fallback: number | undefined): number => {
-  const n = typeof value === "number" ? value : Number(value);
-  return Number.isFinite(n) ? n : (fallback ?? 0);
-};
-
-export const requireApiKey = (serviceName: string, apiKey: string | undefined): string => {
-  const key = apiKey?.trim();
-  if (!key) {
-    throw new Error(`${serviceName} API Key is required`);
-  }
-  return key;
-};
-
-export const requireUrl = (serviceName: string, url: string | undefined): string => {
-  const endpoint = url?.trim().replace(/\/+$/, "");
-  if (!endpoint) {
-    throw new Error(`${serviceName} endpoint URL is required`);
-  }
-  return endpoint;
-};
 
 /**
  * Auto-complete a user-supplied OpenAI-compatible URL to its full
@@ -91,6 +80,73 @@ export const completeOpenAICompatUrl = (url: string): string => {
   }
   return cleaned;
 };
+
+/**
+ * THE endpoint precedence for every relay-capable service — single
+ * implementation, consumed by the openai-compat factory (resolveEndpoint)
+ * and the custom claude / yandex services:
+ *   1. custom URL set      → use it (self-hosted relay or alternate direct
+ *                            endpoint), normalized by `normalize`
+ *   2. useRelay ON, no URL → the shared Cloudflare relay (LLM_RELAY_BASE)
+ *   3. otherwise           → the official direct endpoint
+ */
+export const resolveRelayableEndpoint = (relayKey: string, opts: { customUrl?: string; useRelay?: boolean; direct: string; normalize?: (url: string) => string }): string => {
+  const customUrl = opts.customUrl?.trim();
+  if (customUrl) return (opts.normalize ?? completeOpenAICompatUrl)(customUrl);
+  if (opts.useRelay) return relayUrl(relayKey);
+  return opts.direct;
+};
+
+// ============================================================================
+// Relay-hint error markers
+// ============================================================================
+
+/**
+ * The marker substring retry.ts keys on to classify a relay-remediation error
+ * as NON-retryable (a doomed CORS error must not burn 3 retries). Single source
+ * of truth: every message that should get that classification embeds this
+ * marker (RELAY_HINT_MESSAGE below + the DeepSeek 403 rewrite in llm.ts) —
+ * rewording a message can't silently break the classification.
+ */
+export const RELAY_HINT_MARKER = "enable 'API Relay'";
+
+// Browser-direct calls to a relay-capable provider hit the CORS wall as a raw
+// `TypeError` (no status). withRelayHint (llm.ts) rewrites it into this message
+// AND attaches `errorHintKey: "errorHintRelay"` — the display layer
+// (describeError) swaps the message for the localized common.errorHintRelay
+// text, so this English form only reaches console logs / non-UI consumers.
+export const RELAY_HINT_MESSAGE = `Network error (possibly CORS). Please ${RELAY_HINT_MARKER} in API Settings.`;
+
+// ============================================================================
+// Config value normalization & required-field validation
+// ============================================================================
+
+export const normalizePrompt = (value: string | undefined, fallback: string): string => (typeof value === "string" && value.trim() ? value : fallback);
+
+export const normalizeNumber = (value: unknown, fallback: number | undefined): number => {
+  const n = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(n) ? n : (fallback ?? 0);
+};
+
+export const requireApiKey = (serviceName: string, apiKey: string | undefined): string => {
+  const key = apiKey?.trim();
+  if (!key) {
+    throw new Error(`${serviceName} API Key is required`);
+  }
+  return key;
+};
+
+export const requireUrl = (serviceName: string, url: string | undefined): string => {
+  const endpoint = url?.trim().replace(/\/+$/, "");
+  if (!endpoint) {
+    throw new Error(`${serviceName} endpoint URL is required`);
+  }
+  return endpoint;
+};
+
+// ============================================================================
+// HTTP requests & error handling
+// ============================================================================
 
 // 注意:这里【不再】拼接用户提示文案。每个状态码代表的可行动问题由展示层
 // 的 describeError(utils/errorUtils.ts)按错误对象的 .status 查 i18n 键
@@ -159,6 +215,10 @@ export const fetchJSON = async (url: string, init?: RequestInit): Promise<unknow
   }
   return response.json();
 };
+
+// ============================================================================
+// Response content extraction
+// ============================================================================
 
 // Intrinsic-reasoning models (Perplexity sonar-reasoning-pro, DeepSeek-R1-style
 // SKUs on aggregators/self-hosted) inline their chain-of-thought as a leading

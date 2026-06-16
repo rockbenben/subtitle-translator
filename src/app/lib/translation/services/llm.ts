@@ -2,10 +2,11 @@
 
 import type { ReasoningEffort, ThinkingDirective, TranslateTextParams, TranslationService } from "../types";
 import { DEFAULT_SYSTEM_PROMPT, DEFAULT_USER_PROMPT } from "../config";
-import { defaultConfigs, isCustomModel, isThinkingModel, OPENAI_COMPAT_KEYS, OPENAI_COMPAT_PROVIDERS, URL_IS_PRIMARY_CRED, type OpenAICompatProviderKey, type OpenAICompatProviderSpec } from "../registry";
+import { acceptsCustomUrl, defaultConfigs, isCustomModel, isThinkingModel, OPENAI_COMPAT_KEYS, OPENAI_COMPAT_PROVIDERS, URL_IS_PRIMARY_CRED, type OpenAICompatProviderKey, type OpenAICompatProviderSpec } from "../registry";
 import { getAIModelPrompt } from "../utils";
+import { isNetworkError } from "@/app/utils/errorUtils";
 
-import { fetchJSON, normalizeNumber, normalizePrompt, relayUrl, requireApiKey, requireUrl, completeOpenAICompatUrl, PROXY_ENDPOINTS, getOpenAICompatContent, getClaudeContent } from "./shared";
+import { fetchJSON, normalizeNumber, normalizePrompt, requireApiKey, requireUrl, completeOpenAICompatUrl, resolveRelayableEndpoint, PROXY_ENDPOINTS, getOpenAICompatContent, getClaudeContent, RELAY_HINT_MARKER, RELAY_HINT_MESSAGE } from "./shared";
 
 // Prepare prompts common to all LLM services
 const preparePrompts = (params: { text: string; targetLanguage: string; sourceLanguage: string; systemPrompt?: string; userPrompt?: string; fullText?: string }) => {
@@ -66,17 +67,17 @@ const openAICompatRequest = async (cfg: OpenAICompatRequestConfig): Promise<stri
   return getOpenAICompatContent(data, serviceName);
 };
 
-// Resolve the endpoint for a provider with allowCustomUrl / allowRelay priority:
-// user-supplied URL > relay (when useRelay toggled) > default endpoint.
-// completeOpenAICompatUrl normalizes user-supplied URLs (bare host, /v1, wrong
-// /v1/responses or /v1/completions paths) — safety net for settings imported
-// from file or hand-edited localStorage that bypass the UI's onBlur fix.
-const resolveEndpoint = (key: OpenAICompatProviderKey, spec: OpenAICompatProviderSpec, params: TranslateTextParams): string => {
-  const customUrl = params.url?.trim();
-  if (spec.allowCustomUrl && customUrl) return completeOpenAICompatUrl(customUrl);
-  if (spec.allowRelay && params.useRelay) return relayUrl(key);
-  return spec.endpoint;
-};
+// Factory adapter over the ONE precedence implementation (shared.ts
+// resolveRelayableEndpoint: custom URL > shared relay > direct). The spec only
+// gates which inputs exist for this provider — acceptsCustomUrl admits the url
+// field (structural: relay capability implies it), defaultUseRelay presence
+// admits the relay toggle — the user's config always has the final say.
+const resolveEndpoint = (key: OpenAICompatProviderKey, spec: OpenAICompatProviderSpec, params: TranslateTextParams): string =>
+  resolveRelayableEndpoint(key, {
+    customUrl: acceptsCustomUrl(spec) ? params.url : undefined,
+    useRelay: spec.defaultUseRelay !== undefined && params.useRelay,
+    direct: spec.endpoint,
+  });
 
 // ═════════════════════════════════════════════════════════════════════════
 // Two-tier OpenAI-compat service generation:
@@ -209,26 +210,31 @@ const THINKING_BUILDERS: Partial<Record<OpenAICompatProviderKey, ExtraBodyBuilde
 // disable payload). Returns {} for providers with no builder.
 export const buildThinkingExtraBody = (service: OpenAICompatProviderKey, params: TranslateTextParams): Record<string, unknown> => THINKING_BUILDERS[service]?.(params) ?? {};
 
-// Shared relay-hint message: browser-direct calls to a relay-capable provider
-// hit the same CORS wall and surface a raw `TypeError: Failed to fetch` (no
-// status → retry.ts would wrongly retry it 3×). The "enable 'API Relay'" marker
-// is what retry.ts matches to treat it as non-retryable, so retrying a doomed
-// CORS error is avoided. Hardcoded bilingual to match existing precedent.
-export const RELAY_HINT_MESSAGE = "Network error (possibly CORS). Please enable 'API Relay' in API Settings. / 网络错误（可能是 CORS 限制），请在 API 设置中开启「中转 API」。";
-
-// True when an error is the browser's CORS/network `TypeError: Failed to fetch`.
-const isFailedToFetch = (error: unknown): error is TypeError => error instanceof TypeError && error.message.includes("Failed to fetch");
-
-// Wrap a relay-capable provider's service so a `Failed to fetch` (CORS) error
+// Wrap a relay-capable provider's service so a browser network/CORS TypeError
 // with relay OFF is rewritten into the actionable relay hint. Applied generically
-// to every `allowRelay` provider — not just DeepSeek — so they all get the hint
+// to every relay-capable provider — not just DeepSeek — so they all get the hint
 // (and the non-retryable classification) instead of a raw doomed retry.
+// isNetworkError covers all three engines' wording (Chrome "Failed to fetch",
+// Firefox "NetworkError when attempting…", Safari "Load failed") — matching only
+// Chrome's left FF/Safari users burning 3 retries on a doomed CORS error and
+// then seeing a generic "service unreachable" instead of the relay remediation.
+// Would enabling the relay actually change routing? Only when the request is
+// currently DIRECT (toggle off) and no custom URL outranks the toggle
+// (resolveRelayableEndpoint precedence 1 > 2). Shared by both rewrite sites —
+// suggesting "enable API Relay" in any other state is a dead end (with url set,
+// the raw error surfaces instead and networkUnavailable points the user at
+// their own endpoint).
+const relayHintWouldHelp = (params: TranslateTextParams): boolean => !params.useRelay && !params.url?.trim();
+
 const withRelayHint = (service: TranslationService): TranslationService => async (params) => {
   try {
     return await service(params);
   } catch (error) {
-    if (!params.useRelay && isFailedToFetch(error)) {
-      throw new Error(RELAY_HINT_MESSAGE);
+    if (relayHintWouldHelp(params) && isNetworkError(error)) {
+      // errorHintKey → describeError renders the localized common.errorHintRelay
+      // text; the English message stays as the console/log fallback and carries
+      // RELAY_HINT_MARKER for retry.ts's non-retryable classification.
+      throw Object.assign(new Error(RELAY_HINT_MESSAGE), { errorHintKey: "errorHintRelay" });
     }
     throw error;
   }
@@ -249,7 +255,10 @@ const makeOpenAICompat = (key: OpenAICompatProviderKey, extraBodyBuilder?: Extra
       extraHeaders: spec.extraHeaders,
       extraBody: extraBodyBuilder?.(params),
     });
-  return spec.allowRelay ? withRelayHint(base) : base;
+  // Every relay-capable provider gets the hint wrap: a CORS failure with the
+  // toggle off (incl. a default-on provider the user switched to direct) is
+  // remediated by turning the relay (back) on.
+  return spec.defaultUseRelay !== undefined ? withRelayHint(base) : base;
 };
 
 // Auto-generate every OpenAI-compat service: each provider gets a base service,
@@ -268,8 +277,11 @@ export const deepseek: TranslationService = async (params) => {
     // 字面匹配漏掉的恰是最常见的浏览器源被拦场景。fetchJSON 已 Object.assign
     // 附 status。
     const status = (error as { status?: number } | null)?.status;
-    if (!params.useRelay && (status === 403 || (error instanceof Error && error.message.includes("[403]")))) {
-      throw new Error("DeepSeek API returned 403 Forbidden. Please enable 'API Relay' in API Settings. / DeepSeek API 返回 403 禁止访问，请在 API 设置中开启「中转 API」。");
+    if (relayHintWouldHelp(params) && (status === 403 || (error instanceof Error && error.message.includes("[403]")))) {
+      // "Forbidden" in the message keeps isAuthError's keyword classification
+      // (auth → whole-batch abort: every line would fail identically); the
+      // errorHintKey gives the display layer the localized relay remediation.
+      throw Object.assign(new Error(`DeepSeek API returned 403 Forbidden. Please ${RELAY_HINT_MARKER} in API Settings.`), { errorHintKey: "errorHintRelay403" });
     }
     throw error;
   }
@@ -322,13 +334,19 @@ export const gemini: TranslationService = async (params) => {
   // Flash-only state (the registry audit note concedes Pro "can't fully
   // disable"). Sending "minimal" to a Pro SKU 400s its untouched DEFAULT
   // config; "low" is the lowest level Pro actually accepts.
+  const isProModel = /-pro\b|-pro-/.test(effectiveModel);
   const disableLevel = (m: string): string => (/-pro\b|-pro-/.test(m) ? "low" : "minimal");
+  // Pro 只收 low/high,但 gemini 不在 BINARY_EFFORT_VENDORS(Flash 是真四档),
+  // UI 对 Pro SKU 照样给出 Medium —— 不钳制的话 enable 路径原样发 "medium",
+  // 每个请求确定性 400、整轮翻译 0 产出(与 grok medium→low 同一 bug 类,
+  // disable 路径映射 Pro→"low" 正是基于同一约束)。
+  const clampLevel = (lvl: string): string => (isProModel && lvl === "medium" ? "low" : lvl);
   if (isThinkingModel("gemini", effectiveModel)) {
-    generationConfig.thinkingConfig = { thinkingLevel: reasoningEffort && reasoningEffort !== "auto" ? reasoningEffort : disableLevel(effectiveModel) };
+    generationConfig.thinkingConfig = { thinkingLevel: reasoningEffort && reasoningEffort !== "auto" ? clampLevel(reasoningEffort) : disableLevel(effectiveModel) };
   } else if (isCustomModel("gemini", effectiveModel) && reasoningEffort !== "auto") {
     // Custom model 3-state: default Off (undefined) → lowest accepted level;
     // effort → that level; "auto" → omit (skip thinkingConfig, follow server default).
-    generationConfig.thinkingConfig = { thinkingLevel: reasoningEffort ?? disableLevel(effectiveModel) };
+    generationConfig.thinkingConfig = { thinkingLevel: reasoningEffort ? clampLevel(reasoningEffort) : disableLevel(effectiveModel) };
   }
 
   const data = (await fetchJSON(`https://generativelanguage.googleapis.com/v1beta/models/${effectiveModel}:generateContent?key=${key}`, {
@@ -410,16 +428,15 @@ export const azureopenai: TranslationService = async (params) => {
 };
 
 // Yandex AI Studio — protocol-wise plain OpenAI-compat chat/completions, but a
-// custom service for two reasons the factory can't express:
-//   1. Model IDs are per-tenant URIs (gpt://<folder_id>/<model>/latest) assembled
-//      from the dedicated `folderId` config field at request time. A full gpt://
-//      URI typed into the model field passes through verbatim (power-user escape;
-//      also how configs imported from the pre-folderId era keep working).
-//   2. Requests route UNCONDITIONALLY through the Cloudflare relay — the upstream
-//      llm.api.cloud.yandex.net sends no CORS headers (verified 2026-06: preflight
-//      OPTIONS is parsed as a JSON body → 400), so browser-direct calls always
-//      fail. Same always-proxy posture as Nvidia NIM's default path; no useRelay
-//      toggle whose OFF state would be permanently broken.
+// custom service because the factory can't assemble per-tenant model URIs:
+// gpt://<folder_id>/<model>/latest is built from the dedicated `folderId`
+// config field at request time. A full gpt:// URI typed into the model field
+// passes through verbatim (power-user escape; also how configs imported from
+// the pre-folderId era keep working).
+//
+// Relay: useRelay defaults ON in registry defaults (upstream sends no CORS
+// headers as of 2026-06 — preflight OPTIONS is parsed as a JSON body → 400),
+// but the toggle stays user-controllable like every relay-capable provider.
 // Pure URI assembly, exported for unit tests (same pattern as buildAzureReasoningBody).
 export const buildYandexModelUri = (model: string | undefined, folderId: string | undefined): string => {
   // Trim BEFORE the fallback: a whitespace-only model is truthy, so `model || default`
@@ -437,16 +454,18 @@ export const buildYandexModelUri = (model: string | undefined, folderId: string 
   return `gpt://${folder}/${shortModel}`;
 };
 
-export const yandex: TranslationService = async (params) => {
+export const YANDEX_DIRECT_ENDPOINT = "https://llm.api.cloud.yandex.net/v1/chat/completions";
+
+export const yandex: TranslationService = withRelayHint(async (params) => {
   const model = buildYandexModelUri(params.model, params.folderId);
   return openAICompatRequest({
     params: { ...params, model },
     serviceName: "Yandex",
-    endpoint: relayUrl("yandex"),
+    endpoint: resolveRelayableEndpoint("yandex", { customUrl: params.url, useRelay: params.useRelay, direct: YANDEX_DIRECT_ENDPOINT }),
     defaultModel: model,
     defaultTemperature: defaultConfigs.yandex.temperature as number,
   });
-};
+});
 
 // NVIDIA NIM wraps thinking params in `chat_template_kwargs` (vs native APIs
 // which use top-level `reasoning_effort` / `thinking`). Orchestrator-level gate
@@ -478,8 +497,13 @@ export const nvidia: TranslationService = async (params) => {
   };
 
   // Direct call (custom URL) vs proxy call (default Nvidia API, avoids CORS)
-  const isDirectCall = !!url;
-  const fetchUrl = isDirectCall ? completeOpenAICompatUrl(url) : PROXY_ENDPOINTS.nvidia;
+  // !!url?.trim() 同 deepl/deeplx:纯空白 URL(" ")是 truthy,
+  // completeOpenAICompatUrl 把它 trim 成 "" 后 fetch("") 打到当前页面 ——
+  // HTML 响应让 ok 路径的 response.json() 抛无 status 的 SyntaxError,被当
+  // 可重试错误烧光重试预算,而不是回落默认代理端点。
+  const trimmedUrl = url?.trim();
+  const isDirectCall = !!trimmedUrl;
+  const fetchUrl = isDirectCall ? completeOpenAICompatUrl(trimmedUrl) : PROXY_ENDPOINTS.nvidia;
   const headers: Record<string, string> = { "Content-Type": "application/json" };
   let body: Record<string, unknown> = requestBody;
 
@@ -552,6 +576,26 @@ export const llm: TranslationService = async (params) => {
   return getOpenAICompatContent(data, serviceName);
 };
 
+// Exported for the worker-parity test (workerParity.test.ts) — the Worker's
+// PROVIDER_URLS targets must equal these direct endpoints.
+export const CLAUDE_DIRECT_ENDPOINT = "https://api.anthropic.com/v1/messages";
+
+// Claude-flavored URL completion (Anthropic Messages protocol — the
+// chat/completions normalizer would rewrite to the wrong path): a bare host
+// (self-hosted relay) gets /v1/messages appended; any URL that already has a
+// path is trusted verbatim.
+export const completeClaudeUrl = (url: string): string => {
+  const cleaned = url.trim().replace(/\/+$/, "");
+  if (!cleaned || cleaned.endsWith("/messages")) return cleaned;
+  try {
+    const parsed = new URL(cleaned);
+    if (parsed.pathname === "" || parsed.pathname === "/") return `${cleaned}/v1/messages`;
+  } catch {
+    // Invalid URL — leave alone, fetch will throw a clearer error
+  }
+  return cleaned;
+};
+
 export const claude: TranslationService = withRelayHint(async (params) => {
   const { apiKey, model, temperature, reasoningEffort, useRelay } = params;
   const { effectiveSystemPrompt, prompt } = preparePrompts(params);
@@ -595,7 +639,10 @@ export const claude: TranslationService = withRelayHint(async (params) => {
   // header since 2024-08 (bring-your-own-key apps). When proxied through the
   // Cloudflare relay the header is harmless but unnecessary — we keep it
   // unconditionally to avoid branching.
-  const endpoint = useRelay ? relayUrl("claude") : "https://api.anthropic.com/v1/messages";
+  // Claude speaks the Anthropic Messages protocol, NOT chat/completions, so
+  // the shared precedence gets the claude-flavored normalizer (bare hosts →
+  // /v1/messages, anything with a path trusted verbatim).
+  const endpoint = resolveRelayableEndpoint("claude", { customUrl: params.url, useRelay, direct: CLAUDE_DIRECT_ENDPOINT, normalize: completeClaudeUrl });
 
   const data = await fetchJSON(endpoint, {
     method: "POST",

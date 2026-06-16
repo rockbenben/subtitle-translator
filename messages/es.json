@@ -196,6 +196,8 @@
     "errorHint429": "Límite de solicitudes superado, inténtelo más tarde",
     "errorHint456": "Cuota de traducción agotada para este período",
     "errorHint5xx": "Error del servidor, inténtelo más tarde",
+    "errorHintRelay": "Error de red (posiblemente CORS): active \"Relé API\" en los ajustes de API",
+    "errorHintRelay403": "La API devolvió 403 Forbidden: active \"Relé API\" en los ajustes de API",
     "rateLimitCooldown": "Límite de solicitudes alcanzado — pausa breve, se reintentará automáticamente"
   },
   "SubtitleTranslator": {
@@ -208,12 +210,17 @@
     "bilingualFormatTooltip": "ASS: estilos de fuente/color separados para original y traducción. SRT: texto plano, ambas líneas apiladas en la misma señal.",
     "translationFirst": "Traducción Arriba",
     "originalFirst": "Traducción Abajo",
-    "unsupportedSub": "Formato no reconocido. Asegúrate de que el archivo sea SRT, ASS, VTT o LRC.",
+    "unsupportedSub": "Formato no reconocido. Asegúrate de que el archivo sea SRT, ASS, VTT, SBV o LRC.",
     "noFileUploaded": "Por favor sube un archivo de subtítulos primero.",
     "noSourceText": "Por favor sube archivo o pega texto.",
     "noExtractedText": "No se extrajo contenido, verifica formato de archivo.",
     "textExtracted": "Texto de subtítulos extraído, ",
-    "bilingualError": "Etiquetas de estilo complejas detectadas. Modo bilingüe puede causar errores de formato. Recomendado desactivar 'Subtítulos Bilingües'."
+    "bilingualError": "Etiquetas de estilo complejas detectadas. Modo bilingüe puede causar errores de formato. Recomendado desactivar 'Subtítulos Bilingües'.",
+    "reviewTitle": "Revisión bilingüe",
+    "reviewColSource": "Original",
+    "reviewColTarget": "Traducción",
+    "reviewApplyDownload": "Aplicar y descargar",
+    "reviewDownloaded": "Subtítulo revisado descargado"
   },
   "TranslationSettings": {
     "resetConfigSuccess": "Configuración restablecida a los valores predeterminados",
@@ -255,6 +262,7 @@
     "delayTime": "Retraso",
     "useRelay": "Relé API",
     "useRelayTooltip": "Habilita el relé API si encuentras errores CORS o 403",
+    "useRelayOverridden": "Hay una URL personalizada: las solicitudes van directamente a ella y este interruptor no tiene efecto; borre la URL para reactivarlo",
     "reasoningEffort": "Esfuerzo de razonamiento",
     "reasoningEffortExtra": "Off desactiva el razonamiento (predeterminado); activarlo suele ser más preciso, pero más lento y consume más tokens. Los modelos personalizados también ofrecen Auto = seguir el valor predeterminado del modelo (úsalo solo si Off provoca un error de la API).",
     "presetSelect": "Seleccionar preset",
@@ -282,13 +290,13 @@
   "tools": {
     "subtitleTranslator": {
       "title": "Traductor Subtítulos",
-      "description": "Traducción por lote SRT, ASS, VTT, LRC. 120+ idiomas.",
+      "description": "Traducción por lote SRT, ASS, VTT, SBV, LRC. 120+ idiomas.",
       "metaTitle": "Traductor subtítulos gratis | SRT/VTT/ASS IA bilingüe",
-      "metaDescription": "Traductor IA de subtítulos para SRT, ASS, VTT, LRC. 25+ motores: DeepSeek, Claude, GPT, DeepL. 120+ idiomas, timecodes intactos, bilingüe.",
+      "metaDescription": "Traductor IA de subtítulos para SRT, ASS, VTT, SBV, LRC. 25+ motores: DeepSeek, Claude, GPT, DeepL. 120+ idiomas, timecodes intactos, bilingüe.",
       "faq": [
         {
-          "q": "¿Qué formatos de subtítulos son compatibles? ¿Se pueden traducir SRT, ASS, VTT y LRC?",
-          "a": "Cuatro formatos compatibles: SRT, ASS, VTT y LRC. SRT/VTT para YouTube, reproductores HTML5 y paneles de creador (exporta subtítulos de YouTube con yt-dlp); ASS para Aegisub y fansubs de anime, etiquetas de posición al inicio de línea (\\\\an8) restauradas tras la traducción; LRC para letras de música. La codificación (UTF-8 / UTF-16 / GBK / Shift-JIS) se detecta automáticamente con jschardet. Las etiquetas de efectos ASS inline complejas (colores, animación, karaoke) se simplifican durante la traducción."
+          "q": "¿Qué formatos de subtítulos son compatibles? ¿Se pueden traducir SRT, ASS, VTT, SBV y LRC?",
+          "a": "Cinco formatos compatibles: SRT, ASS, VTT, SBV y LRC. SRT/VTT para YouTube, reproductores HTML5 y paneles de creador (exporta subtítulos de YouTube con yt-dlp); ASS/SSA para Aegisub y fansubs de anime, etiquetas de posición al inicio de línea (\\\\an8) restauradas tras la traducción; SBV es el formato de exportación nativo del editor de subtítulos de YouTube Studio; LRC para letras de música. La codificación (UTF-8 / UTF-16 / GBK / Shift-JIS) se detecta automáticamente con jschardet. Las etiquetas de efectos ASS inline complejas (colores, animación, karaoke) se simplifican durante la traducción."
         },
         {
           "q": "Subtítulos: ¿usar traducción automática o traducción IA/LLM? ¿Cuál es la mejor calidad, cuál la más barata?",
@@ -326,7 +334,7 @@
       "howto": [
         {
           "name": "Comenzar desde video o archivo de subtítulos",
-          "text": "Suba SRT/ASS/VTT/LRC. Extracción: YouTube con yt-dlp, otras plataformas con herramientas dedicadas. Formato y codificación UTF-8/UTF-16/GBK detectados automáticamente."
+          "text": "Suba SRT/ASS/VTT/SBV/LRC. Extracción: YouTube con yt-dlp, otras plataformas con herramientas dedicadas. Formato y codificación UTF-8/UTF-16/GBK detectados automáticamente."
         },
         {
           "name": "Elegir motor y modo de salida",
@@ -338,7 +346,7 @@
         }
       ],
       "features": [
-        "Compatible con SRT, ASS, VTT, LRC, etiquetas de posición ASS (\\\\an8 etc.) preservadas",
+        "Compatible con SRT, ASS, VTT, SBV, LRC, etiquetas de posición ASS (\\\\an8 etc.) preservadas",
         "Timecodes intactos — solo se traduce el texto, timing original preservado",
         "Detección automática de codificación UTF-8/UTF-16/GBK",
         "Posición subtítulos bilingües: arriba (aprendizaje) o abajo (visualización)",
@@ -409,6 +417,10 @@
     "dataParserImgPrompt": {
       "title": "Generador Datos IMGPrompt",
       "description": "Generar datos JSON IMGPrompt por lote"
+    },
+    "textDiff": {
+      "title": "Text Diff",
+      "description": "Compare dos textos o archivos en paralelo y localice la primera diferencia."
     }
   },
   "navigation": {

@@ -51,18 +51,20 @@ export const useExportFilename = (toolKey: string = "default"): ExportFilenameCo
 
     // Generate date and time strings
     const now = new Date();
-    const dateStr = now.toISOString().slice(0, 10); // YYYY-MM-DD
+    // en-CA 给出本地日历日的 YYYY-MM-DD:toISOString 是 UTC 日期,与下面的
+    // 本地 {time} 错位 —— UTC+8(本站主用户群)在 0-8 点导出时 {date} 落在
+    // 【昨天】,{date}_{time} 组合自相矛盾。
+    const dateStr = new Intl.DateTimeFormat("en-CA").format(now); // YYYY-MM-DD
     const timeStr = now.toTimeString().slice(0, 8).replace(/:/g, ""); // HHMMss
 
     // Replace placeholders。函数形式替换:文件名常含 $ 字符($&/$'/$$ 会被
     // GetSubstitution 解释,产生损坏的下载名,$' 还会把后文吞进去)。
+    // 单趟替换:链式 replace 会把【上一步展开文本里】的字面占位符再展开 ——
+    // 文件名本身含 "{lang}"/"{date}"(i18n 模板文件 strings_{lang}.json、
+    // 媒体名 "Movie {2023}")时 {name} 展开出的 token 被二次替换,下载名被改写。
     if (customFileName.trim()) {
-      let result = customFileName
-        .replace(/\{name\}/gi, () => baseName)
-        .replace(/\{lang\}/gi, () => langCode)
-        .replace(/\{ext\}/gi, () => ext)
-        .replace(/\{date\}/gi, () => dateStr)
-        .replace(/\{time\}/gi, () => timeStr);
+      const tokens: Record<string, string> = { name: baseName, lang: langCode, ext, date: dateStr, time: timeStr };
+      let result = customFileName.replace(/\{(name|lang|ext|date|time)\}/gi, (_, p: string) => tokens[p.toLowerCase()]);
 
       // Ensure the result has an extension. 是否"已带扩展名"必须基于【用户的
       // pattern】判断,而不是展开后的结果末段:{name} 展开出的点分基名尾段

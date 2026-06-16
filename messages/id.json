@@ -196,6 +196,8 @@
     "errorHint429": "Batas permintaan terlampaui, silakan coba lagi nanti",
     "errorHint456": "Kuota terjemahan periode ini telah habis",
     "errorHint5xx": "Kesalahan server, silakan coba lagi nanti",
+    "errorHintRelay": "Kesalahan jaringan (kemungkinan CORS) — aktifkan \"Relay API\" di Pengaturan API",
+    "errorHintRelay403": "API mengembalikan 403 Forbidden — aktifkan \"Relay API\" di Pengaturan API",
     "rateLimitCooldown": "Batas permintaan tercapai — jeda sejenak, akan dicoba ulang otomatis"
   },
   "SubtitleTranslator": {
@@ -208,12 +210,17 @@
     "bilingualFormatTooltip": "ASS: gaya font/warna terpisah untuk teks asli dan terjemahan. SRT: teks polos, kedua baris ditumpuk dalam cue yang sama.",
     "translationFirst": "Terjemahan di Atas",
     "originalFirst": "Terjemahan di Bawah",
-    "unsupportedSub": "Format tidak dikenali. Pastikan file adalah SRT, ASS, VTT, atau LRC.",
+    "unsupportedSub": "Format tidak dikenali. Pastikan file adalah SRT, ASS, VTT, SBV, atau LRC.",
     "noFileUploaded": "Silakan unggah file subtitle terlebih dahulu.",
     "noSourceText": "Silakan unggah file atau tempel teks.",
     "noExtractedText": "Tidak ada konten yang diekstrak, periksa format file.",
     "textExtracted": "Teks subtitle diekstrak, ",
-    "bilingualError": "Tag gaya kompleks terdeteksi. Mode dwibahasa dapat menyebabkan kesalahan format. Disarankan untuk mematikan 'Subtitle Dwibahasa'."
+    "bilingualError": "Tag gaya kompleks terdeteksi. Mode dwibahasa dapat menyebabkan kesalahan format. Disarankan untuk mematikan 'Subtitle Dwibahasa'.",
+    "reviewTitle": "Tinjauan Dwibahasa",
+    "reviewColSource": "Sumber",
+    "reviewColTarget": "Terjemahan",
+    "reviewApplyDownload": "Terapkan & unduh",
+    "reviewDownloaded": "Subtitle hasil tinjauan diunduh"
   },
   "TranslationSettings": {
     "resetConfigSuccess": "Konfigurasi disetel ulang ke default",
@@ -255,6 +262,7 @@
     "delayTime": "Penundaan",
     "useRelay": "Relay API",
     "useRelayTooltip": "Aktifkan relay API jika terjadi kesalahan CORS atau 403",
+    "useRelayOverridden": "URL kustom telah diisi — permintaan langsung menuju URL tersebut dan sakelar ini tidak berlaku; kosongkan URL untuk mengaktifkannya kembali",
     "reasoningEffort": "Intensitas penalaran",
     "reasoningEffortExtra": "Off menonaktifkan pemikiran (default); mengaktifkannya biasanya lebih akurat tetapi lebih lambat dan menggunakan lebih banyak token. Model kustom juga punya Auto = mengikuti default bawaan model (gunakan hanya jika Off menyebabkan error API).",
     "presetSelect": "Pilih Preset",
@@ -282,13 +290,13 @@
   "tools": {
     "subtitleTranslator": {
       "title": "Penerjemah Subtitle",
-      "description": "Terjemahan batch SRT, ASS, VTT, LRC. 120+ bahasa.",
+      "description": "Terjemahan batch SRT, ASS, VTT, SBV, LRC. 120+ bahasa.",
       "metaTitle": "Penerjemah Subtitle Gratis | Batch SRT/VTT/ASS + Dwibahasa",
-      "metaDescription": "Penerjemah subtitle AI untuk SRT, ASS, VTT, LRC. 25+ mesin: DeepSeek, Claude, GPT, DeepL, Google. 120+ bahasa, timecode utuh, output dwibahasa.",
+      "metaDescription": "Penerjemah subtitle AI untuk SRT, ASS, VTT, SBV, LRC. 25+ mesin: DeepSeek, Claude, GPT, DeepL, Google. 120+ bahasa, timecode utuh, output dwibahasa.",
       "faq": [
         {
-          "q": "Format subtitle apa saja yang didukung? Bisa menerjemahkan SRT, ASS, VTT, dan LRC?",
-          "a": "Empat format didukung: SRT, ASS, VTT, dan LRC. SRT/VTT untuk YouTube, pemutar HTML5, dan dasbor kreator (ekspor subtitle YouTube dengan yt-dlp); ASS untuk Aegisub dan fansub anime, tag posisi di awal baris (\\\\an8) dipulihkan setelah terjemahan; LRC untuk lirik musik. Encoding file (UTF-8 / UTF-16 / GBK / Shift-JIS) dideteksi otomatis via jschardet. Tag inline efek ASS yang kompleks (warna, animasi, karaoke) disederhanakan selama terjemahan."
+          "q": "Format subtitle apa saja yang didukung? Bisa menerjemahkan SRT, ASS, VTT, SBV, dan LRC?",
+          "a": "Lima format didukung: SRT, ASS, VTT, SBV, dan LRC. SRT/VTT untuk YouTube, pemutar HTML5, dan dasbor kreator (ekspor subtitle YouTube dengan yt-dlp); ASS/SSA untuk Aegisub dan fansub anime, tag posisi di awal baris (\\\\an8) dipulihkan setelah terjemahan; SBV adalah format ekspor bawaan editor subtitle YouTube Studio; LRC untuk lirik musik. Encoding file (UTF-8 / UTF-16 / GBK / Shift-JIS) dideteksi otomatis via jschardet. Tag inline efek ASS yang kompleks (warna, animasi, karaoke) disederhanakan selama terjemahan."
         },
         {
           "q": "Subtitle: pakai mesin terjemahan atau terjemahan AI/LLM? Mana kualitas terbaik, mana paling murah?",
@@ -326,7 +334,7 @@
       "howto": [
         {
           "name": "Mulai dari video atau file subtitle",
-          "text": "Unggah SRT/ASS/VTT/LRC. Ekstraksi: YouTube via yt-dlp, platform lain via alat khusus. Format dan pengkodean UTF-8/UTF-16/GBK terdeteksi otomatis."
+          "text": "Unggah SRT/ASS/VTT/SBV/LRC. Ekstraksi: YouTube via yt-dlp, platform lain via alat khusus. Format dan pengkodean UTF-8/UTF-16/GBK terdeteksi otomatis."
         },
         {
           "name": "Pilih mesin dan mode output",
@@ -338,7 +346,7 @@
         }
       ],
       "features": [
-        "Mendukung SRT, ASS, VTT, LRC, tag posisi ASS (\\\\an8 dll.) dipertahankan",
+        "Mendukung SRT, ASS, VTT, SBV, LRC, tag posisi ASS (\\\\an8 dll.) dipertahankan",
         "Timecode tidak diubah — hanya teks diterjemahkan, waktu asli dipertahankan",
         "Deteksi pengkodean otomatis UTF-8/UTF-16/GBK",
         "Posisi subtitle dwibahasa: atas (belajar) atau bawah (menonton)",
@@ -409,6 +417,10 @@
     "dataParserImgPrompt": {
       "title": "Generator Data IMGPrompt",
       "description": "Hasilkan data JSON IMGPrompt secara batch"
+    },
+    "textDiff": {
+      "title": "Text Diff",
+      "description": "Bandingkan dua teks atau file berdampingan dan temukan perbedaan pertama."
     }
   },
   "navigation": {

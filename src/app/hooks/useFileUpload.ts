@@ -1,8 +1,8 @@
 "use client";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { App } from "antd";
 import { useTranslations } from "next-intl";
-import { normalizeNewlines } from "@/app/utils";
+import { normalizeNewlines, decodeFileBytes } from "@/app/utils";
 import type { UploadFile, UploadProps } from "antd";
 
 // Shared dedup predicate: match by name + size
@@ -17,7 +17,16 @@ const useFileUpload = () => {
   const [fileList, setFileList] = useState<UploadFile[]>([]);
   const [singleFileMode, setSingleFileMode] = useState(false);
   const [isFileProcessing, setIsFileProcessing] = useState<boolean>(false);
+  // 读取序号守卫:FileReader.onload / decodeFileBytes 都是异步,一次读取尚未完成时
+  // 又发起新读取(连续换文件)或清空(resetUpload),旧读的回调若晚到会用旧内容
+  // 覆盖新状态 —— 用户看到的正文与文件列表不符,或清空后内容又冒回来。每次读取/
+  // 清空自增序号,过期(seq 不再是最新)的 onload 结果直接丢弃(同 text-diff loadSeq)。
+  const loadSeq = useRef(0);
 
+  // readFile 不做序号守卫:批量消费者(chinese-conversion 用 Promise.all 并发读多文件、
+  // 各自独立回调)需要【每个】回调都触发,守卫会把先发起的读丢弃 → 其 resolve 永不
+  // 调用 → Promise.all 永久挂起。序号守卫只加在写【共享】sourceText 的那条路径上
+  // (单文件上传 / 删到只剩一个),见 latestSourceWriter 包装。
   // onError lets batch callers settle their per-file Promise when decode/read fails.
   // Without it the success `callback` (which usually calls resolve()) never runs, so a
   // single bad file hangs the whole batch loop forever.
@@ -28,43 +37,9 @@ const useFileUpload = () => {
     reader.onload = async (e) => {
       try {
         const buffer = e.target?.result as ArrayBuffer;
-        const uint8Array = new Uint8Array(buffer);
-
-        // 解码策略:先用 UTF-8 fatal 模式对【全文】试解 —— UTF-8 是自验证编码,
-        // fatal 解码成功就几乎确定是 UTF-8。此前的"前 512KB 样本检测 + 全文按
-        // 检测结果解码"对开头长段纯 ASCII 的大文件会误判(ascii/windows-1252),
-        // 后部的 UTF-8 多字节字符整体 mojibake。真正的 legacy 编码(GBK/UTF-16
-        // 等)会让 fatal 解码抛错,才落到 jschardet 检测路径。
-        let text: string;
-        try {
-          text = new TextDecoder("utf-8", { fatal: true }).decode(uint8Array);
-        } catch {
-          // Sample first 512KB for encoding detection (avoids converting full file to string)
-          const SAMPLE_SIZE = 512 * 1024;
-          const sample = uint8Array.subarray(0, Math.min(SAMPLE_SIZE, uint8Array.length));
-          // Build binary string where charCode === byte value (required by jschardet)
-          // Cannot use TextDecoder("latin1") because browsers map it to Windows-1252,
-          // which remaps bytes 0x80-0x9F to different code points and breaks detection
-          let sampleString = "";
-          for (let i = 0; i < sample.length; i += 8192) {
-            sampleString += String.fromCharCode.apply(null, sample.subarray(i, i + 8192) as unknown as number[]);
-          }
-
-          // 检测编码（基于样本），后续仍对完整内容进行解码
-          // Lazy load jschardet
-          const jschardet = (await import("jschardet")).default;
-          const detected = jschardet.detect(sampleString);
-
-          // jschardet 可能返回 TextDecoder 不认的标签（或乱码标签），
-          // new TextDecoder(label) 会抛 RangeError —— 回退到 utf-8 而不是让整个回调崩掉。
-          let decoder: TextDecoder;
-          try {
-            decoder = new TextDecoder(detected.encoding || "utf-8");
-          } catch {
-            decoder = new TextDecoder("utf-8");
-          }
-          text = decoder.decode(uint8Array);
-        }
+        // 编码自适应解码(UTF-8 fatal 试解 → jschardet 检测)抽到共享的
+        // decodeFileBytes —— 词汇表/保护规则导入同此管线,策略说明见 fileUtils。
+        const text = await decodeFileBytes(buffer);
         callback(normalizeNewlines(text));
       } catch (error) {
         // jschardet 加载失败 / 解码异常等：别让 onload 静默 reject（否则下方 finally 之外
@@ -86,7 +61,18 @@ const useFileUpload = () => {
     reader.readAsArrayBuffer(file);
   };
 
+  // 把「写入共享 sourceText」的回调用当前读取序号封一层:换文件 / 清空会自增序号,
+  // 较早读取的过期 onload 写回时序号已变 → 丢弃,不覆盖新文件内容或清空后的空态。
+  // 批量读取各自独立,不经此路径,故不受影响。
+  const latestSourceWriter = () => {
+    const seq = ++loadSeq.current;
+    return (text: string) => {
+      if (seq === loadSeq.current) setSourceText(text);
+    };
+  };
+
   const resetUpload = () => {
+    loadSeq.current++; // 取消所有在途读取:清空后过期 onload 不得把内容写回来
     setFileList([]);
     setMultipleFiles([]);
     setSourceText("");
@@ -117,9 +103,7 @@ const useFileUpload = () => {
     if (uploadMode === "single") {
       setSourceText("");
       setMultipleFiles([uploadedFile]);
-      readFile(uploadedFile, (text) => {
-        setSourceText(text);
-      });
+      readFile(uploadedFile, latestSourceWriter());
     } else {
       setMultipleFiles((prevFiles) => {
         if (prevFiles.some((f) => isDuplicateFile(f, uploadedFile))) return prevFiles;
@@ -142,9 +126,7 @@ const useFileUpload = () => {
       // Down to one file → flip back to single mode + load its content.
       if (updatedMultipleFiles.length === 1 && uploadMode === "multiple") {
         setUploadMode("single");
-        readFile(updatedMultipleFiles[0], (text) => {
-          setSourceText(text);
-        });
+        readFile(updatedMultipleFiles[0], latestSourceWriter());
       }
 
       return updatedMultipleFiles;

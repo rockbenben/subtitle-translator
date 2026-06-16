@@ -196,6 +196,8 @@
     "errorHint429": "Vượt quá giới hạn yêu cầu, vui lòng thử lại sau",
     "errorHint456": "Đã hết hạn mức dịch của kỳ này",
     "errorHint5xx": "Lỗi máy chủ, vui lòng thử lại sau",
+    "errorHintRelay": "Lỗi mạng (có thể do CORS) — hãy bật \"Chuyển tiếp API\" trong Cài đặt API",
+    "errorHintRelay403": "API trả về 403 Forbidden — hãy bật \"Chuyển tiếp API\" trong Cài đặt API",
     "rateLimitCooldown": "Đạt giới hạn yêu cầu — tạm dừng một lát rồi tự động thử lại"
   },
   "SubtitleTranslator": {
@@ -208,12 +210,17 @@
     "bilingualFormatTooltip": "ASS: định kiểu phông chữ/màu sắc riêng cho bản gốc và bản dịch. SRT: văn bản thuần, cả hai dòng xếp chồng trong cùng một cue.",
     "translationFirst": "Dịch ở trên",
     "originalFirst": "Dịch ở dưới",
-    "unsupportedSub": "Định dạng không được nhận dạng. Đảm bảo tệp là SRT, ASS, VTT hoặc LRC.",
+    "unsupportedSub": "Định dạng không được nhận dạng. Đảm bảo tệp là SRT, ASS, VTT, SBV hoặc LRC.",
     "noFileUploaded": "Vui lòng tải tệp phụ đề lên trước.",
     "noSourceText": "Vui lòng tải tệp hoặc dán văn bản.",
     "noExtractedText": "Không trích xuất được nội dung, kiểm tra định dạng tệp.",
     "textExtracted": "Đã trích xuất văn bản phụ đề, ",
-    "bilingualError": "Phát hiện thẻ kiểu phức tạp. Chế độ song ngữ có thể gây lỗi định dạng. Khuyên dùng tắt 'Phụ đề song ngữ'."
+    "bilingualError": "Phát hiện thẻ kiểu phức tạp. Chế độ song ngữ có thể gây lỗi định dạng. Khuyên dùng tắt 'Phụ đề song ngữ'.",
+    "reviewTitle": "Soát hai ngôn ngữ",
+    "reviewColSource": "Nguồn",
+    "reviewColTarget": "Bản dịch",
+    "reviewApplyDownload": "Áp dụng & tải",
+    "reviewDownloaded": "Đã tải phụ đề đã soát"
   },
   "TranslationSettings": {
     "resetConfigSuccess": "Đã đặt lại cấu hình về mặc định",
@@ -255,6 +262,7 @@
     "delayTime": "Độ trễ",
     "useRelay": "Chuyển tiếp API",
     "useRelayTooltip": "Bật chuyển tiếp API khi gặp lỗi CORS hoặc 403",
+    "useRelayOverridden": "Đã đặt URL tùy chỉnh — yêu cầu sẽ đi thẳng tới đó và công tắc này không có hiệu lực; xóa URL để bật lại",
     "reasoningEffort": "Mức độ suy luận",
     "reasoningEffortExtra": "Off tắt chế độ suy nghĩ (mặc định); bật lên thường chính xác hơn nhưng chậm hơn và tiêu tốn nhiều token hơn. Các mô hình tùy chỉnh còn có Auto = theo mặc định tích hợp của mô hình (chỉ dùng khi Off gây lỗi API).",
     "presetSelect": "Chọn cài đặt sẵn",
@@ -282,13 +290,13 @@
   "tools": {
     "subtitleTranslator": {
       "title": "Dịch giả Phụ đề",
-      "description": "Dịch hàng loạt SRT, ASS, VTT, LRC. 120+ ngôn ngữ.",
+      "description": "Dịch hàng loạt SRT, ASS, VTT, SBV, LRC. 120+ ngôn ngữ.",
       "metaTitle": "Dịch Phụ Đề Miễn Phí | Hàng Loạt SRT/VTT/ASS + Song Ngữ",
-      "metaDescription": "Trình dịch phụ đề AI cho SRT, ASS, VTT, LRC. 25+ engine: DeepSeek, Claude, GPT, DeepL, Google. 120+ ngôn ngữ, giữ nguyên timecode, song ngữ.",
+      "metaDescription": "Trình dịch phụ đề AI cho SRT, ASS, VTT, SBV, LRC. 25+ engine: DeepSeek, Claude, GPT, DeepL, Google. 120+ ngôn ngữ, giữ nguyên timecode, song ngữ.",
       "faq": [
         {
-          "q": "Hỗ trợ những định dạng phụ đề nào? SRT, ASS, VTT và LRC đều dịch được chứ?",
-          "a": "Hỗ trợ bốn định dạng: SRT, ASS, VTT và LRC. SRT/VTT phù hợp YouTube, trình phát HTML5 và bảng điều khiển nhà sáng tạo (xuất phụ đề YouTube qua yt-dlp); ASS phù hợp Aegisub và fansub anime, thẻ vị trí đầu dòng (\\\\an8) được khôi phục sau khi dịch; LRC phù hợp tệp lời bài hát. Mã hóa tệp (UTF-8 / UTF-16 / GBK / Shift-JIS) được tự động phát hiện qua jschardet. Các thẻ hiệu ứng inline ASS phức tạp (màu sắc, hoạt ảnh, karaoke) được đơn giản hóa trong quá trình dịch."
+          "q": "Hỗ trợ những định dạng phụ đề nào? SRT, ASS, VTT, SBV và LRC đều dịch được chứ?",
+          "a": "Hỗ trợ năm định dạng: SRT, ASS, VTT, SBV và LRC. SRT/VTT phù hợp YouTube, trình phát HTML5 và bảng điều khiển nhà sáng tạo (xuất phụ đề YouTube qua yt-dlp); ASS/SSA phù hợp Aegisub và fansub anime, thẻ vị trí đầu dòng (\\\\an8) được khôi phục sau khi dịch; SBV là định dạng xuất gốc của trình chỉnh sửa phụ đề YouTube Studio; LRC phù hợp tệp lời bài hát. Mã hóa tệp (UTF-8 / UTF-16 / GBK / Shift-JIS) được tự động phát hiện qua jschardet. Các thẻ hiệu ứng inline ASS phức tạp (màu sắc, hoạt ảnh, karaoke) được đơn giản hóa trong quá trình dịch."
         },
         {
           "q": "Phụ đề: dùng dịch máy hay dịch AI/LLM? Cái nào chất lượng tốt nhất, cái nào rẻ nhất?",
@@ -326,7 +334,7 @@
       "howto": [
         {
           "name": "Bắt đầu từ video hoặc tệp phụ đề",
-          "text": "Tải lên SRT/ASS/VTT/LRC. Trích xuất: YouTube qua yt-dlp, nền tảng khác qua công cụ chuyên dụng. Định dạng và mã hóa UTF-8/UTF-16/GBK được phát hiện tự động."
+          "text": "Tải lên SRT/ASS/VTT/SBV/LRC. Trích xuất: YouTube qua yt-dlp, nền tảng khác qua công cụ chuyên dụng. Định dạng và mã hóa UTF-8/UTF-16/GBK được phát hiện tự động."
         },
         {
           "name": "Chọn engine và chế độ xuất",
@@ -338,7 +346,7 @@
         }
       ],
       "features": [
-        "Hỗ trợ SRT, ASS, VTT, LRC, thẻ vị trí ASS (\\\\an8 v.v.) được bảo toàn",
+        "Hỗ trợ SRT, ASS, VTT, SBV, LRC, thẻ vị trí ASS (\\\\an8 v.v.) được bảo toàn",
         "Timecode không đổi — chỉ dịch văn bản, thời gian gốc được bảo toàn",
         "Tự phát hiện mã hóa UTF-8/UTF-16/GBK",
         "Vị trí phụ đề song ngữ: trên (học) hoặc dưới (xem)",
@@ -409,6 +417,10 @@
     "dataParserImgPrompt": {
       "title": "Trình tạo dữ liệu IMGPrompt",
       "description": "Tạo dữ liệu JSON IMGPrompt hàng loạt"
+    },
+    "textDiff": {
+      "title": "Text Diff",
+      "description": "So sánh hai văn bản hoặc tệp song song và xác định điểm khác biệt đầu tiên."
     }
   },
   "navigation": {

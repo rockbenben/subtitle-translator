@@ -196,6 +196,8 @@
     "errorHint429": "Limite de requêtes dépassée, veuillez réessayer plus tard",
     "errorHint456": "Quota de traduction épuisé pour cette période",
     "errorHint5xx": "Erreur serveur, veuillez réessayer plus tard",
+    "errorHintRelay": "Erreur réseau (probablement CORS) — activez « Relais API » dans les paramètres API",
+    "errorHintRelay403": "L'API a renvoyé 403 Forbidden — activez « Relais API » dans les paramètres API",
     "rateLimitCooldown": "Limite de requêtes atteinte — courte pause, nouvelle tentative automatique"
   },
   "SubtitleTranslator": {
@@ -208,12 +210,17 @@
     "bilingualFormatTooltip": "ASS : styles de police/couleur distincts pour l'original et la traduction. SRT : texte brut, lignes empilées dans la même séquence.",
     "translationFirst": "Traduction au-dessus",
     "originalFirst": "Traduction en dessous",
-    "unsupportedSub": "Format non reconnu. Assurez-vous que le fichier est SRT, ASS, VTT ou LRC.",
+    "unsupportedSub": "Format non reconnu. Assurez-vous que le fichier est SRT, ASS, VTT, SBV ou LRC.",
     "noFileUploaded": "Veuillez d'abord télécharger un fichier de sous-titres.",
     "noSourceText": "Veuillez télécharger un fichier ou coller du texte.",
     "noExtractedText": "Aucun contenu extrait, vérifiez le format du fichier.",
     "textExtracted": "Texte de sous-titres extrait, ",
-    "bilingualError": "Balises de style complexes détectées. Le mode bilingue peut causer des erreurs de format. Recommandé de désactiver 'Sous-titres bilingues'."
+    "bilingualError": "Balises de style complexes détectées. Le mode bilingue peut causer des erreurs de format. Recommandé de désactiver 'Sous-titres bilingues'.",
+    "reviewTitle": "Révision bilingue",
+    "reviewColSource": "Source",
+    "reviewColTarget": "Traduction",
+    "reviewApplyDownload": "Appliquer et télécharger",
+    "reviewDownloaded": "Sous-titre révisé téléchargé"
   },
   "TranslationSettings": {
     "resetConfigSuccess": "Configuration réinitialisée aux valeurs par défaut",
@@ -255,6 +262,7 @@
     "delayTime": "Délai",
     "useRelay": "Relais API",
     "useRelayTooltip": "Activez le relais API en cas d'erreurs CORS ou 403",
+    "useRelayOverridden": "Une URL personnalisée est définie — les requêtes y sont envoyées directement et cet interrupteur est sans effet ; videz l'URL pour le réactiver",
     "reasoningEffort": "Effort de raisonnement",
     "reasoningEffortExtra": "Off désactive le raisonnement (par défaut) ; l'activer est généralement plus précis, mais plus lent et consomme plus de tokens. Les modèles personnalisés proposent aussi Auto = suivre la valeur par défaut du modèle (à n'utiliser que si Off provoque une erreur API).",
     "presetSelect": "Sélectionner un préréglage",
@@ -282,13 +290,13 @@
   "tools": {
     "subtitleTranslator": {
       "title": "Traducteur Sous-titres",
-      "description": "Traduction par lot SRT, ASS, VTT, LRC. 120+ langues.",
+      "description": "Traduction par lot SRT, ASS, VTT, SBV, LRC. 120+ langues.",
       "metaTitle": "Traducteur sous-titres gratuit | SRT/VTT/ASS IA bilingue",
-      "metaDescription": "Traducteur IA de sous-titres SRT, ASS, VTT, LRC. 25+ moteurs: DeepSeek, Claude, GPT, DeepL. 120+ langues, timecodes conservés, bilingue.",
+      "metaDescription": "Traducteur IA de sous-titres SRT, ASS, VTT, SBV, LRC. 25+ moteurs: DeepSeek, Claude, GPT, DeepL. 120+ langues, timecodes conservés, bilingue.",
       "faq": [
         {
-          "q": "Quels formats de sous-titres sont pris en charge ? SRT, ASS, VTT et LRC peuvent-ils être traduits ?",
-          "a": "Quatre formats pris en charge : SRT, ASS, VTT et LRC. SRT/VTT pour YouTube, lecteurs HTML5 et tableaux de bord créateurs (export YouTube via yt-dlp) ; ASS pour Aegisub et fansubs anime, balises de position en début de ligne (\\\\an8) restaurées après traduction ; LRC pour les fichiers de paroles. L'encodage (UTF-8 / UTF-16 / GBK / Shift-JIS) est détecté via jschardet. Les balises d'effets ASS inline complexes (couleurs, animations, karaoké) sont simplifiées pendant la traduction."
+          "q": "Quels formats de sous-titres sont pris en charge ? SRT, ASS, VTT, SBV et LRC peuvent-ils être traduits ?",
+          "a": "Cinq formats pris en charge : SRT, ASS, VTT, SBV et LRC. SRT/VTT pour YouTube, lecteurs HTML5 et tableaux de bord créateurs (export YouTube via yt-dlp) ; ASS/SSA pour Aegisub et fansubs anime, balises de position en début de ligne (\\\\an8) restaurées après traduction ; SBV est le format d'export natif de l'éditeur de sous-titres de YouTube Studio; LRC pour les fichiers de paroles. L'encodage (UTF-8 / UTF-16 / GBK / Shift-JIS) est détecté via jschardet. Les balises d'effets ASS inline complexes (couleurs, animations, karaoké) sont simplifiées pendant la traduction."
         },
         {
           "q": "Sous-titres : faut-il utiliser la traduction automatique ou la traduction IA?",
@@ -326,7 +334,7 @@
       "howto": [
         {
           "name": "Partir d'une vidéo ou d'un fichier sous-titre",
-          "text": "Importez SRT/ASS/VTT/LRC. Extraction : YouTube via yt-dlp, autres plateformes via outils dédiés. Format et encodage UTF-8/UTF-16/GBK détectés automatiquement."
+          "text": "Importez SRT/ASS/VTT/SBV/LRC. Extraction : YouTube via yt-dlp, autres plateformes via outils dédiés. Format et encodage UTF-8/UTF-16/GBK détectés automatiquement."
         },
         {
           "name": "Choisir le moteur et le mode de sortie",
@@ -338,7 +346,7 @@
         }
       ],
       "features": [
-        "Supporte SRT, ASS, VTT, LRC, balises de position ASS (\\\\an8, etc.) préservées",
+        "Supporte SRT, ASS, VTT, SBV, LRC, balises de position ASS (\\\\an8, etc.) préservées",
         "Timecodes intouchés — seul le texte est traduit, timing original préservé",
         "Détection automatique d'encodage UTF-8/UTF-16/GBK",
         "Position des sous-titres bilingues : au-dessus (apprentissage) ou en-dessous (visionnage)",
@@ -409,6 +417,10 @@
     "dataParserImgPrompt": {
       "title": "Générateur Données IMGPrompt",
       "description": "Générer données JSON IMGPrompt par lot"
+    },
+    "textDiff": {
+      "title": "Text Diff",
+      "description": "Comparez deux textes ou fichiers côte à côte et repérez la première différence."
     }
   },
   "navigation": {

@@ -1,6 +1,23 @@
-export const loadFromLocalStorage = (key: string) => {
+// 浏览器「阻止所有 Cookie」/嵌入式 WebView 拒绝存储时,window.localStorage
+// 【属性访问本身】抛 SecurityError —— 读路径不护住会让整棵 React 树渲染崩溃
+// (仓库没有 error boundary,全站白屏)。读写失败时落到会话级内存 Map:
+// 只裸降级成 null 的话,所有 useLocalStorage 背书的受控输入(API key 输入框、
+// provider 选择器、导出开关…)写入后 getSnapshot 永远读回默认值 —— 每敲一个
+// 键就被弹回,整个设置面板冻死且无任何提示。内存兜底让站点以"会话内可用、
+// 不持久化"模式照常工作。
+const memoryStore = new Map<string, string>();
+
+export const readLocalStorageRaw = (key: string): string | null => {
   if (typeof window === "undefined") return null;
-  const storedValue = localStorage.getItem(key);
+  try {
+    return window.localStorage.getItem(key);
+  } catch {
+    return memoryStore.get(key) ?? null;
+  }
+};
+
+export const loadFromLocalStorage = (key: string) => {
+  const storedValue = readLocalStorageRaw(key);
   if (storedValue === null) return null;
 
   try {
@@ -24,6 +41,13 @@ export const saveToLocalStorage = (key: string, value: unknown) => {
   try {
     localStorage.setItem(key, JSON.stringify(value));
   } catch (error) {
+    // 写失败(存储被禁/配额满)→ 会话内存兜底,readLocalStorageRaw 的 catch
+    // 路径会读到它;存储可用但配额满时读路径仍走 localStorage(行为同旧版)。
+    try {
+      memoryStore.set(key, JSON.stringify(value));
+    } catch {
+      /* 值不可序列化时维持旧行为:静默丢弃 */
+    }
     console.error(`Error saving key "${key}" to localStorage:`, error);
     if (isQuotaError(error) && !persistWarned) {
       persistWarned = true;

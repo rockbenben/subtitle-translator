@@ -196,6 +196,8 @@
     "errorHint429": "Anfragelimit überschritten, bitte später erneut versuchen",
     "errorHint456": "Übersetzungskontingent für diesen Zeitraum aufgebraucht",
     "errorHint5xx": "Serverfehler, bitte später erneut versuchen",
+    "errorHintRelay": "Netzwerkfehler (möglicherweise CORS) — aktivieren Sie „API-Relay“ in den API-Einstellungen",
+    "errorHintRelay403": "Die API hat 403 Forbidden zurückgegeben — aktivieren Sie „API-Relay“ in den API-Einstellungen",
     "rateLimitCooldown": "Anfragelimit erreicht — kurze Pause, automatischer neuer Versuch"
   },
   "SubtitleTranslator": {
@@ -208,12 +210,17 @@
     "bilingualFormatTooltip": "ASS: separate Schrift-/Farbstile für Original und Übersetzung. SRT: Klartext, beide Zeilen im selben Cue gestapelt.",
     "translationFirst": "Übersetzung oben",
     "originalFirst": "Übersetzung unten",
-    "unsupportedSub": "Untertitelformat nicht erkannt. Bitte sicherstellen, dass die Datei im SRT-, ASS-, VTT- oder LRC-Format vorliegt.",
+    "unsupportedSub": "Untertitelformat nicht erkannt. Bitte sicherstellen, dass die Datei im SRT-, ASS-, VTT-, SBV- oder LRC-Format vorliegt.",
     "noFileUploaded": "Bitte laden Sie zuerst eine Untertiteldatei hoch.",
     "noSourceText": "Bitte Untertiteldatei hochladen oder Text einfügen.",
     "noExtractedText": "Kein Untertitelinhalt extrahiert, bitte Dateiformat prüfen.",
     "textExtracted": "Untertiteltext extrahiert, ",
-    "bilingualError": "Komplexe Stil-Tags erkannt. Zweisprachiger Modus kann zu Formatierungsfehlern führen. Empfohlen: 'Zweisprachige Untertitel' deaktivieren."
+    "bilingualError": "Komplexe Stil-Tags erkannt. Zweisprachiger Modus kann zu Formatierungsfehlern führen. Empfohlen: 'Zweisprachige Untertitel' deaktivieren.",
+    "reviewTitle": "Zweisprachige Prüfung",
+    "reviewColSource": "Original",
+    "reviewColTarget": "Übersetzung",
+    "reviewApplyDownload": "Anwenden & herunterladen",
+    "reviewDownloaded": "Geprüfte Untertitel heruntergeladen"
   },
   "TranslationSettings": {
     "resetConfigSuccess": "Konfiguration auf Standardwerte zurückgesetzt",
@@ -255,6 +262,7 @@
     "delayTime": "Verzögerungszeit",
     "useRelay": "API-Relay",
     "useRelayTooltip": "Aktivieren Sie API-Relay bei CORS- oder 403-Fehlern",
+    "useRelayOverridden": "Eine benutzerdefinierte URL ist gesetzt — Anfragen gehen direkt dorthin, dieser Schalter hat keine Wirkung; URL leeren, um ihn wieder zu aktivieren",
     "reasoningEffort": "Reasoning-Aufwand",
     "reasoningEffortExtra": "Off deaktiviert das Denken (Standard); aktiviert ist es meist genauer, aber langsamer und verbraucht mehr Tokens. Benutzerdefinierte Modelle bieten zudem Auto = der modelleigenen Voreinstellung folgen (nur verwenden, wenn Off einen API-Fehler verursacht).",
     "presetSelect": "Voreinstellung wählen",
@@ -282,13 +290,13 @@
   "tools": {
     "subtitleTranslator": {
       "title": "Untertitel-Übersetzer",
-      "description": "Batch-Übersetzung für SRT, ASS, VTT, LRC. 120+ Sprachen.",
+      "description": "Batch-Übersetzung für SRT, ASS, VTT, SBV, LRC. 120+ Sprachen.",
       "metaTitle": "Untertitel-Übersetzer | SRT/VTT/ASS Batch KI zweisprachig",
-      "metaDescription": "KI-Untertitelübersetzer für SRT, ASS, VTT, LRC. 25+ Engines: DeepSeek, Claude, GPT, DeepL. 120+ Sprachen, Timecodes erhalten, zweisprachig.",
+      "metaDescription": "KI-Untertitelübersetzer für SRT, ASS, VTT, SBV, LRC. 25+ Engines: DeepSeek, Claude, GPT, DeepL. 120+ Sprachen, Timecodes erhalten, zweisprachig.",
       "faq": [
         {
-          "q": "Welche Untertitelformate werden unterstützt? Können SRT, ASS, VTT und LRC übersetzt werden?",
-          "a": "Vier Formate unterstützt: SRT, ASS, VTT und LRC. SRT/VTT für YouTube, HTML5-Player und Creator-Dashboards (YouTube-Untertitel via yt-dlp exportieren); ASS für Aegisub und Anime-Fansubs, Positions-Tags am Zeilenanfang (\\\\an8 etc.) werden nach der Übersetzung wiederhergestellt; LRC für Liedtexte. Dateikodierung (UTF-8 / UTF-16 / GBK / Shift-JIS) wird via jschardet automatisch erkannt. Komplexe ASS-Inline-Effekt-Tags (Farben, Animation, Karaoke) werden während der Übersetzung vereinfacht."
+          "q": "Welche Untertitelformate werden unterstützt? Können SRT, ASS, VTT, SBV und LRC übersetzt werden?",
+          "a": "Fünf Formate unterstützt: SRT, ASS, VTT, SBV und LRC. SRT/VTT für YouTube, HTML5-Player und Creator-Dashboards (YouTube-Untertitel via yt-dlp exportieren); ASS/SSA für Aegisub und Anime-Fansubs, Positions-Tags am Zeilenanfang (\\\\an8 etc.) werden nach der Übersetzung wiederhergestellt; SBV ist das native Exportformat des Untertitel-Editors von YouTube Studio; LRC für Liedtexte. Dateikodierung (UTF-8 / UTF-16 / GBK / Shift-JIS) wird via jschardet automatisch erkannt. Komplexe ASS-Inline-Effekt-Tags (Farben, Animation, Karaoke) werden während der Übersetzung vereinfacht."
         },
         {
           "q": "Untertitel: Maschinelle Übersetzung oder KI/LLM-Übersetzung verwenden? Was ist beste Qualität, was am günstigsten?",
@@ -326,7 +334,7 @@
       "howto": [
         {
           "name": "Mit Video- oder Untertiteldatei beginnen",
-          "text": "SRT/ASS/VTT/LRC hochladen. Extraktion: YouTube über yt-dlp, andere Plattformen über spezielle Tools. Format und UTF-8/UTF-16/GBK-Kodierung automatisch erkannt."
+          "text": "SRT/ASS/VTT/SBV/LRC hochladen. Extraktion: YouTube über yt-dlp, andere Plattformen über spezielle Tools. Format und UTF-8/UTF-16/GBK-Kodierung automatisch erkannt."
         },
         {
           "name": "Engine und Ausgabemodus wählen",
@@ -338,7 +346,7 @@
         }
       ],
       "features": [
-        "Unterstützt SRT, ASS, VTT, LRC, ASS-Positions-Tags (\\\\an8 etc.) werden beibehalten",
+        "Unterstützt SRT, ASS, VTT, SBV, LRC, ASS-Positions-Tags (\\\\an8 etc.) werden beibehalten",
         "Timecodes unverändert — nur Text wird übersetzt, Original-Timing erhalten",
         "Automatische UTF-8/UTF-16/GBK-Kodierungserkennung",
         "Zweisprachige Untertitelposition: oben (Lernen) oder unten (Anschauen)",
@@ -409,6 +417,10 @@
     "dataParserImgPrompt": {
       "title": "IMGPrompt Datengenerator",
       "description": "IMGPrompt JSON-Daten im Batch generieren"
+    },
+    "textDiff": {
+      "title": "Text Diff",
+      "description": "Vergleichen Sie zwei Texte oder Dateien nebeneinander und finden Sie den ersten Unterschied."
     }
   },
   "navigation": {

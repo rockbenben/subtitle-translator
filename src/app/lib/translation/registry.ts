@@ -55,9 +55,32 @@ export type OpenAICompatProviderSpec = BaseProvider & {
   extraHeaders?: Record<string, string>;
   /** When true, user-supplied `params.url` overrides the default endpoint (Doubao, Qwen). */
   allowCustomUrl?: boolean;
-  /** When true, UI renders a "useRelay" toggle that routes through the Cloudflare Worker. */
-  allowRelay?: boolean;
+  /**
+   * Factory default for the user's `useRelay` config toggle — the exact same
+   * spec↔config pairing as defaultModel↔model and defaultTemperature↔temperature.
+   * Presence = this provider has a Cloudflare relay route (UI renders the
+   * toggle); value = the toggle's initial state. The user's toggle ALWAYS has
+   * the final say — relay is never forced (今天实测的"直连必死"不是永恒事实,
+   * 上游修了 CORS 用户应能自行切回直连):
+   *   - false: direct by default; relay is the escape hatch for CORS-walled
+   *     networks/origins.
+   *   - true: relay by default because browser-direct is broken as of the
+   *     verification date noted on the entry (hunyuan: preflight 404).
+   * Members need a matching /api/{key} Worker route (scripts/llm-proxy-worker.js).
+   */
+  defaultUseRelay?: boolean;
 };
+
+/**
+ * Whether an openai-compat provider accepts a user-supplied URL. STRUCTURAL
+ * rule, not a convention: relay capability implies it (用户规则:能用共享中转
+ * 就必须能填自建中转),so `defaultUseRelay` presence grants the url field
+ * automatically — no per-entry `allowCustomUrl: true` to forget, no invariant
+ * test to keep them in sync. `allowCustomUrl` remains only for NON-relay
+ * providers with alternate endpoints (mimo billing/regional variants,
+ * minimax io/cn, litellm self-hosted).
+ */
+export const acceptsCustomUrl = (spec: OpenAICompatProviderSpec): boolean => Boolean(spec.allowCustomUrl) || spec.defaultUseRelay !== undefined;
 
 /** Providers with hand-written implementations (Claude, Gemini, Azure OpenAI, Nvidia, Custom LLM, all MT). */
 export type CustomProviderSpec = BaseProvider & {
@@ -201,7 +224,7 @@ export const PROVIDERS = {
     defaultTemperature: 0.7,
     docs: "https://api-docs.deepseek.com/",
     apiKeyUrl: "https://platform.deepseek.com/api_keys",
-    allowRelay: true,
+    defaultUseRelay: false,
     // DeepSeek V4 系列两个 SKU 都支持 thinking / non-thinking 两种模式
     // (docs.deepseek.com: "supporting both modes")。
     models: [
@@ -218,7 +241,7 @@ export const PROVIDERS = {
     defaultTemperature: 1,
     docs: "https://developers.openai.com/api/docs/guides/text",
     apiKeyUrl: "https://platform.openai.com/api-keys",
-    allowRelay: true,
+    defaultUseRelay: false,
     // https://developers.openai.com/api/docs/models
     // GPT-5 系列全部支持 reasoning ── developers.openai.com 各 model 页明示
     // "Reasoning token support" + reasoning.effort: none/low/medium/high/xhigh
@@ -234,7 +257,9 @@ export const PROVIDERS = {
     label: "Claude",
     docs: "https://platform.claude.com/docs/en/intro",
     apiKeyUrl: "https://console.anthropic.com/settings/keys",
-    defaults: { apiKey: "", model: "claude-sonnet-4-6", temperature: 0.7, batchSize: 20, contextBatchSize: 3, contextWindow: 100, thinkingEffort: {}, useRelay: false },
+    // url 可选:自建中转(转发到 api.anthropic.com/v1/messages 的自有 Worker)。
+    // 优先级:自定义 URL > useRelay > 官方直连(见 services/llm.ts claude)。
+    defaults: { url: "", apiKey: "", model: "claude-sonnet-4-6", temperature: 0.7, batchSize: 20, contextBatchSize: 3, contextWindow: 100, thinkingEffort: {}, useRelay: false },
     // Claude 4 系列全部支持 thinking ── Opus 4.7 是 adaptive thinking,
     // Sonnet 4.6 + Haiku 4.5 是 extended thinking(per docs.anthropic.com)。
     models: [
@@ -269,8 +294,7 @@ export const PROVIDERS = {
     defaultTemperature: 0.7,
     docs: "https://help.aliyun.com/zh/model-studio/qwen-api-via-openai-chat-completions",
     apiKeyUrl: "https://bailian.console.aliyun.com/?tab=model#/api-key",
-    allowCustomUrl: true,
-    allowRelay: true,
+    defaultUseRelay: false,
     endpoints: [
       { label: "Mainland (CN)", url: "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions" },
       { label: "International", url: "https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions" },
@@ -292,8 +316,7 @@ export const PROVIDERS = {
     defaultTemperature: 0.7,
     docs: "https://platform.moonshot.cn/docs",
     apiKeyUrl: "https://platform.moonshot.cn/console/api-keys",
-    allowCustomUrl: true,
-    allowRelay: true,
+    defaultUseRelay: false,
     endpoints: [
       { label: "Mainland (CN)", url: "https://api.moonshot.cn/v1/chat/completions" },
       { label: "International", url: "https://api.moonshot.ai/v1/chat/completions" },
@@ -316,8 +339,7 @@ export const PROVIDERS = {
     defaultTemperature: 0.7,
     docs: "https://www.volcengine.com/docs/82379",
     apiKeyUrl: "https://console.volcengine.com/ark/region:ark+cn-beijing/apiKey",
-    allowCustomUrl: true,
-    allowRelay: true,
+    defaultUseRelay: false,
     endpoints: [
       { label: "Standard", url: "https://ark.cn-beijing.volces.com/api/v3/chat/completions" },
       { label: "Coding Plan", url: "https://ark.cn-beijing.volces.com/api/coding/v3/chat/completions" },
@@ -376,8 +398,7 @@ export const PROVIDERS = {
     defaultTemperature: 0.7,
     docs: "https://docs.bigmodel.cn/cn/guide/start/introduction",
     apiKeyUrl: "https://bigmodel.cn/usercenter/proj-mgmt/apikeys",
-    allowCustomUrl: true,
-    allowRelay: true,
+    defaultUseRelay: false,
     endpoints: [
       { label: "Mainland (CN)", url: "https://open.bigmodel.cn/api/paas/v4/chat/completions" },
       { label: "International (Z.ai)", url: "https://api.z.ai/api/paas/v4/chat/completions" },
@@ -450,6 +471,10 @@ export const PROVIDERS = {
     defaultTemperature: 0.7,
     docs: "https://cloud.tencent.com/document/product/1729/111007",
     apiKeyUrl: "https://console.cloud.tencent.com/hunyuan/api-key",
+    // 浏览器直连当前不可用:OPTIONS 预检对该路径恒返回 404(预检必须 2xx,
+    // 实测 2026-06-11,POST 响应反而带 CORS 头 —— 但浏览器到不了那一步),
+    // 所以默认开 relay 保证开箱可用;开关保留,上游修了预检用户可自行切回直连。
+    defaultUseRelay: true,
     models: [
       // Not thinking-tagged: the OpenAI-compat path has no documented thinking
       // toggle (the old `enable_enhancement` was a web-search switch, not
@@ -472,7 +497,7 @@ export const PROVIDERS = {
     defaultTemperature: 0.7,
     docs: "https://docs.mistral.ai/api/",
     apiKeyUrl: "https://console.mistral.ai/api-keys",
-    allowRelay: true,
+    defaultUseRelay: false,
     // 来自 https://docs.mistral.ai/models/overview
     // Adjustable reasoning(mistral-medium-3-5 / mistral-small)通过 reasoning_effort
     // 控制(docs.mistral.ai/studio-api/conversations/reasoning,取值 high|none,二元 →
@@ -496,7 +521,7 @@ export const PROVIDERS = {
     defaultTemperature: 0.7,
     docs: "https://docs.x.ai/docs/models",
     apiKeyUrl: "https://console.x.ai/",
-    allowRelay: true,
+    defaultUseRelay: false,
     // Grok 4.3 chat/completions 支持 reasoning_effort 但仅 low/high 两档
     // (docs.x.ai/docs/api-reference);grok-4.20-reasoning / multi-agent 是
     // thinking-intrinsic SKU,无 toggle 参数。service 层 medium → low 映射。
@@ -516,7 +541,7 @@ export const PROVIDERS = {
     defaultTemperature: 0.7,
     docs: "https://docs.perplexity.ai/api-reference/chat-completions-post",
     apiKeyUrl: "https://www.perplexity.ai/account/api/keys",
-    allowRelay: true,
+    defaultUseRelay: false,
     // https://docs.perplexity.ai/docs/sonar/models
     // sonar-reasoning-pro 是 thinking-intrinsic(<think> 内嵌,无 toggle),选它即 thinking。
     // sonar-deep-research 是研究模型:推理无法关闭(默认 medium),但 reasoning_effort
@@ -557,11 +582,11 @@ export const PROVIDERS = {
     // Yandex AI Studio's OpenAI-compat API (llm.api.cloud.yandex.net/v1) sends
     // NO CORS headers (verified 2026-06: a preflight OPTIONS is parsed as a JSON
     // request body → 400, no Access-Control-Allow-Origin), so browser-direct
-    // calls always fail. The service routes UNCONDITIONALLY through the
-    // Cloudflare relay (relayUrl("yandex") in services/llm.ts), same
-    // always-proxy posture as Nvidia NIM — no useRelay toggle whose OFF state
-    // would be permanently broken in browsers. The relay forwards
-    // `Authorization: Bearer <api-key>` to llm.api.cloud.yandex.net/v1/chat/completions.
+    // calls fail as of that date. useRelay therefore DEFAULTS ON (works out of
+    // the box; the relay forwards `Authorization: Bearer <api-key>` to
+    // llm.api.cloud.yandex.net/v1/chat/completions), but the toggle stays
+    // user-controllable like every other relay-capable provider — if Yandex
+    // ever ships CORS headers, users can switch to direct themselves.
     //
     // Model IDs are per-tenant URIs — gpt://<folder_id>/<model>/latest — so the
     // config carries a dedicated `folderId` field (kind: "custom" because the
@@ -572,7 +597,9 @@ export const PROVIDERS = {
     // required by validation — keeping status logic model-value-independent).
     docs: "https://aistudio.yandex.ru/docs/en/ai-studio/concepts/api.html",
     apiKeyUrl: "https://aistudio.yandex.ru/platform/folders/",
-    defaults: { apiKey: "", folderId: "", model: "yandexgpt-5.1", temperature: 0.7, batchSize: 20, contextBatchSize: 3, contextWindow: 100 },
+    // url 可选:自建中转(转发到 llm.api.cloud.yandex.net 的自有代理)。
+    // 优先级:自定义 URL > useRelay > 官方直连(见 services/llm.ts yandex)。
+    defaults: { url: "", apiKey: "", folderId: "", model: "yandexgpt-5.1", temperature: 0.7, batchSize: 20, contextBatchSize: 3, contextWindow: 100, useRelay: true },
     // Hosted SKUs per aistudio.yandex.ru/docs (generation/models, 2026-06).
     // No thinking tags — the OpenAI-compat path documents no reasoning toggle
     // (YandexGPT 5.1's Chain-of-Reasoning isn't exposed as a request param);
@@ -992,8 +1019,8 @@ const buildOpenAICompatDefault = (spec: OpenAICompatProviderSpec): TranslationCo
   // tickets. The transparent passthrough in openAICompatRequest still respects
   // maxTokens when present (power users can import via JSON config), so
   // wiring stays consistent — only the surfaced UI default is gated.
-  if (spec.allowCustomUrl) base.url = "";
-  if (spec.allowRelay) base.useRelay = false;
+  if (acceptsCustomUrl(spec)) base.url = "";
+  if (spec.defaultUseRelay !== undefined) base.useRelay = spec.defaultUseRelay;
   // Seed an empty thinkingEffort record when any model on this provider is
   // tagged thinking. Without this, migrateConfig strips the field on next
   // render (defaults-key-only merge), making the UI toggle silently reset.
@@ -1197,4 +1224,8 @@ export const categorizedOptions = (["machine-translation", "llm", "aggregator"] 
 // Lookups
 export const findMethodLabel = (method: string): string => PROVIDERS[method as ProviderKey]?.label ?? method;
 
-export const getDefaultConfig = (method: string): TranslationConfig | undefined => defaultConfigs[method as ProviderKey];
+// Object.hasOwn 守卫:method 来自持久化/导入的字符串,"constructor"/"toString"
+// 这类原型链键裸索引会返回【继承的函数】(truthy)—— useTranslationState 靠
+// 本函数判断 storedMethod 是否合法的回退逻辑被骗过,validate() 在
+// UNSUPPORTED_LANGS[method]?.has 上抛 TypeError,翻译按钮每次点击都炸。
+export const getDefaultConfig = (method: string): TranslationConfig | undefined => (Object.hasOwn(defaultConfigs, method) ? defaultConfigs[method as ProviderKey] : undefined);

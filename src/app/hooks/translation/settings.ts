@@ -40,7 +40,9 @@ export const exportTranslationSettings = async (settings: Omit<TranslationSettin
   };
 
   const jsonString = JSON.stringify(exportData, null, 2);
-  const fileName = `translation-settings-${new Date().toISOString().split("T")[0]}.json`;
+  // en-CA = 本地日历日 YYYY-MM-DD:toISOString 是 UTC 日期,UTC+8 用户 0-8 点
+  // 导出时文件名落在【昨天】(exportDate 字段保留完整 ISO 时间戳,不受影响)。
+  const fileName = `translation-settings-${new Intl.DateTimeFormat("en-CA").format(new Date())}.json`;
 
   await downloadFile(jsonString, fileName, "application/json");
 };
@@ -89,12 +91,52 @@ const FIELD_KINDS: Record<keyof Omit<TranslationSettings, "translationMethod" | 
 
 const matchesKind = (value: unknown, kind: "string" | "boolean" | "number" | "array"): boolean => (kind === "array" ? Array.isArray(value) : typeof value === kind);
 
-const sanitizeSettings = (settings: TranslationSettings): TranslationSettings => {
+// Exported for unit tests (same pattern as buildYandexModelUri in services/llm.ts).
+export const sanitizeSettings = (settings: TranslationSettings): TranslationSettings => {
   const out = { ...settings } as Record<string, unknown>;
   for (const [field, kind] of Object.entries(FIELD_KINDS)) {
     if (out[field] !== undefined && !matchesKind(out[field], kind)) {
       delete out[field];
     }
+  }
+  // 数值字段还要做【范围】校验(与 AdvancedTranslationSettings 的 InputNumber
+  // min/max 同界):requestTimeoutSec: 0 通过 typeof 检查落盘后,每个请求在
+  // 下一个宏任务就被 abort(且 abort 不可重试)—— 全部翻译 + 连接测试 + 预检
+  // 持久失败,直到用户摸到高级设置重填。越界一律丢字段,导入保留现值。
+  const NUMERIC_BOUNDS: Record<string, [number, number]> = { retryCount: [1, 10], requestTimeoutSec: [5, 1200] };
+  for (const [field, [min, max]] of Object.entries(NUMERIC_BOUNDS)) {
+    const v = out[field];
+    if (typeof v === "number" && (!Number.isFinite(v) || v < min || v > max)) {
+      delete out[field];
+    }
+  }
+  // llmPresets / promptPresets 深度校验:与下方 glossaryPresets 同因 ——
+  // Array.isArray 不够。[null] 会让设置抽屉每次打开都在 llmPresets.map(p =>
+  // p.name) 上抛 TypeError;promptPresets 里 systemPrompt 非字符串的预设被
+  // load 后落盘 translation-systemPrompt,useTranslationState 的
+  // systemPrompt.trim() 在每次渲染抛错 → 所有翻译工具持久白屏直到手清存储。
+  // 不合形状的预设直接丢弃。
+  if (Array.isArray(out.llmPresets)) {
+    out.llmPresets = (out.llmPresets as unknown[]).filter(
+      (p) =>
+        typeof p === "object" &&
+        p !== null &&
+        typeof (p as { id?: unknown }).id === "string" &&
+        typeof (p as { name?: unknown }).name === "string" &&
+        typeof (p as { config?: unknown }).config === "object" &&
+        (p as { config?: unknown }).config !== null,
+    );
+  }
+  if (Array.isArray(out.promptPresets)) {
+    out.promptPresets = (out.promptPresets as unknown[]).filter(
+      (p) =>
+        typeof p === "object" &&
+        p !== null &&
+        typeof (p as { id?: unknown }).id === "string" &&
+        typeof (p as { name?: unknown }).name === "string" &&
+        typeof (p as { systemPrompt?: unknown }).systemPrompt === "string" &&
+        typeof (p as { userPrompt?: unknown }).userPrompt === "string",
+    );
   }
   // glossaryPresets 深度校验:Array.isArray 不够 —— terms 里混入非字符串
   // source/target(手编文件、坏导出、改名前 {from,to} 形状的旧文件)会进

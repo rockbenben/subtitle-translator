@@ -196,6 +196,8 @@
     "errorHint429": "요청 한도를 초과했습니다. 나중에 다시 시도하세요",
     "errorHint456": "이번 기간의 번역 할당량을 모두 사용했습니다",
     "errorHint5xx": "서버 오류입니다. 나중에 다시 시도하세요",
+    "errorHintRelay": "네트워크 오류(CORS 제한일 수 있음). API 설정에서 \"API 중계\"를 켜세요",
+    "errorHintRelay403": "API가 403 Forbidden을 반환했습니다. API 설정에서 \"API 중계\"를 켜세요",
     "rateLimitCooldown": "요청 한도 도달 — 잠시 멈춘 뒤 자동으로 재시도합니다"
   },
   "SubtitleTranslator": {
@@ -208,12 +210,17 @@
     "bilingualFormatTooltip": "ASS: 원문과 번역에 별도의 글꼴/색상 스타일 적용 가능. SRT: 일반 텍스트, 같은 큐에 겹쳐 표시.",
     "translationFirst": "번역문 위로",
     "originalFirst": "번역문 아래로",
-    "unsupportedSub": "자막 형식을 인식할 수 없습니다. 파일이 SRT, ASS, VTT 또는 LRC 형식인지 확인하세요.",
+    "unsupportedSub": "자막 형식을 인식할 수 없습니다. 파일이 SRT, ASS, VTT, SBV 또는 LRC 형식인지 확인하세요.",
     "noFileUploaded": "자막 파일을 먼저 업로드하세요.",
     "noSourceText": "자막 파일을 업로드하거나 텍스트를 붙여넣으세요.",
     "noExtractedText": "자막 내용이 추출되지 않았습니다. 파일 형식을 확인하세요.",
     "textExtracted": "자막 텍스트 추출됨, ",
-    "bilingualError": "복잡한 스타일 태그가 감지되었습니다. 이중 언어 모드에서는 서식이 깨질 수 있으므로 '이중 언어 자막'을 끄는 것을 권장합니다."
+    "bilingualError": "복잡한 스타일 태그가 감지되었습니다. 이중 언어 모드에서는 서식이 깨질 수 있으므로 '이중 언어 자막'을 끄는 것을 권장합니다.",
+    "reviewTitle": "대역 검토",
+    "reviewColSource": "원문",
+    "reviewColTarget": "번역",
+    "reviewApplyDownload": "적용 후 다운로드",
+    "reviewDownloaded": "검토된 자막을 다운로드했습니다"
   },
   "TranslationSettings": {
     "resetConfigSuccess": "설정을 기본값으로 되돌렸습니다",
@@ -255,6 +262,7 @@
     "delayTime": "지연 시간",
     "useRelay": "API 중계",
     "useRelayTooltip": "CORS 또는 403 오류가 발생하면 API 중계를 활성화하세요",
+    "useRelayOverridden": "사용자 지정 URL이 설정되어 요청이 해당 주소로 직접 전송되며 이 스위치는 적용되지 않습니다. URL을 지우면 다시 활성화됩니다",
     "reasoningEffort": "추론 강도",
     "reasoningEffortExtra": "Off는 사고 모드를 비활성화(기본값); 켜면 보통 더 정확하지만 느려지고 토큰을 더 소비합니다. 사용자 지정 모델에는 Auto도 있어 모델 자체 기본값을 따릅니다(Off에서 API 오류가 발생할 때만 사용).",
     "presetSelect": "프리셋 선택",
@@ -282,13 +290,13 @@
   "tools": {
     "subtitleTranslator": {
       "title": "자막 번역기",
-      "description": "SRT, ASS, VTT, LRC 자막 일괄 번역, 120개 이상 언어 지원",
-      "metaTitle": "자막 번역기 - SRT/ASS/VTT/LRC 일괄 AI 번역 및 이중 언어 자막 생성",
-      "metaDescription": "AI 자막 번역기, SRT/ASS/VTT/LRC 일괄 변환, DeepSeek/Claude/GPT 25+ 엔진, 타임코드 유지 이중 자막.",
+      "description": "SRT, ASS, VTT, SBV, LRC 자막 일괄 번역, 120개 이상 언어 지원",
+      "metaTitle": "자막 번역기 - SRT/ASS/VTT/SBV/LRC 일괄 AI 번역 및 이중 언어 자막 생성",
+      "metaDescription": "AI 자막 번역기, SRT/ASS/VTT/SBV/LRC 일괄 변환, DeepSeek/Claude/GPT 25+ 엔진, 타임코드 유지 이중 자막.",
       "faq": [
         {
-          "q": "어떤 자막 형식을 지원하나요? SRT, ASS, VTT, LRC 모두 번역할 수 있나요?",
-          "a": "SRT, ASS, VTT, LRC 네 가지 형식을 지원합니다. SRT/VTT는 YouTube, HTML5 플레이어, 크리에이터 대시보드에 적합(YouTube 자막은 yt-dlp로 내보내기); ASS는 Aegisub와 애니메이션 자막 팀용으로, 행 시작 위치 태그(\\\\an8 등)는 번역 후 자동 복원; LRC는 음악 가사 파일용. 파일 인코딩(UTF-8/UTF-16/GBK/Shift-JIS)은 jschardet으로 자동 감지. 복잡한 ASS 인라인 효과 태그(색상, 애니메이션, 가라오케)는 번역 중 단순화됩니다."
+          "q": "어떤 자막 형식을 지원하나요? SRT, ASS, VTT, SBV, LRC 모두 번역할 수 있나요?",
+          "a": "SRT, ASS, VTT, SBV, LRC 다섯 가지 형식을 지원합니다. SRT/VTT는 YouTube, HTML5 플레이어, 크리에이터 대시보드에 적합(YouTube 자막은 yt-dlp로 내보내기); ASS/SSA는 Aegisub와 애니메이션 자막 팀용으로, 행 시작 위치 태그(\\\\an8 등)는 번역 후 자동 복원; SBV는 YouTube 스튜디오 자막 편집기의 기본 내보내기 형식; LRC는 음악 가사 파일용. 파일 인코딩(UTF-8/UTF-16/GBK/Shift-JIS)은 jschardet으로 자동 감지. 복잡한 ASS 인라인 효과 태그(색상, 애니메이션, 가라오케)는 번역 중 단순화됩니다."
         },
         {
           "q": "자막 번역은 기계 번역과 AI 번역 중 무엇을 쓸까요? 어떤 게 품질이 좋고 어떤 게 저렴한가요?",
@@ -326,7 +334,7 @@
       "howto": [
         {
           "name": "비디오 또는 자막 파일에서 시작",
-          "text": "SRT/ASS/VTT/LRC 자막 업로드. YouTube는 yt-dlp로 추출, 네이버TV 등은 크리에이터 대시보드에서, 기타 플랫폼은 공식 경로에서 자막을 얻으세요. jschardet로 UTF-8/UTF-16/EUC-KR/GBK 인코딩 자동 감지."
+          "text": "SRT/ASS/VTT/SBV/LRC 자막 업로드. YouTube는 yt-dlp로 추출, 네이버TV 등은 크리에이터 대시보드에서, 기타 플랫폼은 공식 경로에서 자막을 얻으세요. jschardet로 UTF-8/UTF-16/EUC-KR/GBK 인코딩 자동 감지."
         },
         {
           "name": "엔진과 출력 모드 선택",
@@ -338,7 +346,7 @@
         }
       ],
       "features": [
-        "SRT, ASS, VTT, LRC 자막 형식 지원, ASS 위치 태그(\\\\an8 등) 번역 후 유지",
+        "SRT, ASS, VTT, SBV, LRC 자막 형식 지원, ASS 위치 태그(\\\\an8 등) 번역 후 유지",
         "타임코드 보존 — 텍스트만 번역, 원본 타이밍 유지",
         "UTF-8/UTF-16/EUC-KR 인코딩 자동 감지",
         "이중 언어 번역 위치: 위(학습) 또는 아래(시청)",
@@ -409,6 +417,10 @@
     "dataParserImgPrompt": {
       "title": "IMGPrompt 생성기",
       "description": "IMGPrompt JSON 데이터 일괄 생성"
+    },
+    "textDiff": {
+      "title": "텍스트 비교",
+      "description": "두 텍스트 또는 파일을 나란히 비교하여 첫 번째 차이점을 정확히 찾아냅니다."
     }
   },
   "navigation": {

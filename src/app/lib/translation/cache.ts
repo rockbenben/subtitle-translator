@@ -117,8 +117,13 @@ export const generateCacheSuffix = ({ sourceLanguage, targetLanguage, translatio
 };
 
 export const generateCacheKey = (text: string, cacheSuffix: string): string => {
-  const encoded = text.length <= 32 ? encodeURIComponent(text) : null;
-  const key = encoded && encoded.length <= 50 ? encoded : SparkMD5.hash(text);
+  // 孤立代理项(JSON 转义残留的半个 emoji,如 "\ud83d")会让 encodeURIComponent
+  // 和 spark-md5(内部 unescape(encodeURIComponent)) 双双抛 URIError —— 该行
+  // 永久翻译失败且白烧全部重试预算。toWellFormed 把孤立代理换成 U+FFFD 后取键。
+  // 键不再唯一区分 "a\ud83db" 与 "a�b"(两者上游产出一致,碰撞无害)。
+  const safe = text.isWellFormed() ? text : text.toWellFormed();
+  const encoded = safe.length <= 32 ? encodeURIComponent(safe) : null;
+  const key = encoded && encoded.length <= 50 ? encoded : SparkMD5.hash(safe);
   return `${CACHE_PREFIX}${key}_${cacheSuffix}`;
 };
 

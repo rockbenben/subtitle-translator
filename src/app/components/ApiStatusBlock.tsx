@@ -51,7 +51,10 @@ const ApiStatusBlock = ({ disabled = false }: ApiStatusBlockProps) => {
   // which tenant/deployment a test actually hit; useRelay changes the entire
   // wire path — flipping it is the documented fix for browser-direct CORS
   // failures, so a stale red "failed" badge must not survive the toggle.
-  const identity = `${translationMethod}|${config?.apiKey ?? ""}|${config?.url ?? ""}|${config?.model ?? ""}|${config?.region ?? ""}|${config?.apiVersion ?? ""}|${config?.folderId ?? ""}|${config?.useRelay ?? false}`;
+  // sendSystemPrompt 同 pingSignature:它翻转 Gemma 后端 200/400(请求形状
+  // 字段),恰是测试失败后用户会去扳的开关 —— 漏掉它,红色 failed 徽章在
+  // 用户应用了文档建议的修复后仍然挂着。
+  const identity = `${translationMethod}|${config?.apiKey ?? ""}|${config?.url ?? ""}|${config?.model ?? ""}|${config?.region ?? ""}|${config?.apiVersion ?? ""}|${config?.folderId ?? ""}|${config?.useRelay ?? false}|${config?.sendSystemPrompt ?? true}`;
   const [prevIdentity, setPrevIdentity] = useState(identity);
   if (prevIdentity !== identity) {
     setPrevIdentity(identity);

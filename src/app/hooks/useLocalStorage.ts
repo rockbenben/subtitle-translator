@@ -1,7 +1,7 @@
 "use client";
 
 import { useSyncExternalStore, useCallback, useRef } from "react";
-import { saveToLocalStorage } from "@/app/utils/localStorageUtils";
+import { saveToLocalStorage, readLocalStorageRaw } from "@/app/utils/localStorageUtils";
 
 // Shared subscriber set so every useLocalStorage in the tree re-runs
 // getSnapshot when any setter writes (cross-hook consistency), plus the
@@ -47,7 +47,9 @@ export function useLocalStorage<T>(key: string, defaultValue: T): [T, (value: T 
   const cacheRef = useRef<{ raw: string | null; value: T; fallback: T } | null>(null);
 
   const getSnapshot = useCallback((): T => {
-    const raw = window.localStorage.getItem(key);
+    // readLocalStorageRaw 而非裸 window.localStorage:浏览器阻止存储时属性
+    // 访问本身抛 SecurityError,getSnapshot 在渲染期执行 —— 不护住会白屏全站。
+    const raw = readLocalStorageRaw(key);
     const fallback = defaultRef.current;
     const cache = cacheRef.current;
     if (cache && cache.raw === raw && cache.fallback === fallback) {
@@ -76,7 +78,7 @@ export function useLocalStorage<T>(key: string, defaultValue: T): [T, (value: T 
       // ran synchronously in the prior call).
       const next =
         typeof update === "function"
-          ? (update as (prev: T) => T)(parseStored(window.localStorage.getItem(key), defaultRef.current))
+          ? (update as (prev: T) => T)(parseStored(readLocalStorageRaw(key), defaultRef.current))
           : update;
       saveToLocalStorage(key, next);
       // Fan out to all hook instances in this tree

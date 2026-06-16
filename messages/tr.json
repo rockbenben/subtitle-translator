@@ -196,6 +196,8 @@
     "errorHint429": "İstek sınırı aşıldı, lütfen daha sonra tekrar deneyin",
     "errorHint456": "Bu dönemin çeviri kotası tükendi",
     "errorHint5xx": "Sunucu hatası, lütfen daha sonra tekrar deneyin",
+    "errorHintRelay": "Ağ hatası (muhtemelen CORS) — API Ayarlarında \"API Aktarıcı\"yı açın",
+    "errorHintRelay403": "API 403 Forbidden döndürdü — API Ayarlarında \"API Aktarıcı\"yı açın",
     "rateLimitCooldown": "İstek sınırına ulaşıldı — kısa bir duraklamadan sonra otomatik olarak yeniden denenecek"
   },
   "SubtitleTranslator": {
@@ -208,12 +210,17 @@
     "bilingualFormatTooltip": "ASS: orijinal ve çeviri için ayrı yazı tipi/renk stilleri. SRT: düz metin, iki satır aynı cue içinde üst üste.",
     "translationFirst": "Çeviri Üstte",
     "originalFirst": "Çeviri Altta",
-    "unsupportedSub": "Format tanınmadı. Dosyanın SRT, ASS, VTT veya LRC olduğundan emin olun.",
+    "unsupportedSub": "Format tanınmadı. Dosyanın SRT, ASS, VTT, SBV veya LRC olduğundan emin olun.",
     "noFileUploaded": "Lütfen önce bir altyazı dosyası yükleyin.",
     "noSourceText": "Lütfen dosya yükleyin veya metin yapıştırın.",
     "noExtractedText": "İçerik çıkarılamadı, dosya formatını kontrol edin.",
     "textExtracted": "Altyazı metni çıkarıldı, ",
-    "bilingualError": "Karmaşık stil etiketleri algılandı. İki dilli mod format hatalarına neden olabilir. 'İki Dilli Altyazı'yı kapatmanız önerilir."
+    "bilingualError": "Karmaşık stil etiketleri algılandı. İki dilli mod format hatalarına neden olabilir. 'İki Dilli Altyazı'yı kapatmanız önerilir.",
+    "reviewTitle": "İki dilli inceleme",
+    "reviewColSource": "Kaynak",
+    "reviewColTarget": "Çeviri",
+    "reviewApplyDownload": "Uygula ve indir",
+    "reviewDownloaded": "İncelenen altyazı indirildi"
   },
   "TranslationSettings": {
     "resetConfigSuccess": "Yapılandırma varsayılanlara sıfırlandı",
@@ -255,6 +262,7 @@
     "delayTime": "Gecikme",
     "useRelay": "API Aktarıcı",
     "useRelayTooltip": "CORS veya 403 hatalarında API aktarıcıyı etkinleştirin",
+    "useRelayOverridden": "Özel bir URL ayarlı — istekler doğrudan oraya gider ve bu anahtar etkisizdir; yeniden etkinleştirmek için URL'yi temizleyin",
     "reasoningEffort": "Akıl yürütme yoğunluğu",
     "reasoningEffortExtra": "Off düşünmeyi devre dışı bırakır (varsayılan); açmak genellikle daha doğrudur ama daha yavaştır ve daha fazla token tüketir. Özel modellerde ayrıca Auto vardır = modelin yerleşik varsayılanını izler (yalnızca Off bir API hatasına yol açarsa kullanın).",
     "presetSelect": "Ön Ayar Seç",
@@ -282,13 +290,13 @@
   "tools": {
     "subtitleTranslator": {
       "title": "Altyazı Çevirici",
-      "description": "Toplu SRT, ASS, VTT, LRC çevirisi. 120+ dil.",
+      "description": "Toplu SRT, ASS, VTT, SBV, LRC çevirisi. 120+ dil.",
       "metaTitle": "Ücretsiz Altyazı Çevirici | Toplu SRT/VTT/ASS + İki Dilli",
-      "metaDescription": "SRT, ASS, VTT, LRC için AI altyazı çevirmeni. 25+ motor: DeepSeek, Claude, GPT, DeepL, Google. 120+ dil, zaman kodları korunur, çift dilli çıktı.",
+      "metaDescription": "SRT, ASS, VTT, SBV, LRC için AI altyazı çevirmeni. 25+ motor: DeepSeek, Claude, GPT, DeepL, Google. 120+ dil, zaman kodları korunur, çift dilli çıktı.",
       "faq": [
         {
-          "q": "Hangi altyazı formatları destekleniyor? SRT, ASS, VTT ve LRC çevrilebilir mi?",
-          "a": "Dört format destekleniyor: SRT, ASS, VTT ve LRC. SRT/VTT YouTube, HTML5 oynatıcılar ve içerik üretici panelleri için (YouTube altyazılarını yt-dlp ile dışa aktarın); ASS Aegisub ve anime fansubları için, satır başındaki konum etiketleri (\\\\an8) çeviri sonrası geri yüklenir; LRC müzik şarkı sözleri için. Dosya kodlaması (UTF-8 / UTF-16 / GBK / Shift-JIS) jschardet ile otomatik algılanır. Karmaşık satır içi ASS efekt etiketleri (renk, animasyon, karaoke) çeviri sırasında sadeleştirilir."
+          "q": "Hangi altyazı formatları destekleniyor? SRT, ASS, VTT, SBV ve LRC çevrilebilir mi?",
+          "a": "Beş format destekleniyor: SRT, ASS, VTT, SBV ve LRC. SRT/VTT YouTube, HTML5 oynatıcılar ve içerik üretici panelleri için (YouTube altyazılarını yt-dlp ile dışa aktarın); ASS/SSA Aegisub ve anime fansubları için, satır başındaki konum etiketleri (\\\\an8) çeviri sonrası geri yüklenir; SBV, YouTube Studio altyazı düzenleyicisinin yerel dışa aktarma biçimidir; LRC müzik şarkı sözleri için. Dosya kodlaması (UTF-8 / UTF-16 / GBK / Shift-JIS) jschardet ile otomatik algılanır. Karmaşık satır içi ASS efekt etiketleri (renk, animasyon, karaoke) çeviri sırasında sadeleştirilir."
         },
         {
           "q": "Altyazılar: makine çevirisi mi yoksa AI/LLM çevirisi mi kullanmalı? Hangisi en kaliteli, hangisi en ucuz?",
@@ -326,7 +334,7 @@
       "howto": [
         {
           "name": "Video veya altyazı dosyasından başlayın",
-          "text": "SRT/ASS/VTT/LRC yükleyin. Çıkarma: YouTube yt-dlp ile, diğer platformlar özel araçlarla. Format ve UTF-8/UTF-16/GBK kodlaması otomatik algılanır."
+          "text": "SRT/ASS/VTT/SBV/LRC yükleyin. Çıkarma: YouTube yt-dlp ile, diğer platformlar özel araçlarla. Format ve UTF-8/UTF-16/GBK kodlaması otomatik algılanır."
         },
         {
           "name": "Motor ve çıktı modunu seçin",
@@ -338,7 +346,7 @@
         }
       ],
       "features": [
-        "SRT, ASS, VTT, LRC desteği, ASS konum etiketleri (\\\\an8 vb.) korunur",
+        "SRT, ASS, VTT, SBV, LRC desteği, ASS konum etiketleri (\\\\an8 vb.) korunur",
         "Zaman kodları değiştirilmez — sadece metin çevrilir, orijinal zamanlama korunur",
         "UTF-8/UTF-16/GBK kodlama otomatik algılama",
         "İki dilli altyazı konumu: üst (öğrenme) veya alt (izleme)",
@@ -409,6 +417,10 @@
     "dataParserImgPrompt": {
       "title": "IMGPrompt Veri Oluşturucu",
       "description": "Toplu IMGPrompt JSON verileri oluştur"
+    },
+    "textDiff": {
+      "title": "Text Diff",
+      "description": "İki metni veya dosyayı yan yana karşılaştırın ve ilk farkı bulun."
     }
   },
   "navigation": {

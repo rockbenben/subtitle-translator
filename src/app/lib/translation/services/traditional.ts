@@ -282,7 +282,10 @@ export const deepl: TranslationService = async (params) => {
     ...(sourceLanguage !== "auto" && { source_lang: toDeepLSource(sourceLanguage) }),
   };
 
-  const data = (await fetchJSON(url || PROXY_ENDPOINTS.deepl, {
+  // url?.trim():纯空白 URL(" ")是 truthy,fetch(" ") 会解析到当前页面,
+  // 返回的 HTML 让 ok 路径的 response.json() 抛无 status 的 SyntaxError ——
+  // 被当可重试错误烧光重试预算,还报 "Unexpected token '<'" 而非回落默认端点。
+  const data = (await fetchJSON(url?.trim() || PROXY_ENDPOINTS.deepl, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(requestBody),
@@ -303,7 +306,8 @@ export const deeplx: TranslationService = async (params) => {
     ...(sourceLanguage !== "auto" && { source_lang: toDeepLSource(sourceLanguage) }),
   };
 
-  const data = (await fetchJSON(url || THIRD_PARTY_ENDPOINTS.deeplx, {
+  // url?.trim() 同 deepl:空白 URL 回落默认端点而非劫持到当前页面。
+  const data = (await fetchJSON(url?.trim() || THIRD_PARTY_ENDPOINTS.deeplx, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(requestBody),
@@ -477,6 +481,29 @@ ${text.trim()}<end_of_turn>
 `;
 };
 
+// TranslateGemma is invoked one source segment per request — the registry sets
+// no chunkSize, so useTranslationState ALWAYS takes the line-by-line path
+// (one request per content line). The official model card defines the output
+// as a single string ("Output: Text translated into the target language") and
+// documents no candidate-list behavior. But the 4B model, prompted off its
+// native chat template (we pre-render to /v1/completions to survive LM Studio),
+// occasionally spills a newline-separated list of synonyms for short/ambiguous
+// inputs (可能 / 也许 / 大概 / 八成 / 好像). Left verbatim, that multi-line block
+// lands in ONE line-slot and downstream assembly renders it as several lines,
+// shifting bilingual/subtitle output. Since every request carries exactly one
+// segment, any newline in the output is a candidate separator, never a second
+// translation — keep only the first non-empty candidate to enforce the
+// documented single-translation contract.
+export const firstTranslategemmaCandidate = (raw: string): string => {
+  return (
+    raw
+      .trim()
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .find((line) => line !== "") ?? ""
+  );
+};
+
 // NOTE: the former GET /models health check was removed deliberately — some
 // LM Studio builds don't route GET /v1/models at all ("Unexpected endpoint or
 // method... Returning 200 anyway", with no CORS headers on the fallback), so
@@ -559,5 +586,7 @@ export const translategemma: TranslationService = async (params) => {
   if (choice?.finish_reason === "length") {
     throw new Error("TranslateGemma output truncated (max_tokens reached) — text too long for one batch");
   }
-  return responseText.trim();
+  // Collapse any newline-separated candidate list to the first translation —
+  // see firstTranslategemmaCandidate for why this is safe (one segment/request).
+  return firstTranslategemmaCandidate(responseText);
 };

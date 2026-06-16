@@ -40,7 +40,7 @@ const { CheckableTag } = Tag;
 // Services whose URL field accepts an OpenAI-compatible /chat/completions endpoint;
 // safe to auto-complete on blur. azureopenai is excluded (URL is a base, code
 // builds the deployment path); deepl/deeplx use private protocols.
-const URL_AUTO_COMPLETE_SERVICES = new Set(["llm", "doubao", "qwen", "qwenMt", "nvidia", "translategemma"]);
+const URL_AUTO_COMPLETE_SERVICES = new Set(["llm", "litellm", "doubao", "qwen", "qwenMt", "nvidia", "translategemma"]);
 
 const ServiceSettingsForm = ({ service }: { service: string }) => {
   const tCommon = useTranslations("common");
@@ -74,6 +74,8 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
 
   const defaultConfig = getDefaultConfig(service);
   const config = migrateConfig(translationConfigs?.[service], defaultConfig);
+  // 自定义 URL 已填 → 优先于中转开关(resolveRelayableEndpoint 优先级 1 > 2)。
+  const customUrlSet = typeof config?.url === "string" && config.url.trim() !== "";
 
   // Thinking-effort visibility: per-model gate via `models[].thinking: true`
   // in registry. State stored per-model in `config.thinkingEffort[sku]` where
@@ -197,8 +199,20 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
         return `${tCommon("example")}: https://your-resource-name.openai.azure.com`;
       case "qwenMt":
         return `${tCommon("example")}: https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions`;
+      case "litellm":
+        // URL 即凭证(必填):示例必须是 LiteLLM 自己的默认网关地址 —— 此前
+        // 落进 deeplx 默认分支,在必填字段上展示 /translate 私有协议的局域网
+        // 示例,直接教错 API 形态。
+        return `${tCommon("example")}: http://127.0.0.1:4000/v1/chat/completions`;
+      case "deepl":
+        return `${tCommon("example")}: https://api-edgeone.newzone.top/api/deepl`;
+      case "deeplx":
+        return `${tCommon("example")}: http://192.168.2.3:32770/translate`;
       default:
-        return `${tCommon("example")}: http://192.168.2.3:32770/translate`; // deeplx default
+        // 其余都是 relay-capable 云厂商的可选自定义 URL(自建中继/备用直连)。
+        // 裸主机即可:openai-compat 自动补 /v1/chat/completions,claude 补
+        // /v1/messages —— 通用示例给裸主机最不误导。
+        return `${tCommon("example")}: https://your-proxy.example.com`;
     }
   };
 
@@ -477,8 +491,10 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
               </Form.Item>
             )}
             {config?.useRelay !== undefined && (
-              <Form.Item label={t("useRelay")} extra={t("useRelayTooltip")} style={{ marginBottom: 0 }}>
-                <Switch checked={config.useRelay as boolean | undefined} onChange={(checked) => handleConfigChange(service, "useRelay", checked)} aria-label={t("useRelay")} />
+              // URL 已填时开关不生效 —— 置灰 + 文案说明因果,而非隐藏(隐藏会布局
+              // 跳动且丢失可发现性)。开关状态保留,清空 URL 后立即恢复("待命"语义)。
+              <Form.Item label={t("useRelay")} extra={customUrlSet ? t("useRelayOverridden") : t("useRelayTooltip")} style={{ marginBottom: 0 }}>
+                <Switch checked={config.useRelay as boolean | undefined} disabled={customUrlSet} onChange={(checked) => handleConfigChange(service, "useRelay", checked)} aria-label={t("useRelay")} />
               </Form.Item>
             )}
           </Form>

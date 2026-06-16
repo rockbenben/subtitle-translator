@@ -60,7 +60,10 @@ export function LanguageSelector() {
 
   const handleLanguageChange = (key: string) => {
     const newPath = pathname.replace(/^\/[a-z]{2}(-[a-z]+)?/, `/${key}`);
-    router.push(newPath);
+    // usePathname 不含 query/hash —— 不补会在切语言时丢掉 ?huginn 这类
+    // 功能门控参数(data-batch 的效应还会因参数消失把已选工具回写成
+    // excel,localStorage 永久丢失)。点击事件里读 window.location 安全。
+    router.push(`${newPath}${window.location.search}${window.location.hash}`);
   };
 
   const renderLanguageList = () => (

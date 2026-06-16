@@ -196,6 +196,8 @@
     "errorHint429": "Limite di richieste superato, riprova più tardi",
     "errorHint456": "Quota di traduzione esaurita per questo periodo",
     "errorHint5xx": "Errore del server, riprova più tardi",
+    "errorHintRelay": "Errore di rete (probabilmente CORS): attiva \"Relay API\" nelle impostazioni API",
+    "errorHintRelay403": "L'API ha restituito 403 Forbidden: attiva \"Relay API\" nelle impostazioni API",
     "rateLimitCooldown": "Limite di richieste raggiunto — breve pausa, nuovo tentativo automatico"
   },
   "SubtitleTranslator": {
@@ -208,12 +210,17 @@
     "bilingualFormatTooltip": "ASS: stili di font/colore separati per originale e traduzione. SRT: testo semplice, entrambe le righe nella stessa porzione.",
     "translationFirst": "Traduzione Sopra",
     "originalFirst": "Traduzione Sotto",
-    "unsupportedSub": "Formato non riconosciuto. Assicurati che il file sia SRT, ASS, VTT o LRC.",
+    "unsupportedSub": "Formato non riconosciuto. Assicurati che il file sia SRT, ASS, VTT, SBV o LRC.",
     "noFileUploaded": "Per favore carica prima un file di sottotitoli.",
     "noSourceText": "Per favore carica file o incolla testo.",
     "noExtractedText": "Nessun contenuto estratto, verifica formato file.",
     "textExtracted": "Testo sottotitoli estratto, ",
-    "bilingualError": "Tag stile complessi rilevati. Modalità bilingue può causare errori di formattazione. Consigliato disattivare 'Sottotitoli Bilingue'."
+    "bilingualError": "Tag stile complessi rilevati. Modalità bilingue può causare errori di formattazione. Consigliato disattivare 'Sottotitoli Bilingue'.",
+    "reviewTitle": "Revisione bilingue",
+    "reviewColSource": "Originale",
+    "reviewColTarget": "Traduzione",
+    "reviewApplyDownload": "Applica e scarica",
+    "reviewDownloaded": "Sottotitolo revisionato scaricato"
   },
   "TranslationSettings": {
     "resetConfigSuccess": "Configurazione ripristinata ai valori predefiniti",
@@ -255,6 +262,7 @@
     "delayTime": "Ritardo",
     "useRelay": "Relay API",
     "useRelayTooltip": "Attiva il relay API in caso di errori CORS o 403",
+    "useRelayOverridden": "È impostato un URL personalizzato: le richieste vanno direttamente a esso e questo interruttore non ha effetto; svuota l'URL per riattivarlo",
     "reasoningEffort": "Sforzo di ragionamento",
     "reasoningEffortExtra": "Off disattiva il pensiero (predefinito); attivarlo è di solito più accurato, ma più lento e consuma più token. I modelli personalizzati offrono anche Auto = seguire l'impostazione predefinita del modello (usalo solo se Off causa un errore API).",
     "presetSelect": "Seleziona preset",
@@ -282,13 +290,13 @@
   "tools": {
     "subtitleTranslator": {
       "title": "Traduttore Sottotitoli",
-      "description": "Traduzione in batch SRT, ASS, VTT, LRC. 120+ lingue.",
+      "description": "Traduzione in batch SRT, ASS, VTT, SBV, LRC. 120+ lingue.",
       "metaTitle": "Traduttore sottotitoli gratis | SRT/VTT/ASS IA bilingue",
-      "metaDescription": "Traduttore IA di sottotitoli per SRT, ASS, VTT, LRC. 25+ motori: DeepSeek, Claude, GPT, DeepL. 120+ lingue, timecode intatti, bilingue.",
+      "metaDescription": "Traduttore IA di sottotitoli per SRT, ASS, VTT, SBV, LRC. 25+ motori: DeepSeek, Claude, GPT, DeepL. 120+ lingue, timecode intatti, bilingue.",
       "faq": [
         {
-          "q": "Quali formati di sottotitoli sono supportati? È possibile tradurre SRT, ASS, VTT e LRC?",
-          "a": "Quattro formati supportati: SRT, ASS, VTT e LRC. SRT/VTT per YouTube, player HTML5 e pannelli creator (esporta sottotitoli YouTube con yt-dlp); ASS per Aegisub e fansub anime, tag di posizione a inizio riga (\\\\an8) ripristinati dopo la traduzione; LRC per testi musicali. La codifica del file (UTF-8 / UTF-16 / GBK / Shift-JIS) viene rilevata automaticamente via jschardet. I tag inline di effetti ASS complessi (colori, animazioni, karaoke) vengono semplificati durante la traduzione."
+          "q": "Quali formati di sottotitoli sono supportati? È possibile tradurre SRT, ASS, VTT, SBV e LRC?",
+          "a": "Cinque formati supportati: SRT, ASS, VTT, SBV e LRC. SRT/VTT per YouTube, player HTML5 e pannelli creator (esporta sottotitoli YouTube con yt-dlp); ASS/SSA per Aegisub e fansub anime, tag di posizione a inizio riga (\\\\an8) ripristinati dopo la traduzione; SBV è il formato di esportazione nativo dell'editor di sottotitoli di YouTube Studio; LRC per testi musicali. La codifica del file (UTF-8 / UTF-16 / GBK / Shift-JIS) viene rilevata automaticamente via jschardet. I tag inline di effetti ASS complessi (colori, animazioni, karaoke) vengono semplificati durante la traduzione."
         },
         {
           "q": "Sottotitoli: usare traduzione automatica o traduzione IA/LLM? Qual è la migliore qualità, quale la più economica?",
@@ -326,7 +334,7 @@
       "howto": [
         {
           "name": "Iniziare da video o file di sottotitoli",
-          "text": "Carica SRT/ASS/VTT/LRC. Estrazione: YouTube via yt-dlp, altre piattaforme via strumenti dedicati. Formato e codifica UTF-8/UTF-16/GBK rilevati automaticamente."
+          "text": "Carica SRT/ASS/VTT/SBV/LRC. Estrazione: YouTube via yt-dlp, altre piattaforme via strumenti dedicati. Formato e codifica UTF-8/UTF-16/GBK rilevati automaticamente."
         },
         {
           "name": "Scegliere motore e modalità di output",
@@ -338,7 +346,7 @@
         }
       ],
       "features": [
-        "Supporta SRT, ASS, VTT, LRC, tag di posizione ASS (\\\\an8 ecc.) preservati",
+        "Supporta SRT, ASS, VTT, SBV, LRC, tag di posizione ASS (\\\\an8 ecc.) preservati",
         "Timecode intatti — solo il testo viene tradotto, timing originale preservato",
         "Rilevamento automatico codifica UTF-8/UTF-16/GBK",
         "Posizione sottotitoli bilingue: sopra (apprendimento) o sotto (visualizzazione)",
@@ -409,6 +417,10 @@
     "dataParserImgPrompt": {
       "title": "Generatore Dati IMGPrompt",
       "description": "Genera dati JSON IMGPrompt in batch"
+    },
+    "textDiff": {
+      "title": "Text Diff",
+      "description": "Confronta due testi o file affiancati e individua la prima differenza."
     }
   },
   "navigation": {

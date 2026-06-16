@@ -1,6 +1,6 @@
 // Translation retry configuration and utilities
 
-import { LLM_MODELS } from "@/app/lib/translation";
+import { LLM_MODELS, RELAY_HINT_MARKER } from "@/app/lib/translation";
 import { isAbortError, isCascadedAbort } from "@/app/utils";
 
 // MT-categorized services that actually delegate to an LLM runtime under the
@@ -47,16 +47,18 @@ export const isAuthError = (error: unknown): boolean => {
  * Errors that retrying won't fix — bail out immediately so the user isn't stuck
  * at 0% for 30-60s of doomed retries. These are thrown by service layers when the
  * next attempt will fail the same way — notably the shared CORS → "enable API
- * Relay" rewrite (withRelayHint in services/llm.ts), which now fires for EVERY
- * relay-capable provider (not just DeepSeek) on a `Failed to fetch` with relay
- * off. The "enable 'api relay'" marker below is what classifies them as
- * non-retryable, so a doomed CORS error never burns 3 retries.
+ * Relay" rewrite (withRelayHint in services/llm.ts), which fires for EVERY
+ * relay-capable provider (not just DeepSeek) on a network/CORS TypeError with
+ * relay off. The relay entry derives from RELAY_HINT_MARKER (services/shared.ts)
+ * — the same constant embedded in every relay-remediation message — so rewording
+ * a message can't silently break this classification. The Chinese entry is a
+ * redundant second net over the same messages' zh half.
  *
  * "max_tokens reached" is the marker getOpenAICompatContent throws when a
  * response has finish_reason==="length" — same input + same max_tokens
  * truncates at the same boundary every time, so retries are pure waste.
  */
-const NON_RETRYABLE_MESSAGES = ["enable 'api relay'", "请在 api 设置中开启", "max_tokens reached"];
+const NON_RETRYABLE_MESSAGES = [RELAY_HINT_MARKER.toLowerCase(), "请在 api 设置中开启", "max_tokens reached"];
 
 /**
  * Check if error is retryable (server errors or rate limits).

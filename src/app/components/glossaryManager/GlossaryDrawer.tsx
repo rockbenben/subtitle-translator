@@ -6,7 +6,7 @@ import { PlusOutlined, DeleteOutlined, UploadOutlined, DownloadOutlined, SearchO
 import { useTranslations } from "next-intl";
 import { useTranslationContext } from "@/app/components/TranslationContext";
 import { languages } from "@/app/lib/translation/languages-data";
-import { downloadFile } from "@/app/utils";
+import { downloadFile, decodeFileBytes } from "@/app/utils";
 import { mergeImportedTerms, parseGlossaryTsv, type GlossaryTerm } from "@/app/lib/translation/glossary";
 
 const LANG_OPTIONS = languages.filter((l) => l.value !== "auto").map((l) => ({ label: `${l.name} (${l.nativelabel})`, value: l.value }));
@@ -19,7 +19,7 @@ const GlossaryDrawer = ({ open, onClose }: { open: boolean; onClose: () => void 
   const t = useTranslations("TranslationGlossary");
   const tCommon = useTranslations("common");
   const { message } = App.useApp();
-  const { activeGlossaryPreset, activeGlossaryPresetId, updateGlossaryPreset, targetLanguage } = useTranslationContext();
+  const { activeGlossaryPreset, updateGlossaryPreset, targetLanguage } = useTranslationContext();
   const [selectedLang, setSelectedLang] = useState<string>(targetLanguage || "zh");
   const [search, setSearch] = useState("");
 
@@ -49,8 +49,15 @@ const GlossaryDrawer = ({ open, onClose }: { open: boolean; onClose: () => void 
   const completeCount = useMemo(() => visibleTerms.filter((term) => term.source.trim() && term.target.trim()).length, [visibleTerms]);
   const selectedLangLabel = languages.find((l) => l.value === selectedLang)?.nativelabel ?? selectedLang;
 
-  const saveTerms = (next: GlossaryTerm[]) => {
-    if (activeGlossaryPresetId) updateGlossaryPreset(activeGlossaryPresetId, { terms: next });
+  // 返回是否真的落盘:活动预设可能在抽屉开着时被另一标签页删掉
+  // (useLocalStorage 跨标签同步)—— 调用方(importTsv)据此分流提示,
+  // 不能在没保存任何东西时报"导入成功"。判【对象】而非 id:删除后 id
+  // 可悬空残留(usePresetCollection.update 对不存在的 id 静默 no-op),
+  // 只判 id 会在没写入任何东西时返回 true。
+  const saveTerms = (next: GlossaryTerm[]): boolean => {
+    if (!activeGlossaryPreset) return false;
+    updateGlossaryPreset(activeGlossaryPreset.id, { terms: next });
+    return true;
   };
   const editTerm = (originalIdx: number, patch: Partial<GlossaryTerm>) => saveTerms(allTerms.map((term, i) => (i === originalIdx ? { ...term, ...patch } : term)));
   const removeTerm = (originalIdx: number) => saveTerms(allTerms.filter((_, i) => i !== originalIdx));
@@ -88,14 +95,28 @@ const GlossaryDrawer = ({ open, onClose }: { open: boolean; onClose: () => void 
   // glossary.ts 的纯函数里,带单测。
   const importTsv = (file: File) => {
     const reader = new FileReader();
-    reader.onload = () => {
-      const parsed = parseGlossaryTsv(String(reader.result), selectedLang, LANG_VALUES);
-      saveTerms(mergeImportedTerms(allTerms, parsed));
-      message.success(t("importDone", { count: parsed.length }));
+    // readAsArrayBuffer + decodeFileBytes 而非 readAsText:readAsText 只按
+    // UTF-8 解,中文 Windows 上 Excel 导出的 ANSI/GBK TSV 会被解成 U+FFFD
+    // 乱码,parse 后仍通过 source/target 非空过滤 —— 损坏的词条被【静默
+    // 持久化】还报导入成功,翻译时术语永远匹配不上。
+    reader.onload = async () => {
+      try {
+        const text = await decodeFileBytes(reader.result as ArrayBuffer);
+        const parsed = parseGlossaryTsv(text, selectedLang, LANG_VALUES);
+        if (saveTerms(mergeImportedTerms(allTerms, parsed))) {
+          message.success(t("importDone", { count: parsed.length }));
+        } else {
+          // 活动预设已不存在(被另一标签页删除)——什么都没保存,不能报成功
+          message.error(t("presetEmptyHint"));
+        }
+      } catch (error) {
+        console.error("Glossary import failed:", error);
+        message.error(tCommon("fileReadFailed"));
+      }
     };
     // Don't swallow a failed read (locked file, odd encoding) silently.
     reader.onerror = () => message.error(tCommon("fileReadFailed"));
-    reader.readAsText(file);
+    reader.readAsArrayBuffer(file);
     return false;
   };
 

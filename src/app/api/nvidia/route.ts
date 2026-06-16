@@ -87,6 +87,12 @@ export async function POST(req: NextRequest) {
       // Strip <think>...</think> tags and everything inside them.
       // Non-greedy regex matches correctly when multiple tags exist.
       data.choices[0].message.content = data.choices[0].message.content.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
+      // 内容只剩 <think> 块时剥完为空 —— 正是上面 502 闸门要拦的"成功但空白
+      // 翻译",必须复检(短输入下 MiniMax 偶发只回思考块)。
+      if (!data.choices[0].message.content) {
+        console.error("Nvidia API returned only a <think> block (empty after strip).");
+        return NextResponse.json({ error: "Nvidia API returned a response with no message content." }, { status: 502 });
+      }
     }
 
     return NextResponse.json(data);

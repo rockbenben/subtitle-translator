@@ -12,21 +12,29 @@ export const LRC_TIME_REGEX = /^\[\d{2}:\d{2}(\.\d{2,3})?\]/;
 // RegExp()` per line × per call (was 2× per LRC line on every export).
 export const LRC_TIME_REGEX_GLOBAL = /\[\d{2}:\d{2}(?:\.\d{2,3})?\]/g;
 const LRC_METADATA_REGEX = /^\[(ar|ti|al|by|offset|re|ve):/i;
+// YouTube SBV 时间行:`0:00:01.000,0:00:03.500`(逗号分隔 start,end,无 --> 箭头)。
+// 整行锚定 —— cue 文本里出现类似片段不会误判;ms 容忍 1-3 位(YouTube 固定输出 3 位)。
+export const SBV_TIME_REGEX = /^\d+:\d{2}:\d{2}\.\d{1,3},\d+:\d{2}:\d{2}\.\d{1,3}$/;
 
 // 识别字幕文件的类型
-export const detectSubtitleFormat = (lines: string[]): "ass" | "vtt" | "srt" | "lrc" | "error" => {
+export const detectSubtitleFormat = (lines: string[]): "ass" | "vtt" | "srt" | "lrc" | "sbv" | "error" => {
   // 获取前 50 行，并去除其中的空行
   const nonEmptyLines = lines.slice(0, 50).filter((line) => line.trim().length > 0);
   let assCount = 0,
     vttCount = 0,
     srtCount = 0,
-    lrcCount = 0;
+    lrcCount = 0,
+    sbvCount = 0;
 
   for (let i = 0; i < nonEmptyLines.length; i++) {
     const trimmed = nonEmptyLines[i].trim();
 
-    // ASS 格式判断：如果存在 [script info]，或对话行符合 ASS 格式
-    if (/^\[script info\]/i.test(trimmed)) return "ass";
+    // ASS 格式判断:[script info] 行计入投票,不再无条件早退 —— cue 文本里
+    // 以 "[Script Info]" 开头的合法 SRT/SBV(讲字幕格式的视频字幕)曾被整文件
+    // 劫持成 ass,filterSubLines 提不出任何 Dialogue 行,文件完全不可翻译。
+    // 真 ASS 靠 [script info] + Dialogue 行的票数照样胜出(纯头部粘贴时其余
+    // 计数均为 0,1 票也够)。
+    if (/^\[script info\]/i.test(trimmed)) assCount++;
 
     // 如果第一行是 WEBVTT 标识，则为 VTT 格式
     if (i === 0 && /^WEBVTT($|\s)/i.test(trimmed)) return "vtt";
@@ -49,17 +57,26 @@ export const detectSubtitleFormat = (lines: string[]): "ass" | "vtt" | "srt" | "
     if (LRC_METADATA_REGEX.test(trimmed)) {
       lrcCount++;
     }
+    if (SBV_TIME_REGEX.test(trimmed)) {
+      sbvCount++;
+    }
   }
 
-  // 根据时间行分隔符数量判断
-  if (assCount > 0 && assCount >= Math.max(vttCount, srtCount, lrcCount)) {
+  // 根据时间行分隔符数量判断。严格多数(>)而非 >=:真 ASS 不含箭头/LRC/SBV
+  // 时间行(其余计数恒为 0,1 票照样胜出);平局意味着每个 cue 文本里都有一条
+  // Dialogue 行 —— 讲 ASS 语法的 SRT/SBV 教学字幕,>= 会把整文件劫持成 ass,
+  // 序号/箭头时间码被原样保留、cue 文本被当 Dialogue 改写,导出 .ass 两头不合法
+  // ([Script Info] 投票同病已修,这里是 Dialogue 计票的平局分支)。
+  if (assCount > 0 && assCount > Math.max(vttCount, srtCount, lrcCount, sbvCount)) {
     return "ass";
   }
   // LRC 判定要求文件【完全没有】--> 箭头:真 LRC 不含箭头时间行;cue 文本
   // 里内嵌 [mm:ss] 标注的 SRT/VTT(歌词字幕、转录稿)曾被票数压过误判成
   // LRC。用宽松的 includes("-->") 而非带空格要求的时间码正则 —— 无空格箭头
   // 的 SRT(00:00:01,000-->00:00:02,000)两个计数都是 0,照样会误判。
-  if (lrcCount > 0 && vttCount === 0 && srtCount === 0 && !nonEmptyLines.some((l) => l.includes("-->"))) {
+  // sbvCount === 0 同理:真 LRC 不含 SBV 时间行,带 [mm:ss] 标注的 SBV 转录稿
+  // 不能被 LRC 票数压过。
+  if (lrcCount > 0 && vttCount === 0 && srtCount === 0 && sbvCount === 0 && !nonEmptyLines.some((l) => l.includes("-->"))) {
     return "lrc";
   }
   // 无 WEBVTT 头(头部在上面 i===0 已提前返回)的点分隔毫秒文件按 SRT 处理:
@@ -67,6 +84,8 @@ export const detectSubtitleFormat = (lines: string[]): "ass" | "vtt" | "srt" | "
   // VTT 处理会让 translated-only 导出生成无 WEBVTT 头的 .vtt(两种格式下都
   // 不合法);按 SRT 导出保持与源文件相同的保真度。
   if (srtCount > 0 || vttCount > 0) return "srt";
+  // 箭头时间码是更强信号,SBV 排在 srt/vtt 之后:真 SBV 不含 --> 行
+  if (sbvCount > 0) return "sbv";
   return "error";
 };
 
@@ -90,12 +109,18 @@ export const appendBilingualSuffix = (filename: string): string => {
   return `${filename.slice(0, dotIndex)}${BILINGUAL_FILENAME_SUFFIX}${filename.slice(dotIndex)}`;
 };
 
-export const getOutputFileExtension = (fileType: string, bilingualSubtitle: boolean, bilingualFormat: BilingualFormat = "ass"): string => {
+export const getOutputFileExtension = (fileType: string, bilingualSubtitle: boolean, bilingualFormat: BilingualFormat = "ass", sourceExt?: string): string => {
   if (fileType === "lrc") {
     return "lrc";
   }
+  // SBV 双语是原地叠行(仍是合法 SBV 多行 cue),不参与 ASS/SRT 格式选择
+  if (fileType === "sbv") {
+    return "sbv";
+  }
   if (fileType === "ass") {
-    return "ass";
+    // SSA(v4.00)走同一条 ass 管线(in-place 行替换,输出保持 v4.00 结构)——
+    // 按源文件扩展名回写 .ssa,而不是给 v4.00 内容贴 .ass 名
+    return sourceExt === "ssa" ? "ssa" : "ass";
   }
   // SRT/VTT 双语按用户选择:format=ass 转 ASS,format=srt 输出 SRT(VTT 走 vttToSrt 后处理)
   if (bilingualSubtitle) {
@@ -109,11 +134,6 @@ export const getOutputFileExtension = (fileType: string, bilingualSubtitle: bool
 
 // 预编译正则表达式用于检测纯数字行(SRT 的 cue 序号)
 const INTEGER_REGEX = /^\d+$/;
-// 检测当前行是否为有效字幕内容(非空 且 非纯整数序号)
-const isValidSubtitleLine = (str: string): boolean => {
-  const trimmedStr = str.trim();
-  return trimmedStr !== "" && !INTEGER_REGEX.test(trimmedStr);
-};
 
 export const filterSubLines = (lines: string[], fileType: string) => {
   const contentLines: string[] = [];
@@ -224,6 +244,18 @@ export const filterSubLines = (lines: string[], fileType: string) => {
           extractedContent = line;
         }
       }
+    } else if (fileType === "sbv") {
+      // SBV 结构 = 时间行 + 文本行 + 空行分隔,无 cue 序号、无头部 ——
+      // 首个时间行之后,非空且非时间行的都是 cue 文本(数字台词也保留)
+      const isSbvTimecode = SBV_TIME_REGEX.test(trimmedLine);
+      if (!startExtracting && isSbvTimecode) {
+        startExtracting = true;
+      }
+
+      if (startExtracting) {
+        isContent = trimmedLine !== "" && !isSbvTimecode;
+        extractedContent = line;
+      }
     } else if (fileType === "lrc") {
       if (!startExtracting && LRC_TIME_REGEX.test(trimmedLine)) {
         startExtracting = true;
@@ -232,8 +264,11 @@ export const filterSubLines = (lines: string[], fileType: string) => {
       if (startExtracting) {
         extractedContent = trimmedLine.replace(/\[\d{2}:\d{2}(\.\d{2,3})?\]/g, "").trim();
         // 只有当去除时间标记后内容不为空时，才认为是有效内容
-        // (纯时间标记行如 "[01:23.45]" 是 LRC 的间奏锚点,不应送 LLM 翻译)
-        isContent = isValidSubtitleLine(extractedContent);
+        // (纯时间标记行如 "[01:23.45]" 是 LRC 的间奏锚点,不应送 LLM 翻译)。
+        // 只判非空,不复用 isValidSubtitleLine:它的整数过滤是给 SRT cue 序号
+        // 用的,LRC 没有序号 —— 纯数字歌词(倒数 "3"、年份 "1999")曾被它
+        // 静默丢弃,永不翻译且无任何提示。
+        isContent = extractedContent !== "";
       }
     } else if (fileType === "ass") {
       // 大小写不敏感 —— 检测器(detectSubtitleFormat)接受 "dialogue:",提取器
@@ -247,7 +282,13 @@ export const filterSubLines = (lines: string[], fileType: string) => {
         const parts = line.split(",");
         if (isDialogue && parts.length > assContentStartIndex) {
           extractedContent = parts.slice(assContentStartIndex).join(",").trim();
-          isContent = isValidSubtitleLine(line);
+          // 只判提取后的 Text 字段非空(同 LRC 分支),不复用 isValidSubtitleLine:
+          // 它校验的是整行 "Dialogue:...",对空 Text 的 sign/计时占位行永远返回 true,
+          // 把 "" 当内容行推入 —— 非上下文路径会把空串发给翻译 API(白烧请求 + 污染
+          // 缓存),LLM 路径关掉 context 感知时更会把幻觉文本写回原本空白的字幕行。
+          // 不用 isValidSubtitleLine(extractedContent):它的纯整数过滤是给 SRT 序号的,
+          // 会误杀正文是 "3"/"1999" 的 ASS 台词。
+          isContent = extractedContent !== "";
         }
       }
     }
@@ -268,17 +309,18 @@ export const filterSubLines = (lines: string[], fileType: string) => {
  * 后面 cue 的内容"传送"到前面合并、并在 SRT 路径留下空壳 cue。行号天然唯一。
  * trim 后再测试 —— 管线里其它所有匹配点都 trim,唯独这里曾不 trim,导致带
  * 前导空白时间码的文件双语 ASS 导出完全为空。
+ * timeRegex 可换成 SBV_TIME_REGEX 等其它格式的时间行匹配(默认 VTT/SRT 箭头时间码)。
  */
-export const findTimeLineIndexBefore = (lines: string[], index: number): number => {
+export const findTimeLineIndexBefore = (lines: string[], index: number, timeRegex: RegExp = VTT_SRT_TIME): number => {
   for (let i = index - 1; i >= 0; i--) {
-    if (VTT_SRT_TIME.test(lines[i].trim())) return i;
+    if (timeRegex.test(lines[i].trim())) return i;
   }
   return -1;
 };
 
-/** 从 index 位置向上扫描 lines,找最近的 VTT/SRT 时间码行(trim 后的文本) */
-export const findTimeLineBefore = (lines: string[], index: number): string => {
-  const i = findTimeLineIndexBefore(lines, index);
+/** 从 index 位置向上扫描 lines,找最近的时间码行(trim 后的文本) */
+export const findTimeLineBefore = (lines: string[], index: number, timeRegex?: RegExp): string => {
+  const i = findTimeLineIndexBefore(lines, index, timeRegex);
   return i === -1 ? "" : lines[i].trim();
 };
 
@@ -452,6 +494,45 @@ export const vttToSrt = (vttText: string): string => {
 
   // 清头部空行;合并 3+ 连续空行为 1 个(VTT 块之间可能有多余空行)
   return out.join("\n").replace(/^\n+/, "").replace(/\n{3,}/g, "\n\n");
+};
+
+/**
+ * 从【已知 cue 结构】直接生成 VTT 源的 SRT 双语输出,而不是把译文插进 VTT 文本
+ * 后再用 vttToSrt 重新解析。那次重解析仅凭 VTT_SRT_TIME 正则判定 cue 边界 ——
+ * 一旦某 cue 的【原文或译文正文行本身以时间码开头】(屏显内容恰好是时间码区间),
+ * 就会被误判为新 cue,把该 cue 拆开、丢掉一条译文并使其后全部重新编号错位。
+ * 这里 cue 边界已知(findTimeLineIndexBefore 取每条内容行前的时间码行),据此直接
+ * 拼 SRT,绝不重扫正文。对规范输入与旧 vttToSrt 路径逐字节一致(时间码 .→,、
+ * 丢弃 cue settings / WEBVTT / NOTE / cue id、剥 VTT 内联标签、cue 间一个空行)。
+ */
+export const buildVttBilingualSrt = (lines: string[], contentIndices: number[], translatedLines: string[], isOriginalFirst: boolean): string => {
+  const stripInline = (s: string) => s.replace(VTT_INLINE_C_TAG, "").replace(VTT_INLINE_TIMESTAMP, "");
+  type CueGroup = { timeLine: string; origs: string[]; trans: string[] };
+  // key = 时间码行号(同 generateSubtitle 的双语聚合):时间码文本相同的两个独立 cue 不合并
+  const cueGroups = new Map<number, CueGroup>();
+  contentIndices.forEach((index, i) => {
+    const timeIdx = findTimeLineIndexBefore(lines, index);
+    if (timeIdx === -1) return;
+    const existing = cueGroups.get(timeIdx);
+    if (existing) {
+      existing.origs.push(lines[index]);
+      existing.trans.push(translatedLines[i]);
+    } else {
+      cueGroups.set(timeIdx, { timeLine: lines[timeIdx], origs: [lines[index]], trans: [translatedLines[i]] });
+    }
+  });
+
+  let seq = 0;
+  const cues: string[] = [];
+  for (const group of cueGroups.values()) {
+    seq += 1;
+    const allOrig = group.origs.map(stripInline).join("\n");
+    const allTrans = group.trans.map(stripInline).join("\n");
+    const body = isOriginalFirst ? `${allOrig}\n${allTrans}` : `${allTrans}\n${allOrig}`;
+    cues.push(`${seq}\n${normalizeVttTimeLine(group.timeLine.trim())}\n${body}`);
+  }
+  // 与 vttToSrt 收尾一致:合并 3+ 连续空行(空译文留下的尾随空行 + cue 间空行)
+  return cues.join("\n\n").replace(/^\n+/, "").replace(/\n{3,}/g, "\n\n");
 };
 
 // ASS 覆盖标签处理：翻译前剥离，翻译后还原

@@ -107,9 +107,12 @@ export const getAIModelPrompt = (content: string, userPrompt: string, targetLang
   prompt = prompt.replaceAll("${targetLanguage}", getLanguageName(targetLanguage));
   // ${fullText} gate checked BEFORE content insertion — only the user's own
   // template can opt in, never a literal token inside the document body.
+  // ${fullText} 与 ${content} 必须【单趟】替换:先插全文再扫 ${content} 会把
+  // 文档正文里的字面 ${content}(讲模板/提示词的文档)当变量展开 —— 当前
+  // 待译块被拼进上下文,且坏 prompt 的产出会进缓存(违反不变量 #1)。
   if (prompt.includes("${fullText}")) {
     const full = fullText || content;
-    prompt = prompt.replaceAll("${fullText}", () => full);
+    return prompt.replace(/\$\{(?:fullText|content)\}/g, (m) => (m === "${fullText}" ? full : content));
   }
   return prompt.replaceAll("${content}", () => content);
 };
