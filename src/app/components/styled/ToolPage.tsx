@@ -108,7 +108,9 @@ const ToolPage = ({ icon, toolKey, description, guideUrl, withPrivacyNotice = tr
               </>
             )}
             {description}
-            {withPrivacyNotice && t("privacyNotice")}
+            {/* 显式空格,同上方 guide 链接后的 {" "}:不加的话空格分隔语种
+                (en/de/fr/…)的每个工具页都渲染成 "…timelines.Your API key…" */}
+            {withPrivacyNotice && <> {t("privacyNotice")}</>}
           </Paragraph>
         )}
       </header>

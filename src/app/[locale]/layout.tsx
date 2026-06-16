@@ -8,7 +8,25 @@ import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
 import { AntdRegistry } from "@ant-design/nextjs-registry";
 import ThemesProvider from "@/app/ThemesProvider";
+import BackTop from "@/app/components/BackTop";
 import { SITE_URL } from "@/app/lib/seo";
+import { Schibsted_Grotesk, Fragment_Mono } from "next/font/google";
+
+// Interlingua typography: Schibsted Grotesk (display + body) and Fragment Mono
+// (meta labels), exposed as CSS vars (--font-sans / --font-mono) that globals.css
+// and ThemesProvider consume. Self-hosted via next/font, no FOUT.
+const fontGrotesk = Schibsted_Grotesk({
+  subsets: ["latin"],
+  variable: "--font-sans",
+  display: "swap",
+  fallback: ["Helvetica Neue", "Arial", "PingFang SC", "Microsoft YaHei", "sans-serif"],
+});
+const fontMono = Fragment_Mono({
+  subsets: ["latin"],
+  weight: "400",
+  variable: "--font-mono",
+  display: "swap",
+});
 
 type Props = {
   children: React.ReactNode;
@@ -48,13 +66,14 @@ export default async function LocaleLayout({ children, params }: Props) {
   const messages = await getMessages();
 
   return (
-    <html lang={locale} dir={direction} suppressHydrationWarning>
+    <html lang={locale} dir={direction} suppressHydrationWarning className={`${fontGrotesk.variable} ${fontMono.variable}`}>
       <body>
         <AntdRegistry>
           <NextIntlClientProvider messages={messages}>
             <ThemesProvider>
               <Navigation />
               <main style={{ maxWidth: 1280, width: "100%", marginTop: 8, marginInline: "auto", paddingInline: "clamp(16px, 4vw, 24px)", paddingBlock: 16 }}>{children}</main>
+              <BackTop />
             </ThemesProvider>
           </NextIntlClientProvider>
         </AntdRegistry>
