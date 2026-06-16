@@ -41,4 +41,7 @@ yarn-error.log*
 next-env.d.ts
 
 # tauri
-src-tauri
+src-tauri/target
+src-tauri/gen/schemas
+src-tauri/*.key
+src-tauri/*.key.pub

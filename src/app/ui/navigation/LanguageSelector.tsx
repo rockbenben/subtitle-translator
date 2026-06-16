@@ -4,6 +4,8 @@ import { usePathname, useRouter } from "next/navigation";
 import { Button, Dropdown, Input, Drawer, Row, Col, theme, Grid } from "antd";
 import { TranslationOutlined, CheckOutlined } from "@ant-design/icons";
 import { useLocale } from "next-intl";
+import { setPreferredLanguage } from "@/app/hooks/useLanguagePreference";
+import { isTauriRuntime } from "@/app/utils/externalLink";
 
 // ============ 语言配置 ============
 
@@ -59,6 +61,10 @@ export function LanguageSelector() {
   })();
 
   const handleLanguageChange = (key: string) => {
+    // Tauri: remember the explicit choice here (the switcher), NOT in a nav effect —
+    // an effect would race the launch-time redirect and could persist the entry
+    // locale over the user's pick (gotcha #11). Soft router.push below works in Tauri.
+    if (isTauriRuntime()) setPreferredLanguage(key);
     const newPath = pathname.replace(/^\/[a-z]{2}(-[a-z]+)?/, `/${key}`);
     // usePathname 不含 query/hash —— 不补会在切语言时丢掉 ?huginn 这类
     // 功能门控参数(data-batch 的效应还会因参数消失把已选工具回写成

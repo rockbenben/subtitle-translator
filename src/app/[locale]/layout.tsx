@@ -9,6 +9,7 @@ import { routing } from "@/i18n/routing";
 import { AntdRegistry } from "@ant-design/nextjs-registry";
 import ThemesProvider from "@/app/ThemesProvider";
 import BackTop from "@/app/components/BackTop";
+import TauriIntegration from "@/app/components/TauriIntegration";
 import { SITE_URL } from "@/app/lib/seo";
 import { Schibsted_Grotesk, Fragment_Mono } from "next/font/google";
 
@@ -71,6 +72,7 @@ export default async function LocaleLayout({ children, params }: Props) {
         <AntdRegistry>
           <NextIntlClientProvider messages={messages}>
             <ThemesProvider>
+              <TauriIntegration />
               <Navigation />
               <main style={{ maxWidth: 1280, width: "100%", marginTop: 8, marginInline: "auto", paddingInline: "clamp(16px, 4vw, 24px)", paddingBlock: 16 }}>{children}</main>
               <BackTop />

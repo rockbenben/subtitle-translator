@@ -12,9 +12,16 @@ const withNextIntl = createNextIntlPlugin();
 // Static deployment: export (default — uses the remote EdgeOne proxy)
 const isDev = process.env.NODE_ENV === "development";
 const isDocker = process.env.DOCKER_BUILD === "true";
+// Set by `yarn build:tauri`. Drives Tauri-only `trailingSlash` so the static
+// export emits `/{locale}/index.html` (resolved by Tauri's directory-index
+// asset server) instead of flat `{locale}.html` (404s under tauri://). Gated on
+// an EXPLICIT flag — never TAURI_ENV_PLATFORM, which isn't set for the frontend
+// build and would silently yield flat files / broken locale routing.
+const isTauri = process.env.TAURI_BUILD === "1";
 
 const nextConfig: NextConfig = {
   ...(isDev ? {} : { output: isDocker ? "standalone" : "export" }),
+  ...(isTauri ? { trailingSlash: true } : {}),
   images: {
     unoptimized: true,
   },
