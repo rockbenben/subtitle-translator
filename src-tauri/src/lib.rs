@@ -11,6 +11,15 @@ fn focus_main_window(app: &tauri::AppHandle) {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    // WebKitGTK 的 DMABUF 渲染器在许多 Linux GPU/驱动组合下（Xfce、虚拟机、
+    // 混合显卡、NVIDIA）会以 EGL_BAD_ALLOC 崩溃。必须在任何窗口/GTK 初始化
+    // 之前，强制回退到非 DMABUF 渲染器。仅在用户未自行设置时注入，以尊重
+    // 用户/发行版的偏好（生态通行做法）。
+    #[cfg(target_os = "linux")]
+    if std::env::var_os("WEBKIT_DISABLE_DMABUF_RENDERER").is_none() {
+        std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1");
+    }
+
     let mut builder = tauri::Builder::default();
 
     // Single-instance MUST be registered first (gotcha #5) so a second launch
