@@ -20,6 +20,16 @@ pub fn run() {
         std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1");
     }
 
+    // 在部分机型（如 Manjaro Xfce）上仅关闭 DMABUF 还不够：WebKit 的 GL 合成
+    // 上下文同样建不出 EGL display，进程虽不再崩溃，但窗口渲染为空白。再额外
+    // 强制关闭合成模式，回退到软件渲染以保证可见。代价是动画 / transform /
+    // filter / backdrop-filter 会变卡或失效，对字幕翻译类工具可接受。同样仅在
+    // 用户未自行设置时注入。
+    #[cfg(target_os = "linux")]
+    if std::env::var_os("WEBKIT_DISABLE_COMPOSITING_MODE").is_none() {
+        std::env::set_var("WEBKIT_DISABLE_COMPOSITING_MODE", "1");
+    }
+
     let mut builder = tauri::Builder::default();
 
     // Single-instance MUST be registered first (gotcha #5) so a second launch
