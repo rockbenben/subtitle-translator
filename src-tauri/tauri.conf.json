@@ -16,6 +16,7 @@
         "label": "main",
         "title": "Subtitle Translator",
         "url": "/en/",
+        "dragDropEnabled": false,
         "width": 1280,
         "height": 832,
         "minWidth": 720,
