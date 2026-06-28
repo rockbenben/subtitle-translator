@@ -569,17 +569,21 @@ export const nvidia: TranslationService = async (params) => {
 };
 
 export const llm: TranslationService = async (params) => {
-  const { apiKey, url, model, temperature, sendSystemPrompt, maxTokens } = params;
+  const { apiKey, url, model, temperature, sendSystemPrompt, maxTokens, useProxy } = params;
   const { effectiveSystemPrompt, prompt } = preparePrompts(params);
 
   const serviceName = "Custom (OpenAI-compatible)";
   // Belt-and-suspenders: UI auto-completes on blur, but settings imported from
   // file or edited via localStorage may bypass that — re-normalize here.
-  const apiEndpoint = completeOpenAICompatUrl(requireUrl(serviceName, url));
+  const normalizedUrl = completeOpenAICompatUrl(requireUrl(serviceName, url));
+  const apiEndpoint = useProxy ? "/api/proxy" : normalizedUrl;
 
   const headers: Record<string, string> = { "Content-Type": "application/json" };
   if (apiKey?.trim()) {
     headers.Authorization = `Bearer ${apiKey}`;
+  }
+  if (useProxy) {
+    headers["x-proxy-pass"] = normalizedUrl;
   }
 
   // sendSystemPrompt=false: omit the system ROLE for chat templates that
@@ -601,6 +605,7 @@ export const llm: TranslationService = async (params) => {
   // the field. Send only when user-supplied; let server error if required.
   const requestBody: Record<string, unknown> = {
     messages,
+    stream: false,
     temperature: normalizeNumber(temperature, defaultConfigs.llm.temperature),
   };
   const effectiveModel = model?.trim();

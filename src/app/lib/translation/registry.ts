@@ -861,7 +861,7 @@ export const PROVIDERS = {
     // path is the entry point for local Ollama/LM Studio users — small models
     // (<14B) commonly drop lines or scramble structure in long batches.
     // Power users with bigger local models can raise it in Advanced Settings.
-    defaults: { url: "", apiKey: "", model: "", temperature: 0.7, maxTokens: 0, sendSystemPrompt: true, batchSize: 10, contextBatchSize: 1, contextWindow: 30 },
+    defaults: { url: "", apiKey: "", model: "", temperature: 0.7, maxTokens: 0, sendSystemPrompt: true, useProxy: false, batchSize: 10, contextBatchSize: 1, contextWindow: 30 },
     endpoints: [
       // Local servers first (LM Studio → Ollama → llama.cpp by general
       // popularity), cloud aggregators after. Order matches translategemma's

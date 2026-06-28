@@ -92,6 +92,7 @@ export const pingSignature = (method: string, config: TranslationConfig | undefi
     apiVersion: config?.apiVersion ?? "",
     folderId: config?.folderId ?? "",
     useRelay: config?.useRelay ?? false,
+    useProxy: config?.useProxy ?? false,
     // Request-shape field, not a prompt: flips a Gemma-served backend between
     // 200 and a deterministic 400 ("system role not supported"), so a probe
     // pass from the other toggle state must not be replayed.

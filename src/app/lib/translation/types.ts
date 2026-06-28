@@ -34,6 +34,7 @@ export interface TranslateTextParams {
   userPrompt?: string;
   sendSystemPrompt?: boolean; // When false, omit the system message (Custom OpenAI-compat — Gemma-style chat templates rejecting system role)
   useRelay?: boolean;
+  useProxy?: boolean;
   // Thinking directive. An effort (low/medium/high) = thinking ON at that level;
   // the "auto" sentinel = OMIT the param and follow the server default; undefined =
   // the DEFAULT (no user entry) = thinking OFF, i.e. send the provider's explicit
@@ -87,6 +88,7 @@ export interface TranslationConfig {
   userPrompt?: string;
   sendSystemPrompt?: boolean;
   useRelay?: boolean;
+  useProxy?: boolean;
   /**
    * Per-model thinking directive. Key is the model SKU; value is the chosen effort
    * (low/medium/high = thinking on) or the `"auto"` sentinel (omit, custom models

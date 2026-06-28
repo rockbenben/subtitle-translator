@@ -441,7 +441,6 @@ export const qwenMt: TranslationService = async (params) => {
       messages: [{ role: "user", content: text }],
       model: model || defaultConfigs.qwenMt.model!,
       translation_options: translationOptions,
-      stream: false,
     }),
     signal: params.signal,
   });
