@@ -19,13 +19,17 @@ import {
   getOutputFileExtension,
   filterSubLines,
   findTimeLineIndexBefore,
-  assHeader,
+  buildAssHeader,
+  ASS_STYLE_PRESETS,
   prepareAssForTranslation,
   restoreAssAfterTranslation,
   buildVttBilingualSrt,
   appendBilingualSuffix,
   buildAssBilingualBody,
+  buildNativeAssRebuild,
   type BilingualFormat,
+  type AssStyleConfig,
+  type AssStylePreset,
 } from "./subtitleUtils";
 import { LLM_MODELS } from "@/app/lib/translation";
 import { delay } from "@/app/hooks/translation";
@@ -42,6 +46,9 @@ import TranslateFailurePanel from "@/app/components/TranslateFailurePanel";
 
 import MultiLanguageSettingsModal from "@/app/components/MultiLanguageSettingsModal";
 import SourceArea from "@/app/components/SourceArea";
+
+import dynamic from "next/dynamic";
+const AssStyleDrawer = dynamic(() => import("./AssStyleDrawer"), { ssr: false });
 
 const { TextArea } = Input;
 const { Dragger } = Upload;
@@ -97,6 +104,9 @@ const SubtitleTranslator = () => {
     failedReason,
     clearFailures,
     hadRunFailures,
+    runRetry,
+    isScopedRetry,
+    getActiveTargetLangs,
     isDisposed,
     isTranslating,
     setIsTranslating,
@@ -121,12 +131,27 @@ const SubtitleTranslator = () => {
   // Export mode: 'translatedOnly' | 'bilingual' | 'both'
   const [exportMode, setExportMode] = useLocalStorage<"translatedOnly" | "bilingual" | "both">("subtitle-translator-exportMode", "translatedOnly");
   // bilingualOrder 标识双语拼接顺序:谁先呈现(SRT/VTT/ASS 多行 = 在上;LRC 行内 = 在前)
+  // 默认译文在上:符合中外双语惯例(译文为主、较大、在上;原文较小在下)。
   type BilingualOrder = "originalFirst" | "translationFirst";
-  const [bilingualOrder, setBilingualOrder] = useLocalStorage<BilingualOrder>("subtitle-translator-bilingualOrder", "originalFirst");
+  const [bilingualOrder, setBilingualOrder] = useLocalStorage<BilingualOrder>("subtitle-translator-bilingualOrder", "translationFirst");
   const isOriginalFirst = bilingualOrder === "originalFirst";
   // SRT/VTT 双语输出格式选择,ASS=转换为 ASS(默认,保留旧行为),SRT=保留源格式叠两行
   // ASS/LRC 源文件忽略此选项(它们各自有专用的双语格式)
   const [bilingualFormat, setBilingualFormat] = useLocalStorage<BilingualFormat>("subtitle-translator-bilingualFormat", "ass");
+  // key 带 -v2:结构从位置(top/bottom)改为角色(translation/original),旧存值形状不兼容,
+  // 直接换 key 让旧值过期、回落到新默认(不写迁移垫片,符合项目"旧版过期"约定)。
+  const [assStyle, setAssStyle] = useLocalStorage<AssStyleConfig>("subtitle-translator-assStyle-v2", ASS_STYLE_PRESETS.default);
+  const [assPreset, setAssPreset] = useLocalStorage<AssStylePreset | "custom">("subtitle-translator-assPreset", "default");
+  // 自定义配置单独存:切到预设再切回「自定义」时恢复,避免一切换自定义就丢。
+  const [assCustomStyle, setAssCustomStyle] = useLocalStorage<AssStyleConfig>("subtitle-translator-assCustomStyle", ASS_STYLE_PRESETS.default);
+  // 单一入口:同步 config + preset;preset 为 custom 时把配置落进 customStyle。
+  const handleAssChange = (cfg: AssStyleConfig, p: AssStylePreset | "custom") => {
+    setAssStyle(cfg);
+    setAssPreset(p);
+    if (p === "custom") setAssCustomStyle(cfg);
+  };
+  // 原生 ASS 双语:false=逐行沿用源样式(默认);true=放弃源样式、用本工具预设重新排版。
+  const [assNativeRebuild, setAssNativeRebuild] = useLocalStorage<boolean>("subtitle-translator-assNativeRebuild", false);
 
   // 双语模式标志:exportMode 是 "bilingual" 或 "both" 时需要生成双语版本
   const needsBilingual = exportMode === "bilingual" || exportMode === "both";
@@ -148,11 +173,17 @@ const SubtitleTranslator = () => {
 
   // ASS/SRT 格式选项只在 SRT/VTT 源 + 双语时显示——ASS/LRC 源选项无法兑现,避免 UI 撒谎
   const showBilingualFormatChoice = needsBilingual && (sourceFileType === "srt" || sourceFileType === "vtt");
+  // 原生 ASS 双语:显示「沿用源样式 / 重新排版」选择;选重新排版才用本工具样式。
+  const nativeAss = sourceFileType === "ass";
+  const showNativeRebuildChoice = needsBilingual && nativeAss;
+  // 「ASS 样式」可调:SRT/VTT 转 ASS,或 原生 ASS + 重新排版。
+  const showAssStyle = (showBilingualFormatChoice && bilingualFormat === "ass") || (showNativeRebuildChoice && assNativeRebuild);
   const [contextAware, setContextAware] = useLocalStorage("subtitle-translator-contextAware", true); // 上下文感知翻译开关
   // 面板 key 必须与下方 Collapse items 的 key("subtitle"/"advanced")一致 ——
   // 旧默认值 "SubtitleTranslator" 不匹配任何面板,导出控件永远默认收起。
   const [collapseKeys, setCollapseKeys] = useLocalStorage<string[]>("subtitle-translator-collapseKeys", ["subtitle"]);
   const [multiLangModalOpen, setMultiLangModalOpen] = useState(false);
+  const [assStyleOpen, setAssStyleOpen] = useState(false);
   // 提取出的纯文本预览 — 只在 SubtitleTranslator 和 MDTranslator 用,
   // 不应该污染 TranslationProvider 的共享 state。
   const [extractedText, setExtractedText] = useState("");
@@ -171,8 +202,9 @@ const SubtitleTranslator = () => {
   // (format=ass 时是 2N 条 Dialogue)。
   const [translatedTextBilingual, setTranslatedTextBilingual] = useState(false);
   // 记录 translatedText 对应的目标语种,handleExportFile 用它生成文件名;
-  // 多语言模式下 translatedText 是 targetLangs[0] 而非主 targetLanguage,
-  // 不记录的话导出文件名会标错语种(主 targetLanguage 跟 translatedText 内容不匹配)
+  // 多语言模式下 translatedText 是 previewLang(常规跑 = targetLangs[0];scoped
+  // 重试时保持上一次预览的语种)而非主 targetLanguage,不记录的话导出文件名会
+  // 标错语种(主 targetLanguage 跟 translatedText 内容不匹配)
   const [translatedTextLang, setTranslatedTextLang] = useState<string | null>(null);
   const { customFileName, setCustomFileName, generateFileName } = useExportFilename("subtitle-translator");
 
@@ -201,13 +233,22 @@ const SubtitleTranslator = () => {
       return;
     }
 
-    const targetLangs = multiLanguageMode ? targetLanguages : [targetLanguage];
+    // On a failure-panel retry (runRetry) this is narrowed to the langs still
+    // needing work — successful languages aren't re-walked/re-downloaded.
+    const targetLangs = getActiveTargetLangs();
 
     if (multiLanguageMode && targetLangs.length === 0) {
       message.error(t("noTargetLanguage"));
       failedFilesRef.current++;
       return;
     }
+
+    // 预览语言:常规跑 = 本轮第一个语言(旧行为);多语言 scoped 重试 = 保持
+    // 当前预览的语言 —— 仅当它也在重试范围内时刷新,否则不动预览。不加这条,
+    // 重试会把用户正在校对的 targetLangs[0](现在是第一个【失败】语言)静默
+    // 换掉;重试再失败时预览也不会被清空(runTranslation 在 scoped 重试下不清
+    // translatedText)。单语言模式恒取 targetLangs[0]:预览是唯一输出。
+    const previewLang = multiLanguageMode && isScopedRetry() && translatedTextLang ? (targetLangs.includes(translatedTextLang) ? translatedTextLang : null) : targetLangs[0];
 
     const fileName = fileNameSet || multipleFiles[0]?.name || "subtitle";
     // 源文件物理扩展名:SSA 与 ASS 共用 "ass" 管线,导出时靠它回写 .ssa
@@ -216,7 +257,7 @@ const SubtitleTranslator = () => {
 
     // Helper function to generate subtitle output based on bilingual mode
     // Defined outside the loop to avoid repeated function creation
-    const generateSubtitle = (isBilingual: boolean, translatedLines: string[]): string => {
+    const generateSubtitle = (isBilingual: boolean, translatedLines: string[], exportLang: string): string => {
       // removeChars 已在调用方对【原始译文】应用(restore ASS 标签之前)——
       // 在这里(restore 之后)应用会损坏 \N 硬换行、{\anX} 标签和 verbatim
       // 绘图坐标行。
@@ -289,10 +330,15 @@ const SubtitleTranslator = () => {
       // 译文的文本再喂 vttToSrt 重解析 —— 否则某 cue 的原文/译文正文行若以时间码开头
       // 会被误判成新 cue,拆 cue、丢译文、其后整体重编号错位。
       const shouldConvertToAssBilingual = isBilingual && bilingualFormat === "ass" && (fileType === "srt" || fileType === "vtt");
-      if (shouldConvertToAssBilingual) {
+      if (isBilingual && fileType === "ass" && assNativeRebuild) {
+        // 原生 ASS「重新排版」:丢弃源样式,用本工具预设把每条 Dialogue 重排成干净双语;
+        // verbatim/非对白行原样保留(上面的 forEach 逐行装配在此分支被忽略)。
+        const verbatimIndices = new Set(contentIndices.filter((_, i) => tagMaps[i]?.verbatim !== undefined));
+        finalSubtitle = buildNativeAssRebuild(lines, contentIndices, translatedLines, verbatimIndices, assStyle, sourceLanguage, exportLang, isOriginalFirst, contentLines);
+      } else if (shouldConvertToAssBilingual) {
         // 第 5 参传清理后的 contentLines:原始行带 VTT 内联标签(<c.color…>/卡拉
         // OK 时间戳),ASS 渲染器会把它们字面画上屏。
-        finalSubtitle = `${assHeader}\n${buildAssBilingualBody(lines, contentIndices, translatedLines, isOriginalFirst, contentLines)}`;
+        finalSubtitle = `${buildAssHeader(assStyle, sourceLanguage, exportLang)}\n${buildAssBilingualBody(lines, contentIndices, translatedLines, isOriginalFirst, contentLines)}`;
       } else if (isBilingual && bilingualFormat === "srt" && fileType === "vtt") {
         finalSubtitle = buildVttBilingualSrt(lines, contentIndices, translatedLines, isOriginalFirst);
       } else {
@@ -338,13 +384,17 @@ const SubtitleTranslator = () => {
     const isAss = fileType === "ass";
     const { cleanLines, tagMaps } = isAss ? prepareAssForTranslation(contentLines) : { cleanLines: contentLines, tagMaps: [] };
 
+    // contentIndices 把每条 cue 文本行映射回源文件物理行 —— 失败面板要报的是
+    // 用户在文件里能找到的行号,不是"第 N 条可译行"的序数。
+    const sourceLineNumbers = contentIndices.map((index) => index + 1);
+
     // 跟踪当前文件是否有任何 lang 翻译失败;末尾合并到 failedFilesRef
     let hasFailedLang = false;
 
     for (const currentTargetLang of targetLangs) {
       try {
         // Translate content using the specific target language
-        const rawTranslatedLines = await translateBatch(cleanLines, translationMethod, currentTargetLang, fileIndex, totalFiles, contextAware ? "subtitle" : undefined);
+        const rawTranslatedLines = await translateBatch(cleanLines, translationMethod, currentTargetLang, fileIndex, totalFiles, contextAware ? "subtitle" : undefined, { lineNumbers: sourceLineNumbers, fileName });
         // removeChars 只清理【原始译文】,且必须在 ASS 标签/verbatim 还原【之前】
         // 应用 —— restore 之后应用会损坏 \N 硬换行、{\anX} 标签和绘图坐标行。
         const cleanedTranslated = removeChars.trim()
@@ -364,15 +414,16 @@ const SubtitleTranslator = () => {
         // Handle different export modes
         if (exportMode === "both") {
           // Generate and download both translated-only and bilingual versions
-          const translatedOnlySubtitle = generateSubtitle(false, translatedLines);
-          const bilingualSubtitle = generateSubtitle(true, translatedLines);
+          const translatedOnlySubtitle = generateSubtitle(false, translatedLines, currentTargetLang);
+          const bilingualSubtitle = generateSubtitle(true, translatedLines, currentTargetLang);
           const translatedOnlyExt = getOutputFileExtension(fileType, false, bilingualFormat, sourceExt);
-          const bilingualExt = getOutputFileExtension(fileType, true, bilingualFormat, sourceExt);
+          // 原生 ASS 重新排版产出 v4.00+,即使源是 .ssa 也回写 .ass(仅双语版被重排)。
+          const bilingualExt = fileType === "ass" && assNativeRebuild ? "ass" : getOutputFileExtension(fileType, true, bilingualFormat, sourceExt);
 
-          const translatedOnlyFileName = generateFileName(fileName, langLabel, translatedOnlyExt);
+          const translatedOnlyFileName = generateFileName(fileName, langLabel, translatedOnlyExt, multiLanguageMode);
           // bilingual 文件在扩展名前插 _bilingual 后缀,避免跟 translatedOnly 文件同名冲突
           // (ASS/LRC 源、SRT+format=srt 三种场景下两个 ext 相同,不区分会被浏览器覆盖下载)
-          const bilingualFileName = appendBilingualSuffix(generateFileName(fileName, langLabel, bilingualExt));
+          const bilingualFileName = appendBilingualSuffix(generateFileName(fileName, langLabel, bilingualExt, multiLanguageMode));
 
           await downloadFile(translatedOnlySubtitle, translatedOnlyFileName);
           await downloadFile(bilingualSubtitle, bilingualFileName);
@@ -383,9 +434,9 @@ const SubtitleTranslator = () => {
             message.success(t("fileExported", { fileName: `${translatedOnlyFileName}, ${bilingualFileName}` }));
           }
 
-          // 多语言模式下只把第一个语言写入 translatedText 作 UI 预览;
-          // 其它语言已通过 downloadFile 自动落盘,UI 不再重复展示(避免冗余)
-          if (currentTargetLang === targetLangs[0]) {
+          // 多语言模式下只把 previewLang(常规跑 = 第一个语言)写入 translatedText
+          // 作 UI 预览;其它语言已通过 downloadFile 自动落盘,UI 不再重复展示
+          if (currentTargetLang === previewLang) {
             setTranslatedText(bilingualSubtitle);
             setTranslatedTextExt(bilingualExt);
             setNeedsBilingualSuffix(true);
@@ -394,16 +445,17 @@ const SubtitleTranslator = () => {
           }
         } else {
           // Generate single version based on mode
-          const finalSubtitle = generateSubtitle(needsBilingual, translatedLines);
-          const fileExt = getOutputFileExtension(fileType, needsBilingual, bilingualFormat, sourceExt);
-          const downloadFileName = generateFileName(fileName, langLabel, fileExt);
+          const finalSubtitle = generateSubtitle(needsBilingual, translatedLines, currentTargetLang);
+          // 原生 ASS 重新排版(双语)产出 v4.00+ → .ass,即使源是 .ssa。
+          const fileExt = fileType === "ass" && needsBilingual && assNativeRebuild ? "ass" : getOutputFileExtension(fileType, needsBilingual, bilingualFormat, sourceExt);
+          const downloadFileName = generateFileName(fileName, langLabel, fileExt, multiLanguageMode);
 
           // Always download in multi-language mode
           if (multiLanguageMode || multipleFiles.length > 1) {
             await downloadFile(finalSubtitle, downloadFileName);
           }
 
-          if (currentTargetLang === targetLangs[0]) {
+          if (currentTargetLang === previewLang) {
             setTranslatedText(finalSubtitle);
             setTranslatedTextExt(fileExt);
             setNeedsBilingualSuffix(false);
@@ -449,7 +501,10 @@ const SubtitleTranslator = () => {
     // 有任何 lang 失败时跳过此消息(per-lang error toast 已显示,避免红+绿对冲)
     // isDisposed:中途导航离开时每个 lang 都按级联静默 continue,hasFailedLang
     // 仍是 false —— 不挡会在用户切去的页面上弹"已导出 N 个文件"的假成功。
-    if (multiLanguageMode && targetLangs.length > 1 && multipleFiles.length <= 1 && !hasFailedLang && !isDisposed()) {
+    // 不设 length > 1 门槛:多语言模式必自动下载(哪怕只剩 1 个语言 —— 单语言
+    // scoped 重试就是这个形态),没有 toast 的话用户只看到面板消失 + 一次静默
+    // 下载,会误判重试没生效。
+    if (multiLanguageMode && multipleFiles.length <= 1 && !hasFailedLang && !isDisposed()) {
       const fileCount = exportMode === "both" ? targetLangs.length * 2 : targetLangs.length;
       message.success(`${t("translationExported")} (${fileCount} ${t("exportedFile")})`);
     }
@@ -526,7 +581,7 @@ const SubtitleTranslator = () => {
     const langLabel = translatedTextLang ?? targetLanguage;
 
     // Use custom filename if set, otherwise use default pattern
-    let fileName = generateFileName(uploadFileName, langLabel, fileExt);
+    let fileName = generateFileName(uploadFileName, langLabel, fileExt, multiLanguageMode);
     // both 模式下的 bilingual 预览要加 _bilingual 后缀,跟翻译时下载的 bilingual 文件名一致
     if (needsBilingualSuffix) {
       fileName = appendBilingualSuffix(fileName);
@@ -794,6 +849,29 @@ const SubtitleTranslator = () => {
                           />
                         </Tooltip>
                       )}
+
+                      {showNativeRebuildChoice && (
+                        <Tooltip title={tSubtitle("assNativeModeTooltip")}>
+                          <Segmented
+                            block
+                            size="small"
+                            value={assNativeRebuild ? "rebuild" : "source"}
+                            onChange={(value) => setAssNativeRebuild(value === "rebuild")}
+                            options={[
+                              { label: tSubtitle("assNativeModeSource"), value: "source" },
+                              { label: tSubtitle("assNativeModeRebuild"), value: "rebuild" },
+                            ]}
+                          />
+                        </Tooltip>
+                      )}
+
+                      {showAssStyle && (
+                        <Tooltip title={tSubtitle("assStyleTooltip")}>
+                          <Button size="small" icon={<FormatPainterOutlined />} onClick={() => setAssStyleOpen(true)}>
+                            {tSubtitle("assStyleButton")}
+                          </Button>
+                        </Tooltip>
+                      )}
                     </div>
                   ),
                 },
@@ -836,7 +914,7 @@ const SubtitleTranslator = () => {
         reason={failedReason}
         onClose={clearFailures}
         disabled={isTranslating}
-        onRetry={() => (uploadMode === "single" ? runTranslation(performTranslation, sourceText, contextAware ? "subtitle" : undefined) : handleMultipleTranslate())}
+        onRetry={() => runRetry(() => (uploadMode === "single" ? runTranslation(performTranslation, sourceText, contextAware ? "subtitle" : undefined) : handleMultipleTranslate()))}
       />
 
       {/* Results Section */}
@@ -888,8 +966,9 @@ const SubtitleTranslator = () => {
       )}
 
       <TranslationProgressModal
-        open={isTranslating}
+        isTranslating={isTranslating}
         percent={progressPercent}
+        onDismiss={resetProgress}
         multiLanguageMode={multiLanguageMode}
         targetLanguageCount={targetLanguages.length}
         currentCount={progressInfo.current}
@@ -902,6 +981,18 @@ const SubtitleTranslator = () => {
         targetLanguages={targetLanguages}
         setTargetLanguages={setTargetLanguages}
         setMultiLanguageMode={setMultiLanguageMode}
+      />
+
+      <AssStyleDrawer
+        open={assStyleOpen}
+        onClose={() => setAssStyleOpen(false)}
+        config={assStyle}
+        preset={assPreset}
+        customStyle={assCustomStyle}
+        onChange={handleAssChange}
+        isOriginalFirst={isOriginalFirst}
+        sourceLang={sourceLanguage}
+        targetLang={targetLanguage}
       />
     </Spin>
   );

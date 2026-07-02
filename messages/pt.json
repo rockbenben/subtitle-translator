@@ -89,6 +89,7 @@
     "exportedFile": "Exportado",
     "extractedText": "Texto Extraído",
     "translating": "Traduzindo...",
+    "translateDone": "Tradução concluída",
     "multiTranslating": "Traduzindo, total de idiomas:",
     "model": "Modelo",
     "sameLanguageTarget": "Idiomas de origem e destino iguais; destino ajustado automaticamente para",
@@ -132,7 +133,7 @@
     "requestTimeoutSec": "Tempo limite",
     "requestTimeoutSecTooltip": "Espera máxima por solicitação (segundos). O raciocínio do LLM leva mais tempo; recomenda-se 180 s ou mais.",
     "customExportFilename": "Padrão de nome de arquivo",
-    "customExportFilenameTooltip": "'{'name'}' = nome original, '{'lang'}' = idioma, '{'ext'}' = extensão, '{'date'}' = data, '{'time'}' = hora",
+    "customExportFilenameTooltip": "'{'name'}' = nome original, '{'lang'}' = idioma, '{'ext'}' = extensão, '{'date'}' = data, '{'time'}' = hora; no modo multilíngue, '{'lang'}' é adicionado automaticamente para evitar conflitos de nome",
     "partialFailureTitle": "{count} linha(s) falharam",
     "partialFailureDesc": "As linhas que falharam mantiveram o texto original como espaço reservado, o arquivo continua utilizável. Essas falhas geralmente são oscilações de rede ou instabilidade temporária do serviço de tradução — serviços gratuitos e servidores auto-hospedados são especialmente propensos, e não é um problema de configuração sua. Clique em Tentar novamente para continuar (as linhas bem-sucedidas vêm do cache, sem retradução); se continuar falhando, tente novamente mais tarde ou troque para outro serviço de tradução. Ou clique em Ver linhas que falharam para tratá-las manualmente.",
     "retryFailedLines": "Tentar novamente",
@@ -170,6 +171,7 @@
     "translategemmaUnavailable": "O serviço TranslateGemma está temporariamente inacessível, verifique se o seu servidor local (LM Studio / llama.cpp / Ollama) está em execução e o URL está correto.",
     "networkUnavailable": "O serviço de tradução está temporariamente inacessível — pode ser um problema de rede ou o serviço está com algum problema momentâneo. Tente novamente mais tarde ou troque para outro serviço de tradução.",
     "translationTimeout": "A solicitação de tradução expirou — pode ser uma rede lenta ou o serviço está demorando muito para responder. Tente novamente mais tarde ou troque para outro serviço de tradução.",
+    "translationTimeoutLocal": "O tempo da tradução com o modelo local esgotou. Um LLM local pode travar em um loop de repetição — reduza max_tokens (o limite de saída) nas Configurações avançadas e verifique se o idioma de origem selecionado corresponde ao texto real.",
     "langGroupCommon": "Comuns",
     "langGroupEurope": "Europa",
     "langGroupMiddleEast": "Médio Oriente",
@@ -220,7 +222,50 @@
     "reviewColSource": "Original",
     "reviewColTarget": "Tradução",
     "reviewApplyDownload": "Aplicar e baixar",
-    "reviewDownloaded": "Legenda revisada baixada"
+    "reviewDownloaded": "Legenda revisada baixada",
+    "assStyleButton": "Estilo ASS",
+    "assStyleTooltip": "Personalize fonte, tamanho, cor e posição das legendas ASS bilíngues",
+    "assNativeModeSource": "Manter estilo da fonte",
+    "assNativeModeRebuild": "Reestilizar",
+    "assNativeModeTooltip": "ASS nativo bilíngue: manter os estilos do arquivo de origem, ou descartá-los e reestilizar com Estilo ASS (apenas legendas de diálogo)",
+    "assStyleTitle": "Configurações de estilo ASS",
+    "assPresetLabel": "Predefinição",
+    "assPresetDefault": "Padrão",
+    "assPresetLarge": "Grande",
+    "assPresetCinematic": "Cinematográfico",
+    "assPresetBoxed": "Caixa",
+    "assPresetCustom": "Personalizado",
+    "assGlobalGroup": "Global",
+    "assTranslationStyle": "Estilo da tradução",
+    "assOriginalStyle": "Estilo do original",
+    "assFontName": "Fonte",
+    "assFontPlaceholder": "Deixar vazio = automático conforme idioma alvo",
+    "assReadSystemFonts": "Ler fontes do sistema",
+    "assSystemFontsGroup": "Fontes do sistema",
+    "assReadSystemFontsUnsupported": "Este navegador não consegue ler fontes do sistema — digite um nome de fonte",
+    "assFontSize": "Tamanho",
+    "assTextColor": "Cor do texto",
+    "assOutlineColor": "Cor do contorno",
+    "assBoxColor": "Cor da caixa",
+    "assOutline": "Contorno",
+    "assShadow": "Sombra",
+    "assAlignment": "Alinhamento",
+    "assAlignBottom": "Centro inferior",
+    "assAlignTop": "Centro superior",
+    "assMarginV": "Margem",
+    "previewOriginal": "Original",
+    "previewTranslation": "Tradução",
+    "fontGroup": {
+      "broad": "Amplo / multilíngue",
+      "zhHans": "Chinês simplificado",
+      "zhHant": "Chinês tradicional",
+      "japanese": "日本語",
+      "korean": "한국어",
+      "arabic": "العربية",
+      "devanagari": "हिन्दी / Devanagari",
+      "thai": "ไทย",
+      "latin": "Latino / Cirílico / Grego"
+    }
   },
   "TranslationSettings": {
     "resetConfigSuccess": "Configuração redefinida para os padrões",
@@ -276,6 +321,8 @@
     "presetUpdated": "Salvo na predefinição atual",
     "presetDeleteConfirm": "Excluir esta predefinição?",
     "presetEmptyHint": "Sem predefinições — edite e clique em Salvar",
+    "presetDefault": "Prompt padrão",
+    "presetDefaultReadonly": "O prompt padrão é integrado — não pode ser modificado nem excluído. Use \"Salvar como nova predefinição\" para personalizar.",
     "qwenMtDomains": "Prompts de Domínio (apenas em inglês)",
     "sendSystemPrompt": "Enviar prompt system",
     "sendSystemPromptExtra": "Desligue apenas quando o chat template rejeitar o papel system — erro típico \"Conversations must start with a user prompt\" (ex. família Gemma).",
@@ -329,20 +376,6 @@
         {
           "q": "Os arquivos de legenda são enviados ao servidor? É privado e seguro?",
           "a": "Totalmente client-side: leitura, parsing e requisições de tradução acontecem no seu navegador — o conteúdo original nunca passa pelos nossos servidores. As requisições aos motores LLM vão direto do seu navegador para o endpoint de API que você configurou (OpenAI, DeepSeek, etc.), e as API Keys ficam apenas no localStorage local. O cache de tradução usa IndexedDB do navegador e persiste entre sessões. Código aberto no GitHub (rockbenben/subtitle-translator) para self-hosting ou auditoria."
-        }
-      ],
-      "howto": [
-        {
-          "name": "Começar a partir de vídeo ou arquivo de legenda",
-          "text": "Carregue SRT/ASS/VTT/SBV/LRC. Extração: YouTube via yt-dlp, outras plataformas com ferramentas dedicadas. Formato e codificação UTF-8/UTF-16/GBK detectados automaticamente."
-        },
-        {
-          "name": "Escolher motor e modo de saída",
-          "text": "Google grátis para testes rápidos, DeepSeek/DeepL API para qualidade. 'Apenas tradução' para publicar, 'Bilíngue' para aprender idiomas. No bilíngue, posição acima (aprender) ou abaixo (assistir)."
-        },
-        {
-          "name": "Traduzir e exportar para sua plataforma",
-          "text": "Clique em Traduzir e verifique o timing na pré-visualização. Baixe SRT para legendas comunitárias do YouTube, ASS estilizado para Premiere/DaVinci Resolve, VTT para players web, LRC para letras."
         }
       ],
       "features": [
@@ -430,7 +463,11 @@
     "textParser": "Ferramentas Texto",
     "jsonParser": "Ferramentas JSON",
     "dataParser": "Ferramentas Dados",
-    "otherTools": "Outras Ferramentas"
+    "otherTools": "Outras Ferramentas",
+    "externalTools": {
+      "legendtalk": "Mesa-redonda de pensadores de IA",
+      "imgprompt": "Prompts de imagem de IA"
+    }
   },
   "Metadata": {
     "title": "ToolsByAI - Ferramentas de IA e Dados para Desenvolvedores",

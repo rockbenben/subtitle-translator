@@ -131,6 +131,15 @@ export const getCachedTranslation = async (cacheKey: string): Promise<string | n
   return translationCache.get(cacheKey);
 };
 
+/**
+ * Batch cache read in a single IndexedDB transaction — used by the per-line
+ * prefill (cross-run skip) so a long file's re-run does one transaction
+ * instead of one per line. Result order matches `cacheKeys`; misses are null.
+ */
+export const getCachedTranslations = async (cacheKeys: string[]): Promise<(string | null)[]> => {
+  return translationCache.getMany(cacheKeys);
+};
+
 export const setCachedTranslation = async (cacheKey: string, translation: string): Promise<void> => {
   return translationCache.set(cacheKey, translation);
 };

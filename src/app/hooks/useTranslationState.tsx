@@ -23,7 +23,7 @@ import {
   DEFAULT_SYSTEM_PROMPT,
   DEFAULT_USER_PROMPT,
   deleteCachedTranslation,
-  getCachedTranslation,
+  getCachedTranslations,
   setCachedTranslation,
   generateCacheKey,
   type TranslateTextParams,
@@ -50,12 +50,19 @@ import {
   type TranslationSettings,
   type UserRetryConfig,
 } from "@/app/hooks/translation";
-import { describeError, isNetworkError } from "@/app/utils/errorUtils";
+import { describeError, isAbortError, isNetworkError } from "@/app/utils/errorUtils";
 import pLimit from "p-limit";
 import pRetry from "p-retry";
 import { useTranslations } from "next-intl";
 
 const DEFAULT_API = "gtxFreeAPI";
+// Methods that run against a LOCAL runtime (Ollama / LM Studio / llama.cpp),
+// where a per-request timeout most often means the model stalled in a repeat
+// loop or is just slow — NOT a network/cloud-service issue. A timeout on these
+// gets a method-specific hint (lower max_tokens, check source language) instead
+// of the generic "service slow, try another" message. translategemma always
+// runs local; `llm` Custom's primary audience is local self-hosters.
+const LOCAL_TIMEOUT_HINT_METHODS: ReadonlySet<string> = new Set(["translategemma", "llm"]);
 // Caps context window padding around a batch — without this, a large
 // contextWindow would request hundreds of neighbor lines per batch and blow
 // past the model's context limit on long inputs.
@@ -64,6 +71,30 @@ const MAX_CONTEXT_PADDING = 50;
 type TranslationConfigs = Record<string, TranslationConfig>;
 
 type PerformTranslation = (sourceText: string, fileNameSet?: string, fileIndex?: number, totalFiles?: number, documentType?: "subtitle" | "markdown" | "generic") => Promise<void>;
+
+// A line that still failed after retries. `line` is the 1-based PHYSICAL source
+// line — callers pass a lineNumbers mapping (translateBatch meta) whenever the
+// array they translate is filtered/derived (subtitle cue text lines, md segments),
+// so the failure modal points at a line the user can actually find; without a
+// mapping it falls back to the array ordinal (correct only for full-line callers
+// like md raw mode). Absent for units with no line position (JSONTranslator's key
+// nodes — the modal falls back to sequential numbering). `lang` tags the target in
+// multi-language runs where the same source line can fail under several targets;
+// `file` tags the source file in multi-file batches, where failures accumulate
+// across files under a single clearFailures.
+export interface FailedLine {
+  text: string;
+  line?: number;
+  lang?: string;
+  file?: string;
+}
+
+// Failure-panel metadata for translateBatch. lineNumbers[i] = 1-based physical
+// source line of contentLines[i] — REQUIRED for correct failure locations when
+// contentLines is a filtered/derived list (cue text lines, md segments); omitted,
+// the ordinal fallback i+1 only holds for full-line arrays. fileName tags each
+// failure with its source file so multi-file batches stay attributable.
+export type TranslateBatchMeta = { lineNumbers?: number[]; fileName?: string };
 
 type TranslationRuntimeConfig = TranslationConfig & {
   translationMethod: string;
@@ -91,15 +122,11 @@ const useTranslationState = () => {
   const [apiSettingsOpen, setApiSettingsOpen] = useState<boolean>(false);
   // storedMethod = 用户真实选择(落盘);translationMethod = 当前生效值(派生)。
   const [storedMethod, setTranslationMethod] = useLocalStorage<string>("translation-method", DEFAULT_API);
-  // 当 storedMethod 不是当前构建已知的 provider(getDefaultConfig 返回 undefined)时,
-  // 仅本次渲染回退到 DEFAULT_API 用于显示/翻译 —— 绝不写回 localStorage。
-  //
-  // ⚠ 为什么不能落盘纠偏(旧做法 setTranslationMethod(DEFAULT_API) 的坑):
-  // 用户选了某 provider(如 mimo)落盘后,若之后加载到一份"缺少该 provider 的旧 bundle"
-  // (浏览器/CDN 缓存、灰度发布中途、回滚),旧做法会立刻把 gtx 落盘,**永久覆盖**用户的
-  // 真实选择 —— 即使之后正确 bundle 回来了也回不去。纯派生则让真实选择安然留在 localStorage,
-  // 正确 bundle 一加载就自动恢复;旧/已删 key(如 "aliyun")也只是显示成 gtx,不破坏数据。
-  // 只有用户主动改选(setTranslationMethod)才写盘。
+  // storedMethod 不是当前 bundle 已知的 provider 时,仅本次渲染回退 DEFAULT_API,
+  // 绝不写回 localStorage。⚠ 别落盘纠偏(旧做法 setTranslationMethod(DEFAULT_API)):
+  // 遇到缺该 provider 的旧 bundle(缓存/灰度/回滚)会用 gtx **永久覆盖**用户的真实
+  // 选择,正确 bundle 回来也回不去。纯派生让选择留在盘上,bundle 一对就恢复;已删
+  // key 也只是显示成 gtx,不破坏数据。只有用户主动改选才写盘。
   const translationMethod = getDefaultConfig(storedMethod) ? storedMethod : DEFAULT_API;
   const [translationConfigs, setTranslationConfigs] = useLocalStorage<TranslationConfigs>("translation-configs", defaultConfigs as TranslationConfigs);
   const [systemPrompt, setSystemPrompt] = useLocalStorage<string>("translation-systemPrompt", DEFAULT_SYSTEM_PROMPT);
@@ -122,7 +149,7 @@ const useTranslationState = () => {
   // Line-level soft-failure: lines still failing after retries exhaust.
   // UI shows Alert with retry button; cache hits skip re-translation.
   const [failedCount, setFailedCount] = useState<number>(0);
-  const [failedLines, setFailedLines] = useState<string[]>([]);
+  const [failedLines, setFailedLines] = useState<FailedLine[]>([]);
   // Lang-level failures: in multi-language batch mode, codes of langs that
   // errored out entirely. Replaces noisy per-lang toasts. See md-translator #7.
   const [failedLangs, setFailedLangs] = useState<string[]>([]);
@@ -136,6 +163,13 @@ const useTranslationState = () => {
   // True once the current run records any soft line-failure — gates the single-file
   // success toast so we never say "完成" when the failure panel/warning is also showing.
   const runHadFailuresRef = useRef(false);
+  // True once ANY request in the current run hit a 429. Drives the context-path
+  // auto-retry breather: a real rate-limit needs the long cool-off (the
+  // provider's counter must reset), but a transient blip (5xx / network) does
+  // not — so a cache-heavy re-run with a couple residual failures no longer
+  // freezes at ~99% for a flat 10s when nothing was actually rate-limited.
+  // Reset per run by clearFailures().
+  const rateLimitedThisRunRef = useRef(false);
 
   const effectiveSystemPrompt = systemPrompt.trim() ? systemPrompt : DEFAULT_SYSTEM_PROMPT;
   const effectiveUserPrompt = userPrompt.trim() ? userPrompt : DEFAULT_USER_PROMPT;
@@ -340,38 +374,31 @@ const useTranslationState = () => {
     setTranslatedText("");
   };
 
-  // Validation
-  //
-  // 设计要点 (踩坑后留的注释,改之前先理解):
-  //
-  // 1. 不在此处碰 isTranslating —— 该 flag 由调用方 (runTranslation /
-  //    handleMultipleTranslate) 的 try/finally 统一管。validate 内部自己开关
-  //    会跟外层 set 冲突,触发 progress modal 闪烁,职责也乱。
-  //
-  // 2. 语言不支持时不再自动改 translationMethod —— 早期版本会偷偷 fallback
-  //    到 DEFAULT_API,用户察觉不到 method 被换。现在只报错,让用户自己决定
-  //    换语言还是换 method。
-  //
-  // 3. test ping 只对这 5 个服务执行 (deepl/deeplx/llm/gtxFreeAPI/translategemma):
-  //    它们是"免费/自托管/本地"类,可用性不稳定 (GFW 墙、自架挂了、模型没启动)
-  //    需要提前探测。付费 API (DeepSeek/Claude/Gemini 等) 假定 API key 给了就能
-  //    用,出错让翻译请求本身去报。
-  //
-  // 4. test ping 失败时只有 deeplx 自动 fallback —— deeplx 是自托管代理,
-  //    URL 配错 / 服务挂了的概率最高;其他 4 个失败通常是真实问题 (key 错、
-  //    服务真不可用),fallback 没意义。
+  // Validation — 设计要点(踩坑后留,改之前先理解):
+  // 1. 不碰 isTranslating:由调用方(runTranslation/handleMultipleTranslate)的
+  //    try/finally 统一管;这里自己开关会与外层冲突,触发 progress modal 闪烁。
+  // 2. 语言不支持只报错,不自动改 translationMethod(旧版偷偷 fallback 到
+  //    DEFAULT_API,用户察觉不到 method 被换);换语言还是换 method 交给用户。
+  // 3. test ping 只对 deepl/deeplx/llm/gtxFreeAPI/translategemma(免费/自托管/
+  //    本地,可用性不稳)提前探测;付费 API 假定 key 可用,出错让翻译请求自己报。
+  // 4. ping 失败只有 deeplx 自动 fallback(自托管代理最易配错/挂);其余 4 个
+  //    失败通常是真问题(key 错、服务真不可用),fallback 没意义。
   const validate = async () => {
     const config = getSelectedConfig();
 
     // Sync validation: creds + language support. Extracted to a pure function
     // (hooks/translation/validation.ts) so it's unit-testable without React.
+    // targetLanguages is retry-scoped: a failure-panel retry only runs its scoped
+    // subset (failed + newly-added langs), so a lang excluded from the retry (e.g.
+    // an already-succeeded lang unsupported by a newly selected method) must not
+    // hard-block it. No-op on a normal run.
     const syncResult = validateTranslationInputs({
       config,
       method: translationMethod,
       sourceLanguage,
       targetLanguage,
       multiLanguageMode,
-      targetLanguages,
+      targetLanguages: scopeTargetLangs(targetLanguages),
     });
     if (!syncResult.ok) {
       if ("errorKey" in syncResult) {
@@ -582,6 +609,17 @@ const useTranslationState = () => {
           } catch (error) {
             cleanup();
 
+            // Local-model timeout → attach a method-specific hint via the
+            // explicit errorHintKey channel (describeError honors it). Gate on a
+            // GENUINE per-request timeout: a run-signal abort (auth cascade /
+            // unmount) also surfaces as an AbortError on the in-flight fetch, but
+            // run.signal.aborted is set then — that's not a slow-model timeout, so
+            // exclude it. Set before the rethrow so the soft-fail catch upstream
+            // (lastErrorRef = describeError) localizes the right guidance.
+            if (isAbortError(error) && !run?.signal.aborted && LOCAL_TIMEOUT_HINT_METHODS.has(config.translationMethod)) {
+              (error as { errorHintKey?: string }).errorHintKey = "translationTimeoutLocal";
+            }
+
             // Auth error → abort all concurrent requests OF THIS RUN. Aborting
             // the live ref instead would let a ghost task from a dead run kill
             // a healthy successor run.
@@ -593,6 +631,10 @@ const useTranslationState = () => {
             // (同一波并发 429 只第一个生效),据此弹一次降速提示 —— 用户
             // 能看出"为什么变慢了",而不是面对一个静默卡住的进度条。
             if ((error as { status?: number })?.status === 429) {
+              // Mark the run rate-limited (even within-burst dups that don't
+              // start a cooldown) so the post-pass auto-retry keeps its long
+              // breather only when the provider actually throttled us.
+              rateLimitedThisRunRef.current = true;
               const startedCooldown = rateLimitGate.trip(config.translationMethod, (error as { retryAfterMs?: number }).retryAfterMs);
               if (startedCooldown) {
                 message.warning({ content: t("rateLimitCooldown"), key: "rate-limit-cooldown", duration: 5 });
@@ -666,6 +708,7 @@ const useTranslationState = () => {
     documentType: "subtitle" | "markdown" | "generic" = "subtitle",
     fullText?: string,
     runController?: AbortController,
+    meta?: TranslateBatchMeta,
   ) => {
     // This run's controller, captured ONCE — every liveness check below must
     // use it, never the live abortControllerRef (see translateSingle's ghost-
@@ -697,7 +740,7 @@ const useTranslationState = () => {
     // lines instead of re-rolling whole batches whose batch-cache was purged
     // after a partial failure (issue#44 purge). Write-once inside the helper.
     if (runtimeConfig.useCache !== false) {
-      await prefillFromLineCache(contentLines, translatedLines, (text) => getCachedTranslation(generateCacheKey(text, cacheSuffix)));
+      await prefillFromLineCache(contentLines, translatedLines, (texts) => getCachedTranslations(texts.map((text) => generateCacheKey(text, cacheSuffix))));
     }
 
     const translateSingleBatch = async (batchStart: number, batchEnd: number, contextWindow: number): Promise<boolean> => {
@@ -745,7 +788,10 @@ const useTranslationState = () => {
         // sourceLines slice lets the extraction's merge guard tell real gaps from
         // blank-source slots (which legitimately come back empty).
         const batchSources = contentLines.slice(batchStart, batchEnd);
-        const translatedBatch = extractTranslatedLinesWithNumbers(result || "", batchEnd - batchStart, batchSources);
+        // Pass the full context window (target slice + ±padding) so the echo guard
+        // can catch a TRANSLATE slot that copied a forward-[CONTEXT] source line
+        // verbatim (the NHK 红白 ≈+9 misalignment), not just within-batch echoes.
+        const translatedBatch = extractTranslatedLinesWithNumbers(result || "", batchEnd - batchStart, batchSources, contextLines);
 
         // A response that failed extraction anywhere is useless to replay, but
         // the cache layer already stored it (every 200 is a "success" there —
@@ -915,9 +961,15 @@ const useTranslationState = () => {
       }
     };
 
-    // Show non-zero progress immediately so users see the modal is alive
-    // (a single LLM batch can take 20-60s before the first updateProgress call)
-    updateProgress(0.5, contentLines.length);
+    // Show progress immediately so users see the modal is alive (a single LLM
+    // batch can take 20-60s before the first in-loop updateProgress). On a
+    // cache-heavy re-run, the blank pre-fill + per-line cache prefill have
+    // already decided most slots — surface that at once so the bar jumps to
+    // near-complete instead of sitting at ~0% through the prefill + first
+    // batch (which read as "stuck" even though the work is basically done).
+    // Floor at 0.5 so a cold run with nothing prefilled still shows movement.
+    const prefilledDone = translatedLines.filter((x) => x !== undefined).length;
+    updateProgress(prefilledDone > 0 ? prefilledDone : 0.5, contentLines.length);
 
     // Main loop: run batches in parallel with user-configurable concurrency.
     // Context mode uses `contextBatchSize` — each task sends ~contextWindow
@@ -983,8 +1035,16 @@ const useTranslationState = () => {
     // state and the whole auto-retry layer becomes dead code. includes() treats
     // holes as undefined (same idiom as the batch-completeness checks above).
     if (translatedLines.includes(undefined) && !run?.signal.aborted) {
-      console.log("Auto-retry remaining failed lines after 10s with clustered small-context retry...");
-      await delay(10000);
+      // Adaptive breather. The flat 10s here used to freeze EVERY re-run that
+      // still had a couple residual failures at ~99% — even when nothing was
+      // rate-limited (the common "再试一次 feels slow despite cache" case). Only
+      // a real 429 this run needs the long cool-off so the provider's counter
+      // resets; transient blips (5xx / network) recover after a short pause.
+      // The shared rateLimitGate already enforces the actual per-request 429
+      // cooldown independently of this breather.
+      const autoRetryDelayMs = rateLimitedThisRunRef.current ? 10000 : 1500;
+      console.log(`Auto-retry remaining failed lines after ${autoRetryDelayMs}ms with clustered small-context retry...`);
+      await delay(autoRetryDelayMs);
       try {
         await clusterRetryFailures(0, contentLines.length);
       } catch (err) {
@@ -1004,12 +1064,15 @@ const useTranslationState = () => {
     // failures — empty/whitespace-only lines (common in subtitle spacing,
     // markdown blank lines) weren't meaningful translations in the first
     // place, so flagging them as failures would just confuse the UI.
-    const failedLinesList: string[] = [];
+    const failedLinesList: FailedLine[] = [];
     for (let i = 0; i < translatedLines.length; i++) {
       if (translatedLines[i] === undefined) {
         const original = contentLines[i];
         translatedLines[i] = original;
-        if (original && original.trim()) failedLinesList.push(original);
+        // line = real 1-based source position (meta.lineNumbers maps slot i back to
+        // the physical line when contentLines is filtered/derived, else ordinal);
+        // lang lets the panel tag which target this line failed under in batch runs.
+        if (original && original.trim()) failedLinesList.push({ text: original, line: meta?.lineNumbers?.[i] ?? i + 1, lang: runtimeConfig.targetLanguage, file: meta?.fileName });
       }
     }
     if (failedLinesList.length > 0) {
@@ -1018,6 +1081,12 @@ const useTranslationState = () => {
       setFailedLines((prev) => [...prev, ...failedLinesList]);
       if (lastErrorRef.current) setFailedReason(lastErrorRef.current);
     }
+
+    // Every slot is filled now (soft-fill above), so the run is complete — pin
+    // progress to 100% like the line-by-line path (translateBatch) does. Without
+    // this, a run with any soft-failed line ends below 100% and the completion
+    // modal's DONE state (gated on percent >= 100) would never show.
+    updateProgress(contentLines.length, contentLines.length);
 
     return translatedLines;
   };
@@ -1030,6 +1099,7 @@ const useTranslationState = () => {
     fileIndex: number = 0,
     totalFiles: number = 1,
     documentType?: "subtitle" | "markdown" | "generic",
+    meta?: TranslateBatchMeta,
   ) => {
     const config = getSelectedConfig();
     const concurrency = Math.max(Number(config?.batchSize) || 10, 1);
@@ -1084,7 +1154,7 @@ const useTranslationState = () => {
       // Context-aware translation with LLM. Glossary is applied per-line inside
       // translateWithContext (success-only), so no blanket pass here.
       if (documentType && LLM_MODELS.includes(translationMethodArg) && contentLines.length > 1) {
-        return await translateWithContext(contentLines, runtimeConfig, cacheSuffix, updateProgress, documentType, fullText, runController);
+        return await translateWithContext(contentLines, runtimeConfig, cacheSuffix, updateProgress, documentType, fullText, runController, meta);
       }
 
       if (config?.chunkSize === undefined) {
@@ -1094,11 +1164,23 @@ const useTranslationState = () => {
         // letting peers finish. Auth errors (and post-abort cascades) still
         // propagate so Promise.all rejects and the translator catch can route.
         const translatedLines = new Array(contentLines.length);
-        const failedLinesList: string[] = [];
+        const failedLinesList: FailedLine[] = [];
         let completedCount = 0;
 
         const progressStep = Math.max(1, Math.floor(contentLines.length / 100));
         updateProgress(0.5, contentLines.length);
+
+        // Batched cache probe (ONE transaction) → indices that will hit cache.
+        // baseDelay (default 200ms) exists to rate-limit REAL API calls; a cache
+        // hit makes none, so throttling it just made a fully-cached re-run crawl
+        // (baseDelay × lines / concurrency — ~20s on a 1000-line file). Used
+        // only to SKIP the delay below; the translate path is unchanged (the
+        // per-line cache check inside translateSingleWithGlossary still runs).
+        const cacheHitIndices = new Set<number>();
+        if (runtimeConfig.useCache !== false) {
+          const hits = await getCachedTranslations(contentLines.map((line) => generateCacheKey(line, cacheSuffix)));
+          for (let i = 0; i < contentLines.length; i++) if (hits[i] != null) cacheHitIndices.add(i);
+        }
 
         const promises = contentLines.map((line, index) =>
           limit(async () => {
@@ -1127,13 +1209,17 @@ const useTranslationState = () => {
               // etc., after pRetry exhausted): soft-fail this line, keep peers running.
               lastErrorRef.current = describeError(error, t);
               translatedLines[index] = line;
-              if (line && line.trim()) failedLinesList.push(line);
+              // line = real 1-based source position via meta.lineNumbers (ordinal
+              // fallback for full-line callers); currentTargetLang tags the target.
+              if (line && line.trim()) failedLinesList.push({ text: line, line: meta?.lineNumbers?.[index] ?? index + 1, lang: currentTargetLang, file: meta?.fileName });
             }
             completedCount++;
             if (completedCount % progressStep === 0 || completedCount === contentLines.length) {
               updateProgress(completedCount, contentLines.length);
             }
-            if (baseDelay > 0 && completedCount < contentLines.length) {
+            // Skip the inter-line throttle for cache hits — they issued no API
+            // request, so there's nothing to rate-limit (see cacheHitIndices).
+            if (baseDelay > 0 && completedCount < contentLines.length && !cacheHitIndices.has(index)) {
               await delay(baseDelay);
             }
           }),
@@ -1154,13 +1240,9 @@ const useTranslationState = () => {
       }
 
       // Chunk-based translation (DeepL / DeepLX / Azure).
-      // Blank lines must NOT enter the wire text: the old code mapped each
-      // blank line to the delimiter itself AND joined with the delimiter, so
-      // one blank source line became TWO delimiters — the translated split
-      // gained an extra slot per blank line, the first non-blank line after
-      // each blank got "", and every later translation shifted down one slot
-      // (silent off-by-one corruption for ASS tag-only cues and md raw mode).
-      // Translate only non-blank lines; re-thread blanks by original index.
+      // 空行不进 wire text —— 只翻非空行,空行按原索引回穿。⚠ 别把空行映射成
+      // 分隔符:那会双写分隔符,split 多出一格,每个空行后的译文整体下移一格
+      // (ASS 纯标签 cue / md raw 模式的静默 off-by-one)。
       const delimiter = translationMethodArg === "deeplx" ? "<>" : "\n";
       const sourceIdx: number[] = [];
       const nonBlankLines: string[] = [];
@@ -1193,7 +1275,12 @@ const useTranslationState = () => {
       // keeps that chunk's SOURCE text and rolls into TranslateFailurePanel.
       // Without this, one chunk exhausting retries threw away every chunk that
       // had already succeeded (all-or-nothing for the DEFAULT free service).
-      const failedChunkLines: string[] = [];
+      // Real source line numbers ARE recoverable: sourceIdx[k] maps each non-blank
+      // wire line k back to its contentLines index, and failedK collects the k's of
+      // every failed chunk. Materialized from failedK AFTER the loop (below) so the
+      // modal shows the pristine source text + true line number — same as the
+      // LLM/line paths — instead of the newline-flattened wire text.
+      const failedChunkLines: FailedLine[] = [];
       // 软填(保留原文)的行号集合 —— 术语表 leak-through 只能套在【成功译文】
       // 上:对软填的源文套术语表会产出 "斯派克, hi" 式半本地化混合体,这正是
       // context/line 路径注释里明令禁止、失败面板又声称"保留了原文"的腐败输出。
@@ -1214,7 +1301,6 @@ const useTranslationState = () => {
           lastErrorRef.current = describeError(error, t);
           // 软填原文 —— deeplx 的源块含 "<>" 分隔符,同样要还原成 \n 保持行对齐
           processed = translationMethodArg === "deeplx" ? chunks[i].replace(/<>/g, "\n") : chunks[i];
-          failedChunkLines.push(...processed.split("\n").filter((l) => l.trim()));
           for (let k = chunkStartK; k < chunkStartK + chunkLineCount; k++) failedK.add(k);
         }
         translatedChunks.push(processed);
@@ -1222,6 +1308,17 @@ const useTranslationState = () => {
         chunkLinesDone += chunkLineCount;
         updateProgress(chunkLinesDone, totalChunkLines);
         if (i < chunks.length - 1) await delay(config?.delayTime || 200);
+      }
+
+      // Materialize failures from failedK → pristine source line + real line number
+      // (meta.lineNumbers maps the contentLines index to the physical source line
+      // when the caller's array is filtered/derived). failedK is ascending (insertion
+      // order); the panel re-sorts by (file, lang, line) anyway. Every k indexes a
+      // non-blank line by construction, so the count here equals the old per-chunk
+      // split-count (no blanks were ever pushed).
+      for (const k of failedK) {
+        const i = sourceIdx[k];
+        failedChunkLines.push({ text: contentLines[i], line: meta?.lineNumbers?.[i] ?? i + 1, lang: currentTargetLang, file: meta?.fileName });
       }
 
       if (failedChunkLines.length > 0) {
@@ -1261,15 +1358,25 @@ const useTranslationState = () => {
     setFailedReason("");
     lastErrorRef.current = null;
     runHadFailuresRef.current = false;
+    rateLimitedThisRunRef.current = false;
+    // Fresh (non-retry) run: also reset the attempted-lang memory backing retry
+    // scoping. A scoped retry keeps it — that's what lets the NEXT retry tell
+    // "succeeded earlier this cycle" (attempted, no failures) from "never ran"
+    // (added by the user after the failed run).
+    if (!retryTargetLangsRef.current) attemptedLangsRef.current = new Set();
   };
 
   // 行级软失败上报 —— 供自带翻译循环的工具(JSONTranslator)使用:计入失败
   // 面板 + 标记本轮失败,与 hook 内部软失败路径走同一通道。没有它,JSON 工具
   // 的单节点瞬时失败只能 abort 整个语言(丢弃全部已完成节点)或静默吞掉。
-  const recordLineFailure = (line: string, reason?: string) => {
+  // meta.lang tags the target in batch runs; meta.line is the 1-based source
+  // position when the caller has one. JSONTranslator works on key nodes with no
+  // line position, so it omits both and the modal falls back to sequential
+  // numbering for those records.
+  const recordLineFailure = (line: string, reason?: string, meta?: { line?: number; lang?: string }) => {
     runHadFailuresRef.current = true;
     setFailedCount((prev) => prev + 1);
-    setFailedLines((prev) => [...prev, line]);
+    setFailedLines((prev) => [...prev, { text: line, line: meta?.line, lang: meta?.lang }]);
     if (reason) {
       lastErrorRef.current = reason;
       setFailedReason(reason);
@@ -1289,6 +1396,75 @@ const useTranslationState = () => {
   // this directly after the loop to gate their success toast against the failure panel.
   const hadRunFailures = () => runHadFailuresRef.current;
 
+  // ─── Retry scoping ──────────────────────────────────────────────────────
+  // When set, a tool's target-language loop is restricted to these langs so the
+  // failure panel's "再试一次" only re-processes languages that still need work.
+  // Successful langs are otherwise re-walked from cache AND (in batch export)
+  // re-downloaded on every retry — pure waste when a single lang's few lines are
+  // all that's left. Null outside a runRetry()-wrapped retry, so the normal
+  // translate button is completely unaffected.
+  const retryTargetLangsRef = useRef<string[] | null>(null);
+
+  // Langs actually dispatched since the last fresh (non-retry) run — recorded by
+  // getActiveTargetLangs, reset by clearFailures. Distinguishes "succeeded" (was
+  // attempted, not in the failed set) from "never ran" (added by the user between
+  // the failed run and the retry): without it a scoped retry silently drops
+  // newly added languages.
+  const attemptedLangsRef = useRef<Set<string>>(new Set());
+
+  // The languages that FAILED this cycle: union of lang-level failures (a whole
+  // lang errored) and the per-line failures' tagged langs. runRetry augments this
+  // with never-attempted langs to form the full retry scope. Read at retry time,
+  // BEFORE the wrapped run clears failure state.
+  const failedTargetLangs = (): string[] => Array.from(new Set<string>([...failedLangs, ...failedLines.map((l) => l.lang).filter((l): l is string => !!l)]));
+
+  // Narrow a run's target languages to the active retry set. No-op on a first run.
+  // Falls back to the full list if the filter would empty it — never turns a real
+  // run into a no-op. Internal — tools go through getActiveTargetLangs (validate
+  // also applies it so a retry is validated against the langs it will actually run).
+  const scopeTargetLangs = (langs: string[]): string[] => {
+    if (!retryTargetLangsRef.current) return langs;
+    const scoped = langs.filter((l) => retryTargetLangsRef.current!.includes(l));
+    return scoped.length > 0 ? scoped : langs;
+  };
+
+  // Single home for "the languages this run should process": the mode branch reads
+  // hook-owned state, so it lives here instead of being re-derived in every tool.
+  // During a failure-panel retry (runRetry) the list is narrowed to the langs that
+  // still need work; on a normal run scoping is a no-op. Opting out of scoping =
+  // not wrapping the rerun in runRetry (JSONTranslator's i18nMode iterates raw
+  // targetLanguages instead — its combined artifact needs every lang each run).
+  // Side effect: records the returned langs as attempted (see attemptedLangsRef).
+  const getActiveTargetLangs = (): string[] => {
+    const langs = scopeTargetLangs(multiLanguageMode ? targetLanguages : [targetLanguage]);
+    for (const lang of langs) attemptedLangsRef.current.add(lang);
+    return langs;
+  };
+
+  // True while a runRetry-wrapped rerun is in flight. Tools use it to preserve
+  // instead of reset their previous results (result preview, per-lang exports) so
+  // a scoped retry only overwrites what it actually re-translates.
+  const isScopedRetry = () => retryTargetLangsRef.current !== null;
+
+  // Wrap the failure panel's retry so only languages that still need work re-run:
+  // the failed set plus anything never attempted this cycle (langs the user added
+  // after the failed run — filtering to failed alone would silently drop them).
+  // The scope is PINNED here rather than derived per file, because the run itself
+  // marks langs attempted (a multi-file retry would otherwise narrow after file 1).
+  // Captured up front (the wrapped run clears failure state via clearFailures),
+  // then always cleared — a throwing retry can't leave it stuck on.
+  const runRetry = async (retryFn: () => Promise<unknown> | unknown): Promise<void> => {
+    const failed = failedTargetLangs();
+    const base = multiLanguageMode ? targetLanguages : [targetLanguage];
+    const scope = base.filter((lang) => failed.includes(lang) || !attemptedLangsRef.current.has(lang));
+    retryTargetLangsRef.current = scope.length > 0 ? scope : null;
+    try {
+      await retryFn();
+    } finally {
+      retryTargetLangsRef.current = null;
+    }
+  };
+
   // 翻译进行中组件被卸载(用户导航离开)—— 工具层的批量循环靠它跳过失效的
   // 汇总 toast(antd message 挂在应用根上,会弹在用户切去的页面)和后续文件。
   const isDisposed = () => disposedRef.current;
@@ -1298,7 +1474,11 @@ const useTranslationState = () => {
   // caller that owns its own success messaging (e.g. MD single-file) can show a
   // completion toast WITHOUT contradicting the failure panel/error toasts.
   const runTranslation = async (performTranslation: PerformTranslation, sourceText: string, documentType?: "subtitle" | "markdown" | "generic"): Promise<boolean> => {
-    setTranslatedText("");
+    // Scoped retry keeps the existing result on screen: the retry excludes the
+    // already-successful langs, so clearing here would blank the preview with
+    // nothing to repopulate it (tool-side previewLang only refreshes the previewed
+    // lang if it re-runs). Fresh runs still start clean.
+    if (!isScopedRetry()) setTranslatedText("");
     // Reset soft-failure state for this run — the UI Alert is driven by these.
     clearFailures();
     if (!sourceText.trim()) {
@@ -1362,6 +1542,9 @@ const useTranslationState = () => {
     markRunHadFailures,
     recordLineFailure,
     hadRunFailures,
+    runRetry,
+    isScopedRetry,
+    getActiveTargetLangs,
     isDisposed,
     isTranslating,
     setIsTranslating,

@@ -89,6 +89,7 @@
     "exportedFile": "Đã xuất",
     "extractedText": "Văn bản đã trích xuất",
     "translating": "Đang dịch...",
+    "translateDone": "Đã dịch xong",
     "multiTranslating": "Đang dịch, tổng số ngôn ngữ:",
     "model": "Mô hình",
     "sameLanguageTarget": "Ngôn ngữ nguồn và đích giống nhau; đích tự động điều chỉnh thành",
@@ -132,7 +133,7 @@
     "requestTimeoutSec": "Thời gian chờ",
     "requestTimeoutSecTooltip": "Thời gian chờ tối đa mỗi yêu cầu (giây). LLM suy nghĩ mất nhiều thời gian hơn; khuyến nghị 180 giây trở lên.",
     "customExportFilename": "Mẫu tên tệp xuất",
-    "customExportFilenameTooltip": "'{'name'}' = tên tệp gốc, '{'lang'}' = ngôn ngữ, '{'ext'}' = phần mở rộng, '{'date'}' = ngày, '{'time'}' = thời gian",
+    "customExportFilenameTooltip": "'{'name'}' = tên tệp gốc, '{'lang'}' = ngôn ngữ, '{'ext'}' = phần mở rộng, '{'date'}' = ngày, '{'time'}' = thời gian; ở chế độ đa ngôn ngữ, '{'lang'}' được thêm tự động để tránh trùng tên",
     "partialFailureTitle": "{count} dòng dịch thất bại",
     "partialFailureDesc": "Các dòng thất bại đã giữ nguyên văn bản gốc làm chỗ giữ chỗ, tệp vẫn dùng được. Những thất bại này thường do biến động mạng hoặc dịch vụ dịch tạm thời không ổn định — dịch vụ miễn phí và máy chủ tự lưu trữ đặc biệt dễ gặp, và không phải do cấu hình của bạn. Nhấp Thử lại để tiếp tục (các dòng thành công đến từ bộ nhớ đệm, không dịch lại); nếu vẫn thất bại, hãy thử lại sau hoặc chuyển sang dịch vụ dịch khác. Hoặc nhấp Xem các dòng thất bại để xử lý thủ công.",
     "retryFailedLines": "Thử lại",
@@ -170,6 +171,7 @@
     "translategemmaUnavailable": "Dịch vụ TranslateGemma tạm thời không kết nối được, hãy đảm bảo máy chủ cục bộ của bạn (LM Studio / llama.cpp / Ollama) đang chạy và URL chính xác.",
     "networkUnavailable": "Dịch vụ dịch tạm thời không kết nối được — có thể là sự cố mạng hoặc dịch vụ đang gặp trục trặc tạm thời. Vui lòng thử lại sau hoặc chuyển sang dịch vụ dịch khác.",
     "translationTimeout": "Yêu cầu dịch đã hết thời gian — có thể là mạng chậm hoặc dịch vụ phản hồi quá lâu. Vui lòng thử lại sau hoặc chuyển sang dịch vụ dịch khác.",
+    "translationTimeoutLocal": "Dịch bằng mô hình cục bộ đã hết thời gian. Một LLM cục bộ có thể bị kẹt trong vòng lặp lặp lại — hãy giảm max_tokens (giới hạn đầu ra) trong Cài đặt nâng cao và đảm bảo ngôn ngữ nguồn đã chọn khớp với văn bản thực tế.",
     "langGroupCommon": "Phổ biến",
     "langGroupEurope": "Châu Âu",
     "langGroupMiddleEast": "Trung Đông",
@@ -220,7 +222,50 @@
     "reviewColSource": "Nguồn",
     "reviewColTarget": "Bản dịch",
     "reviewApplyDownload": "Áp dụng & tải",
-    "reviewDownloaded": "Đã tải phụ đề đã soát"
+    "reviewDownloaded": "Đã tải phụ đề đã soát",
+    "assStyleButton": "Kiểu ASS",
+    "assStyleTooltip": "Tùy chỉnh phông chữ, kích cỡ, màu sắc và vị trí phụ đề ASS song ngữ",
+    "assNativeModeSource": "Giữ kiểu nguồn",
+    "assNativeModeRebuild": "Đổi kiểu",
+    "assNativeModeTooltip": "ASS gốc song ngữ: giữ kiểu của tệp nguồn, hoặc bỏ và đổi kiểu bằng Kiểu ASS (chỉ phụ đề hội thoại)",
+    "assStyleTitle": "Cài đặt kiểu ASS",
+    "assPresetLabel": "Cài đặt sẵn",
+    "assPresetDefault": "Mặc định",
+    "assPresetLarge": "Lớn",
+    "assPresetCinematic": "Điện ảnh",
+    "assPresetBoxed": "Khung nền",
+    "assPresetCustom": "Tùy chỉnh",
+    "assGlobalGroup": "Chung",
+    "assTranslationStyle": "Kiểu dịch",
+    "assOriginalStyle": "Kiểu gốc",
+    "assFontName": "Phông chữ",
+    "assFontPlaceholder": "Để trống = tự động theo ngôn ngữ đích",
+    "assReadSystemFonts": "Đọc phông chữ hệ thống",
+    "assSystemFontsGroup": "Phông chữ hệ thống",
+    "assReadSystemFontsUnsupported": "Trình duyệt này không thể đọc phông chữ hệ thống — nhập tên phông chữ trực tiếp",
+    "assFontSize": "Kích cỡ",
+    "assTextColor": "Màu chữ",
+    "assOutlineColor": "Màu viền",
+    "assBoxColor": "Màu khung",
+    "assOutline": "Viền",
+    "assShadow": "Bóng",
+    "assAlignment": "Căn chỉnh",
+    "assAlignBottom": "Giữa dưới",
+    "assAlignTop": "Giữa trên",
+    "assMarginV": "Lề",
+    "previewOriginal": "Bản gốc",
+    "previewTranslation": "Bản dịch",
+    "fontGroup": {
+      "broad": "Rộng / đa ngôn ngữ",
+      "zhHans": "Tiếng Trung giản thể",
+      "zhHant": "Tiếng Trung phồn thể",
+      "japanese": "日本語",
+      "korean": "한국어",
+      "arabic": "العربية",
+      "devanagari": "हिन्दी / Devanagari",
+      "thai": "ไทย",
+      "latin": "Latinh / Kirin / Hy Lạp"
+    }
   },
   "TranslationSettings": {
     "resetConfigSuccess": "Đã đặt lại cấu hình về mặc định",
@@ -276,6 +321,8 @@
     "presetUpdated": "Đã lưu vào cài đặt sẵn hiện tại",
     "presetDeleteConfirm": "Xóa cài đặt sẵn này?",
     "presetEmptyHint": "Chưa có cài đặt sẵn — chỉnh sửa và nhấn Lưu",
+    "presetDefault": "Prompt mặc định",
+    "presetDefaultReadonly": "Prompt mặc định là mục tích hợp — không thể sửa hoặc xóa. Dùng \"Lưu thành cài đặt mới\" để tùy chỉnh.",
     "qwenMtDomains": "Lời nhắc tên miền (chỉ tiếng Anh)",
     "sendSystemPrompt": "Gửi lời nhắc system",
     "sendSystemPromptExtra": "Chỉ tắt khi chat template từ chối vai trò system — lỗi điển hình \"Conversations must start with a user prompt\" (ví dụ họ Gemma).",
@@ -329,20 +376,6 @@
         {
           "q": "Tệp phụ đề có được tải lên máy chủ không? Có riêng tư và an toàn không?",
           "a": "Hoàn toàn phía client: đọc tệp phụ đề, phân tích cú pháp và yêu cầu dịch đều diễn ra trong trình duyệt của bạn — nội dung gốc không bao giờ đi qua máy chủ của chúng tôi. Yêu cầu engine LLM đi thẳng từ trình duyệt đến endpoint API bạn đã cấu hình (OpenAI, DeepSeek, v.v.), và API Key chỉ lưu trong localStorage cục bộ. Bộ nhớ đệm dịch dùng IndexedDB của trình duyệt và duy trì giữa các phiên. Mã nguồn mở trên GitHub (rockbenben/subtitle-translator) để tự host hoặc kiểm tra."
-        }
-      ],
-      "howto": [
-        {
-          "name": "Bắt đầu từ video hoặc tệp phụ đề",
-          "text": "Tải lên SRT/ASS/VTT/SBV/LRC. Trích xuất: YouTube qua yt-dlp, nền tảng khác qua công cụ chuyên dụng. Định dạng và mã hóa UTF-8/UTF-16/GBK được phát hiện tự động."
-        },
-        {
-          "name": "Chọn engine và chế độ xuất",
-          "text": "Google miễn phí cho thử nghiệm nhanh, DeepSeek/DeepL API cho chất lượng. 'Chỉ bản dịch' để xuất bản, 'Song ngữ' để học ngôn ngữ. Trong song ngữ, vị trí trên (học) hoặc dưới (xem)."
-        },
-        {
-          "name": "Dịch và xuất lên nền tảng",
-          "text": "Nhấp Dịch và kiểm tra timing trong xem trước. Tải SRT cho phụ đề cộng đồng YouTube, ASS có kiểu cho Premiere/DaVinci Resolve, VTT cho trình phát web, LRC cho lời nhạc."
         }
       ],
       "features": [
@@ -430,7 +463,11 @@
     "textParser": "Công cụ Văn bản",
     "jsonParser": "Công cụ JSON",
     "dataParser": "Công cụ Dữ liệu",
-    "otherTools": "Công cụ Khác"
+    "otherTools": "Công cụ Khác",
+    "externalTools": {
+      "legendtalk": "Bàn tròn nhà tư tưởng AI",
+      "imgprompt": "Câu lệnh tạo ảnh AI"
+    }
   },
   "Metadata": {
     "title": "ToolsByAI - Bộ Công Cụ Dịch Thuật & Dữ Liệu AI Online",

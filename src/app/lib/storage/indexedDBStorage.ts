@@ -46,6 +46,27 @@ export const translationCache = {
     }
   },
 
+  // Batch read in ONE readonly transaction. `db.get()` opens a fresh
+  // transaction per call, so the per-line cache prefill (1000+ lines on a
+  // long subtitle) used to spin up 1000 transactions — a real chunk of the
+  // "cache-hit re-run still feels slow" latency. All gets here are issued
+  // synchronously before the first await, so idb keeps them on the same tx.
+  // Result order matches `keys`; a missing entry is null; a tx-level failure
+  // degrades to all-null (callers treat null as a cache miss → translate).
+  async getMany(keys: string[]): Promise<(string | null)[]> {
+    if (keys.length === 0) return [];
+    try {
+      const db = await getDB();
+      const tx = db.transaction(STORE_NAME, "readonly");
+      const store = tx.objectStore(STORE_NAME);
+      const values = await Promise.all(keys.map((k) => store.get(k)));
+      await tx.done;
+      return values.map((v) => v ?? null);
+    } catch {
+      return keys.map(() => null);
+    }
+  },
+
   async set(key: string, value: string): Promise<void> {
     try {
       const db = await getDB();

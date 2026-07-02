@@ -89,6 +89,7 @@
     "exportedFile": "エクスポート済み",
     "extractedText": "抽出されたテキスト",
     "translating": "翻訳中",
+    "translateDone": "翻訳完了",
     "multiTranslating": "翻訳中、合計言語数：",
     "model": "モデル",
     "sameLanguageTarget": "翻訳元と翻訳先が同じ言語です。自動的に翻訳先を調整しました：",
@@ -132,7 +133,7 @@
     "requestTimeoutSec": "タイムアウト",
     "requestTimeoutSecTooltip": "リクエストあたりの最大待機時間（秒）。LLMの思考時間は長いため、180秒以上を推奨します。",
     "customExportFilename": "エクスポートファイル名の形式",
-    "customExportFilenameTooltip": "'{'name'}' = 元のファイル名, '{'lang'}' = 言語, '{'ext'}' = 拡張子, '{'date'}' = 日付, '{'time'}' = 時間",
+    "customExportFilenameTooltip": "'{'name'}' = 元のファイル名, '{'lang'}' = 言語, '{'ext'}' = 拡張子, '{'date'}' = 日付, '{'time'}' = 時間；多言語モードでは '{'lang'}' が自動追加され、ファイル名の衝突を防ぎます",
     "partialFailureTitle": "{count}行の翻訳に失敗しました",
     "partialFailureDesc": "失敗した行は元のテキストでプレースホルダーされており、ファイル構造に影響しません。この種の失敗は多くがネットワークの揺らぎや翻訳サービスの一時的な不安定によるもので、無料サービスやセルフホストのサーバーで特に起こりやすく、設定の問題ではありません。「再試行」をクリックすれば続行できます（成功した行はキャッシュから読み込まれ、再翻訳されません）。それでも失敗する場合は、しばらくしてから再試行するか別の翻訳サービスをお試しください。「失敗した行を表示」して手動で処理することもできます。",
     "retryFailedLines": "再試行",
@@ -170,6 +171,7 @@
     "translategemmaUnavailable": "TranslateGemma サービスに一時的に接続できません。ローカルサーバー（LM Studio / llama.cpp / Ollama）が起動していて URL が正しいか確認してください。",
     "networkUnavailable": "翻訳サービスに一時的に接続できません。ネットワークの問題かサービス側の一時的な不具合の可能性があります。しばらくしてから再試行するか、別の翻訳サービスに切り替えてください。",
     "translationTimeout": "翻訳リクエストがタイムアウトしました。ネットワークが遅いか、サービスの応答に時間がかかっている可能性があります。しばらくしてから再試行するか、別の翻訳サービスに切り替えてください。",
+    "translationTimeoutLocal": "ローカルモデルの翻訳がタイムアウトしました。ローカル LLM は繰り返しループで停止することがあります。詳細設定で max_tokens（出力上限）を下げ、選択したソース言語が実際のテキストと一致しているか確認してください。",
     "langGroupCommon": "よく使う",
     "langGroupEurope": "ヨーロッパ",
     "langGroupMiddleEast": "中東",
@@ -220,7 +222,50 @@
     "reviewColSource": "原文",
     "reviewColTarget": "訳文",
     "reviewApplyDownload": "適用してダウンロード",
-    "reviewDownloaded": "レビュー済み字幕をダウンロードしました"
+    "reviewDownloaded": "レビュー済み字幕をダウンロードしました",
+    "assStyleButton": "ASSスタイル",
+    "assStyleTooltip": "バイリンガルASSの字幕フォント・サイズ・色・位置をカスタマイズ",
+    "assNativeModeSource": "元のスタイルを維持",
+    "assNativeModeRebuild": "再スタイル",
+    "assNativeModeTooltip": "ネイティブ ASS の二言語:元ファイルのスタイルを維持するか、破棄して「ASS スタイル」で組み直します(セリフ字幕向け)",
+    "assStyleTitle": "ASSスタイル設定",
+    "assPresetLabel": "プリセット",
+    "assPresetDefault": "デフォルト",
+    "assPresetLarge": "大きい文字",
+    "assPresetCinematic": "シネマ風",
+    "assPresetBoxed": "背景ボックス",
+    "assPresetCustom": "カスタム",
+    "assGlobalGroup": "グローバル",
+    "assTranslationStyle": "訳文スタイル",
+    "assOriginalStyle": "原文スタイル",
+    "assFontName": "フォント",
+    "assFontPlaceholder": "空白 = 対象言語に応じて自動選択",
+    "assReadSystemFonts": "システムフォントを読み込む",
+    "assSystemFontsGroup": "システムフォント",
+    "assReadSystemFontsUnsupported": "このブラウザはシステムフォントの読み取りに対応していません。フォント名を直接入力してください",
+    "assFontSize": "サイズ",
+    "assTextColor": "文字色",
+    "assOutlineColor": "縁取り色",
+    "assBoxColor": "ボックス色",
+    "assOutline": "縁取り",
+    "assShadow": "影",
+    "assAlignment": "配置",
+    "assAlignBottom": "下部中央",
+    "assAlignTop": "上部中央",
+    "assMarginV": "余白",
+    "previewOriginal": "原文",
+    "previewTranslation": "翻訳",
+    "fontGroup": {
+      "broad": "広範囲 / 多言語",
+      "zhHans": "簡体字中国語",
+      "zhHant": "繁体字中国語",
+      "japanese": "日本語",
+      "korean": "한국어",
+      "arabic": "العربية",
+      "devanagari": "हिन्दी / Devanagari",
+      "thai": "ไทย",
+      "latin": "ラテン / キリル / ギリシャ"
+    }
   },
   "TranslationSettings": {
     "resetConfigSuccess": "設定をデフォルトに戻しました",
@@ -276,6 +321,8 @@
     "presetUpdated": "現在のプリセットに保存しました",
     "presetDeleteConfirm": "このプリセットを削除しますか？",
     "presetEmptyHint": "プリセットがありません — 編集して保存をクリック",
+    "presetDefault": "デフォルトのプロンプト",
+    "presetDefaultReadonly": "デフォルトのプロンプトは組み込み項目で、変更も削除もできません。カスタマイズするには「新規プリセットとして保存」してください。",
     "qwenMtDomains": "ドメインプロンプト（英語のみ）",
     "sendSystemPrompt": "system プロンプトを送信",
     "sendSystemPromptExtra": "chat template が system ロールを拒否する場合のみオフに — 典型的なエラー \"Conversations must start with a user prompt\"（Gemma 系列など）。",
@@ -329,20 +376,6 @@
         {
           "q": "字幕翻訳はサーバーにアップロードされますか？プライバシーは安全ですか？",
           "a": "完全にフロントエンドで処理：字幕ファイルの読み込み・解析・翻訳リクエストはすべてブラウザ内で完結し、原文は当方のサーバーに保存されません。LLM エンジンへのリクエストはあなたのブラウザから直接、設定した API エンドポイント（OpenAI、DeepSeek など）に送信され、API Key はローカルの localStorage のみに保存されます。翻訳キャッシュはブラウザの IndexedDB を使用し、ページを閉じても保持されるため、次回同じ内容を翻訳するとキャッシュにヒットします。ソースコードは GitHub（rockbenben/subtitle-translator）で公開されており、自由に監査できます。"
-        }
-      ],
-      "howto": [
-        {
-          "name": "動画または字幕ファイルから開始",
-          "text": "SRT/ASS/VTT/SBV/LRC 字幕をアップロード。YouTube は yt-dlp で抽出、ニコ動は配信者ダッシュボードから、他プラットフォームは正規ルートから取得。jschardet で UTF-8/UTF-16/Shift-JIS/GBK エンコーディングを自動検出。"
-        },
-        {
-          "name": "エンジンと出力モードを選択",
-          "text": "無料テストは Google、品質重視は DeepSeek/DeepL API。公開用は「翻訳のみ」、語学学習用は「バイリンガル」。バイリンガルでは訳文を原文の上（学習）または下（視聴）に配置可能。"
-        },
-        {
-          "name": "翻訳してプラットフォームへエクスポート",
-          "text": "翻訳をクリックし、プレビューで時間軸を確認。YouTube コミュニティ字幕用 SRT、Premiere/DaVinci Resolve 用スタイル付き ASS、Web プレーヤー用 VTT、歌詞用 LRC をダウンロード。"
         }
       ],
       "features": [
@@ -430,7 +463,11 @@
     "textParser": "テキスト処理",
     "jsonParser": "JSON処理",
     "dataParser": "データ変換",
-    "otherTools": "その他のツール"
+    "otherTools": "その他のツール",
+    "externalTools": {
+      "legendtalk": "AI思想家ラウンドテーブル",
+      "imgprompt": "AI画像プロンプト"
+    }
   },
   "Metadata": {
     "title": "ToolsByAI | 無料で使えるAI翻訳＆データ処理ツール集",

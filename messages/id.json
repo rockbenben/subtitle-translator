@@ -89,6 +89,7 @@
     "exportedFile": "Diekspor",
     "extractedText": "Teks Diekstrak",
     "translating": "Menerjemahkan...",
+    "translateDone": "Terjemahan selesai",
     "multiTranslating": "Menerjemahkan, total bahasa:",
     "model": "Model",
     "sameLanguageTarget": "Bahasa sumber dan target sama; target otomatis disesuaikan ke",
@@ -132,7 +133,7 @@
     "requestTimeoutSec": "Batas Waktu",
     "requestTimeoutSecTooltip": "Waktu tunggu maksimum per permintaan (detik). Pemikiran LLM membutuhkan waktu lebih lama; direkomendasikan 180 detik atau lebih.",
     "customExportFilename": "Pola Nama File Ekspor",
-    "customExportFilenameTooltip": "'{'name'}' = nama file asli, '{'lang'}' = bahasa, '{'ext'}' = ekstensi, '{'date'}' = tanggal, '{'time'}' = waktu",
+    "customExportFilenameTooltip": "'{'name'}' = nama file asli, '{'lang'}' = bahasa, '{'ext'}' = ekstensi, '{'date'}' = tanggal, '{'time'}' = waktu; dalam mode multibahasa, '{'lang'}' ditambahkan otomatis untuk mencegah bentrokan nama",
     "partialFailureTitle": "{count} baris gagal diterjemahkan",
     "partialFailureDesc": "Baris yang gagal mempertahankan teks asli sebagai placeholder, file tetap dapat digunakan. Kegagalan semacam ini biasanya disebabkan oleh fluktuasi jaringan atau ketidakstabilan sementara layanan terjemahan — layanan gratis dan server yang di-host sendiri sangat rentan, dan ini bukan masalah konfigurasi Anda. Klik Coba lagi untuk melanjutkan (baris yang berhasil berasal dari cache, tanpa penerjemahan ulang); jika tetap gagal, coba lagi nanti atau beralih ke layanan terjemahan lain. Atau klik Lihat baris yang gagal untuk menanganinya secara manual.",
     "retryFailedLines": "Coba lagi",
@@ -170,6 +171,7 @@
     "translategemmaUnavailable": "Layanan TranslateGemma sementara tidak dapat dijangkau, pastikan server lokal Anda (LM Studio / llama.cpp / Ollama) sedang berjalan dan URL sudah benar.",
     "networkUnavailable": "Layanan terjemahan sementara tidak dapat dijangkau — bisa jadi masalah jaringan atau gangguan sementara pada layanan. Silakan coba lagi nanti atau beralih ke layanan terjemahan lain.",
     "translationTimeout": "Permintaan terjemahan habis waktu — bisa jadi jaringan lambat atau layanan terlalu lama merespons. Silakan coba lagi nanti atau beralih ke layanan terjemahan lain.",
+    "translationTimeoutLocal": "Penerjemahan model lokal kehabisan waktu. LLM lokal bisa macet dalam perulangan berulang — turunkan max_tokens (batas keluaran) di Pengaturan Lanjutan, dan pastikan bahasa sumber yang dipilih sesuai dengan teks sebenarnya.",
     "langGroupCommon": "Umum",
     "langGroupEurope": "Eropa",
     "langGroupMiddleEast": "Timur Tengah",
@@ -220,7 +222,50 @@
     "reviewColSource": "Sumber",
     "reviewColTarget": "Terjemahan",
     "reviewApplyDownload": "Terapkan & unduh",
-    "reviewDownloaded": "Subtitle hasil tinjauan diunduh"
+    "reviewDownloaded": "Subtitle hasil tinjauan diunduh",
+    "assStyleButton": "Gaya ASS",
+    "assStyleTooltip": "Sesuaikan font, ukuran, warna, dan posisi subtitle ASS dua bahasa",
+    "assNativeModeSource": "Pertahankan gaya sumber",
+    "assNativeModeRebuild": "Ubah gaya",
+    "assNativeModeTooltip": "ASS native dwibahasa: pertahankan gaya file sumber, atau buang dan ubah gaya dengan Gaya ASS (khusus subtitle dialog)",
+    "assStyleTitle": "Pengaturan Gaya ASS",
+    "assPresetLabel": "Prasetel",
+    "assPresetDefault": "Bawaan",
+    "assPresetLarge": "Besar",
+    "assPresetCinematic": "Sinematik",
+    "assPresetBoxed": "Kotak",
+    "assPresetCustom": "Kustom",
+    "assGlobalGroup": "Global",
+    "assTranslationStyle": "Gaya terjemahan",
+    "assOriginalStyle": "Gaya asli",
+    "assFontName": "Font",
+    "assFontPlaceholder": "Kosongkan = otomatis sesuai bahasa target",
+    "assReadSystemFonts": "Baca font sistem",
+    "assSystemFontsGroup": "Font sistem",
+    "assReadSystemFontsUnsupported": "Browser ini tidak dapat membaca font sistem — ketik nama font langsung",
+    "assFontSize": "Ukuran",
+    "assTextColor": "Warna teks",
+    "assOutlineColor": "Warna garis luar",
+    "assBoxColor": "Warna kotak",
+    "assOutline": "Garis luar",
+    "assShadow": "Bayangan",
+    "assAlignment": "Perataan",
+    "assAlignBottom": "Tengah bawah",
+    "assAlignTop": "Tengah atas",
+    "assMarginV": "Margin",
+    "previewOriginal": "Asli",
+    "previewTranslation": "Terjemahan",
+    "fontGroup": {
+      "broad": "Luas / multibahasa",
+      "zhHans": "Tionghoa Sederhana",
+      "zhHant": "Tionghoa Tradisional",
+      "japanese": "日本語",
+      "korean": "한국어",
+      "arabic": "العربية",
+      "devanagari": "हिन्दी / Devanagari",
+      "thai": "ไทย",
+      "latin": "Latin / Sirilik / Yunani"
+    }
   },
   "TranslationSettings": {
     "resetConfigSuccess": "Konfigurasi disetel ulang ke default",
@@ -276,6 +321,8 @@
     "presetUpdated": "Disimpan ke preset saat ini",
     "presetDeleteConfirm": "Hapus preset ini?",
     "presetEmptyHint": "Belum ada preset — edit lalu klik Simpan",
+    "presetDefault": "Prompt bawaan",
+    "presetDefaultReadonly": "Prompt bawaan adalah item bawaan — tidak dapat diubah atau dihapus. Gunakan \"Simpan sebagai preset baru\" untuk menyesuaikan.",
     "qwenMtDomains": "Prompt Domain (hanya bahasa Inggris)",
     "sendSystemPrompt": "Kirim prompt system",
     "sendSystemPromptExtra": "Matikan hanya ketika chat template menolak peran system — kesalahan tipikal \"Conversations must start with a user prompt\" (mis. keluarga Gemma).",
@@ -329,20 +376,6 @@
         {
           "q": "Apakah file subtitle diunggah ke server Anda? Apakah privat dan aman?",
           "a": "Sepenuhnya sisi-klien: pembacaan file subtitle, parsing, dan permintaan terjemahan semua terjadi di browser Anda — konten asli tidak pernah menyentuh server kami. Permintaan mesin LLM dikirim langsung dari browser Anda ke endpoint API yang Anda konfigurasi (OpenAI, DeepSeek, dll.), dan API Key disimpan hanya di localStorage browser lokal. Cache terjemahan menggunakan IndexedDB browser dan tetap ada di seluruh sesi. Kode sumber terbuka di GitHub (rockbenben/subtitle-translator) untuk self-hosting atau audit."
-        }
-      ],
-      "howto": [
-        {
-          "name": "Mulai dari video atau file subtitle",
-          "text": "Unggah SRT/ASS/VTT/SBV/LRC. Ekstraksi: YouTube via yt-dlp, platform lain via alat khusus. Format dan pengkodean UTF-8/UTF-16/GBK terdeteksi otomatis."
-        },
-        {
-          "name": "Pilih mesin dan mode output",
-          "text": "Google gratis untuk tes cepat, DeepSeek/DeepL API untuk kualitas. 'Hanya terjemahan' untuk publikasi, 'Dwibahasa' untuk pembelajaran bahasa. Di dwibahasa, posisi atas (belajar) atau bawah (menonton)."
-        },
-        {
-          "name": "Terjemahkan dan ekspor ke platform Anda",
-          "text": "Klik Terjemahkan dan verifikasi timing di pratinjau. Unduh SRT untuk subtitle komunitas YouTube, ASS bergaya untuk Premiere/DaVinci Resolve, VTT untuk pemutar web, LRC untuk lirik."
         }
       ],
       "features": [
@@ -430,7 +463,11 @@
     "textParser": "Alat Teks",
     "jsonParser": "Alat JSON",
     "dataParser": "Alat Data",
-    "otherTools": "Alat Lainnya"
+    "otherTools": "Alat Lainnya",
+    "externalTools": {
+      "legendtalk": "Meja Bundar Pemikir AI",
+      "imgprompt": "Prompt Gambar AI"
+    }
   },
   "Metadata": {
     "title": "ToolsByAI - Peralatan Data & Terjemahan AI untuk Developer",

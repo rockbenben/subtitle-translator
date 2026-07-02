@@ -89,6 +89,7 @@
     "exportedFile": "Dışa Aktarıldı",
     "extractedText": "Çıkarılan Metin",
     "translating": "Çevriliyor...",
+    "translateDone": "Çeviri tamamlandı",
     "multiTranslating": "Çevriliyor, toplam dil:",
     "model": "Model",
     "sameLanguageTarget": "Kaynak ve hedef diller aynı; hedef otomatik olarak şuna ayarlandı:",
@@ -132,7 +133,7 @@
     "requestTimeoutSec": "Zaman Aşımı",
     "requestTimeoutSecTooltip": "İstek başına maksimum bekleme süresi (saniye). LLM düşünmesi daha uzun sürer; 180 saniye veya daha fazlası önerilir.",
     "customExportFilename": "Dışa Aktarma Dosya Adı Kalıbı",
-    "customExportFilenameTooltip": "'{'name'}' = orijinal dosya adı, '{'lang'}' = dil, '{'ext'}' = uzantı, '{'date'}' = tarih, '{'time'}' = saat",
+    "customExportFilenameTooltip": "'{'name'}' = orijinal dosya adı, '{'lang'}' = dil, '{'ext'}' = uzantı, '{'date'}' = tarih, '{'time'}' = saat; çok dilli modda ad çakışmalarını önlemek için '{'lang'}' otomatik eklenir",
     "partialFailureTitle": "{count} satır çevrilemedi",
     "partialFailureDesc": "Başarısız satırlar yer tutucu olarak orijinal metni korudu, dosya kullanılabilir kalır. Bu tür hatalar genellikle ağ dalgalanmaları veya çeviri hizmetinin geçici kararsızlığından kaynaklanır — ücretsiz hizmetler ve kendi barındırılan sunucular özellikle bu duruma eğilimlidir ve sizin yapılandırmanızla ilgili bir sorun değildir. Devam etmek için Yeniden Dene'ye tıklayın (başarılı satırlar önbellekten gelir, yeniden çevrilmez); hata devam ederse, daha sonra tekrar deneyin veya başka bir çeviri hizmetine geçin. Veya manuel olarak işlemek için Başarısız satırları gör'e tıklayın.",
     "retryFailedLines": "Yeniden dene",
@@ -170,6 +171,7 @@
     "translategemmaUnavailable": "TranslateGemma hizmetine geçici olarak ulaşılamıyor, yerel sunucunuzun (LM Studio / llama.cpp / Ollama) çalıştığından ve URL'nin doğru olduğundan emin olun.",
     "networkUnavailable": "Çeviri hizmetine geçici olarak ulaşılamıyor — ağ sorunu veya hizmette geçici bir aksaklık olabilir. Lütfen daha sonra tekrar deneyin veya başka bir çeviri hizmetine geçin.",
     "translationTimeout": "Çeviri isteği zaman aşımına uğradı — yavaş bir ağ veya hizmet yanıt vermekte gecikiyor olabilir. Lütfen daha sonra tekrar deneyin veya başka bir çeviri hizmetine geçin.",
+    "translationTimeoutLocal": "Yerel model çevirisi zaman aşımına uğradı. Yerel bir LLM tekrar döngüsünde takılabilir — Gelişmiş Ayarlar'da max_tokens (çıktı sınırı) değerini düşürün ve seçili kaynak dilin gerçek metinle eşleştiğinden emin olun.",
     "langGroupCommon": "Yaygın",
     "langGroupEurope": "Avrupa",
     "langGroupMiddleEast": "Orta Doğu",
@@ -220,7 +222,50 @@
     "reviewColSource": "Kaynak",
     "reviewColTarget": "Çeviri",
     "reviewApplyDownload": "Uygula ve indir",
-    "reviewDownloaded": "İncelenen altyazı indirildi"
+    "reviewDownloaded": "İncelenen altyazı indirildi",
+    "assStyleButton": "ASS Stili",
+    "assStyleTooltip": "İki dilli ASS altyazısının yazı tipi, boyut, renk ve konumunu özelleştirin",
+    "assNativeModeSource": "Kaynak stilini koru",
+    "assNativeModeRebuild": "Yeniden biçimlendir",
+    "assNativeModeTooltip": "Yerel ASS iki dilli: kaynak dosyanın stillerini koruyun ya da atıp ASS Stili ile yeniden biçimlendirin (yalnızca diyalog altyazıları)",
+    "assStyleTitle": "ASS Stil Ayarları",
+    "assPresetLabel": "Ön Ayar",
+    "assPresetDefault": "Varsayılan",
+    "assPresetLarge": "Büyük",
+    "assPresetCinematic": "Sinematik",
+    "assPresetBoxed": "Kutu",
+    "assPresetCustom": "Özel",
+    "assGlobalGroup": "Genel",
+    "assTranslationStyle": "Çeviri stili",
+    "assOriginalStyle": "Orijinal stili",
+    "assFontName": "Yazı tipi",
+    "assFontPlaceholder": "Boş bırakın = hedef dile göre otomatik",
+    "assReadSystemFonts": "Sistem yazı tiplerini oku",
+    "assSystemFontsGroup": "Sistem yazı tipleri",
+    "assReadSystemFontsUnsupported": "Bu tarayıcı sistem yazı tiplerini okuyamıyor — bir yazı tipi adı yazın",
+    "assFontSize": "Boyut",
+    "assTextColor": "Metin rengi",
+    "assOutlineColor": "Dış hat rengi",
+    "assBoxColor": "Kutu rengi",
+    "assOutline": "Dış hat",
+    "assShadow": "Gölge",
+    "assAlignment": "Hizalama",
+    "assAlignBottom": "Alt orta",
+    "assAlignTop": "Üst orta",
+    "assMarginV": "Kenar boşluğu",
+    "previewOriginal": "Orijinal",
+    "previewTranslation": "Çeviri",
+    "fontGroup": {
+      "broad": "Geniş / çok dilli",
+      "zhHans": "Basitleştirilmiş Çince",
+      "zhHant": "Geleneksel Çince",
+      "japanese": "日本語",
+      "korean": "한국어",
+      "arabic": "العربية",
+      "devanagari": "हिन्दी / Devanagari",
+      "thai": "ไทย",
+      "latin": "Latin / Kiril / Yunan"
+    }
   },
   "TranslationSettings": {
     "resetConfigSuccess": "Yapılandırma varsayılanlara sıfırlandı",
@@ -276,6 +321,8 @@
     "presetUpdated": "Mevcut ön ayara kaydedildi",
     "presetDeleteConfirm": "Bu ön ayarı silmek istiyor musunuz?",
     "presetEmptyHint": "Henüz ön ayar yok — düzenleyin ve Kaydet'e tıklayın",
+    "presetDefault": "Varsayılan istem",
+    "presetDefaultReadonly": "Varsayılan istem yerleşiktir — değiştirilemez veya silinemez. Özelleştirmek için \"Yeni ön ayar olarak kaydet\"i kullanın.",
     "qwenMtDomains": "Etki Alanı İpuçları (yalnızca İngilizce)",
     "sendSystemPrompt": "system istemini gönder",
     "sendSystemPromptExtra": "Yalnızca chat template system rolünü reddettiğinde kapatın — tipik hata \"Conversations must start with a user prompt\" (örn. Gemma ailesi).",
@@ -329,20 +376,6 @@
         {
           "q": "Altyazı dosyaları sunucuya yükleniyor mu? Gizlilik güvenli mi?",
           "a": "Tamamen istemci tarafı: altyazı dosyası okuma, ayrıştırma ve çeviri istekleri tarayıcınızda gerçekleşir — orijinal içerik sunucularımıza hiç ulaşmaz. LLM motor istekleri doğrudan tarayıcınızdan yapılandırdığınız API uç noktasına gider (OpenAI, DeepSeek vb.) ve API Key'ler yalnızca yerel localStorage'da saklanır. Çeviri önbelleği tarayıcı IndexedDB'sini kullanır ve oturumlar arasında kalır. Kaynak kod GitHub'da açıktır (rockbenben/subtitle-translator), self-host veya inceleme yapabilirsiniz."
-        }
-      ],
-      "howto": [
-        {
-          "name": "Video veya altyazı dosyasından başlayın",
-          "text": "SRT/ASS/VTT/SBV/LRC yükleyin. Çıkarma: YouTube yt-dlp ile, diğer platformlar özel araçlarla. Format ve UTF-8/UTF-16/GBK kodlaması otomatik algılanır."
-        },
-        {
-          "name": "Motor ve çıktı modunu seçin",
-          "text": "Hızlı testler için Google ücretsiz, kalite için DeepSeek/DeepL API. Yayınlamak için 'Yalnızca Çeviri', dil öğrenmek için 'İki Dilli'. İki dillide çeviri üstte (öğrenme) veya altta (izleme)."
-        },
-        {
-          "name": "Çevirin ve platformunuza aktarın",
-          "text": "Çevir'e tıklayın ve önizlemede zamanlamayı kontrol edin. YouTube topluluk altyazıları için SRT, Premiere/DaVinci Resolve için stilli ASS, web oynatıcılar için VTT, şarkı sözleri için LRC indirin."
         }
       ],
       "features": [
@@ -430,7 +463,11 @@
     "textParser": "Metin Araçları",
     "jsonParser": "JSON Araçları",
     "dataParser": "Veri Araçları",
-    "otherTools": "Diğer Araçlar"
+    "otherTools": "Diğer Araçlar",
+    "externalTools": {
+      "legendtalk": "AI Düşünürler Yuvarlak Masası",
+      "imgprompt": "AI Görsel İstemleri"
+    }
   },
   "Metadata": {
     "title": "ToolsByAI - Geliştiriciler İçin Yapay Zeka ve Veri Araçları",

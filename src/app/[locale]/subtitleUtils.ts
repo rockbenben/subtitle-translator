@@ -337,6 +337,11 @@ export const convertTimeToAss = (time: string): string => {
   return `${parseInt(hours || "0", 10)}:${minutes}:${seconds}.${msValue}`;
 };
 
+// 双语两个 ASS 样式名(header 定义、body 引用的单一来源,防两处漂移):
+// 译文 → Default(保证文件始终有 Default 样式)、原文 → Secondary。
+const STYLE_TRANSLATION = "Default" as const;
+const STYLE_ORIGINAL = "Secondary" as const;
+
 /**
  * 构建 ASS 双语字幕的 [Events] body(Dialogue 行列表,不含 assHeader)。
  * 用于 SRT/VTT 源 + 双语 + format=ass 场景。
@@ -344,9 +349,11 @@ export const convertTimeToAss = (time: string): string => {
  * 关键设计:用原 timeLine 字符串而非 ASS 转换后时间做 Map key —— ASS 时间精度只到厘秒,
  * 两个 ms 级差异的独立 cue 转换后 key 相同会被错误合并(回归点);Map 保留插入顺序。
  *
- * libass 渲染规则:先出现的 Dialogue 画在底,后出现的画在上。所以:
- * - isOriginalFirst=true(原文在上)→ 原文是 second(Default 样式,画在上),译文是 first(Secondary,画在底)
- * - isOriginalFirst=false → 反过来
+ * 样式按角色固定:译文恒用 Default 样式、原文恒用 Secondary 样式(与位置无关)。
+ * libass 渲染规则:先出现的 Dialogue 画在底,后出现的画在上。所以排绘制顺序时,
+ * 「在上」的那个角色放第二行:
+ * - isOriginalFirst=true(原文在上)→ 译文(Default)在前/底,原文(Secondary)在后/顶
+ * - isOriginalFirst=false → 原文(Secondary)在前/底,译文(Default)在后/顶
  *
  * 多行 cue(同 timeLine 多条 content) 在同一 Dialogue pair 内用 \N 聚合,
  * 不会膨胀成多对 Dialogue。
@@ -361,7 +368,7 @@ export const buildAssBilingualBody = (
   // 可选参数:不传时退回原始行(旧调用方兼容)。
   cleanedContents?: string[]
 ): string => {
-  type CueEntry = { assStart: string; assEnd: string; first: string; second: string };
+  type CueEntry = { assStart: string; assEnd: string; translation: string; original: string };
   // Map key = 时间码行的【行号】(findTimeLineIndexBefore):文本 key 会把时间码
   // 逐字节相同的两个独立 cue 错误合并(内容跨文件"传送")。行号唯一,同一物理
   // cue 的多行内容仍正确聚合。
@@ -374,29 +381,29 @@ export const buildAssBilingualBody = (
 
     const originalText = cleanedContents?.[i] ?? lines[index];
     const translatedText = translatedLines[i];
-    const firstText = isOriginalFirst ? translatedText : originalText;
-    const secondText = isOriginalFirst ? originalText : translatedText;
 
     const existing = subtitles.get(timeIdx);
     if (existing) {
-      existing.first += `\\N${firstText}`;
-      existing.second += `\\N${secondText}`;
+      existing.translation += `\\N${translatedText}`;
+      existing.original += `\\N${originalText}`;
     } else {
       const [startTime, endTime] = timeLine.split(TIME_ARROW_SPLIT).map((t) => t.trim().split(/\s/)[0]);
       subtitles.set(timeIdx, {
         assStart: convertTimeToAss(startTime.trim()),
         assEnd: convertTimeToAss(endTime.trim()),
-        first: firstText,
-        second: secondText,
+        translation: translatedText,
+        original: originalText,
       });
     }
   });
 
   return Array.from(subtitles.values())
-    .map(
-      ({ assStart, assEnd, first, second }) =>
-        `Dialogue: 0,${assStart},${assEnd},Secondary,NTP,0000,0000,0000,,${first}\nDialogue: 0,${assStart},${assEnd},Default,NTP,0000,0000,0000,,${second}`
-    )
+    .map(({ assStart, assEnd, translation, original }) => {
+      const transLine = `Dialogue: 0,${assStart},${assEnd},${STYLE_TRANSLATION},NTP,0000,0000,0000,,${translation}`;
+      const origLine = `Dialogue: 0,${assStart},${assEnd},${STYLE_ORIGINAL},NTP,0000,0000,0000,,${original}`;
+      // 在上的角色放第二行(后绘制 → 画在上)。
+      return isOriginalFirst ? `${transLine}\n${origLine}` : `${origLine}\n${transLine}`;
+    })
     .join("\n");
 };
 
@@ -616,8 +623,144 @@ export const restoreAssAfterTranslation = (translatedLines: string[], tagMaps: A
   });
 };
 
-// ASS 文件头模板
-export const assHeader = `[Script Info]
+// ── ASS 样式辅助:颜色 / 双语字体解析 ────────────────────────────
+// ASS 颜色是 &HAABBGGRR(BGR 顺序 + alpha);颜色拾取器用 #RRGGBB。AA=00 表示不透明。
+export const hexToAssColor = (hex: string): string => {
+  const h = hex.replace("#", "");
+  const r = h.slice(0, 2);
+  const g = h.slice(2, 4);
+  const b = h.slice(4, 6);
+  return `&H00${b}${g}${r}`.toUpperCase();
+};
+
+export const assColorToHex = (ass: string): string => {
+  const m = ass.replace(/&H/i, "").padStart(8, "0");
+  const bb = m.slice(2, 4);
+  const gg = m.slice(4, 6);
+  const rr = m.slice(6, 8);
+  return `#${rr}${gg}${bb}`.toUpperCase();
+};
+
+// 每个文字系统:默认字体 + 它能覆盖的文字系统集合(含自身)。CJK/复杂文字字体普遍含拉丁字母。
+export const SCRIPT_INFO: Record<string, { font: string; covers: string[] }> = {
+  latin: { font: "Arial", covers: ["latin"] },
+  hans: { font: "Microsoft YaHei", covers: ["hans", "latin"] },
+  hant: { font: "Microsoft JhengHei", covers: ["hant", "latin"] },
+  jp: { font: "Yu Gothic", covers: ["jp", "latin"] },
+  kr: { font: "Malgun Gothic", covers: ["kr", "latin"] },
+  arabic: { font: "Arial", covers: ["arabic", "latin"] },
+  devanagari: { font: "Nirmala UI", covers: ["devanagari", "latin"] },
+  thai: { font: "Leelawadee UI", covers: ["thai", "latin"] },
+};
+
+// 语言码 → 文字系统;未列出(en/fr/ru/…)与 "auto" 一律 latin。
+export const LANG_SCRIPT: Record<string, string> = {
+  zh: "hans",
+  yue: "hans",
+  "zh-hant": "hant",
+  ja: "jp",
+  ko: "kr",
+  ar: "arabic",
+  he: "arabic",
+  yi: "arabic",
+  hi: "devanagari",
+  th: "thai",
+};
+
+export const scriptOf = (lang: string): string => LANG_SCRIPT[lang] ?? "latin";
+
+// 双语字体解析(按角色):返回译文/原文各自字体。位置无关。
+//  1) 用户填了具体字体 → 两者都用它
+//  2) 否则译文按目标语言、原文按源语言取脚本字体;若一个字体能覆盖另一脚本 → 两者统一用它
+//  3) 都覆盖不了 → 各用各自
+export const resolveBilingualFonts = (
+  sourceLang: string,
+  targetLang: string,
+  explicitFont: string
+): { translation: string; original: string } => {
+  const explicit = explicitFont.trim();
+  if (explicit) return { translation: explicit, original: explicit };
+
+  const ts = scriptOf(targetLang); // 译文
+  const os = scriptOf(sourceLang); // 原文
+  const ti = SCRIPT_INFO[ts];
+  const oi = SCRIPT_INFO[os];
+
+  if (ti.font === oi.font) return { translation: ti.font, original: oi.font };
+  if (ti.covers.includes(os)) return { translation: ti.font, original: ti.font };
+  if (oi.covers.includes(ts)) return { translation: oi.font, original: oi.font };
+  return { translation: ti.font, original: oi.font };
+};
+
+// ── ASS 双语样式:结构化配置 + 头部生成器 ───────────────────────
+// 样式按【角色】走:译文 → ASS Default 样式、原文 → Secondary 样式。
+// 谁在上谁在下由 buildAssBilingualBody 按 isOriginalFirst 排绘制顺序,不影响样式。
+export interface AssLineStyle {
+  fontSize: number; // ASS Fontsize
+  textColor: string; // hex #RRGGBB
+  outlineColor: string; // hex #RRGGBB
+  outline: number; // ASS Outline 宽度
+  shadow: number; // ASS Shadow 粗细
+  // 半透明底框:BorderStyle=3(不透明框),OutlineColour 当框填充色(我们固定
+  // 用 ~50% 透明黑)。亮/杂背景下保证可读,而非靠描边。缺省 = 描边款。
+  boxed?: boolean;
+}
+
+export interface AssStyleConfig {
+  fontName: string; // 全局共用字体;空串 = 自动(随各自语言)
+  alignment: number; // ASS Alignment(小键盘式,2=底部居中)
+  marginV: number; // 底部边距
+  // 样式按【角色】走:译文恒用 translation 样式、原文恒用 original 样式,与上下位置无关。
+  translation: AssLineStyle; // 译文样式 → ASS Default
+  original: AssLineStyle; // 原文样式 → ASS Secondary
+}
+
+export type AssStylePreset = "default" | "large" | "cinematic" | "boxed";
+
+const line = (
+  fontSize: number,
+  textColor: string,
+  outline: number,
+  shadow: number,
+  outlineColor = "#000000",
+  boxed = false
+): AssLineStyle => ({ fontSize, textColor, outlineColor, outline, shadow, ...(boxed ? { boxed: true } : {}) });
+
+// 字号/描边按 1080p 中外双语【libass 实测 + 惯例】定:译文(主)~64、原文(副)~48
+// (比值 ~1.33);58/44 实测偏小且描边 2 在亮背景上白字会糊边,故主行 64、描边 3。
+// 大字号(80/60)给电视/远看:80px 配描边 2 在亮背景上几乎只剩空心轮廓,实测须 4。
+// marginV 50(底部约 4.6% 屏高,常规透气量);顺序 = 受欢迎度。
+export const ASS_STYLE_PRESETS: Record<AssStylePreset, AssStyleConfig> = {
+  default: { fontName: "", alignment: 2, marginV: 50, translation: line(64, "#FFFFFF", 3, 1), original: line(48, "#FFFFFF", 3, 1) },
+  cinematic: { fontName: "", alignment: 2, marginV: 50, translation: line(64, "#FFD700", 3, 1), original: line(48, "#FFFFFF", 3, 1) },
+  large: { fontName: "", alignment: 2, marginV: 50, translation: line(80, "#FFFFFF", 4, 1), original: line(60, "#FFFFFF", 4, 1) },
+  // 底框:白字 + 半透明黑框(BorderStyle=3),无描边无阴影(outline 当框内边距)。
+  // 框色 = outlineColor「#0000009E」:黑、CSS alpha 0x9E≈62% 不透明(可在抽屉里改色+透明度)。
+  boxed: { fontName: "", alignment: 2, marginV: 50, translation: line(64, "#FFFFFF", 4, 0, "#0000009E", true), original: line(48, "#FFFFFF", 4, 0, "#0000009E", true) },
+};
+
+// 单条 Style 行。Format 顺序见下方 [V4+ Styles] 的 Format: 行。font 按行(top/bottom)各传各的。
+// boxed:BorderStyle=3(不透明框),OutlineColour 即框填充色 —— 取用户 outlineColor 的
+// RGB +【它自带的 alpha 位】,所以底框颜色和透明度都可调。ASS 的 alpha 与 CSS 相反
+// (00=不透明、FF=全透明)→ assAlpha = 255 − cssAlpha;无 alpha 位(纯 #RRGGBB)视为
+// 不透明。其余款 BorderStyle=1(描边+阴影)。
+const boxFill = (cssHex: string): string => {
+  const h = cssHex.replace("#", "");
+  const cssA = h.length >= 8 ? parseInt(h.slice(6, 8), 16) : 255;
+  const assA = (255 - (Number.isFinite(cssA) ? cssA : 255)).toString(16).padStart(2, "0").toUpperCase();
+  return `&H${assA}${hexToAssColor("#" + h.slice(0, 6)).slice(4)}`; // slice(4) 去掉 "&H00" 取 BBGGRR
+};
+const buildStyleLine = (name: "Default" | "Secondary", font: string, s: AssLineStyle, config: AssStyleConfig): string => {
+  const borderStyle = s.boxed ? 3 : 1;
+  const outlineColour = s.boxed ? boxFill(s.outlineColor) : hexToAssColor(s.outlineColor);
+  return `Style: ${name},${font},${s.fontSize},${hexToAssColor(
+    s.textColor
+  )},&H000000FF,${outlineColour},&H00000000,0,0,0,0,100,100,0,0,${borderStyle},${s.outline},${s.shadow},${config.alignment},30,30,${config.marginV},1`;
+};
+
+export const buildAssHeader = (config: AssStyleConfig, sourceLang: string, targetLang: string): string => {
+  const fonts = resolveBilingualFonts(sourceLang, targetLang, config.fontName);
+  return `[Script Info]
 Title: Bilingual Subtitles
 ScriptType: v4.00+
 WrapStyle: 0
@@ -628,8 +771,66 @@ Collisions: Normal
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Default,Noto Sans,70,&H00FFFFFF,&H0000FFFF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,1,2,30,30,35,1
-Style: Secondary,Noto Sans,55,&H003CF7F4,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,1,2,30,30,35,1
+${buildStyleLine(STYLE_TRANSLATION, fonts.translation, config.translation, config)}
+${buildStyleLine(STYLE_ORIGINAL, fonts.original, config.original, config)}
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text`;
+};
+
+// 剥【所有】行内覆盖标签(如 {\an8}/{\i1}/{\pos(..)}),使文本在干净 Default/Secondary 下渲染。
+// 「重新排版」=放弃源样式,故行首/行中/行尾标签一律剥掉;\N 硬换行不在花括号内,不受影响。
+const stripAllAssTags = (s: string): string => s.replace(/\{[^}]*\}/g, "");
+
+/**
+ * 原生 ASS「重新排版(放弃源样式)」:丢弃源 [Script Info]/[V4+ Styles],用 buildAssHeader
+ * 重建头部,把每条可译 Dialogue 重排成 Default(译文)/Secondary(原文) 两行;非对白/verbatim
+ * 行原样保留(它们引用的源具名样式已不存在 → libass 回退 Default)。仅用于双语。
+ *
+ * 时间取自源 Dialogue 行的字段 1/2(ASS/SSA 通用),无需转换。
+ */
+export const buildNativeAssRebuild = (
+  lines: string[],
+  contentIndices: number[],
+  translatedLines: string[],
+  verbatimIndices: Set<number>,
+  config: AssStyleConfig,
+  sourceLang: string,
+  targetLang: string,
+  isOriginalFirst: boolean,
+  cleanedContents?: string[]
+): string => {
+  const header = buildAssHeader(config, sourceLang, targetLang);
+
+  // 源 [Events] 正文起点:[Events] 行后第一条 Format: 行之后。
+  const evIdx = lines.findIndex((l) => /^\[Events\]/i.test(l.trim()));
+  let bodyStart = 0;
+  if (evIdx !== -1) {
+    const fmtIdx = lines.findIndex((l, i) => i > evIdx && /^Format:/i.test(l.trim()));
+    bodyStart = fmtIdx !== -1 ? fmtIdx + 1 : evIdx + 1;
+  }
+
+  // 行号 → {译文, 原文文本}
+  const byIndex = new Map<number, { trans: string; orig: string }>();
+  contentIndices.forEach((idx, i) => {
+    byIndex.set(idx, { trans: translatedLines[i], orig: cleanedContents?.[i] ?? lines[idx] });
+  });
+
+  const out: string[] = [];
+  for (let i = bodyStart; i < lines.length; i++) {
+    const entry = byIndex.get(i);
+    if (entry && !verbatimIndices.has(i)) {
+      const parts = lines[i].split(",");
+      const start = parts[1]?.trim() ?? "0:00:00.00";
+      const end = parts[2]?.trim() ?? "0:00:00.00";
+      const transText = stripAllAssTags(entry.trans);
+      const origText = stripAllAssTags(entry.orig);
+      const transLine = `Dialogue: 0,${start},${end},${STYLE_TRANSLATION},NTP,0000,0000,0000,,${transText}`;
+      const origLine = `Dialogue: 0,${start},${end},${STYLE_ORIGINAL},NTP,0000,0000,0000,,${origText}`;
+      out.push(isOriginalFirst ? `${transLine}\n${origLine}` : `${origLine}\n${transLine}`);
+    } else {
+      out.push(lines[i]); // 非对白/verbatim 原样保留
+    }
+  }
+  return `${header}\n${out.join("\n")}`;
+};

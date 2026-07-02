@@ -5,6 +5,7 @@ import { Select, Button, Modal, Input, Space, Popconfirm, App, Tooltip } from "a
 import { SaveOutlined, PlusOutlined, DeleteOutlined } from "@ant-design/icons";
 import { useTranslations } from "next-intl";
 import { useTranslationContext } from "@/app/components/TranslationContext";
+import { DEFAULT_PROMPT_PRESET_ID } from "@/app/hooks/usePromptPresets";
 
 /**
  * Picker for prompt presets (systemPrompt + userPrompt). Mirrors the API config
@@ -36,29 +37,33 @@ const PromptPresetPicker = () => {
     message.success(t("presetSaved"));
   };
 
-  const isEmpty = promptPresets.length === 0;
-  const placeholder = isEmpty ? t("presetEmptyHint") : t("presetSelect");
+  // The default-prompt entry is always present and read-only: selecting it loads
+  // the factory prompts, but it can't be overwritten or deleted. "Save to current"
+  // and "delete" act on a selected user preset only — disabled otherwise.
+  const isDefaultActive = activePromptPresetId === DEFAULT_PROMPT_PRESET_ID;
+  const canEditActive = !!activePromptPresetId && !isDefaultActive;
+  const options = [{ label: t("presetDefault"), value: DEFAULT_PROMPT_PRESET_ID }, ...promptPresets.map((p) => ({ label: p.name, value: p.id }))];
 
   return (
     <div style={{ marginBottom: 16 }}>
       <Space.Compact style={{ width: "100%" }}>
         <Select
           style={{ flex: 1 }}
-          placeholder={placeholder}
+          placeholder={t("presetSelect")}
           aria-label={t("presetSelect")}
           value={activePromptPresetId || undefined}
           onChange={(value) => loadPromptPreset(value)}
           allowClear
           onClear={() => loadPromptPreset("")}
-          options={promptPresets.map((p) => ({ label: p.name, value: p.id }))}
+          options={options}
         />
-        <Tooltip title={t("presetUpdate")}>
+        <Tooltip title={isDefaultActive ? t("presetDefaultReadonly") : t("presetUpdate")}>
           <Button
             icon={<SaveOutlined />}
-            disabled={!activePromptPresetId}
+            disabled={!canEditActive}
             aria-label={t("presetUpdate")}
             onClick={() => {
-              if (!activePromptPresetId) return;
+              if (!canEditActive) return;
               updatePromptPreset(activePromptPresetId);
               message.success(t("presetUpdated"));
             }}
@@ -77,17 +82,17 @@ const PromptPresetPicker = () => {
         <Popconfirm
           title={t("presetDeleteConfirm")}
           onConfirm={() => {
-            if (activePromptPresetId) {
+            if (canEditActive) {
               deletePromptPreset(activePromptPresetId);
               message.success(t("presetDeleted"));
             }
           }}
-          disabled={!activePromptPresetId}>
-          <Tooltip title={t("presetDelete")}>
+          disabled={!canEditActive}>
+          <Tooltip title={isDefaultActive ? t("presetDefaultReadonly") : t("presetDelete")}>
             <Button
               danger
               icon={<DeleteOutlined />}
-              disabled={!activePromptPresetId}
+              disabled={!canEditActive}
               aria-label={t("presetDelete")}
             />
           </Tooltip>

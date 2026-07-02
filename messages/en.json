@@ -91,6 +91,7 @@
     "batchDownloaded": "Processing complete, file downloaded automatically",
     "extractedText": "Extracted Text",
     "translating": "Translating",
+    "translateDone": "Translation complete",
     "multiTranslating": "Translating, total target languages:",
     "model": "Model",
     "sameLanguageTarget": "Source and target languages are the same; automatically adjusted target to",
@@ -145,7 +146,7 @@
     "requestTimeoutSec": "Timeout",
     "requestTimeoutSecTooltip": "Maximum wait per request (seconds). LLM thinking takes longer; 180s or more recommended.",
     "customExportFilename": "Export Filename Pattern",
-    "customExportFilenameTooltip": "'{'name'}' = original filename, '{'lang'}' = language, '{'ext'}' = extension, '{'date'}' = date, '{'time'}' = time",
+    "customExportFilenameTooltip": "'{'name'}' = original filename, '{'lang'}' = language, '{'ext'}' = extension, '{'date'}' = date, '{'time'}' = time; in multi-language mode '{'lang'}' is added automatically to avoid name clashes",
     "partialFailureTitle": "{count} line(s) failed",
     "partialFailureDesc": "Failed lines kept the original text as a placeholder, so the file stays usable. These failures are usually network blips or temporary upstream hiccups — free services and self-hosted servers are especially prone to this, and it's not a problem with your setup. Click Retry to continue (successful lines come from cache, no re-translation); if it still fails, try again later or switch to a different translation service. Or click View failed lines to handle them manually.",
     "retryFailedLines": "Retry",
@@ -170,6 +171,7 @@
     "translategemmaUnavailable": "TranslateGemma service is temporarily unreachable, please make sure your local server (LM Studio / llama.cpp / Ollama) is running and the URL is correct.",
     "networkUnavailable": "Translation service is temporarily unreachable — could be a network issue or the service is having a hiccup. Please try again later, or switch to a different translation service.",
     "translationTimeout": "Translation request timed out — could be a slow network or the service is taking too long to respond. Please try again later, or switch to a different translation service.",
+    "translationTimeoutLocal": "Local model translation timed out. A local LLM can get stuck in a repeat loop — lower max_tokens (the output cap) in Advanced Settings, and make sure the selected source language matches the actual text.",
     "langGroupCommon": "Common",
     "langGroupEurope": "Europe",
     "langGroupMiddleEast": "Middle East",
@@ -220,7 +222,50 @@
     "reviewColSource": "Source",
     "reviewColTarget": "Translation",
     "reviewApplyDownload": "Apply & download",
-    "reviewDownloaded": "Reviewed subtitle downloaded"
+    "reviewDownloaded": "Reviewed subtitle downloaded",
+    "assStyleButton": "ASS Style",
+    "assStyleTooltip": "Customize font, size, color, and position of the bilingual ASS subtitle",
+    "assNativeModeSource": "Keep source style",
+    "assNativeModeRebuild": "Restyle",
+    "assNativeModeTooltip": "Native ASS bilingual: keep the source file's styles, or discard them and restyle with ASS Style (dialogue subtitles only)",
+    "assStyleTitle": "ASS Style Settings",
+    "assPresetLabel": "Preset",
+    "assPresetDefault": "Default",
+    "assPresetLarge": "Large",
+    "assPresetCinematic": "Cinematic",
+    "assPresetBoxed": "Boxed",
+    "assPresetCustom": "Custom",
+    "assGlobalGroup": "Global",
+    "assTranslationStyle": "Translation style",
+    "assOriginalStyle": "Original style",
+    "assFontName": "Font",
+    "assFontPlaceholder": "Leave empty = auto by target language",
+    "assReadSystemFonts": "Read system fonts",
+    "assSystemFontsGroup": "System fonts",
+    "assReadSystemFontsUnsupported": "This browser can't read system fonts — type a font name instead",
+    "assFontSize": "Size",
+    "assTextColor": "Text color",
+    "assOutlineColor": "Outline color",
+    "assBoxColor": "Box color",
+    "assOutline": "Outline",
+    "assShadow": "Shadow",
+    "assAlignment": "Alignment",
+    "assAlignBottom": "Bottom center",
+    "assAlignTop": "Top center",
+    "assMarginV": "Margin",
+    "previewOriginal": "Original",
+    "previewTranslation": "Translation",
+    "fontGroup": {
+      "broad": "Broad / multilingual",
+      "zhHans": "Simplified Chinese",
+      "zhHant": "Traditional Chinese",
+      "japanese": "日本語",
+      "korean": "한국어",
+      "arabic": "العربية",
+      "devanagari": "हिन्दी / Devanagari",
+      "thai": "ไทย",
+      "latin": "Latin / Cyrillic / Greek"
+    }
   },
   "TranslationSettings": {
     "resetConfigSuccess": "Configuration reset to defaults",
@@ -276,6 +321,8 @@
     "presetUpdated": "Saved to current preset",
     "presetDeleteConfirm": "Delete this preset?",
     "presetEmptyHint": "No presets yet — edit and click Save",
+    "presetDefault": "Default prompt",
+    "presetDefaultReadonly": "The default prompt is built-in — it can't be modified or deleted. Use \"Save as new preset\" to customize.",
     "qwenMtDomains": "Domain Prompts (English only)",
     "sendSystemPrompt": "Send system prompt",
     "sendSystemPromptExtra": "Turn off only when the chat template rejects the system role — typical error \"Conversations must start with a user prompt\" (e.g. Gemma family).",
@@ -329,20 +376,6 @@
         {
           "q": "Are subtitle files uploaded to your server? Is it private and secure?",
           "a": "Fully client-side: subtitle file reading, parsing, and translation requests all happen in your browser — original content never touches our servers. LLM engine requests go directly from your browser to your configured API endpoint (OpenAI, DeepSeek, etc.), and API keys are stored only in local browser storage. Translation cache uses browser IndexedDB and persists across sessions. Source code is open on GitHub (rockbenben/subtitle-translator) for self-hosting or auditing."
-        }
-      ],
-      "howto": [
-        {
-          "name": "Start from video or subtitle file",
-          "text": "Upload SRT/ASS/VTT/SBV/LRC subtitle file. Export YouTube subtitles via yt-dlp, Twitch VODs via creator dashboard, or use legitimate sources for streaming platforms."
-        },
-        {
-          "name": "Choose engine and output mode",
-          "text": "Use Google for free quick tests, or DeepSeek/DeepL API for quality. Select 'Translated only' for publishing, 'Bilingual' for language learning. For bilingual, position translation above (learning mode) or below (viewing mode) the original."
-        },
-        {
-          "name": "Translate and export to your platform",
-          "text": "Click Translate and verify timing alignment in preview. Download SRT for YouTube community subtitles, ASS for styled subtitles in Premiere/DaVinci Resolve, VTT for web players, LRC for lyrics."
         }
       ],
       "features": [
@@ -430,7 +463,11 @@
     "textParser": "Text Tools",
     "jsonParser": "JSON Tools",
     "dataParser": "Data Tools",
-    "otherTools": "Other Tools"
+    "otherTools": "Other Tools",
+    "externalTools": {
+      "legendtalk": "AI Thinkers Roundtable",
+      "imgprompt": "AI Image Prompts"
+    }
   },
   "Metadata": {
     "title": "ToolsByAI | Free Open Source AI Translation & Data Tools",

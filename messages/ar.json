@@ -89,6 +89,7 @@
     "exportedFile": "تم التصدير",
     "extractedText": "تم استخراج النص",
     "translating": "جارٍ الترجمة...",
+    "translateDone": "اكتملت الترجمة",
     "multiTranslating": "جارٍ الترجمة، إجمالي اللغات:",
     "model": "النموذج",
     "sameLanguageTarget": "لغات المصدر والهدف متطابقة؛ تم تعديل الهدف تلقائيًا إلى",
@@ -132,7 +133,7 @@
     "requestTimeoutSec": "المهلة",
     "requestTimeoutSecTooltip": "أقصى مدة انتظار لكل طلب (بالثواني). يستغرق التفكير في نماذج اللغة الكبيرة وقتًا أطول؛ يُنصح بـ 180 ثانية أو أكثر.",
     "customExportFilename": "نمط اسم ملف التصدير",
-    "customExportFilenameTooltip": "'{'name'}' = اسم الملف الأصلي، '{'lang'}' = اللغة، '{'ext'}' = الامتداد، '{'date'}' = التاريخ، '{'time'}' = الوقت",
+    "customExportFilenameTooltip": "'{'name'}' = اسم الملف الأصلي، '{'lang'}' = اللغة، '{'ext'}' = الامتداد، '{'date'}' = التاريخ، '{'time'}' = الوقت؛ في الوضع متعدد اللغات تتم إضافة '{'lang'}' تلقائيًا لتجنّب تعارض الأسماء",
     "partialFailureTitle": "فشلت {count} سطر في الترجمة",
     "partialFailureDesc": "احتفظت الأسطر الفاشلة بالنص الأصلي كعنصر نائب، يبقى الملف قابلاً للاستخدام. عادةً ما تكون هذه الإخفاقات بسبب تقلبات الشبكة أو عدم استقرار مؤقت لخدمة الترجمة — الخدمات المجانية والخوادم المستضافة ذاتيًا عرضة لذلك بشكل خاص، وليست مشكلة في إعداداتك. انقر فوق إعادة المحاولة للمتابعة (تأتي الأسطر الناجحة من ذاكرة التخزين المؤقت، بدون إعادة ترجمة)؛ إذا استمر الإخفاق، حاول لاحقًا أو انتقل إلى خدمة ترجمة أخرى. أو انقر فوق عرض الأسطر الفاشلة للتعامل معها يدويًا.",
     "retryFailedLines": "إعادة المحاولة",
@@ -170,6 +171,7 @@
     "translategemmaUnavailable": "خدمة TranslateGemma غير قابلة للوصول مؤقتًا، تأكد من تشغيل الخادم المحلي الخاص بك (LM Studio / llama.cpp / Ollama) وأن عنوان URL صحيح.",
     "networkUnavailable": "خدمة الترجمة غير قابلة للوصول مؤقتًا — قد تكون مشكلة في الشبكة أو خلل مؤقت في الخدمة. يرجى المحاولة لاحقًا أو الانتقال إلى خدمة ترجمة أخرى.",
     "translationTimeout": "انتهت مهلة طلب الترجمة — قد تكون الشبكة بطيئة أو الخدمة تستغرق وقتًا طويلاً للاستجابة. يرجى المحاولة لاحقًا أو الانتقال إلى خدمة ترجمة أخرى.",
+    "translationTimeoutLocal": "انتهت مهلة الترجمة بالنموذج المحلي. قد يعلق نموذج LLM المحلي في حلقة تكرار — اخفض max_tokens (حد الإخراج) في الإعدادات المتقدمة، وتأكد من أن لغة المصدر المختارة تطابق النص الفعلي.",
     "langGroupCommon": "شائعة",
     "langGroupEurope": "أوروبا",
     "langGroupMiddleEast": "الشرق الأوسط",
@@ -220,7 +222,50 @@
     "reviewColSource": "المصدر",
     "reviewColTarget": "الترجمة",
     "reviewApplyDownload": "تطبيق وتنزيل",
-    "reviewDownloaded": "تم تنزيل الترجمة المراجَعة"
+    "reviewDownloaded": "تم تنزيل الترجمة المراجَعة",
+    "assStyleButton": "نمط ASS",
+    "assStyleTooltip": "تخصيص الخط والحجم واللون والموضع لترجمة ASS ثنائية اللغة",
+    "assNativeModeSource": "الإبقاء على نمط المصدر",
+    "assNativeModeRebuild": "إعادة التنسيق",
+    "assNativeModeTooltip": "‏ASS أصلي ثنائي اللغة: أبقِ أنماط الملف المصدر، أو تجاهلها وأعد التنسيق عبر «نمط ASS» (لترجمات الحوار فقط)",
+    "assStyleTitle": "إعدادات نمط ASS",
+    "assPresetLabel": "إعداد مسبق",
+    "assPresetDefault": "افتراضي",
+    "assPresetLarge": "كبير",
+    "assPresetCinematic": "سينمائي",
+    "assPresetBoxed": "مربع الخلفية",
+    "assPresetCustom": "مخصص",
+    "assGlobalGroup": "عام",
+    "assTranslationStyle": "نمط الترجمة",
+    "assOriginalStyle": "نمط الأصل",
+    "assFontName": "الخط",
+    "assFontPlaceholder": "اتركه فارغاً = تلقائي حسب اللغة الهدف",
+    "assReadSystemFonts": "قراءة خطوط النظام",
+    "assSystemFontsGroup": "خطوط النظام",
+    "assReadSystemFontsUnsupported": "هذا المتصفح لا يدعم قراءة خطوط النظام — اكتب اسم الخط يدوياً",
+    "assFontSize": "الحجم",
+    "assTextColor": "لون النص",
+    "assOutlineColor": "لون الحدود",
+    "assBoxColor": "لون المربع",
+    "assOutline": "الحدود",
+    "assShadow": "الظل",
+    "assAlignment": "المحاذاة",
+    "assAlignBottom": "وسط أسفل",
+    "assAlignTop": "وسط أعلى",
+    "assMarginV": "الهامش",
+    "previewOriginal": "الأصلي",
+    "previewTranslation": "الترجمة",
+    "fontGroup": {
+      "broad": "واسع / متعدد اللغات",
+      "zhHans": "الصينية المبسطة",
+      "zhHant": "الصينية التقليدية",
+      "japanese": "日本語",
+      "korean": "한국어",
+      "arabic": "العربية",
+      "devanagari": "हिन्दी / Devanagari",
+      "thai": "ไทย",
+      "latin": "اللاتينية / السيريلية / اليونانية"
+    }
   },
   "TranslationSettings": {
     "resetConfigSuccess": "تمت إعادة تعيين الإعدادات إلى الوضع الافتراضي",
@@ -276,6 +321,8 @@
     "presetUpdated": "تم الحفظ في الإعداد المسبق الحالي",
     "presetDeleteConfirm": "هل تريد حذف هذا الإعداد المسبق؟",
     "presetEmptyHint": "لا توجد إعدادات مسبقة بعد — حرّر وانقر حفظ",
+    "presetDefault": "المطالبة الافتراضية",
+    "presetDefaultReadonly": "المطالبة الافتراضية عنصر مدمج — لا يمكن تعديلها أو حذفها. استخدم \"حفظ كإعداد جديد\" للتخصيص.",
     "qwenMtDomains": "مطالبات المجال (باللغة الإنجليزية فقط)",
     "sendSystemPrompt": "إرسال موجه system",
     "sendSystemPromptExtra": "أوقف التشغيل فقط عندما يرفض قالب الدردشة دور system — الخطأ النموذجي \"Conversations must start with a user prompt\" (مثل عائلة Gemma).",
@@ -329,20 +376,6 @@
         {
           "q": "هل تُرفع ملفات الترجمة إلى الخادم؟ هل هي خاصة وآمنة؟",
           "a": "تعمل بالكامل على جانب العميل: قراءة ملفات الترجمة وتحليلها وطلبات الترجمة تتم كلها داخل متصفحك — المحتوى الأصلي لا يمر أبداً عبر خوادمنا. طلبات محركات الـ LLM تذهب مباشرة من متصفحك إلى نقطة نهاية الـ API التي ضبطتها (OpenAI، DeepSeek، إلخ)، ومفاتيح الـ API تُحفظ فقط في localStorage المحلي. ذاكرة الترجمة المؤقتة تستخدم IndexedDB في المتصفح وتبقى بين الجلسات. الكود المصدري مفتوح على GitHub (rockbenben/subtitle-translator) للاستضافة الذاتية أو المراجعة."
-        }
-      ],
-      "howto": [
-        {
-          "name": "ابدأ من ملف الفيديو أو الترجمة",
-          "text": "حمّل SRT/ASS/VTT/SBV/LRC. الاستخراج: YouTube عبر yt-dlp، المنصات الأخرى عبر أدوات مخصصة. الصيغة والترميز UTF-8/UTF-16/GBK يُكتشفان تلقائياً."
-        },
-        {
-          "name": "اختر المحرك ووضع الإخراج",
-          "text": "Google مجاني للاختبارات السريعة، DeepSeek/DeepL API للجودة. 'ترجمة فقط' للنشر، 'ثنائي اللغة' لتعلم اللغات. في الثنائي، الموقع فوق (التعلم) أو تحت (المشاهدة)."
-        },
-        {
-          "name": "ترجم وصدّر إلى منصتك",
-          "text": "انقر ترجمة وتحقق من التوقيت في المعاينة. حمّل SRT لترجمات مجتمع YouTube، ASS بالأنماط لـ Premiere/DaVinci Resolve، VTT لمشغلات الويب، LRC للكلمات."
         }
       ],
       "features": [
@@ -430,7 +463,11 @@
     "textParser": "أدوات النص",
     "jsonParser": "أدوات JSON",
     "dataParser": "أدوات البيانات",
-    "otherTools": "أدوات أخرى"
+    "otherTools": "أدوات أخرى",
+    "externalTools": {
+      "legendtalk": "طاولة مفكري الذكاء الاصطناعي",
+      "imgprompt": "موجهات صور الذكاء الاصطناعي"
+    }
   },
   "Metadata": {
     "title": "ToolsByAI - أدوات الترجمة والبيانات بالذكاء الاصطناعي",

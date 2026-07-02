@@ -91,6 +91,7 @@
     "batchDownloaded": "Traitement terminé, le fichier a été téléchargé automatiquement",
     "extractedText": "Texte extrait",
     "translating": "Traduction...",
+    "translateDone": "Traduction terminée",
     "multiTranslating": "Traduction en cours, total langues :",
     "model": "Modèle",
     "sameLanguageTarget": "Langues source et cible identiques ; cible ajustée automatiquement à",
@@ -145,7 +146,7 @@
     "requestTimeoutSec": "Délai d'attente",
     "requestTimeoutSecTooltip": "Attente maximale par requête (secondes). La réflexion des LLM prend plus de temps ; 180 s ou plus recommandé.",
     "customExportFilename": "Modèle de nom de fichier",
-    "customExportFilenameTooltip": "'{'name'}' = nom original, '{'lang'}' = langue, '{'ext'}' = extension, '{'date'}' = date, '{'time'}' = heure",
+    "customExportFilenameTooltip": "'{'name'}' = nom original, '{'lang'}' = langue, '{'ext'}' = extension, '{'date'}' = date, '{'time'}' = heure; en mode multilingue, '{'lang'}' est ajouté automatiquement pour éviter les conflits de noms",
     "partialFailureTitle": "{count} ligne(s) ont échoué",
     "partialFailureDesc": "Les lignes échouées ont conservé le texte original comme espace réservé, le fichier reste utilisable. Ces échecs sont généralement dus à des aléas réseau ou à une instabilité temporaire du service de traduction — les services gratuits et les serveurs auto-hébergés y sont particulièrement sensibles, et ce n'est pas un problème de votre configuration. Cliquez sur Réessayer pour continuer (les lignes réussies viennent du cache, pas de retraduction) ; si l'échec persiste, réessayez plus tard ou essayez un autre service de traduction. Ou cliquez sur Voir les lignes échouées pour les traiter manuellement.",
     "retryFailedLines": "Réessayer",
@@ -170,6 +171,7 @@
     "translategemmaUnavailable": "Le service TranslateGemma est temporairement inaccessible, vérifiez que votre serveur local (LM Studio / llama.cpp / Ollama) est en cours d'exécution et que l'URL est correcte.",
     "networkUnavailable": "Le service de traduction est temporairement inaccessible — cela peut être un problème réseau ou un incident côté service. Réessayez plus tard ou changez de service de traduction.",
     "translationTimeout": "La requête de traduction a expiré — il pourrait s'agir d'un réseau lent ou le service met trop de temps à répondre. Réessayez plus tard ou changez de service de traduction.",
+    "translationTimeoutLocal": "Délai dépassé pour la traduction avec le modèle local. Un LLM local peut se bloquer dans une boucle de répétition — réduisez max_tokens (la limite de sortie) dans les paramètres avancés et assurez-vous que la langue source sélectionnée correspond au texte réel.",
     "langGroupCommon": "Courantes",
     "langGroupEurope": "Europe",
     "langGroupMiddleEast": "Moyen-Orient",
@@ -220,7 +222,50 @@
     "reviewColSource": "Source",
     "reviewColTarget": "Traduction",
     "reviewApplyDownload": "Appliquer et télécharger",
-    "reviewDownloaded": "Sous-titre révisé téléchargé"
+    "reviewDownloaded": "Sous-titre révisé téléchargé",
+    "assStyleButton": "Style ASS",
+    "assStyleTooltip": "Personnalisez la police, la taille, la couleur et la position des sous-titres ASS bilingues",
+    "assNativeModeSource": "Garder le style source",
+    "assNativeModeRebuild": "Restyler",
+    "assNativeModeTooltip": "ASS natif bilingue : conserver les styles du fichier source, ou les abandonner et restyler avec Style ASS (sous-titres de dialogue uniquement)",
+    "assStyleTitle": "Paramètres de style ASS",
+    "assPresetLabel": "Préréglage",
+    "assPresetDefault": "Défaut",
+    "assPresetLarge": "Grand",
+    "assPresetCinematic": "Cinématique",
+    "assPresetBoxed": "Encadré",
+    "assPresetCustom": "Personnalisé",
+    "assGlobalGroup": "Global",
+    "assTranslationStyle": "Style de la traduction",
+    "assOriginalStyle": "Style de l'original",
+    "assFontName": "Police",
+    "assFontPlaceholder": "Laisser vide = automatique selon la langue cible",
+    "assReadSystemFonts": "Lire les polices système",
+    "assSystemFontsGroup": "Polices système",
+    "assReadSystemFontsUnsupported": "Ce navigateur ne peut pas lire les polices système — saisissez un nom de police",
+    "assFontSize": "Taille",
+    "assTextColor": "Couleur du texte",
+    "assOutlineColor": "Couleur du contour",
+    "assBoxColor": "Couleur du fond",
+    "assOutline": "Contour",
+    "assShadow": "Ombre",
+    "assAlignment": "Alignement",
+    "assAlignBottom": "Centre bas",
+    "assAlignTop": "Centre haut",
+    "assMarginV": "Marge",
+    "previewOriginal": "Original",
+    "previewTranslation": "Traduction",
+    "fontGroup": {
+      "broad": "Large / multilingue",
+      "zhHans": "Chinois simplifié",
+      "zhHant": "Chinois traditionnel",
+      "japanese": "日本語",
+      "korean": "한국어",
+      "arabic": "العربية",
+      "devanagari": "हिन्दी / Devanagari",
+      "thai": "ไทย",
+      "latin": "Latin / Cyrillique / Grec"
+    }
   },
   "TranslationSettings": {
     "resetConfigSuccess": "Configuration réinitialisée aux valeurs par défaut",
@@ -276,6 +321,8 @@
     "presetUpdated": "Enregistré dans le préréglage actuel",
     "presetDeleteConfirm": "Supprimer ce préréglage ?",
     "presetEmptyHint": "Aucun préréglage — modifiez et cliquez sur Enregistrer",
+    "presetDefault": "Prompt par défaut",
+    "presetDefaultReadonly": "Le prompt par défaut est intégré : il ne peut être ni modifié ni supprimé. Utilisez « Enregistrer comme nouveau préréglage » pour personnaliser.",
     "qwenMtDomains": "Invites de domaine (en anglais uniquement)",
     "sendSystemPrompt": "Envoyer le prompt system",
     "sendSystemPromptExtra": "À désactiver uniquement quand le chat template rejette le rôle system — erreur typique \"Conversations must start with a user prompt\" (par ex. famille Gemma).",
@@ -329,20 +376,6 @@
         {
           "q": "Les fichiers de sous-titres sont-ils envoyés sur votre serveur ? Est-ce privé et sécurisé ?",
           "a": "Entièrement côté client : la lecture, l'analyse et les requêtes de traduction des sous-titres se font dans votre navigateur — les contenus originaux ne touchent jamais nos serveurs. Les requêtes des moteurs LLM vont directement de votre navigateur à votre endpoint API configuré (OpenAI, DeepSeek, etc.), et les API keys sont stockées uniquement dans le localStorage local. Le cache de traduction utilise l'IndexedDB du navigateur et persiste entre les sessions. Le code source est ouvert sur GitHub (rockbenben/subtitle-translator) pour l'auto-hébergement ou l'audit."
-        }
-      ],
-      "howto": [
-        {
-          "name": "Partir d'une vidéo ou d'un fichier sous-titre",
-          "text": "Importez SRT/ASS/VTT/SBV/LRC. Extraction : YouTube via yt-dlp, autres plateformes via outils dédiés. Format et encodage UTF-8/UTF-16/GBK détectés automatiquement."
-        },
-        {
-          "name": "Choisir le moteur et le mode de sortie",
-          "text": "Google gratuit pour tests rapides, DeepSeek/DeepL API pour qualité. 'Traduction seule' pour publication, 'Bilingue' pour apprentissage. En bilingue, position au-dessus (apprentissage) ou en-dessous (visionnage)."
-        },
-        {
-          "name": "Traduire et exporter vers votre plateforme",
-          "text": "Cliquez Traduire et vérifiez le timing dans l'aperçu. Téléchargez SRT pour sous-titres communautaires YouTube, ASS stylisé pour Premiere/DaVinci Resolve, VTT pour lecteurs web, LRC pour paroles."
         }
       ],
       "features": [
@@ -430,7 +463,11 @@
     "textParser": "Outils Texte",
     "jsonParser": "Outils JSON",
     "dataParser": "Outils Données",
-    "otherTools": "Autres Outils"
+    "otherTools": "Autres Outils",
+    "externalTools": {
+      "legendtalk": "Table ronde des penseurs IA",
+      "imgprompt": "Prompts d'images IA"
+    }
   },
   "Metadata": {
     "title": "ToolsByAI | Outils de Traduction & Dev IA Gratuits",

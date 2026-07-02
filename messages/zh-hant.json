@@ -95,6 +95,7 @@
     "exportedFile": "已匯出",
     "extractedText": "提取的文字",
     "translating": "翻譯中",
+    "translateDone": "翻譯完成",
     "multiTranslating": "正在翻譯，目標語言共",
     "model": "模型",
     "sameLanguageTarget": "源語言與目標語言相同，已自動調整目標語言為",
@@ -138,7 +139,7 @@
     "requestTimeoutSec": "超時時間",
     "requestTimeoutSecTooltip": "單次請求的最大等待時間（秒）。LLM 思考耗時較長，建議 180 秒以上",
     "customExportFilename": "匯出檔案名稱格式",
-    "customExportFilenameTooltip": "'{'name'}' = 原始檔案名稱, '{'lang'}' = 語言, '{'ext'}' = 副檔名, '{'date'}' = 日期, '{'time'}' = 時間",
+    "customExportFilenameTooltip": "'{'name'}' = 原始檔案名稱, '{'lang'}' = 語言, '{'ext'}' = 副檔名, '{'date'}' = 日期, '{'time'}' = 時間；多語言模式會自動加 '{'lang'}' 防止檔名衝突",
     "partialFailureTitle": "翻譯失敗 {count} 行",
     "partialFailureDesc": "失敗的行已用原文佔位（不影響檔案結構）。這種失敗大多是網路抖動或翻譯服務臨時不穩定——免費服務和自建伺服器特別容易碰到，不是你的設定問題。點「再試一次」即可繼續，已成功的行走快取不會重翻；如果還是失敗，稍後再點或換個翻譯服務試試。也可點「查看失敗行」自己處理。",
     "retryFailedLines": "再試一次",
@@ -170,6 +171,7 @@
     "translategemmaUnavailable": "TranslateGemma 服務暫時連不上，請確認本機伺服器（LM Studio / llama.cpp / Ollama）已啟動且 URL 正確。",
     "networkUnavailable": "翻譯服務暫時連不上，可能是網路或服務的臨時問題。稍後再試，或換一個翻譯服務。",
     "translationTimeout": "翻譯請求逾時，可能是網路較慢或翻譯服務回應慢。稍後再試，或換一個翻譯服務。",
+    "translationTimeoutLocal": "本地模型翻譯逾時。本地大模型可能陷入複讀迴圈——請在進階設定中調低 max_tokens（輸出上限），並確認所選來源語言與文字實際語言一致。",
     "langGroupCommon": "常用",
     "langGroupEurope": "歐洲",
     "langGroupMiddleEast": "中東",
@@ -220,7 +222,50 @@
     "reviewColSource": "原文",
     "reviewColTarget": "譯文",
     "reviewApplyDownload": "套用並下載",
-    "reviewDownloaded": "已下載校對後字幕"
+    "reviewDownloaded": "已下載校對後字幕",
+    "assStyleButton": "ASS 樣式",
+    "assStyleTooltip": "自訂雙語 ASS 字幕的字體、字號、顏色與位置",
+    "assNativeModeSource": "沿用原樣式",
+    "assNativeModeRebuild": "重新排版",
+    "assNativeModeTooltip": "原生 ASS 雙語:沿用來源檔案樣式,或放棄來源樣式、用「ASS 樣式」重新排版(僅適合對白型字幕)",
+    "assStyleTitle": "ASS 樣式設定",
+    "assPresetLabel": "預設",
+    "assPresetDefault": "預設值",
+    "assPresetLarge": "大字號",
+    "assPresetCinematic": "電影感",
+    "assPresetBoxed": "底框",
+    "assPresetCustom": "自訂",
+    "assGlobalGroup": "全域",
+    "assTranslationStyle": "譯文樣式",
+    "assOriginalStyle": "原文樣式",
+    "assFontName": "字體",
+    "assFontPlaceholder": "留空 = 隨目標語言自動選擇",
+    "assReadSystemFonts": "讀取系統字體",
+    "assSystemFontsGroup": "系統字體",
+    "assReadSystemFontsUnsupported": "目前瀏覽器不支援讀取系統字體，請直接輸入字體名稱",
+    "assFontSize": "字號",
+    "assTextColor": "字色",
+    "assOutlineColor": "描邊色",
+    "assBoxColor": "底框顏色",
+    "assOutline": "描邊",
+    "assShadow": "陰影",
+    "assAlignment": "對齊",
+    "assAlignBottom": "底部居中",
+    "assAlignTop": "頂部居中",
+    "assMarginV": "邊距",
+    "previewOriginal": "原文",
+    "previewTranslation": "譯文",
+    "fontGroup": {
+      "broad": "多語言廣覆蓋",
+      "zhHans": "簡體中文",
+      "zhHant": "繁體中文",
+      "japanese": "日本語",
+      "korean": "한국어",
+      "arabic": "العربية",
+      "devanagari": "हिन्दी / Devanagari",
+      "thai": "ไทย",
+      "latin": "拉丁 / 西里爾 / 希臘"
+    }
   },
   "TranslationSettings": {
     "resetConfigSuccess": "已恢復預設配置",
@@ -276,6 +321,8 @@
     "presetUpdated": "已儲存到當前預設",
     "presetDeleteConfirm": "確定要刪除此預設嗎？",
     "presetEmptyHint": "暫無預設，編輯後點儲存",
+    "presetDefault": "預設提示詞",
+    "presetDefaultReadonly": "預設提示詞為內建項，不可修改或刪除；如需自訂請「另存為新預設」",
     "qwenMtDomains": "領域提示詞 (僅支援英文)",
     "sendSystemPrompt": "發送 system 提示詞",
     "sendSystemPromptExtra": "僅當 chat template 拒絕 system 角色時關閉，典型報錯 \"Conversations must start with a user prompt\"（如 Gemma 系列）",
@@ -329,20 +376,6 @@
         {
           "q": "字幕翻譯會上傳到伺服器嗎？隱私安全嗎？",
           "a": "完全前端處理：字幕檔案讀取、解析、翻譯請求都在瀏覽器內完成，原文不經過我們的伺服器儲存。LLM 引擎的請求直接從你的瀏覽器發往你設定的 API 端點（OpenAI、DeepSeek 等），API Key 僅儲存在本地 localStorage。翻譯快取使用瀏覽器 IndexedDB，關閉頁面也保留，下次翻譯同樣內容直接命中快取。開源程式碼可在 GitHub 審查（rockbenben/subtitle-translator）。"
-        }
-      ],
-      "howto": [
-        {
-          "name": "從影片或字幕檔案開始",
-          "text": "上傳 SRT/ASS/VTT/SBV/LRC 字幕檔案。YouTube 影片字幕用 yt-dlp 匯出，B 站影片可在創作中心下載自己的字幕，其他平臺字幕從合法來源獲取。工具通過 jschardet 自動識別 UTF-8/UTF-16/GBK/Shift-JIS 等編碼。"
-        },
-        {
-          "name": "選擇引擎並配置輸出",
-          "text": "免費測試用 Google，追求質量用 DeepSeek 或 DeepL API。選「僅譯文」用於發布，選「雙語」用於語言學習。雙語時可設定譯文在原文上方（學習模式）或下方（觀看模式）。"
-        },
-        {
-          "name": "翻譯並匯出到目標平臺",
-          "text": "點擊翻譯預覽時間軸對齊。下載 SRT 上傳到 B 站、YouTube 社區字幕；下載 ASS 保留特效和顏色用於 Premiere/DaVinci Resolve；VTT 用於網頁播放器；LRC 用於歌詞。"
         }
       ],
       "features": [
@@ -430,7 +463,11 @@
     "textParser": "文字處理",
     "jsonParser": "JSON 處理",
     "dataParser": "資料轉換",
-    "otherTools": "其他工具"
+    "otherTools": "其他工具",
+    "externalTools": {
+      "legendtalk": "AI 思想家圓桌",
+      "imgprompt": "AI 繪圖提示詞"
+    }
   },
   "Metadata": {
     "title": "ToolsByAI | 免費開源的 AI 翻譯與資料處理工具集",

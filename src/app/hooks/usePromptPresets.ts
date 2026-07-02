@@ -1,6 +1,7 @@
 "use client";
 
 import { usePresetCollection } from "@/app/hooks/usePresetCollection";
+import { DEFAULT_SYSTEM_PROMPT, DEFAULT_USER_PROMPT } from "@/app/lib/translation/config";
 
 export type PromptPreset = {
   id: string;
@@ -8,6 +9,11 @@ export type PromptPreset = {
   systemPrompt: string;
   userPrompt: string;
 };
+
+// Sentinel id for the always-present "default prompt" entry in the picker. User
+// presets use String(Date.now()) (numeric), so this never collides. It's a way
+// back to the factory prompts after the user has saved/edited their own presets.
+export const DEFAULT_PROMPT_PRESET_ID = "default";
 
 type Deps = {
   effectiveSystemPrompt: string;
@@ -49,6 +55,12 @@ export const usePromptPresets = ({ effectiveSystemPrompt, effectiveUserPrompt, s
       setActivePromptPresetId("");
       return;
     }
+    if (id === DEFAULT_PROMPT_PRESET_ID) {
+      setSystemPrompt(DEFAULT_SYSTEM_PROMPT);
+      setUserPrompt(DEFAULT_USER_PROMPT);
+      setActivePromptPresetId(DEFAULT_PROMPT_PRESET_ID);
+      return;
+    }
     const preset = promptPresets.find((p) => p.id === id);
     if (!preset) return;
     setSystemPrompt(preset.systemPrompt);
@@ -56,8 +68,16 @@ export const usePromptPresets = ({ effectiveSystemPrompt, effectiveUserPrompt, s
     setActivePromptPresetId(id);
   };
 
+  // The default entry is read-only — it can't be overwritten or deleted (the
+  // picker disables those buttons too; these guards are the safety net).
   const updatePromptPreset = (id: string) => {
+    if (id === DEFAULT_PROMPT_PRESET_ID) return;
     update(id, { systemPrompt: effectiveSystemPrompt, userPrompt: effectiveUserPrompt });
+  };
+
+  const removePromptPreset = (id: string) => {
+    if (id === DEFAULT_PROMPT_PRESET_ID) return;
+    deletePromptPreset(id);
   };
 
   return {
@@ -67,7 +87,7 @@ export const usePromptPresets = ({ effectiveSystemPrompt, effectiveUserPrompt, s
     setActivePromptPresetId,
     savePromptPreset,
     loadPromptPreset,
-    deletePromptPreset,
+    deletePromptPreset: removePromptPreset,
     renamePromptPreset,
     updatePromptPreset,
   };

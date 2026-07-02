@@ -91,6 +91,7 @@
     "batchDownloaded": "Verarbeitung abgeschlossen, Datei wurde automatisch heruntergeladen",
     "extractedText": "Extrahierter Text",
     "translating": "Übersetze...",
+    "translateDone": "Übersetzung abgeschlossen",
     "multiTranslating": "Übersetze, Zielsprachen gesamt:",
     "model": "Modell",
     "sameLanguageTarget": "Quell- und Zielsprache sind gleich; Zielsprache automatisch angepasst auf",
@@ -145,7 +146,7 @@
     "requestTimeoutSec": "Zeitüberschreitung",
     "requestTimeoutSecTooltip": "Maximale Wartezeit pro Anfrage (in Sekunden). Das Denken von LLMs dauert länger; 180 Sekunden oder mehr werden empfohlen.",
     "customExportFilename": "Dateinamenmuster",
-    "customExportFilenameTooltip": "'{'name'}' = Originalname, '{'lang'}' = Sprache, '{'ext'}' = Endung, '{'date'}' = Datum, '{'time'}' = Zeit",
+    "customExportFilenameTooltip": "'{'name'}' = Originalname, '{'lang'}' = Sprache, '{'ext'}' = Endung, '{'date'}' = Datum, '{'time'}' = Zeit; im Mehrsprachenmodus wird '{'lang'}' automatisch hinzugefügt, um Namenskonflikte zu vermeiden",
     "partialFailureTitle": "{count} Zeile(n) fehlgeschlagen",
     "partialFailureDesc": "Fehlgeschlagene Zeilen behielten den Originaltext als Platzhalter, sodass die Datei nutzbar bleibt. Solche Fehler sind meist Netzwerkschwankungen oder vorübergehende Probleme des Übersetzungsdienstes — kostenlose Dienste und selbst gehostete Server sind besonders anfällig, und es ist kein Konfigurationsproblem auf deiner Seite. Klicke auf Erneut versuchen, um fortzufahren (erfolgreiche Zeilen kommen aus dem Cache, ohne erneute Übersetzung); wenn es weiterhin fehlschlägt, versuche es später erneut oder probiere einen anderen Übersetzungsdienst. Oder klicke auf Fehlgeschlagene Zeilen anzeigen, um sie manuell zu bearbeiten.",
     "retryFailedLines": "Erneut versuchen",
@@ -170,6 +171,7 @@
     "translategemmaUnavailable": "Der TranslateGemma-Dienst ist vorübergehend nicht erreichbar, stelle sicher, dass dein lokaler Server (LM Studio / llama.cpp / Ollama) läuft und die URL korrekt ist.",
     "networkUnavailable": "Der Übersetzungsdienst ist vorübergehend nicht erreichbar — möglicherweise ein Netzwerkproblem oder der Dienst hat einen kurzen Aussetzer. Versuche es später erneut oder wechsle zu einem anderen Übersetzungsdienst.",
     "translationTimeout": "Die Übersetzungsanfrage hat das Zeitlimit überschritten — möglicherweise ein langsames Netzwerk oder der Dienst braucht zu lange zum Antworten. Versuche es später erneut oder wechsle zu einem anderen Übersetzungsdienst.",
+    "translationTimeoutLocal": "Zeitüberschreitung bei der Übersetzung mit lokalem Modell. Ein lokales LLM kann in einer Wiederholungsschleife hängen bleiben — verringern Sie max_tokens (das Ausgabelimit) in den erweiterten Einstellungen und stellen Sie sicher, dass die gewählte Ausgangssprache zum tatsächlichen Text passt.",
     "langGroupCommon": "Häufig",
     "langGroupEurope": "Europa",
     "langGroupMiddleEast": "Naher Osten",
@@ -220,7 +222,50 @@
     "reviewColSource": "Original",
     "reviewColTarget": "Übersetzung",
     "reviewApplyDownload": "Anwenden & herunterladen",
-    "reviewDownloaded": "Geprüfte Untertitel heruntergeladen"
+    "reviewDownloaded": "Geprüfte Untertitel heruntergeladen",
+    "assStyleButton": "ASS-Stil",
+    "assStyleTooltip": "Schrift, Größe, Farbe und Position der zweisprachigen ASS-Untertitel anpassen",
+    "assNativeModeSource": "Quellstil beibehalten",
+    "assNativeModeRebuild": "Neu gestalten",
+    "assNativeModeTooltip": "Natives ASS zweisprachig: Stile der Quelldatei behalten oder verwerfen und mit ASS-Stil neu setzen (nur Dialoguntertitel)",
+    "assStyleTitle": "ASS-Stileinstellungen",
+    "assPresetLabel": "Voreinstellung",
+    "assPresetDefault": "Standard",
+    "assPresetLarge": "Groß",
+    "assPresetCinematic": "Kinematisch",
+    "assPresetBoxed": "Kasten",
+    "assPresetCustom": "Benutzerdefiniert",
+    "assGlobalGroup": "Global",
+    "assTranslationStyle": "Übersetzungsstil",
+    "assOriginalStyle": "Originalstil",
+    "assFontName": "Schriftart",
+    "assFontPlaceholder": "Leer lassen = automatisch nach Zielsprache",
+    "assReadSystemFonts": "Systemschriften lesen",
+    "assSystemFontsGroup": "Systemschriften",
+    "assReadSystemFontsUnsupported": "Dieser Browser kann keine Systemschriften lesen — geben Sie einen Schriftnamen ein",
+    "assFontSize": "Größe",
+    "assTextColor": "Textfarbe",
+    "assOutlineColor": "Umrissfarbe",
+    "assBoxColor": "Kastenfarbe",
+    "assOutline": "Umriss",
+    "assShadow": "Schatten",
+    "assAlignment": "Ausrichtung",
+    "assAlignBottom": "Unten Mitte",
+    "assAlignTop": "Oben Mitte",
+    "assMarginV": "Rand",
+    "previewOriginal": "Original",
+    "previewTranslation": "Übersetzung",
+    "fontGroup": {
+      "broad": "Breit / mehrsprachig",
+      "zhHans": "Vereinfachtes Chinesisch",
+      "zhHant": "Traditionelles Chinesisch",
+      "japanese": "日本語",
+      "korean": "한국어",
+      "arabic": "العربية",
+      "devanagari": "हिन्दी / Devanagari",
+      "thai": "ไทย",
+      "latin": "Lateinisch / Kyrillisch / Griechisch"
+    }
   },
   "TranslationSettings": {
     "resetConfigSuccess": "Konfiguration auf Standardwerte zurückgesetzt",
@@ -276,6 +321,8 @@
     "presetUpdated": "In aktueller Voreinstellung gespeichert",
     "presetDeleteConfirm": "Diese Voreinstellung löschen?",
     "presetEmptyHint": "Noch keine Voreinstellungen — bearbeiten und Speichern klicken",
+    "presetDefault": "Standard-Prompt",
+    "presetDefaultReadonly": "Der Standard-Prompt ist integriert und kann nicht geändert oder gelöscht werden. Zum Anpassen „Als neue Voreinstellung speichern“ verwenden.",
     "qwenMtDomains": "Domänen-Prompts (nur Englisch)",
     "sendSystemPrompt": "System-Prompt senden",
     "sendSystemPromptExtra": "Nur deaktivieren, wenn die Chat-Vorlage die System-Rolle ablehnt — typischer Fehler \"Conversations must start with a user prompt\" (z. B. Gemma-Familie).",
@@ -329,20 +376,6 @@
         {
           "q": "Werden Untertiteldateien auf Ihre Server hochgeladen? Ist es privat und sicher?",
           "a": "Vollständig clientseitig: Lesen, Parsen und Übersetzungsanfragen der Untertiteldateien laufen alle im Browser — Originalinhalte berühren nie unsere Server. LLM-Engine-Anfragen gehen direkt aus Ihrem Browser an den konfigurierten API-Endpunkt (OpenAI, DeepSeek usw.), API-Keys werden nur im lokalen localStorage gespeichert. Der Übersetzungscache nutzt browserseitiges IndexedDB und bleibt sitzungsübergreifend erhalten. Der Quellcode ist auf GitHub (rockbenben/subtitle-translator) zum Self-Hosting oder Audit verfügbar."
-        }
-      ],
-      "howto": [
-        {
-          "name": "Mit Video- oder Untertiteldatei beginnen",
-          "text": "SRT/ASS/VTT/SBV/LRC hochladen. Extraktion: YouTube über yt-dlp, andere Plattformen über spezielle Tools. Format und UTF-8/UTF-16/GBK-Kodierung automatisch erkannt."
-        },
-        {
-          "name": "Engine und Ausgabemodus wählen",
-          "text": "Google kostenlos für Schnelltests, DeepSeek/DeepL API für Qualität. 'Nur Übersetzung' zum Veröffentlichen, 'Zweisprachig' zum Sprachenlernen. Bei zweisprachig: Übersetzung oben (Lernen) oder unten (Anschauen)."
-        },
-        {
-          "name": "Übersetzen und auf Ihrer Plattform exportieren",
-          "text": "Auf Übersetzen klicken und Timing in der Vorschau prüfen. SRT für YouTube Community-Untertitel, ASS mit Stilen für Premiere/DaVinci Resolve, VTT für Web-Player, LRC für Songtexte."
         }
       ],
       "features": [
@@ -430,7 +463,11 @@
     "textParser": "Text-Tools",
     "jsonParser": "JSON-Tools",
     "dataParser": "Daten-Tools",
-    "otherTools": "Andere Tools"
+    "otherTools": "Andere Tools",
+    "externalTools": {
+      "legendtalk": "KI-Denkerrunde",
+      "imgprompt": "KI-Bild-Prompts"
+    }
   },
   "Metadata": {
     "title": "ToolsByAI | Kostenlose KI-Dev- & Übersetzungstools",
