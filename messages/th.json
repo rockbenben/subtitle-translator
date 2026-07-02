@@ -89,6 +89,7 @@
     "exportedFile": "ส่งออกแล้ว",
     "extractedText": "ข้อความที่แยกแล้ว",
     "translating": "กำลังแปล...",
+    "translateDone": "แปลเสร็จแล้ว",
     "multiTranslating": "กำลังแปล จำนวนภาษาทั้งหมด:",
     "model": "โมเดล",
     "sameLanguageTarget": "ภาษาต้นฉบับและเป้าหมายเหมือนกัน เป้าหมายถูกปรับเป็น",
@@ -132,7 +133,7 @@
     "requestTimeoutSec": "หมดเวลา",
     "requestTimeoutSecTooltip": "เวลารอสูงสุดต่อคำขอ (วินาที). LLM ใช้เวลาคิดนานกว่า; แนะนำ 180 วินาทีขึ้นไป.",
     "customExportFilename": "รูปแบบชื่อไฟล์ส่งออก",
-    "customExportFilenameTooltip": "'{'name'}' = ชื่อไฟล์เดิม, '{'lang'}' = ภาษา, '{'ext'}' = นามสกุล, '{'date'}' = วันที่, '{'time'}' = เวลา",
+    "customExportFilenameTooltip": "'{'name'}' = ชื่อไฟล์เดิม, '{'lang'}' = ภาษา, '{'ext'}' = นามสกุล, '{'date'}' = วันที่, '{'time'}' = เวลา; ในโหมดหลายภาษาจะเพิ่ม '{'lang'}' อัตโนมัติเพื่อป้องกันชื่อไฟล์ซ้ำ",
     "partialFailureTitle": "แปลล้มเหลว {count} บรรทัด",
     "partialFailureDesc": "บรรทัดที่ล้มเหลวยังเก็บข้อความต้นฉบับไว้เป็นตัวยึดที่ ไฟล์ยังใช้งานได้ ความล้มเหลวเหล่านี้มักเกิดจากการสะดุดของเครือข่ายหรือบริการแปลไม่เสถียรชั่วคราว — บริการฟรีและเซิร์ฟเวอร์โฮสต์เองมักเจอบ่อย และไม่ใช่ปัญหาจากการตั้งค่าของคุณ คลิกลองอีกครั้งเพื่อดำเนินการต่อ (บรรทัดที่สำเร็จมาจากแคช ไม่แปลซ้ำ) ถ้ายังล้มเหลว ลองภายหลังหรือเปลี่ยนเป็นบริการแปลอื่น หรือคลิกดูบรรทัดที่ล้มเหลวเพื่อจัดการด้วยตนเอง",
     "retryFailedLines": "ลองอีกครั้ง",
@@ -170,6 +171,7 @@
     "translategemmaUnavailable": "บริการ TranslateGemma เชื่อมต่อไม่ได้ชั่วคราว โปรดตรวจสอบให้แน่ใจว่าเซิร์ฟเวอร์ในเครื่องของคุณ (LM Studio / llama.cpp / Ollama) ทำงานอยู่และ URL ถูกต้อง",
     "networkUnavailable": "บริการแปลเชื่อมต่อไม่ได้ชั่วคราว — อาจเป็นปัญหาเครือข่ายหรือบริการมีปัญหาชั่วคราว โปรดลองใหม่ภายหลังหรือเปลี่ยนเป็นบริการแปลอื่น",
     "translationTimeout": "คำขอแปลหมดเวลา — อาจเป็นเพราะเครือข่ายช้าหรือบริการตอบสนองช้าเกินไป โปรดลองใหม่ภายหลังหรือเปลี่ยนเป็นบริการแปลอื่น",
+    "translationTimeoutLocal": "การแปลด้วยโมเดลในเครื่องหมดเวลา โมเดล LLM ในเครื่องอาจค้างอยู่ในลูปการพูดซ้ำ — ลด max_tokens (ขีดจำกัดเอาต์พุต) ในการตั้งค่าขั้นสูง และตรวจสอบว่าภาษาต้นทางที่เลือกตรงกับข้อความจริง",
     "langGroupCommon": "ที่ใช้บ่อย",
     "langGroupEurope": "ยุโรป",
     "langGroupMiddleEast": "ตะวันออกกลาง",
@@ -220,7 +222,50 @@
     "reviewColSource": "ต้นฉบับ",
     "reviewColTarget": "คำแปล",
     "reviewApplyDownload": "ใช้และดาวน์โหลด",
-    "reviewDownloaded": "ดาวน์โหลดคำบรรยายที่ตรวจทานแล้ว"
+    "reviewDownloaded": "ดาวน์โหลดคำบรรยายที่ตรวจทานแล้ว",
+    "assStyleButton": "สไตล์ ASS",
+    "assStyleTooltip": "ปรับแต่งฟอนต์ ขนาด สี และตำแหน่งของซับไตเติล ASS สองภาษา",
+    "assNativeModeSource": "ใช้สไตล์ต้นฉบับ",
+    "assNativeModeRebuild": "จัดสไตล์ใหม่",
+    "assNativeModeTooltip": "ASS ดั้งเดิมสองภาษา: คงสไตล์ของไฟล์ต้นฉบับ หรือทิ้งแล้วจัดสไตล์ใหม่ด้วย «สไตล์ ASS» (เฉพาะซับบทสนทนา)",
+    "assStyleTitle": "การตั้งค่าสไตล์ ASS",
+    "assPresetLabel": "พรีเซ็ต",
+    "assPresetDefault": "ค่าเริ่มต้น",
+    "assPresetLarge": "ขนาดใหญ่",
+    "assPresetCinematic": "สไตล์ภาพยนตร์",
+    "assPresetBoxed": "กล่องพื้นหลัง",
+    "assPresetCustom": "กำหนดเอง",
+    "assGlobalGroup": "ทั่วไป",
+    "assTranslationStyle": "สไตล์คำแปล",
+    "assOriginalStyle": "สไตล์ต้นฉบับ",
+    "assFontName": "ฟอนต์",
+    "assFontPlaceholder": "เว้นว่างไว้ = อัตโนมัติตามภาษาเป้าหมาย",
+    "assReadSystemFonts": "อ่านฟอนต์ระบบ",
+    "assSystemFontsGroup": "ฟอนต์ระบบ",
+    "assReadSystemFontsUnsupported": "เบราว์เซอร์นี้ไม่รองรับการอ่านฟอนต์ระบบ — กรุณาพิมพ์ชื่อฟอนต์แทน",
+    "assFontSize": "ขนาด",
+    "assTextColor": "สีข้อความ",
+    "assOutlineColor": "สีเส้นขอบ",
+    "assBoxColor": "สีกล่อง",
+    "assOutline": "เส้นขอบ",
+    "assShadow": "เงา",
+    "assAlignment": "การจัดตำแหน่ง",
+    "assAlignBottom": "กึ่งกลางด้านล่าง",
+    "assAlignTop": "กึ่งกลางด้านบน",
+    "assMarginV": "ระยะขอบ",
+    "previewOriginal": "ต้นฉบับ",
+    "previewTranslation": "คำแปล",
+    "fontGroup": {
+      "broad": "กว้าง / หลายภาษา",
+      "zhHans": "จีนตัวย่อ",
+      "zhHant": "จีนตัวเต็ม",
+      "japanese": "日本語",
+      "korean": "한국어",
+      "arabic": "العربية",
+      "devanagari": "हिन्दी / Devanagari",
+      "thai": "ไทย",
+      "latin": "ละติน / ซีริลลิก / กรีก"
+    }
   },
   "TranslationSettings": {
     "resetConfigSuccess": "รีเซ็ตการตั้งค่าเป็นค่าเริ่มต้นแล้ว",
@@ -276,6 +321,8 @@
     "presetUpdated": "บันทึกในพรีเซ็ตปัจจุบันแล้ว",
     "presetDeleteConfirm": "ลบพรีเซ็ตนี้หรือไม่?",
     "presetEmptyHint": "ยังไม่มีพรีเซ็ต — แก้ไขแล้วคลิกบันทึก",
+    "presetDefault": "พรอมต์เริ่มต้น",
+    "presetDefaultReadonly": "พรอมต์เริ่มต้นเป็นรายการในตัว — ไม่สามารถแก้ไขหรือลบได้ ใช้ \"บันทึกเป็นพรีเซ็ตใหม่\" เพื่อปรับแต่ง",
     "qwenMtDomains": "พรอมต์โดเมน (ภาษาอังกฤษเท่านั้น)",
     "sendSystemPrompt": "ส่ง system prompt",
     "sendSystemPromptExtra": "ปิดเฉพาะเมื่อ chat template ปฏิเสธบทบาท system — ข้อผิดพลาดทั่วไป \"Conversations must start with a user prompt\" (เช่น ตระกูล Gemma)",
@@ -329,20 +376,6 @@
         {
           "q": "ไฟล์ซับจะอัปโหลดไปที่เซิร์ฟเวอร์ของคุณไหม? เป็นส่วนตัวและปลอดภัยหรือไม่?",
           "a": "ทำงานฝั่งไคลเอนต์ทั้งหมด: การอ่านไฟล์ซับ การ parse และคำขอแปลทั้งหมดเกิดขึ้นในเบราว์เซอร์ของคุณ — เนื้อหาต้นฉบับไม่เคยแตะเซิร์ฟเวอร์ของเรา คำขอเอนจิน LLM ถูกส่งตรงจากเบราว์เซอร์ของคุณไปยัง API endpoint ที่คุณตั้งค่า (OpenAI, DeepSeek ฯลฯ) และ API Key เก็บไว้ใน localStorage ของเบราว์เซอร์เท่านั้น แคชการแปลใช้ IndexedDB ของเบราว์เซอร์และคงอยู่ระหว่างเซสชัน ซอร์สโค้ดเปิดบน GitHub (rockbenben/subtitle-translator) สำหรับ self-hosting หรือตรวจสอบ"
-        }
-      ],
-      "howto": [
-        {
-          "name": "เริ่มจากวิดีโอหรือไฟล์ซับ",
-          "text": "อัปโหลด SRT/ASS/VTT/SBV/LRC แยก: YouTube ด้วย yt-dlp, แพลตฟอร์มอื่นด้วยเครื่องมือเฉพาะ รูปแบบและการเข้ารหัส UTF-8/UTF-16/GBK ตรวจจับอัตโนมัติ"
-        },
-        {
-          "name": "เลือกเอนจินและโหมดเอาต์พุต",
-          "text": "Google ฟรีสำหรับทดสอบเร็ว, DeepSeek/DeepL API เพื่อคุณภาพ 'เฉพาะคำแปล' สำหรับเผยแพร่, 'สองภาษา' สำหรับเรียนภาษา ในสองภาษา วางคำแปลด้านบน (เรียน) หรือด้านล่าง (ดู)"
-        },
-        {
-          "name": "แปลและส่งออกไปยังแพลตฟอร์ม",
-          "text": "คลิกแปลและตรวจสอบจังหวะในตัวอย่าง ดาวน์โหลด SRT สำหรับซับชุมชน YouTube, ASS มีสไตล์สำหรับ Premiere/DaVinci Resolve, VTT สำหรับเว็บเพลเยอร์, LRC สำหรับเนื้อเพลง"
         }
       ],
       "features": [
@@ -430,7 +463,11 @@
     "textParser": "เครื่องมือข้อความ",
     "jsonParser": "เครื่องมือ JSON",
     "dataParser": "เครื่องมือข้อมูล",
-    "otherTools": "เครื่องมืออื่นๆ"
+    "otherTools": "เครื่องมืออื่นๆ",
+    "externalTools": {
+      "legendtalk": "โต๊ะกลมนักคิด AI",
+      "imgprompt": "พรอมต์รูปภาพ AI"
+    }
   },
   "Metadata": {
     "title": "ToolsByAI - ชุดเครื่องมือแปลภาษา & ข้อมูล AI ออนไลน์",
