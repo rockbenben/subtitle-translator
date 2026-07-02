@@ -35,22 +35,34 @@ export const isBlankLine = (line: string | undefined): boolean => !(line ?? "").
  * cache the next run re-translates every line in that batch, including the ones
  * that had succeeded.) Mutates `translatedLines` in place, write-once: only a
  * still-`undefined` slot whose source line is non-blank can be filled, so blank
- * pre-fills and already-decided slots are never clobbered. `cacheGet` returns
- * the cached translation for a source line (null = miss); a rejected lookup is
- * treated as a miss so the line just translates normally. Lookups run parallel.
+ * pre-fills and already-decided slots are never clobbered. `cacheGetMany` reads
+ * the cached translations for a batch of source lines IN ONE transaction
+ * (result order matches input; null = miss) — a rejected batch lookup is
+ * treated as all-miss so those lines just translate normally. Reading all
+ * lookups through one transaction (vs one `get` per line) is what keeps a
+ * cache-heavy re-run of a long file from paying per-line IndexedDB overhead.
  */
-export const prefillFromLineCache = async (contentLines: string[], translatedLines: (string | undefined)[], cacheGet: (text: string) => Promise<string | null>): Promise<void> => {
-  await Promise.all(
-    contentLines.map(async (line, i) => {
-      if (translatedLines[i] !== undefined || isBlankLine(line)) return;
-      try {
-        const hit = await cacheGet(line);
-        if (hit !== null) translatedLines[i] = hit;
-      } catch {
-        /* treat cache error as a miss — the line translates normally */
-      }
-    }),
-  );
+export const prefillFromLineCache = async (contentLines: string[], translatedLines: (string | undefined)[], cacheGetMany: (texts: string[]) => Promise<(string | null)[]>): Promise<void> => {
+  // Only non-blank, still-undefined slots are lookup candidates (write-once).
+  const pending: number[] = [];
+  for (let i = 0; i < contentLines.length; i++) {
+    if (translatedLines[i] === undefined && !isBlankLine(contentLines[i])) pending.push(i);
+  }
+  if (pending.length === 0) return;
+
+  let hits: (string | null)[];
+  try {
+    hits = await cacheGetMany(pending.map((i) => contentLines[i]));
+  } catch {
+    return; // treat a failed batch lookup as all-miss — the lines translate normally
+  }
+
+  for (let p = 0; p < pending.length; p++) {
+    const hit = hits[p];
+    // Re-check write-once: a concurrent path can't touch translatedLines here
+    // (single-threaded), but the guard documents intent and is cheap.
+    if (hit != null && translatedLines[pending[p]] === undefined) translatedLines[pending[p]] = hit;
+  }
 };
 
 /**
@@ -77,7 +89,7 @@ const NUMBERED_TRANSLATE_RE = /\[TRANSLATE_(\d+)\]([\s\S]*?)\[\/(?:TRANSLATE|TRA
  * was never a translation target". Omitting it assumes every slot is a real
  * target (legacy behavior — fine for callers that pre-filter blank lines).
  */
-export const extractTranslatedLinesWithNumbers = (response: string, expectedCount: number, sourceLines?: string[]): string[] => {
+export const extractTranslatedLinesWithNumbers = (response: string, expectedCount: number, sourceLines?: string[], contextLines?: string[]): string[] => {
   // Initialize with empty strings to ensure consistent return type
   const results = new Array<string>(expectedCount).fill("");
 
@@ -144,6 +156,48 @@ export const extractTranslatedLinesWithNumbers = (response: string, expectedCoun
     let j = i - 1;
     while (j >= 0 && blankSource(j)) j--;
     if (j >= 0 && satisfied[j]) results[j] = "";
+  }
+
+  // Cross-line echo guard (NHK 红白 issue): in dense rapid-dialogue regions the
+  // model loses the [TRANSLATE]/[CONTEXT] boundary and copies a NEARBY source line
+  // (observed: the forward-context line ≈+9 ahead) VERBATIM into a TRANSLATE slot,
+  // untranslated. Because every slot comes back non-empty, extraction would count
+  // it a success — the misaligned source text gets cached and shipped, never
+  // retried. A real JP→ZH (or any cross-language) translation is never
+  // byte-identical to a DIFFERENT line's source, so a slot whose content equals
+  // ANOTHER source/context line in this batch's window is an echo: nuke it to ""
+  // so it falls into the caller's retry/soft-fill. `contextLines` is the full
+  // window the model saw (target slice + padding) so echoes of forward-CONTEXT
+  // lines outside the target batch are caught too; falls back to `sourceLines`.
+  //
+  // Runs AFTER the merge guard ON PURPOSE: nuking here must not feed the merge
+  // guard's gap-predecessor discard. An ISOLATED echo (one slot copies a
+  // neighbor; its predecessor is a GOOD translation) would otherwise turn into a
+  // gap whose innocent predecessor gets discarded too — blanking a correctly
+  // translated line. The merge guard already ran on the echo-present results
+  // (sees the echo as a non-empty "satisfied" slot, not an omission), so by the
+  // time we empty the echo here, no predecessor can be collaterally dropped.
+  //
+  // Strictly "a DIFFERENT line": content equal to the slot's OWN source is the
+  // legitimate self-translation of an untranslatable token (names, numbers, pure
+  // punctuation) and must survive. A source text the model also returned AT ITS
+  // OWN slot is whitelisted (proven-plausible target string — e.g. JP "はい" →
+  // "Yes" in a mixed-language subtitle whose line 0 is already English "Yes" —
+  // not copied source). Blank window lines are excluded so an empty slot can't
+  // spuriously "match" them.
+  const echoWindow = contextLines ?? sourceLines;
+  if (echoWindow !== undefined) {
+    const echoSet = new Set(echoWindow.map((l) => (l ?? "").trim()).filter((l) => l !== ""));
+    const selfTranslated = new Set<string>();
+    for (let i = 0; i < expectedCount; i++) {
+      const c = results[i].trim();
+      if (c !== "" && c === (sourceLines?.[i] ?? "").trim()) selfTranslated.add(c);
+    }
+    for (let i = 0; i < expectedCount; i++) {
+      const content = results[i].trim();
+      if (content === "" || content === (sourceLines?.[i] ?? "").trim()) continue;
+      if (echoSet.has(content) && !selfTranslated.has(content)) results[i] = "";
+    }
   }
 
   // Fail safe, not wrong: every returned line is placed at the index named by its

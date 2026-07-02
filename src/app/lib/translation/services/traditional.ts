@@ -111,9 +111,14 @@ const gtxLegacy = async (endpoint: string, params: Parameters<TranslationService
 
     const data = await response.json();
     // Legacy shape: data[0] = Array<[translated, original, ...]>. A non-array
-    // root (auth wall) falls back to "" instead of throwing TypeError on .map.
-    const segments = Array.isArray(data?.[0]) ? data[0] : [];
-    return segments.map((part: unknown) => (Array.isArray(part) && typeof part[0] === "string" ? part[0] : "")).join("");
+    // root means a 200-OK that ISN'T a translation (auth wall / shape drift):
+    // THROW (like every sibling MT service) so retry + soft-fill-with-original
+    // runs. Returning "" here instead silently blanks the line — and across a
+    // multi-line chunk the all-"" join is truthy, so index.ts ships it as a
+    // cached "success" (total silent data loss; also breaks this path's own
+    // "a failed line rejects the whole chunk" contract).
+    if (!Array.isArray(data?.[0])) throw new Error("Invalid response format from Google Translate (gtx)");
+    return data[0].map((part: unknown) => (Array.isArray(part) && typeof part[0] === "string" ? part[0] : "")).join("");
   };
 
   const lines = text.split("\n");
@@ -159,12 +164,28 @@ export const gtxFreeAPI: TranslationService = async (params) => {
   const data = await response.json();
   // Response: data[0] = translations array, parallel to the request payload
   // (data[1] = detected source langs, only present with sl=auto). A non-array
-  // root (auth wall / shape drift) falls back to "" per line instead of
-  // throwing TypeError downstream.
-  const translated = Array.isArray(data?.[0]) ? data[0] : [];
+  // root means a 200-OK that ISN'T a translation (auth wall / shape drift):
+  // THROW (like every sibling MT service) so retry + soft-fill-with-original
+  // runs. Falling back to "" per line silently blanks EVERY sent line — and the
+  // all-"" join is truthy, so index.ts ships the blanked chunk as a cached
+  // "success" (total, silent data loss the user only sees on opening the file).
+  if (!Array.isArray(data?.[0])) throw new Error("Invalid response format from Google Translate (gtx)");
+  const translated = data[0];
   const out = [...lines];
   sentIndices.forEach((lineIdx, j) => {
-    out[lineIdx] = typeof translated[j] === "string" ? translated[j] : "";
+    // Parallel-array contract: one string per sent line. A SHORT array
+    // (translated[j] === undefined) or a HOLEY one (a non-string element) must
+    // THROW like the non-array guard above — not fall back to "". Blanking only
+    // the affected line(s) while the other lines stay populated makes the
+    // out.join("\n") truthy, so index.ts ships the chunk as a cached "success"
+    // (silent, persisted data loss the user only sees on opening the file).
+    // Throwing routes the whole chunk through retry + soft-fill-with-original,
+    // matching every sibling MT service's "a bad response rejects the chunk".
+    const t = translated[j];
+    if (typeof t !== "string") {
+      throw new Error("Invalid response format from Google Translate (gtx) — missing translation for a sent line");
+    }
+    out[lineIdx] = t;
   });
   return out.join("\n");
 };
@@ -553,15 +574,28 @@ export const translategemma: TranslationService = async (params) => {
     headers.Authorization = `Bearer ${apiKey}`;
   }
 
+  // Cap the output budget to ~2× the input length (+headroom), clamped to
+  // [64, 2048]. A translation never legitimately runs much longer than its
+  // source, so this generous ceiling is invisible on the happy path. Its real
+  // job is bounding the WORST case: greedy decoding (temperature 0, no
+  // sampling to escape a loop) on out-of-distribution input — most often a
+  // source-language mismatch, since TranslateGemma has no auto-detect and
+  // bakes the declared source_lang into the prompt — can fail to emit
+  // <end_of_turn> and run away toward the token budget. At a flat 2048 on a
+  // local 12B (a few tok/s), that runaway burns the FULL per-request timeout
+  // (180–300s) before aborting. Scaling the cap to the input means a runaway
+  // hits finish_reason==="length" in seconds → the existing "max_tokens
+  // reached" soft-fail fires fast instead of grinding for minutes. Genuinely
+  // long inputs (≥~1KB) still get the full 2048 (clamp), unchanged from before.
+  const maxTokens = Math.min(2048, Math.max(64, Math.ceil(text.length * 2) + 32));
+
   const requestBody: Record<string, unknown> = {
     prompt,
     // Hardcoded greedy decoding — matches Google's official `do_sample=False`
     // recipe. Sent explicitly so OpenAI-compat servers (LM Studio etc.) don't
     // fall back to their UI default temperature.
     temperature: 0,
-    // 2048 covers translations up to ~6KB of text. Anything longer is unusual
-    // for a single batch entry and would benefit from chunking upstream.
-    max_tokens: 2048,
+    max_tokens: maxTokens,
     // Hard stop at the turn boundary — without it, some runtimes keep
     // generating past the answer (echoing example pairs, role tokens, etc).
     stop: ["<end_of_turn>"],

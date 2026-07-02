@@ -22,7 +22,7 @@ export const SHARED_NAMESPACES = ["Metadata", "navigation", "tools", "feedback",
  * Build the client-bundled messages object: pick SHARED_NAMESPACES from the
  * full messages, slimming `tools.*` to just { title, description } per tool.
  *
- * The long-form metaTitle/metaDescription/faq/howto/features are server-only
+ * The long-form metaTitle/metaDescription/faq/features are server-only
  * (consumed by ToolPageShell + generateMetadata via loadToolContent), so
  * omitting them from the client payload saves ~14 KB per provider, ~30 KB
  * per page (layout + ToolPageShell double-ship would otherwise duplicate).

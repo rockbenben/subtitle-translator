@@ -259,7 +259,7 @@ export const PROVIDERS = {
     apiKeyUrl: "https://console.anthropic.com/settings/keys",
     // url 可选:自建中转(转发到 api.anthropic.com/v1/messages 的自有 Worker)。
     // 优先级:自定义 URL > useRelay > 官方直连(见 services/llm.ts claude)。
-    defaults: { url: "", apiKey: "", model: "claude-sonnet-4-6", temperature: 0.7, batchSize: 20, contextBatchSize: 3, contextWindow: 100, thinkingEffort: {}, useRelay: false },
+    defaults: { url: "", apiKey: "", model: "claude-sonnet-4-6", temperature: 0.7, batchSize: 20, contextBatchSize: 3, contextWindow: 50, thinkingEffort: {}, useRelay: false },
     // Claude 4 系列全部支持 thinking ── Opus 4.7 是 adaptive thinking,
     // Sonnet 4.6 + Haiku 4.5 是 extended thinking(per docs.anthropic.com)。
     models: [
@@ -274,7 +274,7 @@ export const PROVIDERS = {
     label: "Gemini",
     docs: "https://ai.google.dev/gemini-api/docs/text-generation",
     apiKeyUrl: "https://aistudio.google.com/app/api-keys",
-    defaults: { apiKey: "", model: "gemini-3.5-flash", temperature: 0.7, batchSize: 20, contextBatchSize: 3, contextWindow: 100, thinkingEffort: {} },
+    defaults: { apiKey: "", model: "gemini-3.5-flash", temperature: 0.7, batchSize: 20, contextBatchSize: 3, contextWindow: 50, thinkingEffort: {} },
     // 仅收录 Gemini 3.x 系列(2.5 已过时,且参数协议不同需要 budget mapping 增加
     // service 复杂度,精简掉)。Gemini 3 thinking 通过
     // `generationConfig.thinkingConfig.thinkingLevel` (minimal/low/medium/high)
@@ -599,7 +599,7 @@ export const PROVIDERS = {
     apiKeyUrl: "https://aistudio.yandex.ru/platform/folders/",
     // url 可选:自建中转(转发到 llm.api.cloud.yandex.net 的自有代理)。
     // 优先级:自定义 URL > useRelay > 官方直连(见 services/llm.ts yandex)。
-    defaults: { url: "", apiKey: "", folderId: "", model: "yandexgpt-5.1", temperature: 0.7, batchSize: 20, contextBatchSize: 3, contextWindow: 100, useRelay: true },
+    defaults: { url: "", apiKey: "", folderId: "", model: "yandexgpt-5.1", temperature: 0.7, batchSize: 20, contextBatchSize: 3, contextWindow: 50, useRelay: true },
     // Hosted SKUs per aistudio.yandex.ru/docs (generation/models, 2026-06).
     // No thinking tags — the OpenAI-compat path documents no reasoning toggle
     // (YandexGPT 5.1's Chain-of-Reasoning isn't exposed as a request param);
@@ -732,7 +732,7 @@ export const PROVIDERS = {
     label: "Nvidia NIM",
     docs: "https://build.nvidia.com/explore/discover",
     apiKeyUrl: "https://build.nvidia.com/",
-    defaults: { url: "", apiKey: "", model: "deepseek-ai/deepseek-v4-flash", temperature: 0.7, batchSize: 20, contextBatchSize: 3, contextWindow: 100, thinkingEffort: {} },
+    defaults: { url: "", apiKey: "", model: "deepseek-ai/deepseek-v4-flash", temperature: 0.7, batchSize: 20, contextBatchSize: 3, contextWindow: 50, thinkingEffort: {} },
     // https://build.nvidia.com/models?filters=nimType%3Anim_type_preview
     // DeepSeek V4 系列在 NVIDIA NIM 上 thinking 协议跟原生 DeepSeek 不同 ──
     // 用 chat_template_kwargs.thinking + reasoning_effort 嵌套(其他 model
@@ -753,7 +753,7 @@ export const PROVIDERS = {
     category: "aggregator",
     label: "Azure OpenAI",
     docs: "https://learn.microsoft.com/zh-cn/azure/foundry/foundry-models/concepts/models-sold-directly-by-azure",
-    defaults: { url: "", apiKey: "", model: "gpt-5.4-mini", apiVersion: "2025-11-18", temperature: 0.7, batchSize: 20, contextBatchSize: 3, contextWindow: 100, thinkingEffort: {} },
+    defaults: { url: "", apiKey: "", model: "gpt-5.4-mini", apiVersion: "2025-11-18", temperature: 0.7, batchSize: 20, contextBatchSize: 3, contextWindow: 50, thinkingEffort: {} },
     // GPT-5 系列全部支持 reasoning(OpenAI 原生 + Azure 镜像同行为)。
     // gpt-chat-latest 是 5.5 Instant 别名(per Azure docs),同样支持。
     models: [
@@ -1007,11 +1007,15 @@ const buildOpenAICompatDefault = (spec: OpenAICompatProviderSpec): TranslationCo
     temperature: spec.defaultTemperature,
     // batchSize = line-by-line / non-context concurrency; kept high because
     // each request is a single short prompt. contextBatchSize = concurrent
-    // context batches (heavy payloads, ~100 lines each); low default to avoid
+    // context batches (heavy payloads, ~50 lines each); low default to avoid
     // rate-limit storms. Users with paid tier can raise either in settings.
+    // contextWindow 50 (was 100): big windows let the LLM merge/renumber lines
+    // on dense song-lyric / overlapping-dialogue sections, shifting translations
+    // against their timestamps, and the huge requests time out near the tail of
+    // long files. 50 contains both — a drift can only affect ≤50 lines.
     batchSize: 20,
     contextBatchSize: 3,
-    contextWindow: 100,
+    contextWindow: 50,
   };
   // Note: no maxTokens here. Cloud LLMs already have server-side caps and
   // their models are RLHF-tuned out of repeat loops, so exposing an extra

@@ -5,14 +5,20 @@ import { Alert, Button, Modal, List, Space, App, Tag, theme } from "antd";
 import { ReloadOutlined, UnorderedListOutlined, CopyOutlined } from "@ant-design/icons";
 import { useTranslations } from "next-intl";
 import { useCopyToClipboard } from "@/app/hooks/useCopyToClipboard";
+import type { FailedLine } from "@/app/hooks/useTranslationState";
 
 /**
  * Surfaces partial-failure state from useTranslationState: after the main
  * pass + 10s auto-retry, any lines still failing are reported here.
  *
- * - `count` / `lines`: line-level failures within a single translation run
- *    (one lang × N lines that didn't translate). `lines` lets the user copy
- *    the originals and handle manually.
+ * - `count` / `lines`: line-level failures within a single translation run. A
+ *    run can span several target langs (multi-language mode) and several files
+ *    (batch mode) — failures accumulate across all of them until the next
+ *    run/clear. Each `FailedLine` carries the original text plus, when the
+ *    source path can supply them, the real 1-based line position, target lang
+ *    and source file — so the modal points at the actual location instead of a
+ *    meaningless 1..N re-numbering. `lines` lets the user copy the originals
+ *    and handle manually.
  * - `failedLangs`: lang-level failures in multi-language batch mode
  *    (entire target lang errored out across all batches — auth bounce, model
  *    refusal). Codes like "ga fo pa" — user copies and re-runs targeting only
@@ -30,7 +36,7 @@ export default function TranslateFailurePanel({
   disabled = false,
 }: {
   count: number;
-  lines: string[];
+  lines: FailedLine[];
   failedLangs?: string[];
   /** Representative raw API error (e.g. "[422] reasoning_effort is not supported
    *  with this model"). Shown verbatim under the partial-failure notice so the user
@@ -87,10 +93,37 @@ export default function TranslateFailurePanel({
 
   if (!hasFailures) return null;
 
+  // Concurrent soft-fail collection pushes lines out of order, and multi-file
+  // batches accumulate several files' failures under one clearFailures — sort by
+  // (file, lang, line) so rows group per file and each group reads top-to-bottom
+  // like its source (line numbers are only unique within one file). Records
+  // without a line number (JSONTranslator's key nodes) sort to the front and
+  // fall back to sequential.
+  const sortedLines = [...lines].sort((a, b) => {
+    const fileCmp = (a.file ?? "").localeCompare(b.file ?? "");
+    if (fileCmp !== 0) return fileCmp;
+    const langCmp = (a.lang ?? "").localeCompare(b.lang ?? "");
+    if (langCmp !== 0) return langCmp;
+    return (a.line ?? 0) - (b.line ?? 0);
+  });
+  // Tag each row with its source file / target lang only when the failures span
+  // more than one — a single-file or single-language run needs no per-row noise.
+  const distinctLangs = new Set(sortedLines.map((l) => l.lang).filter(Boolean));
+  const showLang = distinctLangs.size > 1;
+  const distinctFiles = new Set(sortedLines.map((l) => l.file).filter(Boolean));
+  const showFile = distinctFiles.size > 1;
+  // Pad the index column to the widest number shown (real line no. or sequential).
+  // reduce, not Math.max(...spread): a fully-failed large file (huge JSON) could
+  // spread tens of thousands of args and hit RangeError("too many arguments").
+  const maxNum = sortedLines.reduce((m, l) => Math.max(m, l.line ?? 0), sortedLines.length);
+  const numWidth = String(maxNum).length;
+
   // copyToClipboard 自带「已复制」提示，不再叠加 message.success（原来会把按钮文案
   // 当成功提示再弹一次，一次点击出现两个 toast）。
+  // 内嵌换行压平成空格:ASS 多行 cue 的 \N 已被转成真实 \n,原样复制会让剪贴板
+  // 物理行数 > 失败条数 —— 拿去外部翻译后逐行贴回(复制按钮存在的工作流)必错位。
   const copyAll = () => {
-    copyToClipboard(lines.join("\n"));
+    copyToClipboard(sortedLines.map((l) => l.text.replace(/\r?\n/g, " ")).join("\n"));
   };
 
   const copyAllLangs = () => {
@@ -194,7 +227,7 @@ export default function TranslateFailurePanel({
         <List
           size="small"
           bordered
-          dataSource={lines}
+          dataSource={sortedLines}
           style={{ maxHeight: "60vh", overflowY: "auto" }}
           renderItem={(item, idx) => (
             <List.Item>
@@ -206,12 +239,24 @@ export default function TranslateFailurePanel({
                   fontSize: 12,
                   letterSpacing: "0.04em",
                   display: "inline-block",
-                  minWidth: `${String(lines.length).length + 1}ch`,
+                  minWidth: `${numWidth + 1}ch`,
                   textAlign: "right",
                 }}>
-                {String(idx + 1).padStart(String(lines.length).length, "0")}
+                {/* Real source line number when the path supplied one; otherwise
+                    sequential (JSONTranslator's key nodes have no line position). */}
+                {String(item.line ?? idx + 1).padStart(numWidth, "0")}
               </span>
-              {item}
+              {showFile && item.file && (
+                <Tag style={{ marginRight: 8 }} color="default">
+                  {item.file}
+                </Tag>
+              )}
+              {showLang && item.lang && (
+                <Tag style={{ marginRight: 8 }} color="default">
+                  {item.lang}
+                </Tag>
+              )}
+              {item.text}
             </List.Item>
           )}
         />

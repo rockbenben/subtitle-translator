@@ -6,8 +6,6 @@ import { SaveOutlined, PlusOutlined, DeleteOutlined, InfoCircleOutlined } from "
 import {
   TRANSLATION_PROVIDERS,
   LLM_MODELS,
-  DEFAULT_SYSTEM_PROMPT,
-  DEFAULT_USER_PROMPT,
   BINARY_EFFORT_VENDORS,
   URL_IS_PRIMARY_CRED,
   getConfigStatus,
@@ -26,6 +24,7 @@ import {
   type ReasoningEffort,
 } from "@/app/lib/translation";
 import { useTranslationContext } from "@/app/components/TranslationContext";
+import { DEFAULT_PROMPT_PRESET_ID } from "@/app/hooks/usePromptPresets";
 import { describeError } from "@/app/utils";
 import { useTranslations } from "next-intl";
 import Section from "@/app/components/styled/Section";
@@ -53,9 +52,8 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
     handleConfigChange,
     resetTranslationConfig,
     systemPrompt,
-    setSystemPrompt,
     userPrompt,
-    setUserPrompt,
+    loadPromptPreset,
     llmPresets,
     activeLlmPresetId,
     saveLlmPreset,
@@ -135,10 +133,16 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
 
   const handleResetToDefault = () => {
     resetTranslationConfig(service);
-    if (isLLMModel) {
-      setSystemPrompt(DEFAULT_SYSTEM_PROMPT);
-      setUserPrompt(DEFAULT_USER_PROMPT);
-    }
+    // Reuse the default-prompt entry: this restores the factory prompts AND marks
+    // the preset picker as "default", so the dropdown reflects the actual state
+    // instead of leaving a now-stale custom preset name selected.
+    if (isLLMModel) loadPromptPreset(DEFAULT_PROMPT_PRESET_ID);
+    // Same staleness for the Custom-LLM preset dropdown (only shown for service
+    // "llm", which snapshots this service's config): after reset the live config
+    // no longer matches the selected preset, so clear the selection. This also
+    // disables its "overwrite" button — otherwise the user could silently save
+    // the reset config over their saved preset while it still looked selected.
+    if (service === "llm") loadLlmPreset("");
     message.success(t("resetConfigSuccess"));
   };
 

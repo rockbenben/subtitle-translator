@@ -181,7 +181,6 @@ export function toolPathsByGroup(group: ToolGroup): string[] {
   return toolKeysByGroup(group).map(pathOf);
 }
 
-export type HowToStep = { name: string; text: string };
 export type FaqEntry = { q: string; a: string };
 
 /**
@@ -200,8 +199,6 @@ export type ToolContent = {
   /** Long SEO meta description */
   metaDescription: string;
   faq: FaqEntry[];
-  /** null when the locale has no howto data — schema is then omitted */
-  howto: HowToStep[] | null;
   features: string[];
 };
 
@@ -226,7 +223,6 @@ export function extractToolContent(
     metaTitle: str("metaTitle"),
     metaDescription: str("metaDescription"),
     faq: Array.isArray(entry.faq) ? (entry.faq as FaqEntry[]) : [],
-    howto: Array.isArray(entry.howto) ? (entry.howto as HowToStep[]) : null,
     features: Array.isArray(entry.features) ? (entry.features as string[]) : [],
   };
 }

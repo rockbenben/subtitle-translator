@@ -60,7 +60,7 @@ export function buildToolPageMetadata({ locale, title, description, path }: { lo
   };
 }
 
-// FAQ/HowTo 文案用 [label](url) + `code` 的 markdown 子集 —— JSON-LD 是给
+// FAQ 文案用 [label](url) + `code` 的 markdown 子集 —— JSON-LD 是给
 // 搜索引擎/AI 的纯文本结构数据,不能塞原始 markdown 语法(链接渲染成字面
 // "[字幕翻译](../subtitle-translator)",代码标记渲染成反引号)。剥成纯文本。
 const stripInlineMarkdown = (text: string): string =>
