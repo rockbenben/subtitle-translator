@@ -423,19 +423,20 @@ export const PROVIDERS = {
     kind: "openai-compat",
     category: "llm",
     label: "MiniMax",
-    endpoint: "https://api.minimaxi.com/v1/chat/completions",
-    defaultModel: "MiniMax-M2.7",
+    endpoint: "https://api.minimax.io/v1/chat/completions",
+    defaultModel: "MiniMax-M3",
     defaultTemperature: 0.7,
     docs: "https://platform.minimax.io/docs/api-reference/text-chat",
     apiKeyUrl: "https://platform.minimax.io/user-center/basic-information/interface-key",
     allowCustomUrl: true,
     endpoints: [
-      { label: "Mainland (CN)", url: "https://api.minimaxi.com/v1/chat/completions" },
       { label: "International", url: "https://api.minimax.io/v1/chat/completions" },
+      { label: "Mainland (CN)", url: "https://api.minimaxi.com/v1/chat/completions" },
     ],
     models: [
-      // Not thinking-tagged: M2 reasoning is intrinsic/unclosable on the hosted
+      // Not thinking-tagged: MiniMax reasoning is intrinsic/unclosable on the hosted
       // API (no toggle param; `enable_thinking` is a local-deploy kwarg). See llm.ts.
+      { label: "MiniMax M3", value: "MiniMax-M3" },
       { label: "MiniMax M2.7", value: "MiniMax-M2.7" },
       { label: "MiniMax M2.7 High-Speed", value: "MiniMax-M2.7-highspeed" },
       { label: "MiniMax M2.5", value: "MiniMax-M2.5" },
