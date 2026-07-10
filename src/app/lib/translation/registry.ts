@@ -423,15 +423,15 @@ export const PROVIDERS = {
     kind: "openai-compat",
     category: "llm",
     label: "MiniMax",
-    endpoint: "https://api.minimax.io/v1/chat/completions",
+    endpoint: "https://api.minimaxi.com/v1/chat/completions",
     defaultModel: "MiniMax-M3",
     defaultTemperature: 0.7,
     docs: "https://platform.minimax.io/docs/api-reference/text-chat",
     apiKeyUrl: "https://platform.minimax.io/user-center/basic-information/interface-key",
     allowCustomUrl: true,
     endpoints: [
-      { label: "International", url: "https://api.minimax.io/v1/chat/completions" },
       { label: "Mainland (CN)", url: "https://api.minimaxi.com/v1/chat/completions" },
+      { label: "International", url: "https://api.minimax.io/v1/chat/completions" },
     ],
     models: [
       // Not thinking-tagged: MiniMax reasoning is intrinsic/unclosable on the hosted
