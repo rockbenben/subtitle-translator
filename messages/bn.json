@@ -463,7 +463,7 @@
     "textParser": "টেক্সট টুল",
     "jsonParser": "JSON টুল",
     "dataParser": "ডেটা টুল",
-    "otherTools": "অন্যান্য টুল",
+    "otherTools": "আরও টুল",
     "externalTools": {
       "legendtalk": "AI চিন্তাবিদ গোলটেবিল",
       "imgprompt": "AI ইমেজ প্রম্পট"

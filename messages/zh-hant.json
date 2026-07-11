@@ -463,7 +463,7 @@
     "textParser": "文字處理",
     "jsonParser": "JSON 處理",
     "dataParser": "資料轉換",
-    "otherTools": "其他工具",
+    "otherTools": "更多工具",
     "externalTools": {
       "legendtalk": "AI 思想家圓桌",
       "imgprompt": "AI 繪圖提示詞"

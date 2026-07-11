@@ -463,7 +463,7 @@
     "textParser": "Công cụ Văn bản",
     "jsonParser": "Công cụ JSON",
     "dataParser": "Công cụ Dữ liệu",
-    "otherTools": "Công cụ Khác",
+    "otherTools": "Thêm công cụ",
     "externalTools": {
       "legendtalk": "Bàn tròn nhà tư tưởng AI",
       "imgprompt": "Câu lệnh tạo ảnh AI"

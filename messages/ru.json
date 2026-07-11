@@ -463,7 +463,7 @@
     "textParser": "Обработка текста",
     "jsonParser": "Обработка JSON",
     "dataParser": "Преобразование данных",
-    "otherTools": "Другие инструменты",
+    "otherTools": "Больше инструментов",
     "externalTools": {
       "legendtalk": "Круглый стол мыслителей ИИ",
       "imgprompt": "Промпты для ИИ-изображений"

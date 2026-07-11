@@ -463,7 +463,7 @@
     "textParser": "टेक्स्ट उपकरण",
     "jsonParser": "JSON उपकरण",
     "dataParser": "डेटा उपकरण",
-    "otherTools": "अन्य उपकरण",
+    "otherTools": "अधिक टूल",
     "externalTools": {
       "legendtalk": "AI विचारक गोलमेज़",
       "imgprompt": "AI इमेज प्रॉम्प्ट"

@@ -463,7 +463,7 @@
     "textParser": "Ferramentas Texto",
     "jsonParser": "Ferramentas JSON",
     "dataParser": "Ferramentas Dados",
-    "otherTools": "Outras Ferramentas",
+    "otherTools": "Mais ferramentas",
     "externalTools": {
       "legendtalk": "Mesa-redonda de pensadores de IA",
       "imgprompt": "Prompts de imagem de IA"

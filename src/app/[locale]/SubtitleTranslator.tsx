@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo, useRef } from "react";
 import { Flex, Card, Button, Typography, Input, Upload, Form, Space, App, Tooltip, Segmented, Spin, Row, Col, Divider, Collapse, Alert, theme } from "antd";
-import { CopyOutlined, InboxOutlined, SettingOutlined, FileTextOutlined, ClearOutlined, FormatPainterOutlined, GlobalOutlined, ImportOutlined, SaveOutlined, ControlOutlined } from "@ant-design/icons";
+import { SettingOutlined, CopyOutlined, InboxOutlined, FileTextOutlined, ClearOutlined, FormatPainterOutlined, GlobalOutlined, ImportOutlined, SaveOutlined, ControlOutlined } from "@ant-design/icons";
 import { useTranslations } from "next-intl";
 import { useCopyToClipboard } from "@/app/hooks/useCopyToClipboard";
 import useFileUpload from "@/app/hooks/useFileUpload";
@@ -714,11 +714,7 @@ const SubtitleTranslator = () => {
         {/* Right Column: Settings and Configuration */}
         <Col xs={24} lg={10} xl={9}>
           <Card
-            title={
-              <Space>
-                <SettingOutlined /> {t("configuration")}
-              </Space>
-            }
+            title={<Space><SettingOutlined /> {t("configuration")}</Space>}
             style={cardStyle}
             extra={
               <Space>

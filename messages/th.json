@@ -463,7 +463,7 @@
     "textParser": "เครื่องมือข้อความ",
     "jsonParser": "เครื่องมือ JSON",
     "dataParser": "เครื่องมือข้อมูล",
-    "otherTools": "เครื่องมืออื่นๆ",
+    "otherTools": "เครื่องมือเพิ่มเติม",
     "externalTools": {
       "legendtalk": "โต๊ะกลมนักคิด AI",
       "imgprompt": "พรอมต์รูปภาพ AI"

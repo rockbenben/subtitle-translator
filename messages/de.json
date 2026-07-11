@@ -463,7 +463,7 @@
     "textParser": "Text-Tools",
     "jsonParser": "JSON-Tools",
     "dataParser": "Daten-Tools",
-    "otherTools": "Andere Tools",
+    "otherTools": "Mehr Tools",
     "externalTools": {
       "legendtalk": "KI-Denkerrunde",
       "imgprompt": "KI-Bild-Prompts"

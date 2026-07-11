@@ -463,7 +463,7 @@
     "textParser": "Text Tools",
     "jsonParser": "JSON Tools",
     "dataParser": "Data Tools",
-    "otherTools": "Other Tools",
+    "otherTools": "More Tools",
     "externalTools": {
       "legendtalk": "AI Thinkers Roundtable",
       "imgprompt": "AI Image Prompts"

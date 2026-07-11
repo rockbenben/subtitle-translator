@@ -463,7 +463,7 @@
     "textParser": "텍스트 처리",
     "jsonParser": "JSON 처리",
     "dataParser": "데이터 변환",
-    "otherTools": "기타 도구",
+    "otherTools": "더 많은 도구",
     "externalTools": {
       "legendtalk": "AI 사상가 라운드테이블",
       "imgprompt": "AI 이미지 프롬프트"
