@@ -200,6 +200,7 @@
     "errorHint5xx": "Erreur serveur, veuillez réessayer plus tard",
     "errorHintRelay": "Erreur réseau (probablement CORS) — activez « Relais API » dans les paramètres API",
     "errorHintRelay403": "L'API a renvoyé 403 Forbidden — activez « Relais API » dans les paramètres API",
+    "errorHintGeminiKey": "Impossible de joindre Gemini : vérifiez d'abord votre réseau (certains réseaux ne peuvent pas atteindre directement les services Google). Si le réseau fonctionne, Google rejette depuis le 19 juin 2026 les clés API sans restriction — régénérez votre clé dans AI Studio (restreinte par défaut) ou ajoutez une restriction Gemini API à l'ancienne clé dans la console Google Cloud",
     "rateLimitCooldown": "Limite de requêtes atteinte — courte pause, nouvelle tentative automatique"
   },
   "SubtitleTranslator": {

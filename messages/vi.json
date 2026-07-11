@@ -200,6 +200,7 @@
     "errorHint5xx": "Lỗi máy chủ, vui lòng thử lại sau",
     "errorHintRelay": "Lỗi mạng (có thể do CORS) — hãy bật \"Chuyển tiếp API\" trong Cài đặt API",
     "errorHintRelay403": "API trả về 403 Forbidden — hãy bật \"Chuyển tiếp API\" trong Cài đặt API",
+    "errorHintGeminiKey": "Không thể kết nối Gemini: hãy kiểm tra mạng trước (một số mạng không thể truy cập trực tiếp dịch vụ Google). Nếu mạng bình thường, từ 19/06/2026 Google từ chối các API key không giới hạn — hãy tạo lại key trong AI Studio (mặc định đã giới hạn) hoặc thêm giới hạn Gemini API cho key cũ trong Google Cloud Console",
     "rateLimitCooldown": "Đạt giới hạn yêu cầu — tạm dừng một lát rồi tự động thử lại"
   },
   "SubtitleTranslator": {

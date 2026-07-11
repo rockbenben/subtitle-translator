@@ -200,6 +200,7 @@
     "errorHint5xx": "Kesalahan server, silakan coba lagi nanti",
     "errorHintRelay": "Kesalahan jaringan (kemungkinan CORS) — aktifkan \"Relay API\" di Pengaturan API",
     "errorHintRelay403": "API mengembalikan 403 Forbidden — aktifkan \"Relay API\" di Pengaturan API",
+    "errorHintGeminiKey": "Tidak dapat terhubung ke Gemini: periksa jaringan Anda terlebih dahulu (beberapa jaringan tidak dapat mengakses layanan Google secara langsung). Jika jaringan baik-baik saja, sejak 19 Juni 2026 Google menolak kunci API tanpa pembatasan — buat ulang kunci di AI Studio (dibatasi secara default) atau tambahkan pembatasan Gemini API pada kunci lama di Google Cloud Console",
     "rateLimitCooldown": "Batas permintaan tercapai — jeda sejenak, akan dicoba ulang otomatis"
   },
   "SubtitleTranslator": {

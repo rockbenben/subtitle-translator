@@ -200,6 +200,7 @@
     "errorHint5xx": "サーバーエラーです。しばらくしてから再試行してください",
     "errorHintRelay": "ネットワークエラー（CORS 制限の可能性があります）。API 設定で「API 中継」を有効にしてください",
     "errorHintRelay403": "API が 403 Forbidden を返しました。API 設定で「API 中継」を有効にしてください",
+    "errorHintGeminiKey": "Gemini に接続できません。まずネットワークを確認してください（一部のネットワークでは Google サービスに直接接続できません）。ネットワークに問題がなければ、2026年6月19日以降 Google は無制限の API キーを拒否しています。AI Studio でキーを再生成する（デフォルトで制限付き）か、Google Cloud コンソールで既存キーに Gemini API 制限を追加してください",
     "rateLimitCooldown": "レート制限に達したため少し待機し、自動的に再試行します"
   },
   "SubtitleTranslator": {

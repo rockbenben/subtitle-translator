@@ -50,7 +50,13 @@ export type OpenAICompatProviderSpec = BaseProvider & {
   kind: "openai-compat";
   endpoint: string;
   defaultModel: string;
-  defaultTemperature: number;
+  /**
+   * Absence = the provider NEVER gets a temperature (no config field → UI hides
+   * the input, wire request omits the param, server default applies). Used for
+   * lineups that reject/lock it: OpenAI GPT-5.x (400 on non-default), Moonshot
+   * kimi-k2.x (locked, other values error). Presence = normal tunable default.
+   */
+  defaultTemperature?: number;
   /** Extra headers to merge into every upstream request (OpenRouter attribution etc). */
   extraHeaders?: Record<string, string>;
   /** When true, user-supplied `params.url` overrides the default endpoint (Doubao, Qwen). */
@@ -237,17 +243,24 @@ export const PROVIDERS = {
     category: "llm",
     label: "OpenAI",
     endpoint: "https://api.openai.com/v1/chat/completions",
-    defaultModel: "gpt-5.4-mini",
-    defaultTemperature: 1,
+    defaultModel: "gpt-5.6-luna",
+    // 无 defaultTemperature:GPT-5.x 全系为推理模型,拒绝非默认 temperature
+    // (400 "Only the default (1) value is supported",运行时实测,2026-07 核查;
+    // effort:none 是否解锁在 5.4+ 未确认)。字段移除 → 请求不发、UI 不显示,
+    // 服务端默认生效。
     docs: "https://developers.openai.com/api/docs/guides/text",
     apiKeyUrl: "https://platform.openai.com/api-keys",
     defaultUseRelay: false,
     // https://developers.openai.com/api/docs/models
-    // GPT-5 系列全部支持 reasoning ── developers.openai.com 各 model 页明示
-    // "Reasoning token support" + reasoning.effort: none/low/medium/high/xhigh
+    // GPT-5.6 家族(sol/terra/luna)是当前主推旗舰,均支持 reasoning
+    // (reasoning.effort 新增 max 档:none/low/medium/high/xhigh/max);上一代
+    // 5.5 / 5.4-mini 仍在售,保留作对照/低成本档。5.6 无 mini 变体,luna 即低成本
+    // 高并发档(官方点名 cost-sensitive/high-volume),故设为翻译默认。
     models: [
+      { label: "GPT-5.6", value: "gpt-5.6", thinking: true },
+      { label: "GPT-5.6 Terra", value: "gpt-5.6-terra", thinking: true },
+      { label: "GPT-5.6 Luna", value: "gpt-5.6-luna", thinking: true },
       { label: "GPT-5.5", value: "gpt-5.5", thinking: true },
-      { label: "GPT-5.4", value: "gpt-5.4", thinking: true },
       { label: "GPT-5.4 Mini", value: "gpt-5.4-mini", thinking: true },
     ],
   },
@@ -259,13 +272,22 @@ export const PROVIDERS = {
     apiKeyUrl: "https://console.anthropic.com/settings/keys",
     // url 可选:自建中转(转发到 api.anthropic.com/v1/messages 的自有 Worker)。
     // 优先级:自定义 URL > useRelay > 官方直连(见 services/llm.ts claude)。
-    defaults: { url: "", apiKey: "", model: "claude-sonnet-4-6", temperature: 0.7, batchSize: 20, contextBatchSize: 3, contextWindow: 50, thinkingEffort: {}, useRelay: false },
-    // Claude 4 系列全部支持 thinking ── Opus 4.7 是 adaptive thinking,
-    // Sonnet 4.6 + Haiku 4.5 是 extended thinking(per docs.anthropic.com)。
+    // 无 temperature 字段:adaptive 世代(Opus 4.8 / Sonnet 5 / Fable 5)拒绝
+    // 非默认 temperature(400,官方成文);统一 provider 级不发,服务端默认生效。
+    defaults: { url: "", apiKey: "", model: "claude-sonnet-5", batchSize: 20, contextBatchSize: 3, contextWindow: 50, thinkingEffort: {}, useRelay: false },
+    // 两代思考机制并存(service 层按 model 分流,见 services/llm.ts claude +
+    // isAdaptiveThinkingClaude):
+    //   - Adaptive thinking(Opus 4.8 / Sonnet 5 / Fable 5):thinking:{type:"adaptive"}
+    //     + output_config.effort;拒绝 temperature/top_p 及旧的 budget_tokens(均 400)。
+    //   - Extended thinking(Haiku 4.5):沿用 thinking:{type:"enabled",budget_tokens}。
+    // temperature 是 provider 级不发(上面 defaults 无此字段)—— Haiku 4.5 虽仍
+    // 接受该参数,但为简化统一不发,用服务端默认值。
+    // 证据:platform.claude.com/docs/en/build-with-claude/adaptive-thinking
     models: [
-      { label: "Claude Opus 4.7", value: "claude-opus-4-7", thinking: true },
-      { label: "Claude Sonnet 4.6", value: "claude-sonnet-4-6", thinking: true },
+      { label: "Claude Opus 4.8", value: "claude-opus-4-8", thinking: true },
+      { label: "Claude Sonnet 5", value: "claude-sonnet-5", thinking: true },
       { label: "Claude Haiku 4.5", value: "claude-haiku-4-5-20251001", thinking: true },
+      { label: "Claude Fable 5", value: "claude-fable-5", thinking: true },
     ],
   },
   gemini: {
@@ -274,7 +296,12 @@ export const PROVIDERS = {
     label: "Gemini",
     docs: "https://ai.google.dev/gemini-api/docs/text-generation",
     apiKeyUrl: "https://aistudio.google.com/app/api-keys",
-    defaults: { apiKey: "", model: "gemini-3.5-flash", temperature: 0.7, batchSize: 20, contextBatchSize: 3, contextWindow: 50, thinkingEffort: {} },
+    // 无 temperature 字段(同 translategemma 先例):Gemini 3.x 官方强烈建议
+    // 保持默认值 1.0(<1.0 可能导致循环输出/推理退化,ai.google.dev
+    // whats-new-gemini-3.5,AI Studio 已移除滑块)。service 层不发该参数 →
+    // 服务端默认 1.0 生效;字段移除后 UI 输入框自动隐藏,migrateConfig 的
+    // defaults-key-only 合并会清掉用户已存的旧值。
+    defaults: { apiKey: "", model: "gemini-3.5-flash", batchSize: 20, contextBatchSize: 3, contextWindow: 50, thinkingEffort: {} },
     // 仅收录 Gemini 3.x 系列(2.5 已过时,且参数协议不同需要 budget mapping 增加
     // service 复杂度,精简掉)。Gemini 3 thinking 通过
     // `generationConfig.thinkingConfig.thinkingLevel` (minimal/low/medium/high)
@@ -290,7 +317,7 @@ export const PROVIDERS = {
     category: "llm",
     label: "Qwen",
     endpoint: "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions",
-    defaultModel: "qwen3.6-plus",
+    defaultModel: "qwen3.7-plus",
     defaultTemperature: 0.7,
     docs: "https://help.aliyun.com/zh/model-studio/qwen-api-via-openai-chat-completions",
     apiKeyUrl: "https://bailian.console.aliyun.com/?tab=model#/api-key",
@@ -303,7 +330,7 @@ export const PROVIDERS = {
     // https://bailian.console.aliyun.com/cn-beijing?spm=5176.29597918.J_F4r-7Zs_PtjrjEY48APSA.d_primary.338d133cOoVKn9&tab=model#/model-market/all?providers=qwen
     models: [
       { label: "Qwen3.7 Max", value: "qwen3.7-max", thinking: true },
-      { label: "Qwen3.6 Plus", value: "qwen3.6-plus", thinking: true },
+      { label: "Qwen3.7 Plus", value: "qwen3.7-plus", thinking: true },
       { label: "Qwen3.6 Flash", value: "qwen3.6-flash", thinking: true },
     ],
   },
@@ -313,7 +340,10 @@ export const PROVIDERS = {
     label: "Moonshot (Kimi)",
     endpoint: "https://api.moonshot.cn/v1/chat/completions",
     defaultModel: "kimi-k2.6",
-    defaultTemperature: 0.7,
+    // 无 defaultTemperature:kimi-k2.x 全系 temperature 锁定(thinking 1.0 /
+    // non-thinking 0.6),传其他值直接报错(platform.kimi.ai 迁移指南原文
+    // "any other value will result in an error",官方建议不传)。字段移除 →
+    // 请求不发、UI 不显示,服务端按模式取锁定值。
     docs: "https://platform.moonshot.cn/docs",
     apiKeyUrl: "https://platform.moonshot.cn/console/api-keys",
     defaultUseRelay: false,
@@ -321,10 +351,8 @@ export const PROVIDERS = {
       { label: "Mainland (CN)", url: "https://api.moonshot.cn/v1/chat/completions" },
       { label: "International", url: "https://api.moonshot.ai/v1/chat/completions" },
     ],
-    // K2.6 通过扁平 `thinking: {type}` 字段切换思考模式。K2.6 同时是 param-locked
-    // 模型(temperature 等不可修改),service 层会在 model 匹配时 strip 这些字段。
-    // K2.5 不支持参数切换 thinking;kimi-k2-thinking 系列 2026-05 deprecating,
-    // 不收录避免引导用户选即将失效的 SKU。
+    // K2.6 通过扁平 `thinking: {type}` 字段切换思考模式。K2.5 不支持参数切换
+    // thinking;kimi-k2-thinking 系列已 2026-05-25 退役,不收录。
     models: [
       { label: "Kimi K2.6", value: "kimi-k2.6", thinking: true },
       { label: "Kimi K2.5", value: "kimi-k2.5" },
@@ -335,7 +363,7 @@ export const PROVIDERS = {
     category: "llm",
     label: "Doubao (Volcengine)",
     endpoint: "https://ark.cn-beijing.volces.com/api/v3/chat/completions",
-    defaultModel: "doubao-seed-2-0-lite-260428",
+    defaultModel: "doubao-seed-2-1-turbo-260628",
     defaultTemperature: 0.7,
     docs: "https://www.volcengine.com/docs/82379",
     apiKeyUrl: "https://console.volcengine.com/ark/region:ark+cn-beijing/apiKey",
@@ -345,10 +373,13 @@ export const PROVIDERS = {
       { label: "Coding Plan", url: "https://ark.cn-beijing.volces.com/api/coding/v3/chat/completions" },
     ],
     // https://www.volcengine.com/docs/82379/1330310
+    // Seed 2.1(260628)是当前旗舰,2.1 只有 pro/turbo(turbo 即轻量高速档,
+    // 翻译性价比最佳 → 默认)。2.0 系列降为往期,保留 pro/lite 作兜底。
     models: [
+      { label: "Doubao Seed 2.1 Pro", value: "doubao-seed-2-1-pro-260628", thinking: true },
+      { label: "Doubao Seed 2.1 Turbo", value: "doubao-seed-2-1-turbo-260628", thinking: true },
       { label: "Doubao Seed 2.0 Pro", value: "doubao-seed-2-0-pro-260215", thinking: true },
       { label: "Doubao Seed 2.0 Lite", value: "doubao-seed-2-0-lite-260428", thinking: true },
-      { label: "Doubao Seed 2.0 Mini", value: "doubao-seed-2-0-mini-260428", thinking: true },
     ],
   },
   mimo: {
@@ -394,7 +425,7 @@ export const PROVIDERS = {
     category: "llm",
     label: "Zhipu GLM",
     endpoint: "https://open.bigmodel.cn/api/paas/v4/chat/completions",
-    defaultModel: "glm-4.7",
+    defaultModel: "glm-5.2",
     defaultTemperature: 0.7,
     docs: "https://docs.bigmodel.cn/cn/guide/start/introduction",
     apiKeyUrl: "https://bigmodel.cn/usercenter/proj-mgmt/apikeys",
@@ -404,10 +435,13 @@ export const PROVIDERS = {
       { label: "International (Z.ai)", url: "https://api.z.ai/api/paas/v4/chat/completions" },
     ],
     // docs.bigmodel.cn/cn/guide/start/model-overview "文本模型" 表格完整列表
-    // (排除标记"即将下线"的 glm-4.5-flash),按文档原顺序。
+    // (排除标记"即将下线"的 glm-4.5-flash),按文档原顺序。GLM-5.2 是当前旗舰
+    // (1M 无损上下文,唯一支持 reasoning_effort),glm-5-turbo 为长任务优化档。
     models: [
+      { label: "GLM-5.2", value: "glm-5.2", thinking: true },
       { label: "GLM-5.1", value: "glm-5.1", thinking: true },
       { label: "GLM-5", value: "glm-5", thinking: true },
+      { label: "GLM-5 Turbo", value: "glm-5-turbo", thinking: true },
       { label: "GLM-4.7", value: "glm-4.7", thinking: true },
       { label: "GLM-4.7 FlashX", value: "glm-4.7-flashx" },
       { label: "GLM-4.6", value: "glm-4.6", thinking: true },
@@ -434,13 +468,18 @@ export const PROVIDERS = {
       { label: "International", url: "https://api.minimax.io/v1/chat/completions" },
     ],
     models: [
-      // Not thinking-tagged: MiniMax reasoning is intrinsic/unclosable on the hosted
-      // API (no toggle param; `enable_thinking` is a local-deploy kwarg). See llm.ts.
-      { label: "MiniMax M3", value: "MiniMax-M3" },
+      // M3 引入了真开关:`thinking:{type:"adaptive"|"disabled"}`(服务端默认
+      // adaptive = ON,可关)→ 打 thinking 标签,off 态发显式 disabled,否则
+      // 每次翻译都默默烧推理 token(DeepSeek「10M tokens」同款事故)。
+      // M2.x 仍是 intrinsic/unclosable(无 toggle 参数)→ 不打标签。See llm.ts.
+      { label: "MiniMax M3", value: "MiniMax-M3", thinking: true },
       { label: "MiniMax M2.7", value: "MiniMax-M2.7" },
       { label: "MiniMax M2.7 High-Speed", value: "MiniMax-M2.7-highspeed" },
+      // M2.5 官方已降为 Legacy 但仍在售。保留收录不只是给旧配置兜底:M3 的
+      // thinking builder 上线后,若 M2.5 变成 custom(未收录),gated() 的
+      // custom 分支会给这个【无 thinking 参数】的 SKU 发显式 disabled → 可能 4xx;
+      // 收录为 listed-untagged 则 gate 正确省略。
       { label: "MiniMax M2.5", value: "MiniMax-M2.5" },
-      { label: "MiniMax M2.1", value: "MiniMax-M2.1" },
     ],
   },
   qianfan: {
@@ -459,7 +498,12 @@ export const PROVIDERS = {
       // SKU with a real toggle: `enable_thinking` boolean (binary → qianfan is in
       // BINARY_EFFORT_VENDORS). Tagged so off-state sends explicit enable_thinking:false.
       { label: "ERNIE 5.0 Thinking", value: "ernie-5.0-thinking-latest", thinking: true },
-      { label: "ERNIE 4.5 Turbo 128K", value: "ernie-4.5-turbo-128k-preview" },
+      // ERNIE X1.1 是文心深度推理线,reasoning 内生(不支持 thinking_budget)。
+      // 不打 thinking 标签:qianfan 走二元 enable_thinking,给内生推理模型发
+      // enable_thinking:false 可能被拒;省略即用其默认推理,翻译结果照常返回。
+      { label: "ERNIE X1.1", value: "ernie-x1.1" },
+      // 128k 已转正,去掉 -preview 后缀
+      { label: "ERNIE 4.5 Turbo 128K", value: "ernie-4.5-turbo-128k" },
       { label: "ERNIE 4.5 Turbo 32K", value: "ernie-4.5-turbo-32k" },
     ],
   },
@@ -468,7 +512,7 @@ export const PROVIDERS = {
     category: "llm",
     label: "Tencent Hunyuan",
     endpoint: "https://api.hunyuan.cloud.tencent.com/v1/chat/completions",
-    defaultModel: "hunyuan-turbos-latest",
+    defaultModel: "hunyuan-a13b",
     defaultTemperature: 0.7,
     docs: "https://cloud.tencent.com/document/product/1729/111007",
     apiKeyUrl: "https://console.cloud.tencent.com/hunyuan/api-key",
@@ -476,18 +520,14 @@ export const PROVIDERS = {
     // 实测 2026-06-11,POST 响应反而带 CORS 头 —— 但浏览器到不了那一步),
     // 所以默认开 relay 保证开箱可用;开关保留,上游修了预检用户可自行切回直连。
     defaultUseRelay: true,
-    models: [
-      // Not thinking-tagged: the OpenAI-compat path has no documented thinking
-      // toggle (the old `enable_enhancement` was a web-search switch, not
-      // thinking). TurboS is fast-think, T1 is reasoning-intrinsic, a13b only
-      // toggles via the `/no_think` prompt prefix — none controllable here. See llm.ts.
-      { label: "Hunyuan TurboS", value: "hunyuan-turbos-latest" },
-      { label: "Hunyuan 2.0 Thinking", value: "hunyuan-2.0-thinking-20251109" },
-      { label: "Hunyuan 2.0 Instruct", value: "hunyuan-2.0-instruct-20251111" },
-      { label: "Hunyuan T1", value: "hunyuan-t1-latest" },
-      { label: "Hunyuan A13B", value: "hunyuan-a13b" },
-      { label: "Hunyuan Lite", value: "hunyuan-lite" },
-    ],
+    // 旧版文生文模型(turbos/t1/2.0-thinking/2.0-instruct/lite)已于 2026-06-22
+    // 整体下线(公告 cloud.tencent.com/announce/detail/2301),legacy 端点通用
+    // 对话模型仅剩 a13b 在售(混元翻译是机器翻译专项,不收进 LLM 清单)。整个
+    // 混元 legacy 平台正迁往 TokenHub(tokenhub.tencentmaas.com),不再新增模型,
+    // 长期建议迁移。
+    // Not thinking-tagged: OpenAI-compat 路径无可控 thinking 开关
+    // (a13b 混合推理仅靠 `/no_think` 提示前缀切换,此处不可控)。
+    models: [{ label: "Hunyuan A13B", value: "hunyuan-a13b" }],
   },
   mistral: {
     kind: "openai-compat",
@@ -502,15 +542,15 @@ export const PROVIDERS = {
     // 来自 https://docs.mistral.ai/models/overview
     // Adjustable reasoning(mistral-medium-3-5 / mistral-small)通过 reasoning_effort
     // 控制(docs.mistral.ai/studio-api/conversations/reasoning,取值 high|none,二元 →
-    // BINARY_EFFORT_VENDORS)。Magistral 是 native always-on(prompt_mode:reasoning),
-    // 无 toggle,故不标 thinking。Large 3 / Ministral 非推理模型。
+    // BINARY_EFFORT_VENDORS)。Large 3 / Ministral 非推理模型。
+    // 注:除 medium-3-5(有效可调 id)外,一律用 `-latest` 别名 —— Mistral 可调
+    // API id 是日期版(mistral-small-2603 等),纯版本号写法(mistral-small-4)不可调用。
+    // Magistral 线已整体废弃(magistral-medium-2509 于 2026-07-31 退役),移除。
     models: [
       { label: "Mistral Medium 3.5", value: "mistral-medium-3-5", thinking: true },
-      { label: "Mistral Small 4", value: "mistral-small-4", thinking: true },
-      { label: "Mistral Large 3", value: "mistral-large-3" },
-      { label: "Ministral 3 14B", value: "ministral-3-14b" },
-      // Magistral 是 thinking-intrinsic(model 选择即 thinking 模式),无 toggle 参数
-      { label: "Magistral Medium 1.2", value: "magistral-medium-1-2" },
+      { label: "Mistral Small 4", value: "mistral-small-latest", thinking: true },
+      { label: "Mistral Large 3", value: "mistral-large-latest" },
+      { label: "Ministral 3 14B", value: "ministral-14b-latest" },
     ],
   },
   grok: {
@@ -518,15 +558,17 @@ export const PROVIDERS = {
     category: "llm",
     label: "xAI (Grok)",
     endpoint: "https://api.x.ai/v1/chat/completions",
-    defaultModel: "grok-4.3",
+    defaultModel: "grok-4.5",
     defaultTemperature: 0.7,
-    docs: "https://docs.x.ai/docs/models",
+    docs: "https://docs.x.ai/developers/models",
     apiKeyUrl: "https://console.x.ai/",
     defaultUseRelay: false,
-    // Grok 4.3 chat/completions 支持 reasoning_effort 但仅 low/high 两档
-    // (docs.x.ai/docs/api-reference);grok-4.20-reasoning / multi-agent 是
+    // Grok 4.5 是当前旗舰(官方 model-selection 指南默认档),reasoning 可配置;
+    // Grok 4.3 支持 reasoning_effort 但仅 low/high 两档
+    // (docs.x.ai/developers/models);grok-4.20-reasoning / multi-agent 是
     // thinking-intrinsic SKU,无 toggle 参数。service 层 medium → low 映射。
     models: [
+      { label: "Grok 4.5", value: "grok-4.5", thinking: true },
       { label: "Grok 4.3", value: "grok-4.3", thinking: true },
       { label: "Grok 4.20 Reasoning", value: "grok-4.20-0309-reasoning" },
       { label: "Grok 4.20 Non-Reasoning", value: "grok-4.20-0309-non-reasoning" },
@@ -605,12 +647,15 @@ export const PROVIDERS = {
     // No thinking tags — the OpenAI-compat path documents no reasoning toggle
     // (YandexGPT 5.1's Chain-of-Reasoning isn't exposed as a request param);
     // sending reasoning_effort risks a 400, same rationale as GitHub Models.
+    // DeepSeek V3.2 已于 2026-06-28 到期(URI 失效返回 400),由 V4 Flash 取代
+    // (Yandex Release Notes 2026-05-28)。aliceai-llm-flash 为 2026-05-19 新增。
     models: [
       { label: "YandexGPT Pro 5.1", value: "yandexgpt-5.1" },
       { label: "YandexGPT Pro 5", value: "yandexgpt-5-pro" },
       { label: "YandexGPT Lite 5", value: "yandexgpt-5-lite" },
       { label: "Alice AI LLM", value: "aliceai-llm" },
-      { label: "DeepSeek V3.2", value: "deepseek-v32" },
+      { label: "Alice AI LLM Flash", value: "aliceai-llm-flash" },
+      { label: "DeepSeek V4 Flash", value: "deepseek-v4-flash" },
       { label: "Qwen3 235B", value: "qwen3-235b-a22b-fp8" },
       { label: "Qwen3.6 35B", value: "qwen3.6-35b-a3b" },
       { label: "GPT-OSS 120B", value: "gpt-oss-120b" },
@@ -638,13 +683,15 @@ export const PROVIDERS = {
       { label: "Laguna M.1 (free)", value: "poolside/laguna-m.1:free" },
       { label: "DeepSeek V4 Flash", value: "deepseek/deepseek-v4-flash", thinking: true },
       { label: "Hy3 preview", value: "tencent/hy3-preview", thinking: true },
-      { label: "Claude Sonnet 4.6", value: "anthropic/claude-sonnet-4.6", thinking: true },
-      { label: "Claude Opus 4.7", value: "anthropic/claude-opus-4.7", thinking: true },
+      { label: "Claude Sonnet 5", value: "anthropic/claude-sonnet-5", thinking: true },
+      { label: "Claude Opus 4.8", value: "anthropic/claude-opus-4.8", thinking: true },
       { label: "Gemini 3.5 Flash", value: "google/gemini-3.5-flash", thinking: true },
       { label: "GPT-5.4 Mini", value: "openai/gpt-5.4-mini", thinking: true },
-      { label: "Grok 4.3", value: "x-ai/grok-4.3" },
+      { label: "Grok 4.5", value: "x-ai/grok-4.5" },
       { label: "Kimi K2.6", value: "moonshotai/kimi-k2.6", thinking: true },
-      { label: "MiniMax M2.7", value: "minimax/minimax-m2.7" },
+      // M3 上游默认 adaptive thinking(可关)→ 打标签让 off 态经 OpenRouter
+      // 统一参数发 reasoning:{enabled:false},否则默认烧推理 token。
+      { label: "MiniMax M3", value: "minimax/minimax-m3", thinking: true },
     ],
   },
   groq: {
@@ -684,7 +731,9 @@ export const PROVIDERS = {
       { label: "DeepSeek V4 Flash", value: "deepseek-ai/DeepSeek-V4-Flash", thinking: true },
       { label: "DeepSeek V4 Pro", value: "deepseek-ai/DeepSeek-V4-Pro", thinking: true },
       { label: "Kimi K2.6", value: "moonshotai/Kimi-K2.6", thinking: true },
-      { label: "MiniMax M2.5", value: "minimax/MiniMax-M2.5" },
+      // org 前缀是 MiniMaxAI(非 minimax),小写前缀会 404
+      { label: "MiniMax M2.5", value: "MiniMaxAI/MiniMax-M2.5" },
+      { label: "GLM-5.2", value: "zai-org/GLM-5.2" },
       { label: "GLM-5.1", value: "zai-org/GLM-5.1" },
       { label: "GLM-4.7", value: "zai-org/GLM-4.7" },
     ],
@@ -734,19 +783,23 @@ export const PROVIDERS = {
     docs: "https://build.nvidia.com/explore/discover",
     apiKeyUrl: "https://build.nvidia.com/",
     defaults: { url: "", apiKey: "", model: "deepseek-ai/deepseek-v4-flash", temperature: 0.7, batchSize: 20, contextBatchSize: 3, contextWindow: 50, thinkingEffort: {} },
-    // https://build.nvidia.com/models?filters=nimType%3Anim_type_preview
-    // DeepSeek V4 系列在 NVIDIA NIM 上 thinking 协议跟原生 DeepSeek 不同 ──
-    // 用 chat_template_kwargs.thinking + reasoning_effort 嵌套(其他 model
-    // 不支持 thinking 注入,user 想要 thinking 应该用原生 DeepSeek provider)。
+    // https://build.nvidia.com/models
+    // NIM 上 deepseek-v4-flash 是 fast 档(官方标签 MoE/agentic/coding/fast,无
+    // reasoning),只有 v4-pro 是 reasoning 档 —— 故仅 pro 标 thinking。其 thinking
+    // 协议跟原生 DeepSeek 不同:chat_template_kwargs.thinking + reasoning_effort
+    // 嵌套(其他 model 不支持 thinking 注入,想要 thinking 用原生 DeepSeek provider)。
+    // 注:build.nvidia.com 的 URL slug 用下划线,真实 model id 用点号。
     models: [
-      { label: "DeepSeek V4 Flash", value: "deepseek-ai/deepseek-v4-flash", thinking: true },
+      { label: "DeepSeek V4 Flash", value: "deepseek-ai/deepseek-v4-flash" },
       { label: "DeepSeek V4 Pro", value: "deepseek-ai/deepseek-v4-pro", thinking: true },
-      { label: "GLM-5.1", value: "z-ai/glm-5.1" },
+      { label: "GLM-5.2", value: "z-ai/glm-5.2" },
+      // gpt-oss 不打 thinking:nvidia 的注入是 DeepSeek 专属 chat_template_kwargs
+      // 嵌套,发给 gpt-oss 是错误形状;其推理本就默认开(medium),省略即正确。
+      { label: "GPT-OSS 120B", value: "openai/gpt-oss-120b" },
       { label: "Gemma 4 31B IT", value: "google/gemma-4-31b-it" },
       { label: "Nemotron Super 120B", value: "nvidia/nemotron-3-super-120b-a12b" },
-      { label: "Llama 3.1 70B Instruct", value: "meta/llama-3.1-70b-instruct" },
+      { label: "Llama 3.3 70B Instruct", value: "meta/llama-3.3-70b-instruct" },
       { label: "Llama 3.1 8B Instruct", value: "meta/llama-3.1-8b-instruct" },
-      { label: "Qwen3 Coder 480B", value: "qwen/qwen3-coder-480b-a35b-instruct" },
     ],
   },
   azureopenai: {
@@ -754,7 +807,10 @@ export const PROVIDERS = {
     category: "aggregator",
     label: "Azure OpenAI",
     docs: "https://learn.microsoft.com/zh-cn/azure/foundry/foundry-models/concepts/models-sold-directly-by-azure",
-    defaults: { url: "", apiKey: "", model: "gpt-5.4-mini", apiVersion: "2025-11-18", temperature: 0.7, batchSize: 20, contextBatchSize: 3, contextWindow: 50, thinkingEffort: {} },
+    // 无 temperature 字段:微软官方把 temperature 列入 reasoning 模型 Not
+    // Supported 清单(GPT-5 全系,learn.microsoft.com/azure/ai-foundry/openai/
+    // how-to/reasoning),运行时证据为 400;统一 provider 级不发。
+    defaults: { url: "", apiKey: "", model: "gpt-5.4-mini", apiVersion: "2025-11-18", batchSize: 20, contextBatchSize: 3, contextWindow: 50, thinkingEffort: {} },
     // GPT-5 系列全部支持 reasoning(OpenAI 原生 + Azure 镜像同行为)。
     // gpt-chat-latest 是 5.5 Instant 别名(per Azure docs),同样支持。
     models: [
@@ -1005,7 +1061,6 @@ const buildOpenAICompatDefault = (spec: OpenAICompatProviderSpec): TranslationCo
   const base: TranslationConfig = {
     apiKey: "",
     model: spec.defaultModel,
-    temperature: spec.defaultTemperature,
     // batchSize = line-by-line / non-context concurrency; kept high because
     // each request is a single short prompt. contextBatchSize = concurrent
     // context batches (heavy payloads, ~50 lines each); low default to avoid
@@ -1024,6 +1079,10 @@ const buildOpenAICompatDefault = (spec: OpenAICompatProviderSpec): TranslationCo
   // tickets. The transparent passthrough in openAICompatRequest still respects
   // maxTokens when present (power users can import via JSON config), so
   // wiring stays consistent — only the surfaced UI default is gated.
+  // defaultTemperature absent = provider never takes a temperature (locked /
+  // rejected upstream) — omitting the field hides the UI input and keeps the
+  // wire request param-free; migrateConfig strips stale stored values.
+  if (spec.defaultTemperature !== undefined) base.temperature = spec.defaultTemperature;
   if (acceptsCustomUrl(spec)) base.url = "";
   if (spec.defaultUseRelay !== undefined) base.useRelay = spec.defaultUseRelay;
   // Seed an empty thinkingEffort record when any model on this provider is
@@ -1067,7 +1126,7 @@ export const isThinkingCapableProvider = (service: string): boolean => {
 /**
  * True when `model` is a user-typed SKU NOT in the provider's curated `models`
  * list — thinking capability is unknown for these. A listed-but-untagged model
- * (e.g. mistral-large-3, ministral) returns FALSE: we KNOW it's non-thinking, so
+ * (e.g. mistral-large-latest, ministral) returns FALSE: we KNOW it's non-thinking, so
  * no opt-in toggle. Empty model (→ provider default) also returns FALSE.
  */
 export const isCustomModel = (service: string, model: string): boolean => {
@@ -1076,6 +1135,16 @@ export const isCustomModel = (service: string, model: string): boolean => {
   if (!p) return false;
   return !(p.models ?? []).some((m) => m.value === model);
 };
+
+/**
+ * Claude's adaptive-thinking generation (Opus 4.7/4.8, Sonnet 5, Fable 5, Mythos).
+ * These models use `thinking:{type:"adaptive"}` + `output_config.effort`, and
+ * REJECT the legacy manual `budget_tokens` shape with a 400. Substring regex so
+ * dated snapshot ids (claude-sonnet-5-20260203) still match.
+ * Doc: platform.claude.com/docs/en/build-with-claude/adaptive-thinking
+ * Consumed by services/llm.ts to pick the thinking wire shape.
+ */
+export const isAdaptiveThinkingClaude = (model: string): boolean => /claude-(opus-4-[78]|sonnet-5|fable-5|mythos)/.test(model);
 
 /**
  * Derive the per-call `reasoningEffort` from a TranslationConfig's per-model
@@ -1088,7 +1157,7 @@ export const isCustomModel = (service: string, model: string): boolean => {
  *      never a disable, so plain translations stay 400-safe; a 422/400 on an
  *      unsupported SKU is the user's call — "选了 custom 就自己搞").
  *
- * A listed-but-untagged model (mistral-large-3, ministral) returns `undefined` —
+ * A listed-but-untagged model (mistral-large-latest, ministral) returns `undefined` —
  * we KNOW it doesn't think. Returns `undefined` (= thinking off) unless (1)+(2)+(3)
  * hold. Used by the orchestrator (per-translate-call), the cache-key generator
  * (per-cache-lookup), and the Test button (per-test-config) — keep them in lockstep
@@ -1099,7 +1168,13 @@ export const deriveThinkingParams = (method: string, config: TranslationConfig |
   if (!model) return undefined;
   const effort = config?.thinkingEffort?.[model];
   if (!effort) return undefined;
-  if (isThinkingModel(method, model)) return effort;
+  // Tagged model: 2-state — "auto" is a CUSTOM-model-only sentinel, but it can
+  // survive in storage when a model the user once hand-typed (and set to Auto)
+  // later joins the curated list (e.g. claude-sonnet-5 added 2026-07). Normalize
+  // it to undefined (= Off) here, at the single source, so no wire layer ever
+  // sees "auto" on a listed model — otherwise a server-default-ON model (Sonnet 5
+  // adaptive) would silently keep thinking with no UI state showing why.
+  if (isThinkingModel(method, model)) return effort === "auto" ? undefined : effort;
   // Custom model: pass the directive through verbatim — an effort (enable) or the
   // "auto" sentinel (omit). Absence (handled above → undefined) is the DEFAULT "Off":
   // the wire layer turns undefined into each provider's disable payload for a custom
@@ -1124,7 +1199,7 @@ export const deriveThinkingParams = (method: string, config: TranslationConfig |
  * grok is NOT here: xAI accepts two real tiers (low/high), so the dial stays
  * graded and the wire builder maps medium→low (services/llm.ts).
  */
-export const BINARY_EFFORT_VENDORS: ReadonlySet<string> = new Set(["deepseek", "doubao", "zhipu", "moonshot", "mimo", "siliconflow", "cohere", "qianfan", "mistral"]);
+export const BINARY_EFFORT_VENDORS: ReadonlySet<string> = new Set(["deepseek", "doubao", "zhipu", "moonshot", "mimo", "siliconflow", "cohere", "qianfan", "mistral", "minimax"]);
 
 /**
  * Providers whose API leaves reasoning/thinking ENABLED when the request omits
@@ -1156,9 +1231,12 @@ export const BINARY_EFFORT_VENDORS: ReadonlySet<string> = new Set(["deepseek", "
  * thinkingLevel "minimal" / reasoning_effort "none"), so the OpenAI-compat
  * invariant test filters them out — they're listed here for documentation.
  *
+ * minimax joined 2026-07 with M3: `thinking:{type:"adaptive"|"disabled"}`,
+ * server-default adaptive = ON, off must send explicit disabled (M2.x SKUs stay
+ * untagged/intrinsic — the gate omits for them).
+ *
  * EXCLUDED — verified genuinely intrinsic/uncontrollable on the OpenAI-compat
- * path (untagged in `models`, no builder): minimax (M2.x interleaved thinking;
- * `reasoning_split` only switches output format, no on/off), hunyuan (no standard
+ * path (untagged in `models`, no builder): hunyuan (no standard
  * thinking field; `enable_enhancement` is web-search), nvidia (NIM/vLLM defaults
  * DeepSeek reasoning OFF — opt-in only, so omit is correct). NOTE mistral & perplexity
  * are NO LONGER fully here: mistral's default medium/small accept reasoning_effort
@@ -1186,6 +1264,7 @@ export const SERVER_DEFAULT_THINKING_ON: ReadonlySet<string> = new Set([
   "azureopenai",
   "siliconflow",
   "mistral",
+  "minimax",
 ]);
 
 /**

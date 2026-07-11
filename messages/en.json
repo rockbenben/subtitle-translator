@@ -200,6 +200,7 @@
     "errorHint5xx": "Server error, please retry later",
     "errorHintRelay": "Network error (possibly CORS) — enable \"API Relay\" in API Settings",
     "errorHintRelay403": "The API returned 403 Forbidden — enable \"API Relay\" in API Settings",
+    "errorHintGeminiKey": "Cannot reach Gemini: check your network first (some networks cannot reach Google services directly). If the network is fine, Google has been rejecting unrestricted API keys since June 19, 2026 — regenerate your key in AI Studio (restricted by default) or add a Gemini API restriction to the old key in Google Cloud Console",
     "rateLimitCooldown": "Rate limited — pausing briefly, will retry automatically"
   },
   "SubtitleTranslator": {

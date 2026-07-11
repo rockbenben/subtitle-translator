@@ -200,6 +200,7 @@
     "errorHint5xx": "Sunucu hatası, lütfen daha sonra tekrar deneyin",
     "errorHintRelay": "Ağ hatası (muhtemelen CORS) — API Ayarlarında \"API Aktarıcı\"yı açın",
     "errorHintRelay403": "API 403 Forbidden döndürdü — API Ayarlarında \"API Aktarıcı\"yı açın",
+    "errorHintGeminiKey": "Gemini'ye ulaşılamıyor: önce ağınızı kontrol edin (bazı ağlar Google hizmetlerine doğrudan erişemez). Ağ sorunsuzsa, 19 Haziran 2026'dan itibaren Google kısıtlamasız API anahtarlarını reddediyor — anahtarınızı AI Studio'da yeniden oluşturun (varsayılan olarak kısıtlı) veya Google Cloud Console'da eski anahtara Gemini API kısıtlaması ekleyin",
     "rateLimitCooldown": "İstek sınırına ulaşıldı — kısa bir duraklamadan sonra otomatik olarak yeniden denenecek"
   },
   "SubtitleTranslator": {

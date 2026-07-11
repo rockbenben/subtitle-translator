@@ -243,7 +243,7 @@ export const getOpenAICompatContent = (data: unknown, serviceName: string): stri
   return content.replace(LEADING_THINK_BLOCK_RE, "").trim();
 };
 
-export const getClaudeContent = (data: unknown, hasThinkingBlock: boolean): string => {
+export const getClaudeContent = (data: unknown): string => {
   const response = data as { content?: Array<{ type?: string; text?: string }>; stop_reason?: string } | null;
   const contentArray = response?.content;
   if (!Array.isArray(contentArray) || contentArray.length === 0) {
@@ -255,16 +255,12 @@ export const getClaudeContent = (data: unknown, hasThinkingBlock: boolean): stri
   if (response?.stop_reason === "max_tokens") {
     throw new Error("Claude response truncated — max_tokens reached. Split input into smaller chunks.");
   }
-  if (hasThinkingBlock) {
-    const textBlock = contentArray.find((block) => block.type === "text");
-    if (!textBlock || typeof textBlock.text !== "string") {
-      throw new Error("Invalid response format from Claude API (no text block found)");
-    }
-    return textBlock.text.trim();
+  // Always locate the text block by type rather than by position: thinking
+  // responses lead with thinking blocks, and adaptive-thinking models don't
+  // guarantee block order — positional [0] is only safe on plain responses.
+  const textBlock = contentArray.find((block) => block.type === "text");
+  if (!textBlock || typeof textBlock.text !== "string") {
+    throw new Error("Invalid response format from Claude API (no text block found)");
   }
-  const text = contentArray[0]?.text;
-  if (typeof text !== "string") {
-    throw new Error("Invalid response format from Claude API");
-  }
-  return text.trim();
+  return textBlock.text.trim();
 };

@@ -2,7 +2,18 @@
 
 import type { ReasoningEffort, ThinkingDirective, TranslateTextParams, TranslationService } from "../types";
 import { DEFAULT_SYSTEM_PROMPT, DEFAULT_USER_PROMPT } from "../config";
-import { acceptsCustomUrl, defaultConfigs, isCustomModel, isThinkingModel, OPENAI_COMPAT_KEYS, OPENAI_COMPAT_PROVIDERS, URL_IS_PRIMARY_CRED, type OpenAICompatProviderKey, type OpenAICompatProviderSpec } from "../registry";
+import {
+  acceptsCustomUrl,
+  defaultConfigs,
+  isAdaptiveThinkingClaude,
+  isCustomModel,
+  isThinkingModel,
+  OPENAI_COMPAT_KEYS,
+  OPENAI_COMPAT_PROVIDERS,
+  URL_IS_PRIMARY_CRED,
+  type OpenAICompatProviderKey,
+  type OpenAICompatProviderSpec,
+} from "../registry";
 import { getAIModelPrompt } from "../utils";
 import { isNetworkError } from "@/app/utils/errorUtils";
 
@@ -22,7 +33,8 @@ type OpenAICompatRequestConfig = {
   serviceName: string;
   endpoint: string;
   defaultModel: string;
-  defaultTemperature: number;
+  /** Absent = provider never sends temperature (locked/rejected upstream — see registry spec). */
+  defaultTemperature?: number;
   extraHeaders?: Record<string, string>;
   extraBody?: Record<string, unknown>;
 };
@@ -57,7 +69,10 @@ const openAICompatRequest = async (cfg: OpenAICompatRequestConfig): Promise<stri
         { role: "user", content: prompt },
       ],
       ...(effectiveModel ? { model: effectiveModel } : {}),
-      temperature: normalizeNumber(temperature, defaultTemperature),
+      // Providers whose spec omits defaultTemperature never send the param —
+      // their lineup rejects/locks it (GPT-5.x 400s, kimi-k2.x errors); the
+      // server default applies. Everyone else keeps the normal tunable value.
+      ...(defaultTemperature !== undefined ? { temperature: normalizeNumber(temperature, defaultTemperature) } : {}),
       stream: false,
       // No max_tokens — cloud models don't repeat-loop. Only `llm` Custom exposes it.
       ...extraBody,
@@ -111,7 +126,7 @@ type EffortShape = (effort: ReasoningEffort | undefined) => Record<string, unkno
 // that don't support them, so a proactive disable would break plain translations on
 // STRICT providers; omitting keeps them safe. A 422/400 when the user DID opt into
 // thinking on an unsupported SKU is their call ("选了 custom 就自己搞"). Listed-but-
-// untagged models (mistral-large-3) never reach here with an effort — deriveThinking
+// untagged models (mistral-large-latest) never reach here with an effort — deriveThinking
 // Params returns undefined for them. Tagged models keep full control (disable when off).
 const gated =
   (service: OpenAICompatProviderKey, shape: EffortShape): ExtraBodyBuilder =>
@@ -128,7 +143,7 @@ const gated =
       if (effort === "auto") return {};
       return shape(effort); // undefined (default Off) → disable; effort → enable
     }
-    // Listed-but-untagged model (e.g. mistral-large-3): known non-thinking → OMIT.
+    // Listed-but-untagged model (e.g. mistral-large-latest): known non-thinking → OMIT.
     return {};
   };
 
@@ -162,13 +177,24 @@ const qwenThinking: EffortShape = (e) => (e ? { enable_thinking: true, thinking_
 // Doc: api-docs.deepseek.com/zh-cn/guides/thinking_mode ("默认思考开关为 enabled").
 export const buildDeepseekExtraBody: EffortShape = (e) => (e ? { thinking: { type: "enabled" }, reasoning_effort: "high" } : { thinking: { type: "disabled" } });
 
-// MiniMax & Hunyuan deliberately have NO thinking builder (untagged → no dead UI
-// toggle): MiniMax M2.x thinking is intrinsic/unclosable — the only hosted knob,
-// `reasoning_split`, just switches output FORMAT (`reasoning_details` vs inline
-// `<think>`), it can't turn reasoning off; Hunyuan's `enable_enhancement` is a
-// WEB-SEARCH toggle, not thinking, and the OpenAI-compat path exposes no documented
-// thinking field (the native-API `EnableThinking` is hunyuan-a13b-only). NVIDIA NIM
-// omits too — vLLM defaults DeepSeek reasoning OFF (opt-in), so there's nothing to disable.
+// MiniMax M3: first hosted SKU with a real toggle — `thinking:{type:"adaptive"|"disabled"}`,
+// server-default adaptive (ON) → off MUST send explicit disabled. M2.x stays
+// intrinsic/unclosable (untagged → gate omits; the only hosted knob there,
+// `reasoning_split`, just switches output FORMAT, it can't turn reasoning off).
+// Doc: platform.minimax.io/docs/api-reference/text-chat-openai.
+const minimaxThinking: EffortShape = (e) => ({ thinking: { type: e ? "adaptive" : "disabled" } });
+
+// Hunyuan deliberately has NO thinking builder (untagged → no dead UI toggle):
+// `enable_enhancement` is a WEB-SEARCH toggle, not thinking, and the OpenAI-compat
+// path exposes no documented thinking field (the native-API `EnableThinking` is
+// hunyuan-a13b-only). NVIDIA NIM's builder is DeepSeek-only (`chat_template_kwargs`
+// nesting) — other NIM models don't support thinking injection, so only the
+// DeepSeek V4 Pro SKU is tagged there; vLLM defaults DeepSeek reasoning OFF
+// (opt-in), so there's nothing to disable.
+
+// (No temperature handling here: providers whose lineup rejects/locks the param
+// simply omit `defaultTemperature` in their registry spec — the factory then
+// never sends it. See OpenAICompatProviderSpec.defaultTemperature.)
 
 const THINKING_BUILDERS: Partial<Record<OpenAICompatProviderKey, ExtraBodyBuilder>> = {
   // `reasoning_effort` enum, explicit "none" off (server-default-ON)
@@ -187,6 +213,8 @@ const THINKING_BUILDERS: Partial<Record<OpenAICompatProviderKey, ExtraBodyBuilde
   doubao: gated("doubao", thinkingType),
   zhipu: gated("zhipu", thinkingType),
   mimo: gated("mimo", thinkingType),
+  // MiniMax M3: thinking:{type:"adaptive"|"disabled"} (server-default adaptive = ON)
+  minimax: gated("minimax", minimaxThinking),
   // Binary enable_thinking bool (server-default-ON)
   siliconflow: gated("siliconflow", enableThinking),
   qianfan: gated("qianfan", enableThinking),
@@ -202,7 +230,7 @@ const THINKING_BUILDERS: Partial<Record<OpenAICompatProviderKey, ExtraBodyBuilde
   // stays intrinsic = untagged → gate returns {}).
   perplexity: gated("perplexity", reasoningEffortGraded),
   groq: gated("groq", reasoningEffortGraded),
-  // (minimax / hunyuan intentionally absent — see note above)
+  // (hunyuan intentionally absent — see note above)
 };
 
 // Exposed for the SERVER_DEFAULT_THINKING_ON invariant test: the thinking extra
@@ -315,7 +343,7 @@ export const openAICompatServices: Record<OpenAICompatProviderKey, TranslationSe
 // --- Special-case services that don't fit the OpenAI-compatible pattern ---
 
 export const gemini: TranslationService = async (params) => {
-  const { apiKey, model, temperature, reasoningEffort } = params;
+  const { apiKey, model, reasoningEffort } = params;
   const { effectiveSystemPrompt, prompt } = preparePrompts(params);
   const key = requireApiKey("Gemini", apiKey);
   const effectiveModel = model || defaultConfigs.gemini.model!;
@@ -327,9 +355,11 @@ export const gemini: TranslationService = async (params) => {
   // thinking on). For a custom (unlisted) SKU we send the level ONLY on opt-in
   // (effort set) and omit otherwise — mirrors gated(): off → server default kept
   // (400-safe), on → user's call if the model rejects it.
-  const generationConfig: Record<string, unknown> = {
-    temperature: normalizeNumber(temperature, defaultConfigs.gemini.temperature),
-  };
+  //
+  // No temperature: Gemini 3.x strongly recommends the default (1.0; lower
+  // values risk looping/degraded reasoning) — the config has no temperature
+  // field (registry), so the request omits it and the server default applies.
+  const generationConfig: Record<string, unknown> = {};
   // Pro-tier 3.x models accept only low/high thinking levels — "minimal" is a
   // Flash-only state (the registry audit note concedes Pro "can't fully
   // disable"). Sending "minimal" to a Pro SKU 400s its untouched DEFAULT
@@ -349,16 +379,28 @@ export const gemini: TranslationService = async (params) => {
     generationConfig.thinkingConfig = { thinkingLevel: reasoningEffort ? clampLevel(reasoningEffort) : disableLevel(effectiveModel) };
   }
 
-  const data = (await fetchJSON(`https://generativelanguage.googleapis.com/v1beta/models/${effectiveModel}:generateContent?key=${key}`, {
+  // Auth via x-goog-api-key header — the only form the official docs still
+  // document (the ?key= query param has been removed from ai.google.dev's
+  // api-key page, 2026-06); also keeps the key out of URLs/logs.
+  const data = (await fetchJSON(`https://generativelanguage.googleapis.com/v1beta/models/${effectiveModel}:generateContent`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", "x-goog-api-key": key },
     body: JSON.stringify({
       contents: [{ parts: [{ text: prompt }] }],
       systemInstruction: { parts: [{ text: effectiveSystemPrompt }] },
       generationConfig,
     }),
     signal: params.signal,
-  })) as { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } ; finishReason?: string }> };
+  }).catch((error) => {
+    // 2026-06-19 起 Gemini API 拒绝「无限制 API Key」的请求(官方公告 + api-key
+    // 文档双确认;2026-09 起 standard key 全面停用)。被 edge 拒绝的请求常无
+    // CORS 头收场 → 浏览器只见 TypeError,通用 networkUnavailable 提示会把用户
+    // 引去排查网络;403 同因。两者都换成「重新生成/限制 key」的定向补救。
+    if ((error as { status?: number } | null)?.status === 403 || isNetworkError(error)) {
+      throw Object.assign(error as Error, { errorHintKey: "errorHintGeminiKey" });
+    }
+    throw error;
+  })) as { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> }; finishReason?: string }> };
 
   const candidate = data.candidates?.[0];
   // Gemini's equivalent of finish_reason==="length". Server default
@@ -393,7 +435,7 @@ export const buildAzureReasoningBody = (deployment: string | undefined, reasonin
 };
 
 export const azureopenai: TranslationService = async (params) => {
-  const { apiKey, url, model, apiVersion, temperature, reasoningEffort } = params;
+  const { apiKey, url, model, apiVersion, reasoningEffort } = params;
   const { effectiveSystemPrompt, prompt } = preparePrompts(params);
   const endpoint = requireUrl("Azure OpenAI", url);
   const deployment = model || defaultConfigs.azureopenai.model!;
@@ -406,12 +448,15 @@ export const azureopenai: TranslationService = async (params) => {
   // `reasoning_effort` per docs.microsoft.com/azure/.../foundry-models-sold-by-azure.
   // Orchestrator gates effort on (thinking-tagged ∧ user picked an effort).
   // No max_tokens passthrough — same rationale as openAICompatRequest above.
+  //
+  // No temperature — Microsoft lists it under "Not Supported" for the whole
+  // GPT-5 reasoning family (runtime evidence: 400, not ignore); provider-level
+  // omit, the config has no temperature field (registry).
   const requestBody: Record<string, unknown> = {
     messages: [
       { role: "system", content: effectiveSystemPrompt },
       { role: "user", content: prompt },
     ],
-    temperature: normalizeNumber(temperature, defaultConfigs.azureopenai.temperature),
     ...buildAzureReasoningBody(deployment, reasoningEffort),
   };
 
@@ -596,20 +641,54 @@ export const completeClaudeUrl = (url: string): string => {
   return cleaned;
 };
 
+// Pure request-shaping for Claude's two thinking generations — exported for
+// thinking.test.ts (same pattern as buildAzureReasoningBody). Membership
+// predicate lives in the registry (isAdaptiveThinkingClaude).
+//   - Adaptive gen (Opus 4.7/4.8, Sonnet 5, Fable 5, Mythos): effort →
+//     thinking:{type:"adaptive"} + output_config.effort; off → explicit
+//     disabled (Sonnet 5 server-defaults adaptive otherwise); "auto" → omit
+//     entirely and follow the server default. Legacy budget_tokens shape 400s.
+//   - Extended gen (Haiku 4.5, Sonnet 4.6): effort → enabled + budget_tokens
+//     (integer budget, not enum); off/auto → omit (server default is off).
+// `directive` comes from deriveThinkingParams, which normalizes tagged-model
+// "auto" to undefined — "auto" here always means a CUSTOM model delegating to
+// the server default.
+// No temperature on any branch — adaptive models 400 on non-default values
+// (provider-level omit, config has no temperature field); legacy SKUs simply
+// use the server default.
+export const buildClaudeThinkingBody = (model: string, directive: ThinkingDirective | undefined): { maxTokens: number; body: Record<string, unknown> } => {
+  const adaptive = isAdaptiveThinkingClaude(model);
+  const autoDirective = directive === "auto";
+  const effort: ReasoningEffort | undefined = autoDirective ? undefined : directive;
+  // Anthropic requires budget_tokens < max_tokens. When thinking may engage —
+  // an explicit effort, or an adaptive model left on "auto" (the server may
+  // then think on its own) — we reserve 10K for reasoning + ~6K for the
+  // visible response. Plain requests stay at the original 8096 cap.
+  const mayThink = !!effort || (adaptive && autoDirective);
+  const body: Record<string, unknown> = {};
+  if (adaptive) {
+    if (effort) {
+      body.thinking = { type: "adaptive" };
+      body.output_config = { effort };
+    } else if (!autoDirective) {
+      body.thinking = { type: "disabled" };
+    }
+  } else if (effort) {
+    // Cap budget at ~12000 to leave room for the visible response under 16384.
+    const CLAUDE_BUDGET: Record<ReasoningEffort, number> = { low: 4096, medium: 10000, high: 12000 };
+    body.thinking = { type: "enabled", budget_tokens: CLAUDE_BUDGET[effort] };
+  }
+  return { maxTokens: mayThink ? 16384 : 8096, body };
+};
+
 export const claude: TranslationService = withRelayHint(async (params) => {
-  const { apiKey, model, temperature, reasoningEffort, useRelay } = params;
+  const { apiKey, model, reasoningEffort, useRelay } = params;
   const { effectiveSystemPrompt, prompt } = preparePrompts(params);
 
   const key = requireApiKey("Claude", apiKey);
   const effectiveModel = model || defaultConfigs.claude.model!;
-  // Claude's server default is thinking OFF, so default-Off (undefined) and "auto"
-  // both = no thinking block (omitting already yields off). Only a real effort enables.
-  const effort: ReasoningEffort | undefined = reasoningEffort === "auto" ? undefined : reasoningEffort;
+  const { maxTokens, body: thinkingBody } = buildClaudeThinkingBody(effectiveModel, reasoningEffort);
 
-  // Anthropic requires budget_tokens < max_tokens. When thinking is on we
-  // reserve 10K for reasoning + ~6K for the visible response, so max_tokens
-  // must grow. Plain (non-thinking) requests stay at the original 8096 cap.
-  //
   // `system` as a block array (not a plain string) is the form that accepts
   // `cache_control` — required since Claude is the ONLY provider where prompt
   // caching is off by default. Anthropic silently no-ops the marker when the
@@ -621,19 +700,9 @@ export const claude: TranslationService = withRelayHint(async (params) => {
     model: effectiveModel,
     system: [{ type: "text", text: effectiveSystemPrompt, cache_control: { type: "ephemeral" } }],
     messages: [{ role: "user", content: prompt }],
-    max_tokens: effort ? 16384 : 8096,
+    max_tokens: maxTokens,
+    ...thinkingBody,
   };
-
-  if (effort) {
-    // Claude's "thinking level" is a token budget (integer), not enum. Map our
-    // user-facing low/medium/high to concrete budgets. Per Anthropic docs
-    // budget_tokens must be < max_tokens (we use 16384 above when thinking,
-    // so cap budget at ~12000 to leave room for the visible response).
-    const CLAUDE_BUDGET: Record<ReasoningEffort, number> = { low: 4096, medium: 10000, high: 12000 };
-    requestBody.thinking = { type: "enabled", budget_tokens: CLAUDE_BUDGET[effort] };
-  } else {
-    requestBody.temperature = normalizeNumber(temperature, defaultConfigs.claude.temperature);
-  }
 
   // Direct-to-Anthropic from the browser requires the explicit opt-in CORS
   // header since 2024-08 (bring-your-own-key apps). When proxied through the
@@ -655,5 +724,5 @@ export const claude: TranslationService = withRelayHint(async (params) => {
     body: JSON.stringify(requestBody),
     signal: params.signal,
   });
-  return getClaudeContent(data, !!effort);
+  return getClaudeContent(data);
 });

@@ -200,6 +200,7 @@
     "errorHint5xx": "เซิร์ฟเวอร์ขัดข้อง โปรดลองใหม่ภายหลัง",
     "errorHintRelay": "ข้อผิดพลาดเครือข่าย (อาจเกิดจาก CORS) — เปิดใช้ \"API Relay\" ในการตั้งค่า API",
     "errorHintRelay403": "API ส่งกลับ 403 Forbidden — เปิดใช้ \"API Relay\" ในการตั้งค่า API",
+    "errorHintGeminiKey": "เชื่อมต่อ Gemini ไม่ได้: โปรดตรวจสอบเครือข่ายก่อน (บางเครือข่ายไม่สามารถเข้าถึงบริการ Google โดยตรง) หากเครือข่ายปกติ ตั้งแต่ 19 มิ.ย. 2026 Google ปฏิเสธ API key แบบไม่จำกัดสิทธิ์ — โปรดสร้าง key ใหม่ใน AI Studio (จำกัดสิทธิ์โดยค่าเริ่มต้น) หรือเพิ่มข้อจำกัด Gemini API ให้ key เดิมใน Google Cloud Console",
     "rateLimitCooldown": "ถึงขีดจำกัดคำขอ — หยุดชั่วครู่แล้วจะลองใหม่อัตโนมัติ"
   },
   "SubtitleTranslator": {

@@ -200,6 +200,7 @@
     "errorHint5xx": "服务器错误，请稍后重试",
     "errorHintRelay": "网络错误（可能是 CORS 限制），请在 API 设置中开启「中转 API」",
     "errorHintRelay403": "接口返回 403 禁止访问，请在 API 设置中开启「中转 API」",
+    "errorHintGeminiKey": "无法连接 Gemini：请先检查网络（部分网络环境无法直连 Google 服务）。若网络正常，则可能是 Google 自 2026-06-19 起拒绝「无限制 API Key」——请在 AI Studio 重新生成密钥（默认已限制），或在 Google Cloud 控制台为旧密钥添加 Gemini API 限制",
     "rateLimitCooldown": "请求过于频繁，已自动暂停片刻后重试"
   },
   "SubtitleTranslator": {

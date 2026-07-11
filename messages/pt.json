@@ -200,6 +200,7 @@
     "errorHint5xx": "Erro do servidor, tente novamente mais tarde",
     "errorHintRelay": "Erro de rede (possivelmente CORS) — ative o \"Relay da API\" nas configurações de API",
     "errorHintRelay403": "A API retornou 403 Forbidden — ative o \"Relay da API\" nas configurações de API",
+    "errorHintGeminiKey": "Não foi possível conectar ao Gemini: verifique primeiro sua rede (algumas redes não alcançam diretamente os serviços do Google). Se a rede estiver bem, desde 19/06/2026 o Google rejeita chaves de API sem restrições — gere novamente sua chave no AI Studio (restrita por padrão) ou adicione uma restrição de Gemini API à chave antiga no Console do Google Cloud",
     "rateLimitCooldown": "Limite de requisições atingido — pausando brevemente, repetiremos automaticamente"
   },
   "SubtitleTranslator": {
