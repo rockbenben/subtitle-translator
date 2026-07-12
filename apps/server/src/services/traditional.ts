@@ -109,8 +109,9 @@ const gtxLegacy = async (endpoint: string, params: Parameters<TranslationService
 
     const data = await response.json();
     // Legacy shape: data[0] = Array<[translated, original, ...]>. A non-array
-    // root (auth wall) falls back to "" instead of throwing TypeError on .map.
-    const segments = Array.isArray(data?.[0]) ? data[0] : [];
+    // root means auth wall / shape drift: throw so retry + soft-fill runs.
+    if (!Array.isArray(data?.[0])) throw new Error("Invalid response format from Google Translate (gtx)");
+    const segments = data[0];
     return segments.map((part: unknown) => (Array.isArray(part) && typeof part[0] === "string" ? part[0] : "")).join("");
   };
 
@@ -155,14 +156,17 @@ export const gtxFreeAPI: TranslationService = async (params) => {
   if (!response.ok) throw httpStatusError(response);
 
   const data = await response.json();
-  // Response: data[0] = translations array, parallel to the request payload
-  // (data[1] = detected source langs, only present with sl=auto). A non-array
-  // root (auth wall / shape drift) falls back to "" per line instead of
-  // throwing TypeError downstream.
-  const translated = Array.isArray(data?.[0]) ? data[0] : [];
+  // Response: data[0] = translations array, parallel to the request payload.
+  // A non-array root means auth wall / shape drift: reject the whole chunk.
+  if (!Array.isArray(data?.[0])) throw new Error("Invalid response format from Google Translate (gtx)");
+  const translated = data[0];
   const out = [...lines];
   sentIndices.forEach((lineIdx, j) => {
-    out[lineIdx] = typeof translated[j] === "string" ? translated[j] : "";
+    const t = translated[j];
+    if (typeof t !== "string") {
+      throw new Error("Invalid response format from Google Translate (gtx) -- missing translation for a sent line");
+    }
+    out[lineIdx] = t;
   });
   return out.join("\n");
 };
@@ -556,9 +560,7 @@ export const translategemma: TranslationService = async (params) => {
     // recipe. Sent explicitly so OpenAI-compat servers (LM Studio etc.) don't
     // fall back to their UI default temperature.
     temperature: 0,
-    // 2048 covers translations up to ~6KB of text. Anything longer is unusual
-    // for a single batch entry and would benefit from chunking upstream.
-    max_tokens: 2048,
+    max_tokens: Math.min(2048, Math.max(64, Math.ceil(text.length * 2) + 32)),
     // Hard stop at the turn boundary — without it, some runtimes keep
     // generating past the answer (echoing example pairs, role tokens, etc).
     stop: ["<end_of_turn>"],
