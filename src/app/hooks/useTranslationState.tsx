@@ -534,7 +534,7 @@ const useTranslationState = () => {
     // Build translate params - pick defined optional fields from config.
     // reasoningEffort is derived per-call from the thinkingEffort record
     // (presence of entry for current model = effort, absence = thinking off).
-    const optionalFields = ["useCache", "apiKey", "region", "url", "model", "apiVersion", "folderId", "temperature", "maxTokens", "systemPrompt", "userPrompt", "sendSystemPrompt", "useRelay", "domains"] as const;
+    const optionalFields = ["useCache", "apiKey", "region", "url", "model", "apiVersion", "folderId", "temperature", "maxTokens", "systemPrompt", "userPrompt", "sendSystemPrompt", "useRelay", "useProxy", "domains"] as const;
     const extras: Record<string, unknown> = {};
     const configRecord = config as unknown as Record<string, unknown>;
     for (const key of optionalFields) {

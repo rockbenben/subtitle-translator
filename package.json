@@ -1,12 +1,20 @@
 {
   "name": "subtitle-translator",
   "version": "3.1.0",
+  "private": true,
   "license": "MIT",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "build:lang": "node scripts/buildWithLang.js",
     "start": "next start",
+    "server:dev": "yarn workspace @subtitle-translator/server dev",
+    "server:build": "yarn workspace @subtitle-translator/server build",
+    "core:build": "yarn workspace @subtitle-translator/translation-core build",
     "lint": "eslint",
     "outdated": "ncu"
   },

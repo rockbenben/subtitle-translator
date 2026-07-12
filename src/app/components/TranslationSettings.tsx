@@ -343,7 +343,7 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
       )}
 
       {/* ========== Credentials group ========== */}
-      {(config?.url !== undefined || config?.apiKey !== undefined || config?.region !== undefined || config?.folderId !== undefined || config?.apiVersion !== undefined || config?.useRelay !== undefined) && (
+      {(config?.url !== undefined || config?.apiKey !== undefined || config?.region !== undefined || config?.folderId !== undefined || config?.apiVersion !== undefined || config?.useRelay !== undefined || config?.useProxy !== undefined) && (
         <Section variant="neutral" style={{ marginTop: 16 }} noGap>
           <Text strong style={{ display: "block", marginBottom: 8 }}>
             {t("credentialsGroup")}
@@ -490,7 +490,7 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
               </Form.Item>
             )}
             {config?.apiVersion !== undefined && (
-              <Form.Item label={`LLM API Version`} extra={`${tCommon("example")}: 2025-11-18`} style={{ marginBottom: config?.useRelay !== undefined ? 24 : 0 }}>
+              <Form.Item label={`LLM API Version`} extra={`${tCommon("example")}: 2025-11-18`} style={{ marginBottom: config?.useRelay !== undefined || config?.useProxy !== undefined ? 24 : 0 }}>
                 <Input value={config.apiVersion as string | undefined} onChange={(e) => handleConfigChange(service, "apiVersion", e.target.value)} aria-label="LLM API Version" spellCheck={false} />
               </Form.Item>
             )}
@@ -499,6 +499,11 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
               // 跳动且丢失可发现性)。开关状态保留,清空 URL 后立即恢复("待命"语义)。
               <Form.Item label={t("useRelay")} extra={customUrlSet ? t("useRelayOverridden") : t("useRelayTooltip")} style={{ marginBottom: 0 }}>
                 <Switch checked={config.useRelay as boolean | undefined} disabled={customUrlSet} onChange={(checked) => handleConfigChange(service, "useRelay", checked)} aria-label={t("useRelay")} />
+              </Form.Item>
+            )}
+            {config?.useProxy !== undefined && (
+              <Form.Item label={t("useProxy")} extra={t("useProxyTooltip")} style={{ marginBottom: 0 }}>
+                <Switch checked={config.useProxy as boolean | undefined} onChange={(checked) => handleConfigChange(service, "useProxy", checked)} aria-label={t("useProxy")} />
               </Form.Item>
             )}
           </Form>

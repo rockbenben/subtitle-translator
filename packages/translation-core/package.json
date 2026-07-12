@@ -1,0 +1,30 @@
+{
+  "name": "@subtitle-translator/translation-core",
+  "version": "0.1.0",
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./subtitle": {
+      "types": "./dist/subtitle/index.d.ts",
+      "import": "./dist/subtitle/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "spark-md5": "^3.0.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/spark-md5": "^3.0.5",
+    "typescript": "^5"
+  }
+}
