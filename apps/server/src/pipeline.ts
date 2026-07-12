@@ -20,7 +20,7 @@ import {
   type TranslationCache,
   type TranslationConfig,
 } from "@subtitle-translator/translation-core";
-import { buildTranslateParams, translateText } from "./translate.js";
+import { buildTranslateParams, translateTextWithMeta } from "./translate.js";
 
 export interface TranslateBatchOptions {
   texts: string[];
@@ -108,19 +108,21 @@ export const translateBatch = async (opts: TranslateBatchOptions): Promise<Trans
               },
               signal,
             });
-            return translateText({ ...params, cache: opts.cache });
+            return translateTextWithMeta({ ...params, cache: opts.cache });
           };
 
-          let result = await pRetry(() => translateOnce(), retryConfig);
+          let translatedResult = await pRetry(() => translateOnce(), retryConfig);
+          let result = translatedResult.text;
           const beforeGlossary = result;
           result = applyGlossaryToText(result, matchingTerms);
           const violations = findGlossaryViolations(source, result, matchingTerms);
           if (violations.length > 0) {
-            result = applyGlossaryToText(await pRetry(() => translateOnce(violations), retryConfig), matchingTerms);
+            translatedResult = await pRetry(() => translateOnce(violations), retryConfig);
+            result = applyGlossaryToText(translatedResult.text, matchingTerms);
           }
           translations[index] = result;
-          if (beforeGlossary === result) translated += 1;
-          else translated += 1;
+          if (translatedResult.cached) cached += 1;
+          else if (!translatedResult.skipped) translated += 1;
         } catch (error) {
           translations[index] = source;
           errors.push({ index, error: getErrorMessage(error) });

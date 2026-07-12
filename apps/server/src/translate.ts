@@ -6,15 +6,21 @@ const HTML_ENCODING_METHODS: ReadonlySet<string> = new Set(["gtxFreeAPI", "googl
 
 export type ServerTranslateTextParams = TranslateTextParams & { cache?: TranslationCache };
 
-export const translateText = async (params: ServerTranslateTextParams): Promise<string> => {
+export type TranslateTextMetaResult = {
+  text: string;
+  cached: boolean;
+  skipped: boolean;
+};
+
+export const translateTextWithMeta = async (params: ServerTranslateTextParams): Promise<TranslateTextMetaResult> => {
   const { text, cacheSuffix, translationMethod, targetLanguage, sourceLanguage, useCache = true, cache } = params;
 
-  if (!HAS_TRANSLATABLE_CONTENT.test(text) || sourceLanguage === targetLanguage) return text;
+  if (!HAS_TRANSLATABLE_CONTENT.test(text) || sourceLanguage === targetLanguage) return { text, cached: false, skipped: true };
 
   const cacheKey = generateCacheKey(text, cacheSuffix);
   if (useCache && cache) {
     const cached = await cache.get(cacheKey);
-    if (cached) return cached;
+    if (cached) return { text: cached, cached: true, skipped: false };
   }
 
   const service = translationServices[translationMethod as TranslationMethod];
@@ -25,8 +31,10 @@ export const translateText = async (params: ServerTranslateTextParams): Promise<
 
   const cleanedText = HTML_ENCODING_METHODS.has(translationMethod) ? cleanTranslatedText(translatedText) : translatedText;
   if (useCache && cache) await cache.set(cacheKey, cleanedText);
-  return cleanedText;
+  return { text: cleanedText, cached: false, skipped: false };
 };
+
+export const translateText = async (params: ServerTranslateTextParams): Promise<string> => (await translateTextWithMeta(params)).text;
 
 export const runReachabilityProbe = async (translationMethod: TranslationMethod, config: Partial<TranslateTextParams>, systemPrompt?: string, userPrompt?: string, signal?: AbortSignal): Promise<string> => {
   const params: TranslateTextParams = {

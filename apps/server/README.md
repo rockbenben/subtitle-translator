@@ -58,13 +58,31 @@ corepack yarn workspace @subtitle-translator/server start
 
 | 方法 | 路径 | 说明 |
 | --- | --- | --- |
+| `GET` | `/healthz` | 服务存活检查 |
+| `GET` | `/readyz` | 服务就绪检查，包含缓存与任务摘要 |
+| `GET` | `/api/v1/version` | 获取服务版本与运行限制 |
 | `GET` | `/api/v1/languages` | 获取支持语言列表 |
 | `GET` | `/api/v1/providers` | 获取翻译服务、默认配置和模型列表 |
+| `POST` | `/api/v1/translate/validate` | 校验翻译配置与语言支持，不发起真实翻译 |
 | `POST` | `/api/v1/translate` | 翻译单段文本 |
 | `POST` | `/api/v1/translate/batch` | 批量翻译多行文本 |
+| `POST` | `/api/v1/translate/text` | 翻译长文本，按 `chunkSize` 或换行切分 |
+| `POST` | `/api/v1/translate/multi-target` | 同一批文本翻译到多个目标语言 |
 | `POST` | `/api/v1/translate/probe` | 测试翻译服务连通性 |
 | `POST` | `/api/v1/subtitle/parse` | 解析字幕文本为 cue 列表 |
+| `POST` | `/api/v1/subtitle/inspect` | 检查字幕格式、cue 数和可翻译行数 |
 | `POST` | `/api/v1/subtitle/translate` | 翻译字幕文本并回写原格式 |
+| `POST` | `/api/v1/subtitle/translate/multi-target` | 同一字幕翻译到多个目标语言 |
+| `POST` | `/api/v1/jobs` | 创建异步翻译任务 |
+| `GET` | `/api/v1/jobs/:jobId` | 查询任务状态与进度 |
+| `GET` | `/api/v1/jobs/:jobId/events` | 通过 SSE 订阅任务进度 |
+| `POST` | `/api/v1/jobs/:jobId/cancel` | 取消任务 |
+| `GET` | `/api/v1/jobs/:jobId/result` | 获取任务结果 |
+| `DELETE` | `/api/v1/jobs/:jobId` | 删除任务记录 |
+| `GET` | `/api/v1/cache/stats` | 获取内存缓存统计 |
+| `POST` | `/api/v1/cache/clear` | 清空内存缓存 |
+| `POST` | `/api/v1/files/subtitle/parse` | 通过 multipart 上传字幕并解析 |
+| `POST` | `/api/v1/files/subtitle/translate` | 上传字幕并创建翻译任务 |
 
 所有请求默认使用 JSON：
 
@@ -244,6 +262,59 @@ curl -X POST http://127.0.0.1:8787/api/v1/translate/batch \
 }
 ```
 
+### 创建异步任务
+
+大文件、多目标语言或需要进度/取消能力的调用建议使用任务接口。
+
+```bash
+curl -X POST http://127.0.0.1:8787/api/v1/jobs \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "type": "subtitle.translate",
+    "content": "1\n00:00:01,000 --> 00:00:03,000\nHello\n",
+    "format": "srt",
+    "translationMethod": "gtxFreeAPI",
+    "sourceLanguage": "en",
+    "targetLanguage": "zh",
+    "config": { "batchSize": 10 }
+  }'
+```
+
+响应：
+
+```json
+{
+  "jobId": "job_xxx",
+  "status": "queued",
+  "links": {
+    "self": "/api/v1/jobs/job_xxx",
+    "events": "/api/v1/jobs/job_xxx/events",
+    "result": "/api/v1/jobs/job_xxx/result"
+  }
+}
+```
+
+支持的 `type`：
+
+- `translate.batch`
+- `translate.text`
+- `translate.multiTarget`
+- `subtitle.translate`
+- `subtitle.translate.multiTarget`
+
+### 上传字幕文件
+
+```bash
+curl -X POST http://127.0.0.1:8787/api/v1/files/subtitle/translate \
+  -F file=@example.srt \
+  -F translationMethod=gtxFreeAPI \
+  -F sourceLanguage=en \
+  -F targetLanguage=zh \
+  -F 'config={"batchSize":10}'
+```
+
+该接口会创建异步任务，结果通过 `/api/v1/jobs/:jobId/result` 获取。
+
 ### 测试连通性
 
 `/api/v1/translate/probe` 会执行一次真实翻译请求：`Hello, world!` → 中文。
@@ -390,6 +461,10 @@ curl -X POST http://127.0.0.1:8787/api/v1/subtitle/translate \
 | `HOST` | `0.0.0.0` | HTTP 监听地址 |
 | `TRANSLATION_CACHE_MAX_SIZE` | `10000` | 内存缓存最大条目数 |
 | `TRANSLATION_CACHE_TTL_MS` | `86400000` | 内存缓存 TTL，默认 24 小时 |
+| `SERVER_MAX_FILE_SIZE` | `20971520` | multipart 上传文件大小上限，默认 20MB |
+| `JOBS_MAX_CONCURRENT` | `2` | 预留的任务并发上限配置 |
+| `JOBS_MAX_QUEUED` | `100` | 预留的任务排队上限配置 |
+| `JOBS_RESULT_TTL_MS` | `86400000` | 任务结果保留 TTL 配置 |
 
 ## 技术栈
 
@@ -401,5 +476,7 @@ curl -X POST http://127.0.0.1:8787/api/v1/subtitle/translate \
 ## 目前限制
 
 - 字幕 API 当前使用 JSON `content` 输入，multipart 文件上传后续再补。
-- 批量翻译当前返回完整 JSON，不提供 SSE 进度流。
+- multipart 字幕上传已支持 UTF-8 文本字幕；复杂编码检测后续再补。
+- 同步批量翻译仍返回完整 JSON；需要进度和取消能力时使用 `/api/v1/jobs` 与 SSE。
+- 当前 JobStore 与结果存储为进程内内存实现，服务重启后任务记录会丢失。
 - Server 与现有 Web 前端独立运行；前端仍使用原有浏览器端翻译实现。
