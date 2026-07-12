@@ -1,0 +1,17 @@
+services:
+  server:
+    build:
+      context: ../..
+      dockerfile: apps/server/Dockerfile
+    image: subtitle-translator-server:local
+    ports:
+      - "8787:8787"
+    environment:
+      HOST: 0.0.0.0
+      PORT: 8787
+      TRANSLATION_CACHE_MAX_SIZE: 10000
+      TRANSLATION_CACHE_TTL_MS: 86400000
+      JOBS_MAX_CONCURRENT: 2
+      JOBS_MAX_QUEUED: 100
+      JOBS_RESULT_TTL_MS: 86400000
+      SERVER_MAX_FILE_SIZE: 20971520

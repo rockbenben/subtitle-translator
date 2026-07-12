@@ -54,6 +54,27 @@ corepack yarn server:build
 corepack yarn workspace @subtitle-translator/server start
 ```
 
+### Docker 部署
+
+在仓库根目录构建并运行 server 镜像：
+
+```bash
+docker build -f apps/server/Dockerfile -t subtitle-translator-server .
+docker run --rm -p 8787:8787 --name subtitle-translator-server subtitle-translator-server
+```
+
+或使用 compose：
+
+```bash
+docker compose -f apps/server/docker-compose.yml up --build
+```
+
+GitHub Actions 会通过 `.github/workflows/server-image.yml` 构建 `linux/amd64` 和 `linux/arm64` 镜像，并发布到 GitHub Container Registry：
+
+```text
+ghcr.io/<owner>/subtitle-translator-server
+```
+
 ## API 总览
 
 | 方法 | 路径 | 说明 |
