@@ -2,16 +2,19 @@
 ⚡️ Subtitle Translator
 </h1>
 <p align="center">
-    English | <a href="./README-zh.md">中文</a>
-</p>
-<p align="center">
     <em>Blazing-fast batch subtitle translation for 120+ languages — powered by AI</em>
+</p>
+
+<p align="center">
+    <b>English</b> · <a href="./README.zh.md">简体中文</a>
 </p>
 
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
   <a href="https://tools.newzone.top/en/subtitle-translator"><img src="https://img.shields.io/badge/Live%20Demo-subtitle--translator-blue" alt="Live Demo"></a>
 </p>
+
+Paste a subtitle file into a general-purpose translator and two things go wrong: the model rewrites your timecodes, and you're doing it one file at a time. Subtitle Translator strips the timing out locally and sends **only the dialogue** to the engine — the timeline physically cannot be touched — then does a whole season in one drop.
 
 **Subtitle Translator** is a free, browser-based batch subtitle translation tool for `.srt`, `.ass`, `.vtt`, and `.lrc` files. With chunked compression and parallel processing it hits ~1 second per episode. Batch-upload a whole season at once, connect to 7 traditional translation APIs (DeepL, Google, Azure, DeepLX, Qwen-MT, TranslateGemma, GTX) or 17+ LLM providers, and translate into 120+ languages — or into several target languages in a single pass, each exported as its own file. Everything runs locally in your browser; subtitle content and API keys never touch a server.
 
@@ -102,14 +105,6 @@ LLM modes can send surrounding lines as context for each batch, improving dialog
 
 See the [full FAQ in the docs](https://docs.newzone.top/en/guide/translation/subtitle-translator/) for more.
 
-## Tech Stack
-
-- **Framework**: [Next.js 16](https://nextjs.org/) (App Router) + React 19 with the React Compiler
-- **UI**: [Ant Design 6](https://ant.design/) + [Tailwind CSS 4](https://tailwindcss.com/)
-- **i18n**: [next-intl](https://next-intl-docs.vercel.app/)
-- **Caching**: [idb](https://github.com/jakearchibald/idb) (IndexedDB)
-- **Encoding Detection**: [jschardet](https://github.com/aadsm/jschardet)
-
 ## Getting Started
 
 ### Requirements
@@ -149,7 +144,3 @@ Contributions are welcome! Feel free to open issues and pull requests.
 2. Run `yarn` and `yarn dev` locally
 3. Add tests / docs when applicable
 4. Submit a PR with a clear description
-
-## License
-
-MIT © 2025 [rockbenben](https://github.com/rockbenben). See [LICENSE](./LICENSE).
