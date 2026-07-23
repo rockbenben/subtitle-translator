@@ -723,7 +723,9 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
               </Form.Item>
             )}
             {config?.delayTime !== undefined && (
-              <Form.Item label={`${t("delayTime")} (ms)`} style={{ marginBottom: 0 }}>
+              // 同组其余字段都有 Extra 说明，只有它没有 —— 它是「被限流就调大」的降速
+              // 旋钮，这个用途此前只写在上面的代码注释里，用户看不到。
+              <Form.Item label={`${t("delayTime")} (ms)`} extra={t("delayTimeExtra")} style={{ marginBottom: 0 }}>
                 <InputNumber
                   min={1}
                   className="!w-full"

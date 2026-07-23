@@ -316,7 +316,7 @@ const SubtitleTranslator = () => {
           if (isBilingual) {
             const orig = lines[index];
             const trans = translatedLines[i];
-            outputLines[index] = isOriginalFirst ?`${orig}\n${trans}` : `${trans}\n${orig}`;
+            outputLines[index] = isOriginalFirst ? `${orig}\n${trans}` : `${trans}\n${orig}`;
           } else {
             outputLines[index] = translatedLines[i];
           }
@@ -367,7 +367,7 @@ const SubtitleTranslator = () => {
           cueGroups.forEach((group) => {
             const allOrig = group.origs.join("\n");
             const allTrans = group.trans.join("\n");
-            outputLines[group.firstIndex] = isOriginalFirst ?`${allOrig}\n${allTrans}` : `${allTrans}\n${allOrig}`;
+            outputLines[group.firstIndex] = isOriginalFirst ? `${allOrig}\n${allTrans}` : `${allTrans}\n${allOrig}`;
           });
         }
 
@@ -625,7 +625,7 @@ const SubtitleTranslator = () => {
   };
 
   return (
-    <Spin spinning={isFileProcessing} description="Please wait..." size="large">
+    <Spin spinning={isFileProcessing} description={t("pleaseWait")} size="large">
       <Row gutter={[24, 24]}>
         {/* Left Column: Upload and Main Actions */}
         <Col xs={24} lg={14} xl={15}>

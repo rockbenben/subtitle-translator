@@ -35,6 +35,7 @@
     "nameRequired": "请填写术语表名称"
   },
   "common": {
+    "supportEscapeChars": "支持转义字符：\\n (换行)、\\r (回车)、\\t (制表符)、\\s (空格)、\\\\ (反斜杠)",
     "skipToContent": "跳到主要内容",
     "fileProcessFailed": "文件处理失败，请检查文件编码或换一个文件",
     "fileReadFailed": "读取文件失败",
@@ -83,6 +84,7 @@
     "extractText": "提取纯文本",
     "translationResult": "翻译结果",
     "copy": "复制",
+    "expand": "展开",
     "remove": "删除",
     "format": "格式化",
     "formatTooltip": "格式化：移除空行及首尾空格",
@@ -205,7 +207,7 @@
   },
   "SubtitleTranslator": {
     "clientDescription": "上传字幕文件或粘贴内容，选择目标语言即可快速翻译。支持批量处理，自动保留时间轴。",
-    "subtitleFormat": "字幕格式",
+    "subtitleFormat": "译文输出",
     "translatedOnly": "仅译文",
     "bilingual": "双语",
     "exportBoth": "两者都要",
@@ -295,6 +297,7 @@
     "userPromptExtra": "自定义翻译提示词，留空使用默认。变量说明",
     "for": "为",
     "textToTranslate": "待翻译文本",
+    "fullText": "全文",
     "chunkSize": "分块大小",
     "chunkSizeExtra": "多行文本（字幕、Markdown 等）将按此大小分块翻译",
     "batchSize": "并发行数",
@@ -306,6 +309,7 @@
     "contextWindow": "上下文行数",
     "contextWindowExtra": "每批包含的行数。值越大请求越少、加速越明显，但可能超 token 上限",
     "delayTime": "延迟时间",
+    "delayTimeExtra": "两次请求之间的等待时间。频繁被限流时调大它降速",
     "useRelay": "中转 API",
     "useRelayTooltip": "如遇到 CORS 或 403 错误，请开启中转 API",
     "useRelayOverridden": "已填写自定义 URL，请求将直达该地址，此开关暂不生效；清空 URL 后恢复",
@@ -314,7 +318,7 @@
     "presetSelect": "选择预设",
     "presetSave": "另存为新预设",
     "presetDelete": "删除当前预设",
-    "presetNamePlaceholder": "输入预设名称",
+    "presetNamePlaceholder": "预设名称（如：影视字幕 / 技术文档）",
     "presetSaved": "已另存为新预设",
     "presetDeleted": "已删除当前预设",
     "presetNameRequired": "请输入预设名称",
@@ -398,7 +402,7 @@
     },
     "textSplitter": {
       "title": "文本分割",
-      "description": "智能分割长文本，适用于 AI 输入和社交媒体"
+      "description": "按符号、字数或整句拆分长文本，适配 AI 投喂与分段发布"
     },
     "chineseConversion": {
       "title": "简繁转换",
@@ -419,6 +423,10 @@
     "dataBatch": {
       "title": "数据批处理",
       "description": "Excel 表格批量去重、列提取、文本合并，多规则按序执行"
+    },
+    "textJoiner": {
+      "title": "文本拼接",
+      "description": "多列文本逐行按模板合并，批量生成 CSV、SQL、JSON"
     },
     "jsonValueExtractor": {
       "title": "JSON 字段值提取",
@@ -619,6 +627,11 @@
     "reaction4": "看不懂",
     "placeholder": "请留言，无需登录（填写邮箱可获回复提醒）",
     "metaDescription": "意见反馈页：报告使用问题、提交功能建议、参与工具改进。基于 Waline 评论系统，匿名也可发言。"
+  },
+  "AppError": {
+    "title": "页面加载出错",
+    "description": "页面加载失败,可能是网站刚更新到新版本,请重新加载。",
+    "reload": "重新加载"
   },
   "NotFound": {
     "title": "页面未找到",

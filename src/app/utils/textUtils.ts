@@ -24,6 +24,15 @@ export const cleanLines = (text: string, shouldTrim: boolean = false): string[] 
     .filter((line) => line.trim())
     .map((line) => (shouldTrim ? line.trim() : line));
 
+/**
+ * 多行合并为一行：丢弃空白行后用 separator 连接。
+ *
+ * 丢空行是有意的——保留会在结果里产出连续分隔符（"a,,b"），几乎没有场景想要。
+ * separator 传入的是【已解转义】的字符串，解转义留给调用方（同 text-splitter 的
+ * getMergedText / text-joiner 的 lineSeparator：存字面串、用时才解）。
+ */
+export const joinLines = (text: string, separator: string = "", shouldTrim: boolean = true): string => cleanLines(text, shouldTrim).join(separator);
+
 // 截断字符串到指定长度，默认长度为 100K
 const MAX_DISPLAY_LENGTH = 100000;
 export const truncate = (str: string, num: number = MAX_DISPLAY_LENGTH): string => (str.length <= num ? str : `${str.slice(0, num)}...`);
@@ -62,20 +71,24 @@ export const splitParagraph = async (text: string, method: ParagraphSplitMethod 
 // 将字符串中的全角数字和字母转为半角
 export const toHalfWidth = (text: string): string => text.replace(/[０-９Ａ-Ｚａ-ｚ]/g, (char) => String.fromCharCode(char.charCodeAt(0) - 65248));
 
-// 过滤文本中的行；filters 可为逗号分隔字符串或字符串数组
+// 过滤文本中的行；filters 可为字符串（按逗号/换行切分，两种写法等价——单行输入框
+// 用逗号、多行黑名单用换行，不该是两个概念）或已切好的字符串数组
+// exact：整行精确匹配（比较时两侧都 trim），默认按子串包含
 // maxLen：长度阈值。0、undefined、负数 均视作"未启用"（不保留超长行的豁免规则）
-export const filterLines = (text: string, filters: string | string[], maxLen?: number): string => {
-  const list = Array.isArray(filters)
-    ? filters
-    : filters
-        .split(",")
-        .map((w) => w.trim())
-        .filter(Boolean);
+export interface FilterLinesOptions {
+  exact?: boolean;
+  maxLen?: number;
+}
+export const filterLines = (text: string, filters: string | string[], options: FilterLinesOptions = {}): string => {
+  const { exact = false, maxLen } = options;
+  const list = (Array.isArray(filters) ? filters : filters.split(/[\n,]/)).map((w) => w.trim()).filter(Boolean);
+  const exactSet = exact ? new Set(list) : undefined;
   const hasMaxLen = typeof maxLen === "number" && maxLen > 0;
   return splitTextIntoLines(text)
     .filter((line) => {
       if (hasMaxLen && line.trim().length > maxLen) return true;
-      return !list.some((f) => f && line.includes(f));
+      if (exactSet) return !exactSet.has(line.trim());
+      return !list.some((f) => line.includes(f));
     })
     .join("\n");
 };
@@ -103,19 +116,18 @@ export const isSeparatorBar = (s: string): boolean => {
   return t.length >= 3 && /^[^\p{L}\p{N}\s]+$/u.test(t) && !SENTENCE_PUNCT_ONLY.test(t) && !/[\p{Emoji_Presentation}️]/u.test(t);
 };
 
-// 通用：移除所有重复行（非相邻去重），支持 trim 比较与排除集合
+// 通用：移除所有重复行（非相邻去重），支持 trim 比较
+// 曾有 exclude 选项（顺带删掉黑名单行）——那是 filterLines 的活，混在去重里只会
+// 让"点去重却少了不重复的行"变得无法解释，已移交 filterLines({ exact: true })
 export interface DedupeOptions {
   trim?: boolean;
-  exclude?: Iterable<string>;
 }
 export const dedupeLines = (lines: string[], options: DedupeOptions = {}): string[] => {
-  const { trim = true, exclude } = options;
-  const excludeSet = exclude ? new Set(exclude) : undefined;
+  const { trim = true } = options;
   const seen = new Set<string>();
   const out: string[] = [];
   for (const line of lines) {
     const key = trim ? line.trim() : line;
-    if (excludeSet && excludeSet.has(key)) continue;
     if (!seen.has(key)) {
       seen.add(key);
       out.push(line);
@@ -245,7 +257,7 @@ export const splitBySpaces = (input: string): string[] => {
  * 解析用户输入的转义字符，将字符串中的转义序列转换为实际字符
  * 支持的转义字符: \n(换行), \r(回车), \t(制表符), \s(空格), \\(反斜杠)
  */
-const parseEscapeChars = (str: string): string => {
+export const parseEscapeChars = (str: string): string => {
   // 单趟替换:链式 replace 会让 "\\t"(想要字面 \t)先被 \t 规则吃掉后半段,
   // 产出「反斜杠+TAB」;单趟里 \\ 先于 t 消耗,语义与文档一致。
   const map: Record<string, string> = { n: "\n", r: "\r", t: "\t", s: " ", "\\": "\\" };
@@ -261,3 +273,20 @@ export const parseSpaceSeparatedItems = (input: string): string[] => {
 
 // 转义正则表达式中的特殊字符，防止正则注入
 export const escapeRegExp = (str: string): string => str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+// 大小写转换：CJK 字符无大小写区分，\w/\b 天然只命中拉丁字母数字，中英混排安全。
+// title/sentence 先整体转小写再逐词/逐句首字母大写，确保 "HELLO world" 这类混合大小写也能规整。
+export type CaseConvertMode = "upper" | "lower" | "title" | "sentence";
+export const convertCase = (text: string, mode: CaseConvertMode): string => {
+  switch (mode) {
+    case "upper":
+      return text.toUpperCase();
+    case "lower":
+      return text.toLowerCase();
+    case "title":
+      return text.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
+    case "sentence":
+      // 句首 = 文本/行开头，或 . ! ? 之后的空白
+      return text.toLowerCase().replace(/(^\s*\w|[.!?]\s+\w)/gm, (c) => c.toUpperCase());
+  }
+};

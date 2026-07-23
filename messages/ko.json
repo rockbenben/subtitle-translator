@@ -35,6 +35,7 @@
     "nameRequired": "용어집 이름을 입력하세요"
   },
   "common": {
+    "supportEscapeChars": "이스케이프 문자 지원: \\n (줄바꿈), \\r (복귀), \\t (탭), \\s (공백), \\\\ (백슬래시)",
     "skipToContent": "본문으로 건너뛰기",
     "fileProcessFailed": "파일 처리에 실패했습니다. 인코딩을 확인하거나 다른 파일을 사용해 보세요",
     "fileReadFailed": "파일을 읽지 못했습니다",
@@ -83,6 +84,7 @@
     "extractText": "텍스트 추출",
     "translationResult": "번역 결과",
     "copy": "복사",
+    "expand": "더 보기",
     "remove": "제거",
     "exportFile": "내보내기",
     "exportAllFile": "모두 내보내기",
@@ -205,7 +207,7 @@
   },
   "SubtitleTranslator": {
     "clientDescription": "자막 파일을 업로드하거나 내용을 붙여넣고 목표 언어를 선택하여 빠르게 번역하세요. 일괄 처리를 지원하며 타임라인을 자동 유지합니다.",
-    "subtitleFormat": "자막 형식",
+    "subtitleFormat": "번역문 출력",
     "translatedOnly": "번역만",
     "bilingual": "이중 언어",
     "exportBoth": "둘 다",
@@ -295,6 +297,7 @@
     "userPromptExtra": "사용자 정의 번역 프롬프트, 비워두면 기본값 사용. 변수 설명",
     "for": "대상:",
     "textToTranslate": "번역할 텍스트",
+    "fullText": "전체 텍스트",
     "chunkSize": "청크 크기",
     "chunkSizeExtra": "여러 줄 텍스트(자막, Markdown 등)는 이 크기로 분할되어 번역됩니다",
     "batchSize": "동시 번역 행수",
@@ -306,6 +309,7 @@
     "contextWindow": "컨텍스트 행수",
     "contextWindowExtra": "배치당 행 수. 높을수록 요청이 적어지고 속도가 빨라지지만 모델의 토큰 한도를 초과할 수 있음",
     "delayTime": "지연 시간",
+    "delayTimeExtra": "요청과 요청 사이의 대기 시간. 속도 제한에 자주 걸리면 값을 키워 속도를 낮추세요",
     "useRelay": "API 중계",
     "useRelayTooltip": "CORS 또는 403 오류가 발생하면 API 중계를 활성화하세요",
     "useRelayOverridden": "사용자 지정 URL이 설정되어 요청이 해당 주소로 직접 전송되며 이 스위치는 적용되지 않습니다. URL을 지우면 다시 활성화됩니다",
@@ -314,7 +318,7 @@
     "presetSelect": "프리셋 선택",
     "presetSave": "새 프리셋으로 저장",
     "presetDelete": "현재 프리셋 삭제",
-    "presetNamePlaceholder": "프리셋 이름 입력",
+    "presetNamePlaceholder": "프리셋 이름 (예: 영상 자막 / 기술 문서)",
     "presetSaved": "새 프리셋으로 저장됨",
     "presetDeleted": "현재 프리셋이 삭제됨",
     "presetNameRequired": "프리셋 이름을 입력하세요",
@@ -398,7 +402,7 @@
     },
     "textSplitter": {
       "title": "텍스트 분할",
-      "description": "장문 스마트 분할, AI 입력 및 SNS에 최적"
+      "description": "긴 텍스트를 구분자·글자 수·문장 단위로 분할하고 다시 병합"
     },
     "chineseConversion": {
       "title": "간체·번체 변환",
@@ -415,6 +419,10 @@
     "dataBatch": {
       "title": "텍스트 처리 도구",
       "description": "Excel 표 데이터 일괄 중복 제거·열 추출·텍스트 병합, 다중 규칙 순차 실행"
+    },
+    "textJoiner": {
+      "title": "텍스트 결합기",
+      "description": "여러 텍스트 열을 템플릿으로 줄 단위 결합해 CSV, SQL, JSON을 일괄 생성"
     },
     "jsonValueExtractor": {
       "title": "JSON 값 추출",
@@ -619,6 +627,11 @@
     "reaction4": "이해 안 됨",
     "placeholder": "메시지를 남겨주세요. 로그인 불필요 (이메일 입력 시 답변 알림 수신 가능)",
     "metaDescription": "Tools By AI 피드백 페이지: 버그 신고, 기능 요청, 사용 사례 공유. Waline 댓글 기반, 익명 작성 가능, 무료."
+  },
+  "AppError": {
+    "title": "페이지 로드 오류",
+    "description": "페이지를 불러오지 못했습니다. 사이트 업데이트 직후에 발생할 수 있으니 새로고침해 주세요.",
+    "reload": "새로고침"
   },
   "NotFound": {
     "title": "페이지를 찾을 수 없음",

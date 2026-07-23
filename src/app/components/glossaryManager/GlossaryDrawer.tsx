@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Drawer, Table, Input, Button, Select, Space, Upload, App, Typography, Alert, Tooltip, Dropdown } from "antd";
-import { PlusOutlined, DeleteOutlined, UploadOutlined, DownloadOutlined, SearchOutlined } from "@ant-design/icons";
+import { PlusOutlined, DeleteOutlined, UploadOutlined, DownloadOutlined, SearchOutlined, DownOutlined } from "@ant-design/icons";
 import { useTranslations } from "next-intl";
 import { useTranslationContext } from "@/app/components/TranslationContext";
 import { languages } from "@/app/lib/translation/languages-data";
@@ -156,7 +156,7 @@ const GlossaryDrawer = ({ open, onClose }: { open: boolean; onClose: () => void 
     <Drawer title={`${t("drawerTitle")}${activeGlossaryPreset ? ` · ${activeGlossaryPreset.name}` : ""}`} open={open} onClose={onClose} size="min(520px, 90vw)">
       <Space style={{ width: "100%", marginBottom: 12 }} wrap>
         <span id="glossary-lang-label">{tCommon("targetLanguage")}</span>
-        <Select aria-labelledby="glossary-lang-label" style={{ minWidth: 200 }} showSearch optionFilterProp="label" value={selectedLang} onChange={setSelectedLang} options={LANG_OPTIONS} />
+        <Select aria-labelledby="glossary-lang-label" style={{ minWidth: 200 }} showSearch={{ optionFilterProp: "label" }} value={selectedLang} onChange={setSelectedLang} options={LANG_OPTIONS} />
         <Tooltip title={t("tsvHint")}>
           <Upload accept=".tsv,.txt" showUploadList={false} beforeUpload={importTsv}>
             <Button icon={<UploadOutlined />}>{t("importTsv")}</Button>
@@ -164,17 +164,21 @@ const GlossaryDrawer = ({ open, onClose }: { open: boolean; onClose: () => void 
         </Tooltip>
         {/* Split button: click = current language (2-col, DeepL-TSV compatible);
             menu = all languages (3-col with targetLang). */}
-        <Dropdown.Button
-          menu={{
-            items: [{ key: "all", label: t("exportAllTsv") }],
-            onClick: ({ key }) => {
-              if (key === "all") exportAllTsv();
-            },
-          }}
-          onClick={exportTsv}
-          disabled={allTerms.length === 0}>
-          <DownloadOutlined /> {t("exportTsv")}
-        </Dropdown.Button>
+        <Space.Compact>
+          <Button icon={<DownloadOutlined />} onClick={exportTsv} disabled={allTerms.length === 0}>
+            {t("exportTsv")}
+          </Button>
+          <Dropdown
+            menu={{
+              items: [{ key: "all", label: t("exportAllTsv") }],
+              onClick: ({ key }) => {
+                if (key === "all") exportAllTsv();
+              },
+            }}
+            disabled={allTerms.length === 0}>
+            <Button icon={<DownOutlined />} />
+          </Dropdown>
+        </Space.Compact>
       </Space>
       <Space style={{ width: "100%", marginBottom: 12, justifyContent: "space-between" }} wrap>
         <Input allowClear prefix={<SearchOutlined />} style={{ width: 220 }} placeholder={t("searchPlaceholder")} aria-label={t("searchPlaceholder")} value={search} onChange={(e) => setSearch(e.target.value)} />

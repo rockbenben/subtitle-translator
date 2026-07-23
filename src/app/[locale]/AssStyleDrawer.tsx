@@ -132,10 +132,12 @@ const AssStyleDrawer = ({ open, onClose, config, preset, customStyle, onChange, 
                 options={fontOptions}
                 placeholder={t("assFontPlaceholder")}
                 allowClear
-                filterOption={(input, option) => {
-                  // fontOptions 是分组结构(组对象无 value);只按叶子项的字体名过滤。
-                  const value = option && "value" in option ? String(option.value) : "";
-                  return value.toLowerCase().includes(input.toLowerCase());
+                showSearch={{
+                  filterOption: (input, option) => {
+                    // fontOptions 是分组结构(组对象无 value);只按叶子项的字体名过滤。
+                    const value = option && "value" in option ? String(option.value) : "";
+                    return value.toLowerCase().includes(input.toLowerCase());
+                  },
                 }}
                 style={{ width: "100%" }}
               />

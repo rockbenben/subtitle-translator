@@ -389,8 +389,10 @@ export const LANGUAGE_GROUP_BY_CODE: Record<string, string> = Object.fromEntries
 // Clicking a preset MERGES into the current selection (not replaces) so users
 // can stack "Top World" + "European Mainstream".
 //
-// Code order within each preset MUST match the master `languages` array order
-// (enforced by test). So adding a code is a single insertion at its master
+// Within each regional group, code order in each preset MUST match the master
+// `languages` array order (enforced by test). Cross-group picks may deviate by
+// geographic intent (e.g. indianSubcontinent appends middleEast's ur after the
+// southAsia block). So adding a code is a single insertion at its master
 // position, not a re-sort across 4 presets + 18 locale files.
 // ════════════════════════════════════════════════════════════════════════════
 export const LANGUAGE_PRESETS: ReadonlyArray<{ key: string; labelKey: string; codes: readonly string[] }> = [

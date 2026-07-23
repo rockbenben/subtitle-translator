@@ -35,6 +35,7 @@
     "nameRequired": "El nombre del glosario es obligatorio"
   },
   "common": {
+    "supportEscapeChars": "Soporta caracteres escape: \\n (nueva línea), \\r (retorno), \\t (tab), \\s (espacio), \\\\ (barra invertida)",
     "skipToContent": "Saltar al contenido principal",
     "fileProcessFailed": "No se pudo procesar el archivo: comprueba su codificación o prueba con otro",
     "fileReadFailed": "No se pudo leer el archivo",
@@ -83,6 +84,7 @@
     "extractText": "Extraer Texto",
     "translationResult": "Resultado",
     "copy": "Copiar",
+    "expand": "más",
     "remove": "Eliminar",
     "exportFile": "Exportar",
     "exportAllFile": "Exportar Todo",
@@ -205,7 +207,7 @@
   },
   "SubtitleTranslator": {
     "clientDescription": "Sube subtítulos o pega contenido. Selecciona idioma destino para traducción rápida. Soporta procesamiento por lotes y conserva línea de tiempo.",
-    "subtitleFormat": "Formato de Subtítulos",
+    "subtitleFormat": "Salida de la traducción",
     "translatedOnly": "Traducido",
     "bilingual": "Bilingüe",
     "exportBoth": "Ambos",
@@ -295,6 +297,7 @@
     "userPromptExtra": "Prompt traducción personalizado, dejar vacío para defecto. Variables:",
     "for": "para",
     "textToTranslate": "texto a traducir",
+    "fullText": "texto completo",
     "chunkSize": "Tamaño Fragmento",
     "chunkSizeExtra": "Texto multilínea (Subtítulos, Markdown) se dividirá por este tamaño",
     "batchSize": "Líneas simultáneas",
@@ -306,6 +309,7 @@
     "contextWindow": "Líneas de contexto",
     "contextWindowExtra": "Líneas por lote. Mayor = menos solicitudes y más velocidad, pero puede exceder el límite de tokens del modelo",
     "delayTime": "Retraso",
+    "delayTimeExtra": "Tiempo de espera entre peticiones consecutivas. Auméntalo si te limitan la tasa con frecuencia",
     "useRelay": "Relé API",
     "useRelayTooltip": "Habilita el relé API si encuentras errores CORS o 403",
     "useRelayOverridden": "Hay una URL personalizada: las solicitudes van directamente a ella y este interruptor no tiene efecto; borre la URL para reactivarlo",
@@ -314,7 +318,7 @@
     "presetSelect": "Seleccionar preset",
     "presetSave": "Guardar como nuevo preset",
     "presetDelete": "Eliminar preset actual",
-    "presetNamePlaceholder": "Ingrese nombre del preset",
+    "presetNamePlaceholder": "Nombre del preajuste (p. ej. Subtítulos / Documentación técnica)",
     "presetSaved": "Guardado como nuevo preset",
     "presetDeleted": "Preset actual eliminado",
     "presetNameRequired": "Por favor ingrese un nombre",
@@ -340,7 +344,7 @@
       "title": "Traductor Subtítulos",
       "description": "Traducción por lote SRT, ASS, VTT, SBV, LRC. 120+ idiomas.",
       "metaTitle": "Traductor subtítulos gratis | SRT/VTT/ASS IA bilingüe",
-      "metaDescription": "Traductor IA de subtítulos para SRT, ASS, VTT, SBV, LRC. 25+ motores: DeepSeek, Claude, GPT, DeepL. 120+ idiomas, timecodes intactos, bilingüe.",
+      "metaDescription": "Traductor IA subtítulos SRT, ASS, VTT, SBV, LRC. 25+ motores: DeepSeek, Claude, GPT, DeepL. 120+ idiomas, timecodes, bilingüe.",
       "faq": [
         {
           "q": "¿Qué formatos de subtítulos son compatibles? ¿Se pueden traducir SRT, ASS, VTT, SBV y LRC?",
@@ -398,7 +402,7 @@
     },
     "textSplitter": {
       "title": "Divisor de Texto",
-      "description": "División inteligente de texto largo para IA y redes sociales"
+      "description": "Divide textos largos por separador, longitud o frase — y vuelve a unirlos"
     },
     "chineseConversion": {
       "title": "Conversión chino",
@@ -415,6 +419,10 @@
     "dataBatch": {
       "title": "Procesador de texto",
       "description": "Procesamiento por lotes de datos Excel — deduplicación, extracción por columnas, fusión, reglas encadenadas"
+    },
+    "textJoiner": {
+      "title": "Unificador de Texto",
+      "description": "Combina varias columnas de texto línea por línea con plantillas para generar en lote CSV, SQL y JSON"
     },
     "jsonValueExtractor": {
       "title": "Extractor Valor JSON",
@@ -472,11 +480,11 @@
   },
   "Metadata": {
     "title": "ToolsByAI | Herramientas de Traducción y Dev con IA",
-    "description": "ToolsByAI: 17 herramientas open source gratis para traducción de subtítulos, Markdown, JSON i18n y procesamiento por lotes. 25+ motores IA.",
+    "description": "ToolsByAI: 17 herramientas open source para traducir subtítulos, Markdown y JSON i18n. Sin instalación, en el navegador.",
     "homeTitle": "Suite ToolsByAI",
     "homeDescription": "20+ herramientas para traducción, texto, JSON y conversión de datos. Impulsa la eficiencia de desarrolladores y creadores.",
     "ogTitle": "ToolsByAI | Herramientas de Traducción y Dev con IA",
-    "ogDescription": "ToolsByAI: 17 herramientas open source gratis para traducción de subtítulos, Markdown, JSON i18n y procesamiento por lotes. 25+ motores IA."
+    "ogDescription": "ToolsByAI: 17 herramientas open source para traducir subtítulos, Markdown y JSON i18n. Sin instalación, en el navegador."
   },
   "languages": {
     "auto": "Detección Auto",
@@ -619,6 +627,11 @@
     "reaction4": "Confuso",
     "placeholder": "Deja un mensaje (no requiere login, email opcional para respuesta)",
     "metaDescription": "Página de feedback para Tools By AI: reporta errores, sugiere funciones, comparte casos de uso. Basada en Waline, publicación anónima."
+  },
+  "AppError": {
+    "title": "Error al cargar la página",
+    "description": "No se pudo cargar la página; puede ocurrir justo después de una actualización del sitio. Vuelve a cargarla.",
+    "reload": "Recargar"
   },
   "NotFound": {
     "title": "Página no encontrada",

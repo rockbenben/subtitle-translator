@@ -35,6 +35,7 @@
     "nameRequired": "Sözlük adı gerekli"
   },
   "common": {
+    "supportEscapeChars": "Kaçış karakterlerini destekler: \\n (yeni satır), \\r (dönüş), \\t (sekme), \\s (boşluk), \\\\ (ters eğik çizgi)",
     "skipToContent": "Ana içeriğe geç",
     "fileProcessFailed": "Dosya işlenemedi — kodlamasını kontrol edin veya başka bir dosya deneyin",
     "fileReadFailed": "Dosya okunamadı",
@@ -83,6 +84,7 @@
     "extractText": "Metni Çıkar",
     "translationResult": "Sonuç",
     "copy": "Kopyala",
+    "expand": "daha fazla",
     "remove": "Kaldır",
     "exportFile": "Dışa Aktar",
     "exportAllFile": "Tümünü Dışa Aktar",
@@ -205,7 +207,7 @@
   },
   "SubtitleTranslator": {
     "clientDescription": "Altyazı yükleyin veya içerik yapıştırın. Hızlı çeviri için hedef dili seçin. Toplu işlemeyi destekler ve zaman çizelgesini korur.",
-    "subtitleFormat": "Altyazı Formatı",
+    "subtitleFormat": "Çeviri çıktısı",
     "translatedOnly": "Çevrilmiş",
     "bilingual": "İki Dilli",
     "exportBoth": "Her İkisi",
@@ -295,6 +297,7 @@
     "userPromptExtra": "Özel çeviri istemi, varsayılan için boş bırakın. Değişkenler:",
     "for": "için",
     "textToTranslate": "çevrilecek metin",
+    "fullText": "tam metin",
     "chunkSize": "Parça Boyutu",
     "chunkSizeExtra": "Çok satırlı metin (Altyazı, Markdown) bu boyuta bölünecektir",
     "batchSize": "Eş zamanlı satırlar",
@@ -306,6 +309,7 @@
     "contextWindow": "Bağlam satırları",
     "contextWindowExtra": "Yığın başına satır. Yüksek = daha az istek ve daha hızlı, ancak modelin token sınırını aşabilir",
     "delayTime": "Gecikme",
+    "delayTimeExtra": "Ardışık iki istek arasındaki bekleme süresi. Sık sık hız sınırına takılıyorsanız artırın",
     "useRelay": "API Aktarıcı",
     "useRelayTooltip": "CORS veya 403 hatalarında API aktarıcıyı etkinleştirin",
     "useRelayOverridden": "Özel bir URL ayarlı — istekler doğrudan oraya gider ve bu anahtar etkisizdir; yeniden etkinleştirmek için URL'yi temizleyin",
@@ -314,7 +318,7 @@
     "presetSelect": "Ön Ayar Seç",
     "presetSave": "Yeni Ön Ayar Olarak Kaydet",
     "presetDelete": "Mevcut Ön Ayarı Sil",
-    "presetNamePlaceholder": "Ön ayar adını girin",
+    "presetNamePlaceholder": "Ön ayar adı (örn. Altyazı / Teknik doküman)",
     "presetSaved": "Yeni ön ayar olarak kaydedildi",
     "presetDeleted": "Mevcut ön ayar silindi",
     "presetNameRequired": "Lütfen bir ad girin",
@@ -340,7 +344,7 @@
       "title": "Altyazı Çevirici",
       "description": "Toplu SRT, ASS, VTT, SBV, LRC çevirisi. 120+ dil.",
       "metaTitle": "Ücretsiz Altyazı Çevirici | Toplu SRT/VTT/ASS + İki Dilli",
-      "metaDescription": "SRT, ASS, VTT, SBV, LRC için AI altyazı çevirmeni. 25+ motor: DeepSeek, Claude, GPT, DeepL, Google. 120+ dil, zaman kodları korunur, çift dilli çıktı.",
+      "metaDescription": "SRT, ASS, VTT, SBV, LRC altyazı çevirmeni. 25+ motor: DeepSeek, Claude, GPT, DeepL, Google. 120+ dil, zaman kodları, çift dilli.",
       "faq": [
         {
           "q": "Hangi altyazı formatları destekleniyor? SRT, ASS, VTT, SBV ve LRC çevrilebilir mi?",
@@ -398,7 +402,7 @@
     },
     "textSplitter": {
       "title": "Metin Bölücü",
-      "description": "AI ve sosyal medya için akıllı uzun metin bölme"
+      "description": "Uzun metni ayırıcıya, uzunluğa veya cümleye göre böl — sonra yeniden birleştir"
     },
     "chineseConversion": {
       "title": "Bas/Gel Çince Dönüştürücü",
@@ -415,6 +419,10 @@
     "dataBatch": {
       "title": "Kişisel Metin İşleyici",
       "description": "Excel toplu veri işleme — tekilleştirme, sütun çıkarma, metin birleştirme, zincirli kurallar"
+    },
+    "textJoiner": {
+      "title": "Metin Birleştirici",
+      "description": "Birden çok metin sütununu şablonlarla satır satır birleştirerek toplu CSV, SQL ve JSON oluşturun"
     },
     "jsonValueExtractor": {
       "title": "JSON Değer Çıkarıcı",
@@ -618,7 +626,12 @@
     "reaction3": "Ne?",
     "reaction4": "Kafam Karıştı",
     "placeholder": "Mesaj bırakın (giriş gerekmez, yanıt için e-posta isteğe bağlı)",
-    "metaDescription": "Tools By AI geri bildirim sayfası: hata bildir, özellik öner veya kullanım örneklerini paylaş. Waline tabanlı, anonim gönderim mümkün, ücretsiz."
+    "metaDescription": "Tools By AI geri bildirim sayfası: hata bildir, özellik öner, kullanım örneği paylaş. Waline tabanlı, anonim, ücretsiz."
+  },
+  "AppError": {
+    "title": "Sayfa yüklenemedi",
+    "description": "Sayfa yüklenemedi — bu, site güncellemesinden hemen sonra olabilir. Lütfen yeniden yükleyin.",
+    "reload": "Yeniden yükle"
   },
   "NotFound": {
     "title": "Sayfa Bulunamadı",

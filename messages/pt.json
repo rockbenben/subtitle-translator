@@ -35,6 +35,7 @@
     "nameRequired": "Nome do glossário obrigatório"
   },
   "common": {
+    "supportEscapeChars": "Suporta caracteres escape: \\n (nova linha), \\r (retorno), \\t (tab), \\s (espaço), \\\\ (barra invertida)",
     "skipToContent": "Pular para o conteúdo principal",
     "fileProcessFailed": "Falha ao processar o arquivo — verifique a codificação ou tente outro",
     "fileReadFailed": "Falha ao ler o arquivo",
@@ -83,6 +84,7 @@
     "extractText": "Extrair Texto",
     "translationResult": "Resultado",
     "copy": "Copiar",
+    "expand": "mais",
     "remove": "Remover",
     "exportFile": "Exportar",
     "exportAllFile": "Exportar Tudo",
@@ -205,7 +207,7 @@
   },
   "SubtitleTranslator": {
     "clientDescription": "Envie legendas ou cole conteúdo. Selecione o idioma de destino para tradução rápida. Suporta processamento em lote e preserva a linha do tempo.",
-    "subtitleFormat": "Formato de Legendas",
+    "subtitleFormat": "Saída da tradução",
     "translatedOnly": "Traduzido",
     "bilingual": "Bilíngue",
     "exportBoth": "Ambos",
@@ -295,6 +297,7 @@
     "userPromptExtra": "Prompt tradução personalizado, deixar vazio para padrão. Variáveis:",
     "for": "para",
     "textToTranslate": "texto a traduzir",
+    "fullText": "texto completo",
     "chunkSize": "Tamanho Fragmento",
     "chunkSizeExtra": "Texto multilinha (Legendas, Markdown) será dividido por este tamanho",
     "batchSize": "Linhas simultâneas",
@@ -306,6 +309,7 @@
     "contextWindow": "Linhas de contexto",
     "contextWindowExtra": "Linhas por lote. Mais alto = menos solicitações e mais velocidade, mas pode exceder o limite de tokens do modelo",
     "delayTime": "Atraso",
+    "delayTimeExtra": "Tempo de espera entre requisições consecutivas. Aumente se você é limitado com frequência",
     "useRelay": "Relay da API",
     "useRelayTooltip": "Ative o relay da API em caso de erros CORS ou 403",
     "useRelayOverridden": "Um URL personalizado está definido — as solicitações vão diretamente para ele e este botão não tem efeito; limpe o URL para reativá-lo",
@@ -314,7 +318,7 @@
     "presetSelect": "Selecionar predefinição",
     "presetSave": "Salvar como nova predefinição",
     "presetDelete": "Excluir predefinição atual",
-    "presetNamePlaceholder": "Digite o nome da predefinição",
+    "presetNamePlaceholder": "Nome da predefinição (ex.: Legendas / Documentação técnica)",
     "presetSaved": "Salvo como nova predefinição",
     "presetDeleted": "Predefinição atual excluída",
     "presetNameRequired": "Digite um nome para a predefinição",
@@ -340,7 +344,7 @@
       "title": "Tradutor Legendas",
       "description": "Tradução em lote SRT, ASS, VTT, SBV, LRC. 120+ idiomas.",
       "metaTitle": "Tradutor de Legendas | Lote SRT/VTT/ASS + Bilíngue",
-      "metaDescription": "Tradutor IA de legendas para SRT, ASS, VTT, SBV, LRC. 25+ motores: DeepSeek, Claude, GPT, DeepL. 120+ idiomas, timecodes preservados, bilíngue.",
+      "metaDescription": "Tradutor IA de legendas SRT, ASS, VTT, SBV, LRC. 25+ motores: DeepSeek, Claude, GPT, DeepL. 120+ idiomas, timecodes, bilíngue.",
       "faq": [
         {
           "q": "Quais formatos de legenda são suportados? É possível traduzir SRT, ASS, VTT, SBV e LRC?",
@@ -398,7 +402,7 @@
     },
     "textSplitter": {
       "title": "Divisor de Texto",
-      "description": "Divisão inteligente de texto longo para IA e redes sociais"
+      "description": "Divida textos longos por separador, tamanho ou frase — e junte de volta"
     },
     "chineseConversion": {
       "title": "Conversor Simp/Trad",
@@ -415,6 +419,10 @@
     "dataBatch": {
       "title": "Processador de Texto",
       "description": "Processamento em lote de dados Excel — deduplicação, extração de colunas, fusão, regras encadeadas"
+    },
+    "textJoiner": {
+      "title": "Unificador de Texto",
+      "description": "Combine várias colunas de texto linha por linha com modelos para gerar em lote CSV, SQL e JSON"
     },
     "jsonValueExtractor": {
       "title": "Extrator Valor JSON",
@@ -618,7 +626,12 @@
     "reaction3": "O quê?",
     "reaction4": "Confuso",
     "placeholder": "Deixe uma mensagem (não requer login, email opcional para resposta)",
-    "metaDescription": "Página de feedback do Tools By AI: relate bugs, sugira recursos, compartilhe casos de uso. Baseado em Waline, publicação anônima, grátis."
+    "metaDescription": "Página de feedback do Tools By AI: relate bugs, sugira recursos ou compartilhe ideias. Baseado em Waline, anônimo, grátis."
+  },
+  "AppError": {
+    "title": "Falha ao carregar a página",
+    "description": "Não foi possível carregar a página; isso pode acontecer logo após uma atualização do site. Recarregue a página.",
+    "reload": "Recarregar"
   },
   "NotFound": {
     "title": "Página não encontrada",

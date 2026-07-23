@@ -35,6 +35,7 @@
     "nameRequired": "Vui lòng nhập tên bảng thuật ngữ"
   },
   "common": {
+    "supportEscapeChars": "Hỗ trợ ký tự thoát: \\n (dòng mới), \\r (xuống dòng), \\t (tab), \\s (dấu cách), \\\\ (dấu gạch chéo ngược)",
     "skipToContent": "Chuyển đến nội dung chính",
     "fileProcessFailed": "Xử lý tệp thất bại — kiểm tra mã hóa hoặc thử tệp khác",
     "fileReadFailed": "Đọc tệp thất bại",
@@ -83,6 +84,7 @@
     "extractText": "Trích xuất văn bản",
     "translationResult": "Kết quả",
     "copy": "Sao chép",
+    "expand": "xem thêm",
     "remove": "Xóa",
     "exportFile": "Xuất",
     "exportAllFile": "Xuất tất cả",
@@ -205,7 +207,7 @@
   },
   "SubtitleTranslator": {
     "clientDescription": "Tải lên phụ đề hoặc dán nội dung. Chọn ngôn ngữ đích để dịch nhanh. Hỗ trợ xử lý hàng loạt và giữ nguyên dòng thời gian.",
-    "subtitleFormat": "Định dạng phụ đề",
+    "subtitleFormat": "Kết quả dịch",
     "translatedOnly": "Đã dịch",
     "bilingual": "Song ngữ",
     "exportBoth": "Cả hai",
@@ -295,6 +297,7 @@
     "userPromptExtra": "Lời nhắc dịch tùy chỉnh, để trống cho mặc định. Biến:",
     "for": "cho",
     "textToTranslate": "văn bản cần dịch",
+    "fullText": "toàn bộ văn bản",
     "chunkSize": "Kích thước đoạn",
     "chunkSizeExtra": "Văn bản nhiều dòng (Phụ đề, Markdown) sẽ được chia theo kích thước này",
     "batchSize": "Số dòng đồng thời",
@@ -306,6 +309,7 @@
     "contextWindow": "Số dòng ngữ cảnh",
     "contextWindowExtra": "Dòng mỗi lô. Cao hơn = ít yêu cầu hơn và nhanh hơn, nhưng có thể vượt giới hạn token của mô hình",
     "delayTime": "Độ trễ",
+    "delayTimeExtra": "Thời gian chờ giữa hai yêu cầu liên tiếp. Tăng lên khi thường xuyên bị giới hạn tốc độ",
     "useRelay": "Chuyển tiếp API",
     "useRelayTooltip": "Bật chuyển tiếp API khi gặp lỗi CORS hoặc 403",
     "useRelayOverridden": "Đã đặt URL tùy chỉnh — yêu cầu sẽ đi thẳng tới đó và công tắc này không có hiệu lực; xóa URL để bật lại",
@@ -314,7 +318,7 @@
     "presetSelect": "Chọn cài đặt sẵn",
     "presetSave": "Lưu như cài đặt sẵn mới",
     "presetDelete": "Xóa cài đặt sẵn hiện tại",
-    "presetNamePlaceholder": "Nhập tên cài đặt sẵn",
+    "presetNamePlaceholder": "Tên cấu hình (ví dụ: Phụ đề / Tài liệu kỹ thuật)",
     "presetSaved": "Đã lưu như cài đặt sẵn mới",
     "presetDeleted": "Đã xóa cài đặt sẵn hiện tại",
     "presetNameRequired": "Vui lòng nhập tên cài đặt sẵn",
@@ -340,7 +344,7 @@
       "title": "Dịch giả Phụ đề",
       "description": "Dịch hàng loạt SRT, ASS, VTT, SBV, LRC. 120+ ngôn ngữ.",
       "metaTitle": "Dịch Phụ Đề Miễn Phí | Hàng Loạt SRT/VTT/ASS + Song Ngữ",
-      "metaDescription": "Trình dịch phụ đề AI cho SRT, ASS, VTT, SBV, LRC. 25+ engine: DeepSeek, Claude, GPT, DeepL, Google. 120+ ngôn ngữ, giữ nguyên timecode, song ngữ.",
+      "metaDescription": "Trình dịch phụ đề SRT, ASS, VTT, SBV, LRC. 25+ engine: DeepSeek, Claude, GPT, DeepL, Google. 120+ ngôn ngữ, timecode, song ngữ.",
       "faq": [
         {
           "q": "Hỗ trợ những định dạng phụ đề nào? SRT, ASS, VTT, SBV và LRC đều dịch được chứ?",
@@ -398,7 +402,7 @@
     },
     "textSplitter": {
       "title": "Bộ chia văn bản",
-      "description": "Chia văn bản dài thông minh cho AI và mạng xã hội"
+      "description": "Chia văn bản dài theo dấu phân tách, độ dài hoặc câu — và gộp lại"
     },
     "chineseConversion": {
       "title": "Chuyển đổi Giản thể ↔ Phồn thể",
@@ -415,6 +419,10 @@
     "dataBatch": {
       "title": "Xử lý văn bản",
       "description": "Xử lý dữ liệu Excel hàng loạt — loại bỏ trùng, trích xuất cột, hợp nhất văn bản, quy tắc nối tiếp"
+    },
+    "textJoiner": {
+      "title": "Công Cụ Ghép Văn Bản",
+      "description": "Ghép nhiều cột văn bản theo từng dòng bằng mẫu để tạo hàng loạt CSV, SQL và JSON"
     },
     "jsonValueExtractor": {
       "title": "Trình trích xuất Giá trị JSON",
@@ -619,6 +627,11 @@
     "reaction4": "Bối rối",
     "placeholder": "Để lại tin nhắn (không cần đăng nhập, email tùy chọn để trả lời)",
     "metaDescription": "Trang phản hồi Tools By AI: báo lỗi, đề xuất tính năng, chia sẻ tình huống sử dụng. Dựa trên Waline, đăng ẩn danh được phép, miễn phí."
+  },
+  "AppError": {
+    "title": "Không tải được trang",
+    "description": "Không thể tải trang — điều này có thể xảy ra ngay sau khi trang web được cập nhật. Vui lòng tải lại.",
+    "reload": "Tải lại"
   },
   "NotFound": {
     "title": "Không tìm thấy trang",

@@ -23,6 +23,20 @@ export const downloadFile = (content: string | Blob | ArrayBuffer, fileName: str
 };
 
 /**
+ * 拆分「文件名 → 主名 + 后缀」的唯一规则。首字符的点不算后缀（`.backup` 是
+ * 无后缀的文件名，不是扩展名），无后缀时回落到 `.txt`。
+ *
+ * 同一份文件名在同一个工具的不同导出按钮下必须得到相同后缀，所以规则只留一处。
+ * 注：useExportFilename / subtitleUtils 里还有各自的历史实现（返回值形状不同、
+ * 回落值不同），归并它们要动翻译系列工具，未一并处理。
+ */
+export const splitFileName = (fileName: string, defaultExt = ".txt"): { nameWithoutExt: string; ext: string } => {
+  const dotIndex = fileName.lastIndexOf(".");
+  if (dotIndex > 0) return { nameWithoutExt: fileName.slice(0, dotIndex), ext: fileName.slice(dotIndex) };
+  return { nameWithoutExt: fileName, ext: defaultExt };
+};
+
+/**
  * 把文件字节解码为字符串(编码自适应)。
  * 策略:先用 UTF-8 fatal 模式对全文试解 —— UTF-8 是自验证编码,成功即几乎
  * 确定是 UTF-8;失败(GBK/Big5/UTF-16 等 legacy 编码)才取样喂 jschardet 检测。

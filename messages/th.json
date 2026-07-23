@@ -35,6 +35,7 @@
     "nameRequired": "กรุณากรอกชื่ออภิธานศัพท์"
   },
   "common": {
+    "supportEscapeChars": "รองรับอักขระ escape: \\n (ขึ้นบรรทัดใหม่), \\r (carriage return), \\t (แท็บ), \\s (ช่องว่าง), \\\\ (แบ็กสแลช)",
     "skipToContent": "ข้ามไปยังเนื้อหาหลัก",
     "fileProcessFailed": "ประมวลผลไฟล์ไม่สำเร็จ — ตรวจสอบการเข้ารหัสหรือลองไฟล์อื่น",
     "fileReadFailed": "อ่านไฟล์ไม่สำเร็จ",
@@ -83,6 +84,7 @@
     "extractText": "แยกข้อความ",
     "translationResult": "ผลลัพธ์",
     "copy": "คัดลอก",
+    "expand": "เพิ่มเติม",
     "remove": "ลบ",
     "exportFile": "ส่งออก",
     "exportAllFile": "ส่งออกทั้งหมด",
@@ -205,7 +207,7 @@
   },
   "SubtitleTranslator": {
     "clientDescription": "อัปโหลดซับไตเติลหรือวางเนื้อหา เลือกภาษาเป้าหมายเพื่อแปลอย่างรวดเร็ว รองรับการประมวลผลเป็นชุดและรักษาไทม์ไลน์",
-    "subtitleFormat": "รูปแบบซับไตเติล",
+    "subtitleFormat": "ผลลัพธ์คำแปล",
     "translatedOnly": "แปลแล้ว",
     "bilingual": "สองภาษา",
     "exportBoth": "ทั้งสอง",
@@ -295,6 +297,7 @@
     "userPromptExtra": "Prompt แปลกำหนดเอง ปล่อยว่างสำหรับค่าเริ่มต้น ตัวแปร:",
     "for": "สำหรับ",
     "textToTranslate": "ข้อความที่ต้องแปล",
+    "fullText": "ข้อความเต็ม",
     "chunkSize": "ขนาดชิ้น",
     "chunkSizeExtra": "ข้อความหลายบรรทัด (ซับไตเติล, Markdown) จะถูกแบ่งตามขนาดนี้",
     "batchSize": "บรรทัดพร้อมกัน",
@@ -306,6 +309,7 @@
     "contextWindow": "บรรทัดบริบท",
     "contextWindowExtra": "บรรทัดต่อแบตช์ สูงขึ้น = คำขอน้อยลงและเร็วขึ้น แต่อาจเกินขีดจำกัดโทเค็นของโมเดล",
     "delayTime": "หน่วงเวลา",
+    "delayTimeExtra": "เวลารอระหว่างคำขอสองครั้งติดกัน เพิ่มค่านี้เมื่อโดนจำกัดอัตราบ่อย",
     "useRelay": "ใช้ API Relay",
     "useRelayTooltip": "เปิด API relay เมื่อพบข้อผิดพลาด CORS หรือ 403",
     "useRelayOverridden": "มีการตั้งค่า URL ที่กำหนดเอง — คำขอจะส่งตรงไปยัง URL นั้นและสวิตช์นี้ไม่มีผล ล้าง URL เพื่อเปิดใช้อีกครั้ง",
@@ -314,7 +318,7 @@
     "presetSelect": "เลือกพรีเซ็ต",
     "presetSave": "บันทึกเป็นพรีเซ็ตใหม่",
     "presetDelete": "ลบพรีเซ็ตปัจจุบัน",
-    "presetNamePlaceholder": "ป้อนชื่อพรีเซ็ต",
+    "presetNamePlaceholder": "ชื่อพรีเซ็ต (เช่น ซับไตเติล / เอกสารเทคนิค)",
     "presetSaved": "บันทึกเป็นพรีเซ็ตใหม่แล้ว",
     "presetDeleted": "ลบพรีเซ็ตปัจจุบันแล้ว",
     "presetNameRequired": "กรุณาป้อนชื่อพรีเซ็ต",
@@ -340,7 +344,7 @@
       "title": "ตัวแปลซับไตเติล",
       "description": "แปล SRT, ASS, VTT, SBV, LRC เป็นชุด 120+ ภาษา",
       "metaTitle": "ตัวแปลซับไตเติลฟรี | แปลชุด SRT/VTT/ASS + สองภาษา",
-      "metaDescription": "ตัวแปลซับไตเติ้ล AI สำหรับ SRT, ASS, VTT, SBV, LRC. 25+ เอ็นจิ้น: DeepSeek, Claude, GPT, DeepL. รองรับ 120+ ภาษา รักษา timecode ผลลัพธ์สองภาษา",
+      "metaDescription": "ตัวแปลซับ AI สำหรับ SRT, ASS, VTT, SBV, LRC. 25+ เอ็นจิ้น: DeepSeek, Claude, GPT, DeepL. 120+ ภาษา รักษา timecode สองภาษา",
       "faq": [
         {
           "q": "รองรับรูปแบบคำบรรยายอะไรบ้าง? แปล SRT, ASS, VTT, SBV, LRC ได้ไหม?",
@@ -398,7 +402,7 @@
     },
     "textSplitter": {
       "title": "ตัวแบ่งข้อความ",
-      "description": "แบ่งข้อความยาวอย่างชาญฉลาดสำหรับ AI และโซเชียลมีเดีย"
+      "description": "แบ่งข้อความยาวตามตัวคั่น จำนวนอักขระ หรือประโยค แล้วรวมกลับได้"
     },
     "chineseConversion": {
       "title": "แปลงอักษรจีนตัวย่อ ↔ ตัวเต็ม",
@@ -415,6 +419,10 @@
     "dataBatch": {
       "title": "ประมวลผลข้อความ",
       "description": "การประมวลผลข้อมูล Excel เป็นชุด — ขจัดซ้ำ แยกคอลัมน์ รวมข้อความ กฎต่อเนื่อง"
+    },
+    "textJoiner": {
+      "title": "เครื่องมือรวมข้อความ",
+      "description": "รวมคอลัมน์ข้อความหลายคอลัมน์ทีละบรรทัดด้วยเทมเพลต เพื่อสร้าง CSV, SQL, JSON แบบเป็นชุด"
     },
     "jsonValueExtractor": {
       "title": "ตัวแยกค่า JSON",
@@ -472,11 +480,11 @@
   },
   "Metadata": {
     "title": "ToolsByAI - ชุดเครื่องมือแปลภาษา & ข้อมูล AI ออนไลน์",
-    "description": "ToolsByAI: 17 เครื่องมือโอเพ่นซอร์สฟรีสำหรับแปลซับไตเติ้ล Markdown และ JSON i18n รวมการประมวลผลข้อความและ JSON เป็นชุด พร้อม 25+ AI engine",
+    "description": "ToolsByAI: 17 เครื่องมือโอเพ่นซอร์สสำหรับแปลซับไตเติ้ล Markdown และ JSON i18n ไม่ต้องติดตั้ง ทำงานบนเบราว์เซอร์",
     "homeTitle": "ชุด ToolsByAI",
     "homeDescription": "20+ เครื่องมือสำหรับแปล ข้อความ JSON และแปลงข้อมูล เพิ่มประสิทธิภาพสำหรับนักพัฒนาและผู้สร้างเนื้อหา",
     "ogTitle": "ToolsByAI - เครื่องมือ Dev AI ฟรี & โอเพนซอร์ส",
-    "ogDescription": "ToolsByAI: 17 เครื่องมือโอเพ่นซอร์สฟรีสำหรับแปลซับไตเติ้ล Markdown และ JSON i18n รวมการประมวลผลข้อความและ JSON เป็นชุด พร้อม 25+ AI engine"
+    "ogDescription": "ToolsByAI: 17 เครื่องมือโอเพ่นซอร์สสำหรับแปลซับไตเติ้ล Markdown และ JSON i18n ไม่ต้องติดตั้ง ทำงานบนเบราว์เซอร์"
   },
   "languages": {
     "auto": "ตรวจจับอัตโนมัติ",
@@ -619,6 +627,11 @@
     "reaction4": "สับสน",
     "placeholder": "ฝากข้อความ (ไม่ต้องเข้าสู่ระบบ อีเมลเป็นตัวเลือกสำหรับการตอบกลับ)",
     "metaDescription": "หน้าฟีดแบ็ก Tools By AI: รายงานบั๊ก แนะนำฟีเจอร์ หรือแชร์เคสการใช้งาน ใช้ Waline โพสต์ไม่ต้องสมัครได้"
+  },
+  "AppError": {
+    "title": "โหลดหน้าไม่สำเร็จ",
+    "description": "ไม่สามารถโหลดหน้านี้ได้ อาจเกิดขึ้นทันทีหลังจากเว็บไซต์อัปเดต โปรดโหลดใหม่",
+    "reload": "โหลดใหม่"
   },
   "NotFound": {
     "title": "ไม่พบหน้า",

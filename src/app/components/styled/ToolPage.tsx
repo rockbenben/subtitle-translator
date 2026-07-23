@@ -44,6 +44,11 @@ const ToolPage = ({ icon, toolKey, description, guideUrl, withPrivacyNotice = tr
 
   // Registry index → "02 / 17" chapter marker. Tools not in the registry
   // (shouldn't happen — invariant-tested) just skip the crumb.
+  // 描述能拼成纯字符串时才有「展开」；调用方目前传的都是 t(...) 字符串，
+  // ReactNode 描述走下面的降级分支（只截断、无展开）。
+  const descriptionText =
+    typeof description === "string" ? [description, withPrivacyNotice ? t("privacyNotice") : ""].filter(Boolean).join(" ") : null;
+
   const registryIndex = TOOL_KEYS.indexOf(toolKey as ToolKey);
   const crumb =
     registryIndex >= 0
@@ -53,19 +58,31 @@ const ToolPage = ({ icon, toolKey, description, guideUrl, withPrivacyNotice = tr
   return (
     <>
       <header style={{ marginBottom: token.marginLG }}>
-        {crumb && (
-          <div
-            className="font-mono"
-            aria-hidden
-            style={{
-              fontSize: 11,
-              letterSpacing: "0.18em",
-              textTransform: "uppercase",
-              color: token.colorTextTertiary,
-              marginBottom: 6,
-            }}>
-            <span style={{ color: token.colorPrimary }}>{crumb.slice(0, 2)}</span>
-            {crumb.slice(2)}
+        {/* 章节序号行同时安置「使用说明」链接：这一行本来右侧全空，链接放这里
+            不占额外高度，也把描述段落让给纯文本（见下方 ellipsis 的说明）。 */}
+        {(crumb || guideUrl) && (
+          <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12, marginBottom: 6 }}>
+            {crumb ? (
+              <span
+                className="font-mono"
+                aria-hidden
+                style={{
+                  fontSize: 11,
+                  letterSpacing: "0.18em",
+                  textTransform: "uppercase",
+                  color: token.colorTextTertiary,
+                }}>
+                <span style={{ color: token.colorPrimary }}>{crumb.slice(0, 2)}</span>
+                {crumb.slice(2)}
+              </span>
+            ) : (
+              <span />
+            )}
+            {guideUrl && (
+              <Link href={guideUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, whiteSpace: "nowrap" }}>
+                <QuestionCircleOutlined /> {t("userGuide")}
+              </Link>
+            )}
           </div>
         )}
         <Title
@@ -98,18 +115,18 @@ const ToolPage = ({ icon, toolKey, description, guideUrl, withPrivacyNotice = tr
             marginBottom: token.marginSM,
           }}
         />
-        {(description || guideUrl || withPrivacyNotice) && (
-          <Paragraph type="secondary" ellipsis={{ rows: 3, expandable: true, symbol: "more" }} style={{ marginBottom: 0 }}>
-            {guideUrl && (
-              <>
-                <Link href={guideUrl} target="_blank" rel="noopener noreferrer">
-                  <QuestionCircleOutlined /> {t("userGuide")}
-                </Link>{" "}
-              </>
-            )}
+        {/* antd 只有在 children 是纯字符串时才会走 JS 量测、渲染「展开」链接;
+            混入 ReactNode 就退化成 CSS 截断 —— 3 行以外的内容直接消失且无从展开
+            (窄屏上几乎每个工具的描述都会被截掉)。所以这里拼成一个字符串,
+            显式空格避免空格分词语种渲染成 "…timelines.Your API key…"。 */}
+        {descriptionText && (
+          <Paragraph type="secondary" ellipsis={{ rows: 3, expandable: true, symbol: t("expand") }} style={{ marginBottom: 0 }}>
+            {descriptionText}
+          </Paragraph>
+        )}
+        {!descriptionText && description && (
+          <Paragraph type="secondary" ellipsis={{ rows: 3 }} style={{ marginBottom: 0 }}>
             {description}
-            {/* 显式空格,同上方 guide 链接后的 {" "}:不加的话空格分隔语种
-                (en/de/fr/…)的每个工具页都渲染成 "…timelines.Your API key…" */}
             {withPrivacyNotice && <> {t("privacyNotice")}</>}
           </Paragraph>
         )}

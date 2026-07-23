@@ -40,7 +40,7 @@ const GlobalPromptsPanel = () => {
         </Form.Item>
         <Form.Item
           label={t("userPrompt")}
-          extra={`${t("userPromptExtra")}: \${sourceLanguage} ${t("for")} ${tCommon("sourceLanguage")}, \${targetLanguage} ${t("for")} ${tCommon("targetLanguage")}, \${content} ${t("for")} ${t("textToTranslate")}, \${fullText} ${t("for")} full text`}
+          extra={`${t("userPromptExtra")}: \${sourceLanguage} ${t("for")} ${tCommon("sourceLanguage")}, \${targetLanguage} ${t("for")} ${tCommon("targetLanguage")}, \${content} ${t("for")} ${t("textToTranslate")}, \${fullText} ${t("for")} ${t("fullText")}`}
           style={{ marginBottom: 0 }}>
           <TextArea value={userPrompt} onChange={(e) => setUserPrompt(e.target.value)} autoSize={{ minRows: 3, maxRows: 16 }} aria-label={t("userPrompt")} />
         </Form.Item>

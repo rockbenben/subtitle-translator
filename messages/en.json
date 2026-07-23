@@ -35,6 +35,7 @@
     "nameRequired": "Glossary name required"
   },
   "common": {
+    "supportEscapeChars": "Supports escape chars: \\n (newline), \\r (return), \\t (tab), \\s (space), \\\\ (backslash)",
     "skipToContent": "Skip to main content",
     "fileProcessFailed": "Failed to process the file — check its encoding or try another",
     "fileReadFailed": "Failed to read the file",
@@ -83,6 +84,7 @@
     "extractText": "Extract Text",
     "translationResult": "Translation Result",
     "copy": "Copy",
+    "expand": "more",
     "remove": "Remove",
     "exportFile": "Export",
     "exportAllFile": "Export All",
@@ -205,7 +207,7 @@
   },
   "SubtitleTranslator": {
     "clientDescription": "Upload subtitles or paste content. Select target language for fast translation. Supports batch processing and retains timelines.",
-    "subtitleFormat": "Subtitle Format",
+    "subtitleFormat": "Translation output",
     "translatedOnly": "Translated",
     "bilingual": "Bilingual",
     "exportBoth": "Both",
@@ -295,6 +297,7 @@
     "userPromptExtra": "Custom translation prompt, leave empty for default. Variables:",
     "for": "for",
     "textToTranslate": "text to translate",
+    "fullText": "full text",
     "chunkSize": "Chunk Size",
     "chunkSizeExtra": "Multi-line text (Subtitles, Markdown) will be split by this size",
     "batchSize": "Concurrent Lines",
@@ -306,6 +309,7 @@
     "contextWindow": "Context Lines",
     "contextWindowExtra": "Lines per batch. Higher means fewer requests and more speed, but may exceed the model's token limit",
     "delayTime": "Delay Time",
+    "delayTimeExtra": "Wait time between consecutive requests. Increase it when you keep hitting rate limits",
     "useRelay": "API Relay",
     "useRelayTooltip": "Enable API relay if you encounter CORS or 403 errors",
     "useRelayOverridden": "A custom URL is set — requests go directly to it and this switch has no effect; clear the URL to re-enable",
@@ -314,7 +318,7 @@
     "presetSelect": "Select Preset",
     "presetSave": "Save as new preset",
     "presetDelete": "Delete current preset",
-    "presetNamePlaceholder": "Enter preset name",
+    "presetNamePlaceholder": "Preset name (e.g. Subtitles / Technical docs)",
     "presetSaved": "Saved as new preset",
     "presetDeleted": "Current preset deleted",
     "presetNameRequired": "Please enter a preset name",
@@ -340,7 +344,7 @@
       "title": "Subtitle Translator",
       "description": "Batch translate SRT, ASS, VTT, SBV, LRC subtitles. 120+ languages.",
       "metaTitle": "Free Subtitle Translator | Batch SRT/VTT/ASS + Bilingual",
-      "metaDescription": "AI subtitle translator for SRT, ASS, VTT, SBV, LRC. 25+ engines: DeepSeek, Claude, GPT, DeepL. 120+ languages, preserved timecodes, bilingual.",
+      "metaDescription": "AI subtitle translator SRT, ASS, VTT, SBV, LRC. 25+ engines: DeepSeek, Claude, GPT, DeepL. 120+ languages, timecodes, bilingual.",
       "faq": [
         {
           "q": "Which subtitle formats are supported? Can it translate SRT, ASS, VTT, SBV, and LRC?",
@@ -398,7 +402,7 @@
     },
     "textSplitter": {
       "title": "Text Splitter",
-      "description": "Smart long text splitter for AI and social media"
+      "description": "Split long text by delimiter, length, or sentence — and merge it back"
     },
     "chineseConversion": {
       "title": "Chinese Conversion",
@@ -415,6 +419,10 @@
     "dataBatch": {
       "title": "Batch Data Processor",
       "description": "Excel batch data processing — dedup, column extraction, text merge, custom rules chained in sequence"
+    },
+    "textJoiner": {
+      "title": "Text Joiner",
+      "description": "Merge multiple text columns line by line with templates to batch-generate CSV, SQL, and JSON"
     },
     "jsonValueExtractor": {
       "title": "JSON Field Value Extractor",
@@ -619,6 +627,11 @@
     "reaction4": "Confused",
     "placeholder": "Leave a message (no login required, email optional for reply)",
     "metaDescription": "Feedback for Tools By AI: report bugs, suggest features, share use-case ideas. Built on Waline, anonymous posting allowed, free."
+  },
+  "AppError": {
+    "title": "Page failed to load",
+    "description": "The page could not be loaded — this can happen right after a site update. Please reload.",
+    "reload": "Reload"
   },
   "NotFound": {
     "title": "Page Not Found",

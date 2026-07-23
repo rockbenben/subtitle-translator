@@ -35,6 +35,7 @@
     "nameRequired": "用語集の名前を入力してください"
   },
   "common": {
+    "supportEscapeChars": "エスケープ文字対応：\\n (改行)、\\r (復帰)、\\t (タブ)、\\s (スペース)、\\\\ (バックスラッシュ)",
     "skipToContent": "メインコンテンツにスキップ",
     "fileProcessFailed": "ファイルの処理に失敗しました。エンコードを確認するか、別のファイルをお試しください",
     "fileReadFailed": "ファイルの読み込みに失敗しました",
@@ -83,6 +84,7 @@
     "extractText": "テキスト抽出",
     "translationResult": "翻訳結果",
     "copy": "コピー",
+    "expand": "続きを読む",
     "remove": "削除",
     "exportFile": "エクスポート",
     "exportAllFile": "すべてエクスポート",
@@ -205,7 +207,7 @@
   },
   "SubtitleTranslator": {
     "clientDescription": "字幕ファイルをアップロードまたは内容を貼り付け、翻訳先言語を選択して素早く翻訳。一括処理に対応し、タイムラインを自動保持。",
-    "subtitleFormat": "字幕形式",
+    "subtitleFormat": "訳文の出力",
     "translatedOnly": "訳文のみ",
     "bilingual": "対訳",
     "exportBoth": "両方",
@@ -295,6 +297,7 @@
     "userPromptExtra": "カスタム翻訳プロンプト、空欄の場合はデフォルトを使用。変数説明",
     "for": "を",
     "textToTranslate": "翻訳対象テキスト",
+    "fullText": "全文",
     "chunkSize": "チャンクサイズ",
     "chunkSizeExtra": "複数行テキスト（字幕、Markdownなど）はこのサイズで分割して翻訳されます",
     "batchSize": "同時翻訳行数",
@@ -306,6 +309,7 @@
     "contextWindow": "コンテキスト行数",
     "contextWindowExtra": "1 バッチあたりの行数。大きいほどリクエスト数が減り高速化しますが、モデルのトークン上限を超える可能性",
     "delayTime": "遅延時間",
+    "delayTimeExtra": "リクエストとリクエストの間の待機時間。レート制限に頻繁にかかる場合は大きくして速度を落とします",
     "useRelay": "API 中継",
     "useRelayTooltip": "CORS や 403 エラーが発生した場合は API 中継を有効にしてください",
     "useRelayOverridden": "カスタム URL が設定されているため、リクエストはその URL に直接送信され、このスイッチは無効です。URL を消去すると再び有効になります",
@@ -314,7 +318,7 @@
     "presetSelect": "プリセットを選択",
     "presetSave": "新しいプリセットとして保存",
     "presetDelete": "現在のプリセットを削除",
-    "presetNamePlaceholder": "プリセット名を入力",
+    "presetNamePlaceholder": "プリセット名（例：映像字幕 / 技術文書）",
     "presetSaved": "新しいプリセットとして保存しました",
     "presetDeleted": "現在のプリセットを削除しました",
     "presetNameRequired": "プリセット名を入力してください",
@@ -339,7 +343,7 @@
     "subtitleTranslator": {
       "title": "字幕翻訳機",
       "description": "SRT、ASS、VTT、SBV、LRC字幕を一括翻訳、120以上の言語に対応",
-      "metaTitle": "字幕翻訳 - SRT/ASS/VTT/SBV/LRC 一括 AI 翻訳とバイリンガル字幕",
+      "metaTitle": "字幕翻訳 - SRT/ASS/VTT/SBV/LRC一括 AI翻訳・バイリンガル",
       "metaDescription": "AI 字幕翻訳、SRT/ASS/VTT/SBV/LRC 一括変換、DeepSeek/Claude/GPT 25+ エンジン、タイムコード保持で二言語字幕。",
       "faq": [
         {
@@ -398,7 +402,7 @@
     },
     "textSplitter": {
       "title": "テキスト分割",
-      "description": "長文をスマートに分割、AI入力とSNSに最適"
+      "description": "長文を区切り記号・文字数・文単位で分割、結合し直しも可能"
     },
     "chineseConversion": {
       "title": "繁体・簡体字変換",
@@ -415,6 +419,10 @@
     "dataBatch": {
       "title": "テキスト処理ツール（自用）",
       "description": "Excel 表データの一括重複削除・列抽出・テキスト結合、複数ルールを順次実行"
+    },
+    "textJoiner": {
+      "title": "テキスト結合ツール",
+      "description": "複数のテキスト列をテンプレートで行ごとに結合し、CSV・SQL・JSONを一括生成"
     },
     "jsonValueExtractor": {
       "title": "JSON値抽出",
@@ -619,6 +627,11 @@
     "reaction4": "不明",
     "placeholder": "メッセージを残してください。ログインは不要です（メールアドレスを入力すると返信通知を受け取れます）",
     "metaDescription": "Tools By AI のフィードバックページ：バグ報告、機能リクエスト、使用例を共有。Waline ベース、匿名投稿可。"
+  },
+  "AppError": {
+    "title": "ページの読み込みエラー",
+    "description": "ページを読み込めませんでした。サイトの更新直後に発生することがあります。再読み込みしてください。",
+    "reload": "再読み込み"
   },
   "NotFound": {
     "title": "ページが見つかりません",

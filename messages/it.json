@@ -35,6 +35,7 @@
     "nameRequired": "Nome del glossario obbligatorio"
   },
   "common": {
+    "supportEscapeChars": "Supporta caratteri escape: \\n (nuova riga), \\r (ritorno), \\t (tab), \\s (spazio), \\\\ (barra rovesciata)",
     "skipToContent": "Vai al contenuto principale",
     "fileProcessFailed": "Elaborazione del file non riuscita — controlla la codifica o prova un altro file",
     "fileReadFailed": "Lettura del file non riuscita",
@@ -83,6 +84,7 @@
     "extractText": "Estrai Testo",
     "translationResult": "Risultato",
     "copy": "Copia",
+    "expand": "altro",
     "remove": "Rimuovi",
     "exportFile": "Esporta",
     "exportAllFile": "Esporta Tutto",
@@ -205,7 +207,7 @@
   },
   "SubtitleTranslator": {
     "clientDescription": "Carica sottotitoli o incolla contenuto. Seleziona lingua destinazione per traduzione rapida. Supporta elaborazione batch e preserva timeline.",
-    "subtitleFormat": "Formato Sottotitoli",
+    "subtitleFormat": "Output della traduzione",
     "translatedOnly": "Tradotto",
     "bilingual": "Bilingue",
     "exportBoth": "Entrambi",
@@ -295,6 +297,7 @@
     "userPromptExtra": "Prompt traduzione personalizzato, lasciare vuoto per predefinito. Variáveis:",
     "for": "per",
     "textToTranslate": "testo da tradurre",
+    "fullText": "testo completo",
     "chunkSize": "Dimensione Frammento",
     "chunkSizeExtra": "Testo multilinea (Sottotitoli, Markdown) sarà diviso per questa dimensione",
     "batchSize": "Righe simultanee",
@@ -306,6 +309,7 @@
     "contextWindow": "Righe di contesto",
     "contextWindowExtra": "Righe per batch. Più alto = meno richieste e più velocità, ma può superare il limite di token del modello",
     "delayTime": "Ritardo",
+    "delayTimeExtra": "Tempo di attesa tra due richieste consecutive. Aumentalo se incontri spesso il rate limit",
     "useRelay": "Relay API",
     "useRelayTooltip": "Attiva il relay API in caso di errori CORS o 403",
     "useRelayOverridden": "È impostato un URL personalizzato: le richieste vanno direttamente a esso e questo interruttore non ha effetto; svuota l'URL per riattivarlo",
@@ -314,7 +318,7 @@
     "presetSelect": "Seleziona preset",
     "presetSave": "Salva come nuovo preset",
     "presetDelete": "Elimina preset corrente",
-    "presetNamePlaceholder": "Inserisci il nome del preset",
+    "presetNamePlaceholder": "Nome del preset (es. Sottotitoli / Documentazione tecnica)",
     "presetSaved": "Salvato come nuovo preset",
     "presetDeleted": "Preset corrente eliminato",
     "presetNameRequired": "Inserisci un nome per il preset",
@@ -340,7 +344,7 @@
       "title": "Traduttore Sottotitoli",
       "description": "Traduzione in batch SRT, ASS, VTT, SBV, LRC. 120+ lingue.",
       "metaTitle": "Traduttore sottotitoli gratis | SRT/VTT/ASS IA bilingue",
-      "metaDescription": "Traduttore IA di sottotitoli per SRT, ASS, VTT, SBV, LRC. 25+ motori: DeepSeek, Claude, GPT, DeepL. 120+ lingue, timecode intatti, bilingue.",
+      "metaDescription": "Traduttore IA sottotitoli SRT, ASS, VTT, SBV, LRC. 25+ motori: DeepSeek, Claude, GPT, DeepL. 120+ lingue, timecode, bilingue.",
       "faq": [
         {
           "q": "Quali formati di sottotitoli sono supportati? È possibile tradurre SRT, ASS, VTT, SBV e LRC?",
@@ -398,7 +402,7 @@
     },
     "textSplitter": {
       "title": "Divisore Testo",
-      "description": "Divisione intelligente testo lungo per IA e social media"
+      "description": "Dividi testi lunghi per separatore, lunghezza o frase — e riuniscili"
     },
     "chineseConversion": {
       "title": "Conversor Semp/Trad",
@@ -415,6 +419,10 @@
     "dataBatch": {
       "title": "Elaboratore di Testo",
       "description": "Elaborazione batch di dati Excel — deduplicazione, estrazione colonne, fusione, regole concatenate"
+    },
+    "textJoiner": {
+      "title": "Unificatore di Testo",
+      "description": "Unisci più colonne di testo riga per riga con modelli per generare in batch CSV, SQL e JSON"
     },
     "jsonValueExtractor": {
       "title": "Estrattore Valore JSON",
@@ -619,6 +627,11 @@
     "reaction4": "Confuso",
     "placeholder": "Lascia un messaggio (nessun login richiesto, email opzionale per risposta)",
     "metaDescription": "Pagina feedback per Tools By AI: segnala bug, suggerisci funzionalità, condividi casi d'uso. Basata su Waline, anonimo consentito."
+  },
+  "AppError": {
+    "title": "Errore di caricamento della pagina",
+    "description": "Impossibile caricare la pagina: può accadere subito dopo un aggiornamento del sito. Ricarica la pagina.",
+    "reload": "Ricarica"
   },
   "NotFound": {
     "title": "Pagina non trovata",
