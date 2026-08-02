@@ -59,6 +59,8 @@
     "selectMultiTargetLanguages": "選擇多個目標語言",
     "noTargetLanguage": "至少選擇一種目標語言。",
     "translationError": "翻譯失敗",
+    "translationCancelled": "已取消翻譯",
+    "translationCancelledResume": "已取消翻譯。已譯好的部分在快取裡，點「翻譯」即可從斷點繼續",
     "translationAPI": "翻譯 API",
     "enter": "請輸入",
     "getApiKey": "獲取 API Key",

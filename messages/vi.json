@@ -59,6 +59,8 @@
     "selectMultiTargetLanguages": "Chọn nhiều ngôn ngữ đích",
     "noTargetLanguage": "Chọn ít nhất một ngôn ngữ đích.",
     "translationError": "Dịch thất bại",
+    "translationCancelled": "Đã hủy dịch",
+    "translationCancelledResume": "Đã hủy dịch. Phần đã dịch xong nằm trong bộ nhớ đệm — bấm \"Dịch\" để tiếp tục từ chỗ dừng",
     "translationAPI": "API Dịch thuật",
     "enter": "Nhập",
     "getApiKey": "Lấy Khóa API",

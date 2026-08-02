@@ -33,7 +33,6 @@ import { applyGlossaryToText, buildGlossaryPromptBlock, buildStrictGlossaryPromp
 import SparkMD5 from "spark-md5";
 import {
   getRetryConfig,
-  delay,
   extractTranslatedLinesWithNumbers,
   buildContextPrompt,
   isBlankLine,
@@ -49,6 +48,7 @@ import {
   isRetryableError,
   type TranslationSettings,
   type UserRetryConfig,
+  abortableSleep,
 } from "@/app/hooks/translation";
 import { describeError, isAbortError, isNetworkError } from "@/app/utils/errorUtils";
 import pLimit from "p-limit";
@@ -211,6 +211,37 @@ const useTranslationState = () => {
 
   // Extracted concerns
   const { isTranslating, setIsTranslating, progressPercent, setProgressPercent, progressInfo, abortControllerRef, disposedRef, makeUpdateProgress, resetProgress } = useTranslationProgress();
+
+  // ─── 取消 ────────────────────────────────────────────────────────────────
+  // 取消【完全复用】既有的级联中止链路:abort 本轮 controller → 在飞请求与
+  // pRetry 的退避被当场叫醒 → 各处 signal 检查抛 "Translation aborted" →
+  // 工具层 isCascadedAbort 静默。不新增任何"取消后的记账":
+  //
+  //   继续翻译 = 用户再点一次「翻译」,逐行缓存就是断点 —— 已译的行全部缓存
+  //   命中、零请求回放;没译的行未命中、真正去翻。哪些要补由缓存未命中集合
+  //   自动定义,所以取消时【没有】需要写对的状态,也就没有能写错的状态。
+  //   (改了进缓存键的设置再继续 → 缓存失效 → 按新设置重翻,同样是对的。)
+  //
+  // cancelRequestedRef 存在的唯一理由:多语言/多文件循环每轮【新建】controller,
+  // 光 abort 当前那个拦不住下一轮 —— 入口守卫要一个跨 controller 的旗标。
+  const cancelRequestedRef = useRef(false);
+  // 预检探测有自己的 controller(validate 里),且发生在本轮 controller 建立之前;
+  // 不挂进来的话,取消在探测期间(最长 requestTimeoutSec)是个空按钮。
+  const preflightControllerRef = useRef<AbortController | null>(null);
+  const isCancelRequested = () => cancelRequestedRef.current;
+  // 自带翻译循环的工具(JSONTranslator)不经 translateBatch,没人替它建本轮
+  // controller —— 开跑时调一次,translateSingle 的 live-ref 回落会自动用上,
+  // requestCancel 才有东西可 abort(否则取消对 JSON 的在飞请求是空操作)。
+  const beginManualRun = () => {
+    abortControllerRef.current = new AbortController();
+  };
+  const requestCancel = () => {
+    cancelRequestedRef.current = true;
+    abortControllerRef.current?.abort();
+    preflightControllerRef.current?.abort();
+    // 文案按 useCache 分两句:缓存关着时"从断点继续"不成立,不许对用户撒谎。
+    message.info(useCache === false ? t("translationCancelled") : t("translationCancelledResume"));
+  };
 
   const { llmPresets, setLlmPresets, activeLlmPresetId, setActiveLlmPresetId, saveLlmPreset, loadLlmPreset, deleteLlmPreset, renameLlmPreset, updateLlmPreset } = useLlmPresets({
     translationConfigs,
@@ -384,6 +415,9 @@ const useTranslationState = () => {
   // 4. ping 失败只有 deeplx 自动 fallback(自托管代理最易配错/挂);其余 4 个
   //    失败通常是真问题(key 错、服务真不可用),fallback 没意义。
   const validate = async () => {
+    // 每轮 run 的唯一共用入口(runTranslation 与三个工具的自有循环都先走这里):
+    // 上一轮的取消旗标在此复位,新一轮才起得来。
+    cancelRequestedRef.current = false;
     const config = getSelectedConfig();
 
     // Sync validation: creds + language support. Extracted to a pure function
@@ -434,9 +468,16 @@ const useTranslationState = () => {
           const tempUserPrompt = translationMethod === "llm" ? effectiveUserPrompt : undefined;
           const probeController = new AbortController();
           const probeTimeout = setTimeout(() => probeController.abort(), requestTimeoutSec * 1000);
+          // 挂给 requestCancel:探测发生在本轮 controller 建立之前,是整条链路里
+          // 唯一不受 abortControllerRef 管辖的等待。
+          preflightControllerRef.current = probeController;
           try {
             await runReachabilityProbe(translationMethod, config, tempSystemPrompt, tempUserPrompt, probeController.signal);
           } catch (error) {
+            // 用户在探测中途点了取消:这个 AbortError 是取消【造成的】,不是服务
+            // 不可达 —— 走下面的硬阻断会弹"服务不可用"红条,把用户自己的动作说成
+            // 一次故障(requestCancel 已弹过取消提示)。静默收工。
+            if (cancelRequestedRef.current || disposedRef.current) return false;
             // Smart gate: HARD-BLOCK when retrying wouldn't help — the same
             // errors the per-line translation gives up on (auth / CORS-needs-relay
             // / abort/timeout, via isRetryableError), PLUS status-less network
@@ -476,6 +517,7 @@ const useTranslationState = () => {
             return true;
           } finally {
             clearTimeout(probeTimeout);
+            preflightControllerRef.current = null;
           }
         }
         // Clean success → remember for this session (skip re-probe on repeat runs).
@@ -645,6 +687,10 @@ const useTranslationState = () => {
         },
         {
           ...retryConfig,
+          // 取消/级联中止要能穿透 pRetry 的退避 sleep(gtx 最长 60s):不接 signal,
+          // 取消后这一行还要睡满剩余退避才轮到入口守卫抛出。p-retry 会在 signal
+          // abort 时直接 reject 整个重试链。
+          signal: run?.signal,
           onFailedAttempt: ({ error, attemptNumber, retriesLeft }) => {
             const textPreview = text.length > 30 ? `${text.substring(0, 30)}...` : text;
             console.warn(`Translation attempt ${attemptNumber} failed for "${textPreview}": ${(error as Error).message} (${retriesLeft} retries left)`);
@@ -652,6 +698,14 @@ const useTranslationState = () => {
         },
       );
     } catch (error) {
+      // run 已中止(用户取消 / auth 级联)时,把各种形态的中止(fetch 的
+      // AbortError、pRetry 退避里被 signal.reason 打醒)规范成级联标记 ——
+      // 自带循环的工具(JSONTranslator)的节点 catch 只认 isCascadedAbort,
+      // 不规范的话一次取消会被它记成一堆"节点失败"。
+      // ⚠ auth 错误例外:第一个触发 abort 的正是它自己,得原样放行让 UI 说清原因
+      // (pRetry 的 shouldRetry(auth)=false 会在任何 signal 检查之前 throw 原错误,
+      // 所以它一定以原始形态到达这里)。
+      if (run?.signal.aborted && !isAuthError(error)) throw new Error("Translation aborted");
       const textPreview = text.length > 30 ? `${text.substring(0, 30)}...` : text;
       console.error(`All ${retryCount} translation attempts failed for: "${textPreview}".`, error);
       throw error; // No fallback to original text - fail explicitly
@@ -1016,7 +1070,7 @@ const useTranslationState = () => {
           // pLimit already throttles concurrency; this adds an optional per-slot
           // pause when users configure delayTime.
           if (interBatchDelay > 0 && !run?.signal.aborted) {
-            await delay(interBatchDelay);
+            await abortableSleep(interBatchDelay, run?.signal);
           }
         }),
       );
@@ -1044,7 +1098,7 @@ const useTranslationState = () => {
       // cooldown independently of this breather.
       const autoRetryDelayMs = rateLimitedThisRunRef.current ? 10000 : 1500;
       console.log(`Auto-retry remaining failed lines after ${autoRetryDelayMs}ms with clustered small-context retry...`);
-      await delay(autoRetryDelayMs);
+      await abortableSleep(autoRetryDelayMs, run?.signal);
       try {
         await clusterRetryFailures(0, contentLines.length);
       } catch (err) {
@@ -1109,9 +1163,10 @@ const useTranslationState = () => {
     try {
       if (!contentLines.length) return [];
 
-      // Provider 已卸载:不再开启新 run(多语言/多文件循环每轮都会走到这里
-      // 新建 controller,单靠卸载时 abort 旧 controller 拦不住后续轮次)。
-      if (disposedRef.current) throw new Error("Translation aborted");
+      // Provider 已卸载或用户已取消:不再开启新 run(多语言/多文件循环每轮都会
+      // 走到这里【新建】controller,单靠 abort 旧 controller 拦不住后续轮次 ——
+      // 这正是 cancelRequestedRef 存在的理由)。
+      if (disposedRef.current || cancelRequestedRef.current) throw new Error("Translation aborted");
 
       // Initialize new abort controller for this translation batch. Capture it
       // as THIS run's controller — every task closure below checks/aborts the
@@ -1220,7 +1275,7 @@ const useTranslationState = () => {
             // Skip the inter-line throttle for cache hits — they issued no API
             // request, so there's nothing to rate-limit (see cacheHitIndices).
             if (baseDelay > 0 && completedCount < contentLines.length && !cacheHitIndices.has(index)) {
-              await delay(baseDelay);
+              await abortableSleep(baseDelay, runController.signal);
             }
           }),
         );
@@ -1307,7 +1362,7 @@ const useTranslationState = () => {
         chunkStartK += chunkLineCount;
         chunkLinesDone += chunkLineCount;
         updateProgress(chunkLinesDone, totalChunkLines);
-        if (i < chunks.length - 1) await delay(config?.delayTime || 200);
+        if (i < chunks.length - 1) await abortableSleep(config?.delayTime || 200, runController.signal);
       }
 
       // Materialize failures from failedK → pristine source line + real line number
@@ -1498,7 +1553,9 @@ const useTranslationState = () => {
       // disposed = 用户翻译中途导航离开:级联标记被工具层静默 continue 后
       // 这里会正常走到 —— 不挡的话调用方在用户已切去的页面上弹"成功"toast
       // (antd message 挂在应用根上,跨页面可见)。
-      return !runHadFailuresRef.current && !disposedRef.current;
+      // 取消的 run 不算成功:调用方拿 true 去弹绿色成功 toast(MD 单文件),
+      // 对着一次用户主动喊停报「完成」是撒谎。
+      return !runHadFailuresRef.current && !disposedRef.current && !cancelRequestedRef.current;
     } finally {
       glossarySnapshotRef.current = null;
       setIsTranslating(false);
@@ -1541,6 +1598,9 @@ const useTranslationState = () => {
     clearFailures,
     markRunHadFailures,
     recordLineFailure,
+    requestCancel,
+    isCancelRequested,
+    beginManualRun,
     hadRunFailures,
     runRetry,
     isScopedRetry,

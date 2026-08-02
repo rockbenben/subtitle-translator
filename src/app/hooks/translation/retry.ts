@@ -134,6 +134,25 @@ export const delay = (ms: number): Promise<void> => {
   return new Promise((resolve) => setTimeout(resolve, ms));
 };
 
+/**
+ * 可被 run signal 提前叫醒的 sleep。取消的响应速度取决于最长的不可中断等待:
+ * 自动重试的 10s 喘息、用户自配的 delayTime(无上限)都坐在翻译循环里,
+ * 裸 delay 会让取消按钮干转到睡满为止。
+ * 叫醒时【resolve 而非 reject】:每个调用点的下一行本就是 signal 检查/入口守卫,
+ * 由它们决定退出路径;在这里 reject 反而多一条要处理的异常形态。
+ */
+export const abortableSleep = (ms: number, signal?: AbortSignal): Promise<void> =>
+  new Promise((resolve) => {
+    if (signal?.aborted) return resolve();
+    const timer = setTimeout(done, ms);
+    function done() {
+      signal?.removeEventListener("abort", done);
+      clearTimeout(timer);
+      resolve();
+    }
+    signal?.addEventListener("abort", done, { once: true });
+  });
+
 // ─── Shared 429 cooldown gate ────────────────────────────────────────────────
 // Per-method, module-level: when any request hits 429, ALL of that method's
 // queued lines + in-flight retries pause until the cooldown ends — instead of

@@ -59,6 +59,8 @@
     "selectMultiTargetLanguages": "複数の翻訳先言語を選択",
     "noTargetLanguage": "少なくとも1つの翻訳先言語を選択してください。",
     "translationError": "翻訳失敗",
+    "translationCancelled": "翻訳をキャンセルしました",
+    "translationCancelledResume": "翻訳をキャンセルしました。完了した部分はキャッシュ済みです。「翻訳」を押すと続きから再開できます",
     "translationAPI": "翻訳API",
     "enter": "入力",
     "getApiKey": "APIキーを取得",

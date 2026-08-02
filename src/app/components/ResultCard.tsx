@@ -58,7 +58,7 @@ interface ResultCardProps {
  *
  * Callers always guard with `{result && (<ResultCard ...>)}`, so this component
  * assumes non-empty content. The translation progress / loading affordance is
- * handled by the surrounding TranslationProgressModal.
+ * handled by the surrounding TranslationProgressStrip.
  *
  * Action buttons are ordered left-to-right by intent: transforms (Format,
  * MoveToSource) first, then takes (Copy, CopyNode, Export). Export is the

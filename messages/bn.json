@@ -59,6 +59,8 @@
     "selectMultiTargetLanguages": "একাধিক লক্ষ্য ভাষা নির্বাচন করুন",
     "noTargetLanguage": "অনুগ্রহ করে অন্তত একটি লক্ষ্য ভাষা নির্বাচন করুন।",
     "translationError": "অনুবাদ ব্যর্থ হয়েছে",
+    "translationCancelled": "অনুবাদ বাতিল করা হয়েছে",
+    "translationCancelledResume": "অনুবাদ বাতিল করা হয়েছে। সম্পন্ন অংশ ক্যাশে আছে — \"অনুবাদ\" চাপলে যেখানে থেমেছিল সেখান থেকে চলবে",
     "translationAPI": "অনুবাদ API",
     "enter": "প্রবেশ করুন",
     "getApiKey": "API কী পান",

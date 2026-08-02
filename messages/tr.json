@@ -59,6 +59,8 @@
     "selectMultiTargetLanguages": "Birden fazla hedef dil seçin",
     "noTargetLanguage": "En az bir hedef dil seçin.",
     "translationError": "Çeviri başarısız",
+    "translationCancelled": "Çeviri iptal edildi",
+    "translationCancelledResume": "Çeviri iptal edildi. Tamamlanan kısımlar önbellekte — kaldığı yerden devam etmek için \"Çevir\"e tıklayın",
     "translationAPI": "Çeviri API'si",
     "enter": "Giriş",
     "getApiKey": "API Anahtarı Al",

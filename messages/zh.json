@@ -59,6 +59,8 @@
     "selectMultiTargetLanguages": "选择多个目标语言",
     "noTargetLanguage": "至少选择一种目标语言。",
     "translationError": "翻译失败",
+    "translationCancelled": "已取消翻译",
+    "translationCancelledResume": "已取消翻译。已译好的部分在缓存里，点「翻译」即可从断点继续",
     "translationAPI": "翻译 API",
     "enter": "请输入",
     "getApiKey": "获取 API Key",

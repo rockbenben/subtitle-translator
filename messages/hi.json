@@ -59,6 +59,8 @@
     "selectMultiTargetLanguages": "कई लक्ष्य भाषाएं चुनें",
     "noTargetLanguage": "कृपया कम से कम एक लक्ष्य भाषा चुनें।",
     "translationError": "अनुवाद विफल",
+    "translationCancelled": "अनुवाद रद्द किया गया",
+    "translationCancelledResume": "अनुवाद रद्द किया गया। पूरे हो चुके हिस्से कैश में हैं — «अनुवाद» दबाकर वहीं से जारी रखें",
     "translationAPI": "अनुवाद API",
     "enter": "दर्ज करें",
     "getApiKey": "API कुंजी प्राप्त करें",

@@ -59,6 +59,8 @@
     "selectMultiTargetLanguages": "เลือกหลายภาษาเป้าหมาย",
     "noTargetLanguage": "เลือกอย่างน้อยหนึ่งภาษาเป้าหมาย",
     "translationError": "การแปลล้มเหลว",
+    "translationCancelled": "ยกเลิกการแปลแล้ว",
+    "translationCancelledResume": "ยกเลิกการแปลแล้ว ส่วนที่แปลเสร็จอยู่ในแคช กด \"แปล\" เพื่อแปลต่อจากจุดที่หยุด",
     "translationAPI": "API แปลภาษา",
     "enter": "ป้อน",
     "getApiKey": "รับ API Key",

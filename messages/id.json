@@ -59,6 +59,8 @@
     "selectMultiTargetLanguages": "Pilih beberapa bahasa target",
     "noTargetLanguage": "Pilih setidaknya satu bahasa target.",
     "translationError": "Terjemahan gagal",
+    "translationCancelled": "Terjemahan dibatalkan",
+    "translationCancelledResume": "Terjemahan dibatalkan. Bagian yang selesai sudah di-cache — klik \"Terjemahkan\" untuk melanjutkan dari titik berhenti",
     "translationAPI": "API Terjemahan",
     "enter": "Masuk",
     "getApiKey": "Dapatkan Kunci API",

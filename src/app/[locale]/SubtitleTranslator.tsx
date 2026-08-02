@@ -37,7 +37,7 @@ import { useLanguageOptions } from "@/app/components/languages";
 import LanguageSelector from "@/app/components/LanguageSelector";
 import ApiStatusBlock from "@/app/components/ApiStatusBlock";
 import ContextTranslationBlock from "@/app/components/ContextTranslationBlock";
-import TranslationProgressModal from "@/app/components/TranslationProgressModal";
+import TranslationProgressStrip from "@/app/components/TranslationProgressStrip";
 import { useTranslationContext } from "@/app/components/TranslationContext";
 import ResultCard from "@/app/components/ResultCard";
 import BilingualReviewPanel from "./BilingualReviewPanel";
@@ -116,6 +116,8 @@ const SubtitleTranslator = () => {
     handleLanguageChange,
     handleSwapLanguages,
     validate,
+    requestCancel,
+    isCancelRequested,
     retryCount,
     setRetryCount,
     requestTimeoutSec,
@@ -392,6 +394,9 @@ const SubtitleTranslator = () => {
     let hasFailedLang = false;
 
     for (const currentTargetLang of targetLangs) {
+      // 取消刹车:translateBatch 的入口守卫本来也会把后续语言逐个抛掉(级联标记
+      // → 下面 catch 静默 continue),在这里刹住只是不做那 N 次空转。
+      if (isCancelRequested()) break;
       try {
         // Translate content using the specific target language
         const rawTranslatedLines = await translateBatch(cleanLines, translationMethod, currentTargetLang, fileIndex, totalFiles, contextAware ? "subtitle" : undefined, { lineNumbers: sourceLineNumbers, fileName });
@@ -504,7 +509,7 @@ const SubtitleTranslator = () => {
     // 不设 length > 1 门槛:多语言模式必自动下载(哪怕只剩 1 个语言 —— 单语言
     // scoped 重试就是这个形态),没有 toast 的话用户只看到面板消失 + 一次静默
     // 下载,会误判重试没生效。
-    if (multiLanguageMode && multipleFiles.length <= 1 && !hasFailedLang && !isDisposed()) {
+    if (multiLanguageMode && multipleFiles.length <= 1 && !hasFailedLang && !isDisposed() && !isCancelRequested()) {
       const fileCount = exportMode === "both" ? targetLangs.length * 2 : targetLangs.length;
       message.success(`${t("translationExported")} (${fileCount} ${t("exportedFile")})`);
     }
@@ -552,8 +557,9 @@ const SubtitleTranslator = () => {
           );
         });
         // 中途导航离开:后续文件只会逐个快速级联失败,汇总 toast 也会弹在
-        // 用户切去的页面上 —— 直接收工。
-        if (isDisposed()) return;
+        // 用户切去的页面上 —— 直接收工。取消同理:requestCancel 已弹过提示,
+        // 「已导出 (n/m)」的汇总只会把一次主动喊停说成一次半失败。
+        if (isDisposed() || isCancelRequested()) return;
       }
 
       // 部分/全失败时不报"已导出"(per-file error toast 已经告知细节),只在有成功时显示汇总。
@@ -708,6 +714,17 @@ const SubtitleTranslator = () => {
                 </Button>
               )}
             </Flex>
+
+            <TranslationProgressStrip
+              isTranslating={isTranslating}
+              percent={progressPercent}
+              onCancel={requestCancel}
+              onDismiss={resetProgress}
+              multiLanguageMode={multiLanguageMode}
+              targetLanguageCount={targetLanguages.length}
+              currentCount={progressInfo.current}
+              totalCount={progressInfo.total}
+            />
           </Card>
         </Col>
 
@@ -960,16 +977,6 @@ const SubtitleTranslator = () => {
       {uploadMode === "single" && translatedText && exportMode === "translatedOnly" && !translatedTextBilingual && failedCount === 0 && (
         <BilingualReviewPanel sourceText={sourceText} sourceFormat={sourceFileType} translatedText={translatedText} translatedFormat={translatedTextExt} />
       )}
-
-      <TranslationProgressModal
-        isTranslating={isTranslating}
-        percent={progressPercent}
-        onDismiss={resetProgress}
-        multiLanguageMode={multiLanguageMode}
-        targetLanguageCount={targetLanguages.length}
-        currentCount={progressInfo.current}
-        totalCount={progressInfo.total}
-      />
 
       <MultiLanguageSettingsModal
         open={multiLangModalOpen}

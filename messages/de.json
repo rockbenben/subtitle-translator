@@ -59,6 +59,8 @@
     "selectMultiTargetLanguages": "Mehrere Zielsprachen wählen",
     "noTargetLanguage": "Mindestens eine Zielsprache auswählen.",
     "translationError": "Übersetzung fehlgeschlagen",
+    "translationCancelled": "Übersetzung abgebrochen",
+    "translationCancelledResume": "Übersetzung abgebrochen. Fertige Teile sind im Cache – mit „Übersetzen“ geht es an der Abbruchstelle weiter",
     "translationAPI": "Übersetzungs-API",
     "enter": "Eingabe",
     "getApiKey": "API-Key abrufen",

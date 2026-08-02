@@ -59,6 +59,8 @@
     "selectMultiTargetLanguages": "Выберите несколько целевых языков",
     "noTargetLanguage": "Выберите хотя бы один целевой язык.",
     "translationError": "Ошибка перевода",
+    "translationCancelled": "Перевод отменён",
+    "translationCancelledResume": "Перевод отменён. Готовые части в кеше — нажмите «Перевести», чтобы продолжить с места остановки",
     "translationAPI": "API перевода",
     "enter": "Ввод",
     "getApiKey": "Получить API Key",

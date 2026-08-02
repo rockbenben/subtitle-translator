@@ -59,6 +59,8 @@
     "selectMultiTargetLanguages": "اختر لغات هدف متعددة",
     "noTargetLanguage": "يرجى اختيار لغة هدف واحدة على الأقل.",
     "translationError": "فشلت الترجمة",
+    "translationCancelled": "تم إلغاء الترجمة",
+    "translationCancelledResume": "تم إلغاء الترجمة. الأجزاء المكتملة محفوظة في الذاكرة المؤقتة — اضغط «ترجمة» للمتابعة من حيث توقفت",
     "translationAPI": "API الترجمة",
     "enter": "دخول",
     "getApiKey": "احصل على مفتاح API",

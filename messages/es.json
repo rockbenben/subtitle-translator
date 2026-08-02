@@ -59,6 +59,8 @@
     "selectMultiTargetLanguages": "Seleccionar múltiples idiomas destino",
     "noTargetLanguage": "Selecciona al menos un idioma destino.",
     "translationError": "Error de traducción",
+    "translationCancelled": "Traducción cancelada",
+    "translationCancelledResume": "Traducción cancelada. Lo ya traducido está en caché: pulsa «Traducir» para continuar donde se detuvo",
     "translationAPI": "API de Traducción",
     "enter": "Entrar",
     "getApiKey": "Obtener API Key",
