@@ -113,10 +113,11 @@ export const languages: LanguageOption[] = [
   { value: "gom", name: "Konkani", nativelabel: "कोंकणी" },
   { value: "sa", name: "Sanskrit", nativelabel: "संस्कृतम्" },
 
-  // ── SeAsia (11) ──
+  // ── SeAsia (12) ──
   { value: "th", name: "Thai", nativelabel: "ไทย" },
   { value: "lo", name: "Lao", nativelabel: "ລາວ" },
   { value: "my", name: "Burmese", nativelabel: "မြန်မာ" },
+  { value: "km", name: "Khmer", nativelabel: "ខ្មែរ" },
   { value: "ms", name: "Malay", nativelabel: "Bahasa Melayu" },
   { value: "fil", name: "Filipino(Tagalog)", nativelabel: "Tagalog" },
   { value: "jv", name: "Javanese", nativelabel: "Basa Jawa" },
@@ -151,7 +152,12 @@ export const languages: LanguageOption[] = [
 ];
 
 // ════════════════════════════════════════════════════════════════════════════
-// Per-service language support — last verified 2026-05-22.
+// Per-service language support — every denylist below verified 2026-07-28
+// against the provider's current list; gtx and deeplx additionally live-probed
+// across all 122 master codes. Each denylist now matches its provider exactly.
+//
+// Probe gotcha: en→en echoes the input, so `en` can never be validated as a
+// TARGET by an English-source probe. It's a known-good pivot, not a failure.
 //
 // Each translation service supports a different subset of our master `languages`
 // list above. UNSUPPORTED_LANGS is a per-service denylist: when a user picks
@@ -161,14 +167,14 @@ export const languages: LanguageOption[] = [
 //
 // ── Verification sources (re-check ~yearly) ──
 //   DeepL:           https://developers.deepl.com/docs/getting-started/supported-languages
-//                    Now 110+ languages — only kn/am/ug/si/lo from our master
-//                    list remain unsupported.
+//                    110+ languages; only kn/am/ug/si/lo/km from our master
+//                    list are unsupported.
 //   Google Cloud:    https://docs.cloud.google.com/translate/docs/languages
 //                    NMT model ~250 codes, LLM model ~100 codes. Same denylist
 //                    used for gtxFreeAPI (free public endpoint) since both route
-//                    through Google's translation backend. Only an/wo from our
-//                    master are missing. NOTE: Wolof is supported by Meta NLLB,
-//                    NOT Google — easy to confuse.
+//                    through Google's translation backend. Only `an` from our
+//                    master is missing — established by live-probing every
+//                    master code, which is more reliable than the doc table.
 //   Qwen-MT:         https://help.aliyun.com/zh/model-studio/machine-translation
 //                    Plus/flash/turbo tiers cover 92 languages; lite is smaller
 //                    and not separately tracked here.
@@ -204,9 +210,9 @@ export const languages: LanguageOption[] = [
 // DeepL's language set, NOT the next-gen 110+ list the official API gained in
 // 2025. The old assumption "DeepLX ≡ DeepL coverage" was empirically false:
 // live-probed every master code against the shipped default endpoint
-// (THIRD_PARTY_ENDPOINTS.deeplx, 2026-06-07) — everything outside this
-// allowlist returns HTTP 400 "Invalid target_lang" (incl. hi/vi/he/th/fa/ur/
-// bn/sw/fil/yue/ca/sr/hr...). zh-hant is EXCLUDED deliberately: the endpoint
+// (THIRD_PARTY_ENDPOINTS.deeplx, re-probed 2026-07-28) — everything outside
+// this allowlist returns HTTP 400 "Invalid target_lang" (incl. hi/vi/he/th/fa/
+// ur/bn/sw/fil/yue/ca/sr/hr...). zh-hant is EXCLUDED deliberately: the endpoint
 // answers 200 for ZH-HANT but silently returns Simplified script (verified
 // byte-identical to the ZH-HANS response) — silently-wrong output is worse
 // than a clean upfront block. The denylist below is derived as
@@ -230,38 +236,47 @@ const AZURE_UNSUPPORTED = new Set([
 
 const UNSUPPORTED_LANGS: Record<string, Set<string>> = {
   // Official DeepL API (next-gen, 110+ languages via the project proxy).
-  // Verified 2026-05-26 — denylist is complete, no other master codes missing.
-  deepl: new Set(["kn", "am", "ug", "si", "lo"]),
+  // These 6 are the only master codes absent from DeepL's supported-languages
+  // table; verified complete 2026-07-28.
+  deepl: new Set(["kn", "am", "ug", "si", "lo", "km"]),
   // DeepLX: derived from the live-probed classic allowlist above — NOT the
   // official DeepL list (see DEEPLX_SUPPORTED comment).
   deeplx: new Set(languages.map((l) => l.value).filter((v) => v !== "auto" && !DEEPLX_SUPPORTED.has(v))),
 
   // Google Cloud Translation / GTX (Free). Both go through Google's NMT backend.
-  // Only 2 codes from our master aren't on Google's official supported list:
-  // `an` (Aragonese) and `wo` (Wolof). Most other niche codes (ace/scn/lmo/etc)
-  // are supported. Verified 2026-05-26. `prs` (Dari) is NOT denied — Google's
-  // code for it is `fa-AF`; services/traditional.ts remaps before sending
+  // `an` (Aragonese) is the only master code Google rejects: live-probing every
+  // master code against the shipped endpoint (translate-pa, en→X, 2026-07-28)
+  // returned real translations for all of them except `an`, which 400s with
+  // "invalid argument". Note Google DOES translate Wolof (`wo`) despite older
+  // sources attributing it to Meta NLLB only.
+  //
+  // `prs` (Dari) is NOT denied — Google's code for it is `fa-AF`;
+  // services/traditional.ts remaps before sending
   // (live-verified 2026-06-07: prs → 400, fa-AF → 200, both directions).
-  gtxFreeAPI: new Set(["an", "wo"]),
-  google: new Set(["an", "wo"]),
+  gtxFreeAPI: new Set(["an"]),
+  google: new Set(["an"]),
 
-  // Azure Translator. Pre-existing `jv` (Javanese) plus 21 from the 2026-05
-  // expansion, plus `be` and `tg` (added 2026-05-26 — both languages appear
-  // only in Azure's Transliterate API table, NOT in Text Translation, which
-  // is the API we hit). Shared with edgeFreeAPI below — Edge's free endpoint
+  // Azure Translator — 24 codes, verified 2026-07-28. Note `be` and `tg` are
+  // denied because they appear only in Azure's Transliterate API table, NOT in
+  // Text Translation, which is the API we hit.
+  // Shared with edgeFreeAPI below — Edge's free endpoint
   // (api-edge.cognitive.microsofttranslator.com) is the same Azure Translator
   // engine behind Edge's free auth, so coverage is identical.
   azure: AZURE_UNSUPPORTED,
   edgeFreeAPI: AZURE_UNSUPPORTED,
 
-  // Qwen-MT plus/flash/turbo. 41 codes denied; 80 of our master supported
-  // (Qwen-MT claims 92 in total — the gap is Arabic dialects + a few codes
-  // like ast/nn/sd/tl/vec/war that aren't in our master at all).
+  // Qwen-MT plus/flash/turbo. Verified 2026-07-28: 43 denied → the 79 that pass
+  // the gate are exactly the 79 master codes in Qwen-MT's official table.
+  // Qwen-MT lists 92 codes; the rest of its gap vs our master is Arabic
+  // dialects + codes like ast/nn/vec/war that aren't in our master at all.
+  // Derived by parsing the doc page's raw HTML — extracting every code yields
+  // exactly 92 entries, matching the documented count, so it's complete.
+  // Key-gated, so unlike gtx/deeplx this one can't be live-probed; the rule
+  // here is strictly not-in-the-official-table ⇒ deny.
   // Official list: https://help.aliyun.com/zh/model-studio/machine-translation
   qwenMt: new Set([
     "ky", "tk", "tg", "mn", "ml", "pa", "bho", "ha", "am", "ug",
-    // 2026-05 additions (ga/gn removed 2026-05-26 — both are in Qwen-MT's
-    // official 92-language list, were wrongly denied):
+    "ga", "gn",
     "ace", "an", "ay", "ba", "br", "ckb", "eo", "gom",
     "ht", "ig", "kmr", "la", "lmo", "ln", "mg", "mi", "om", "pam",
     "prs", "ps", "qu", "sa", "st", "su", "tn", "ts", "tt", "wo",
@@ -275,6 +290,9 @@ const UNSUPPORTED_LANGS: Record<string, Set<string>> = {
   // codes pass through unchanged using languages[].name.
   translategemma: new Set([
     "yue", "bho",
+    // 2026-07-28: km (Khmer) — not among WMT24++'s 55 pairs, so denied under
+    // this list's deny-everything-outside-WMT24++ rule.
+    "km",
     // 2026-05 backfill — our existing master list entries not in WMT24++:
     "af", "bs", "mk", "be", "sq", "mt", "hy", "ka", "uz", "kk", "ky", "tk",
     "az", "tg", "mn", "si", "ne", "lo", "my", "ms", "jv", "ha", "am", "ug",
@@ -357,7 +375,7 @@ export const LANGUAGE_GROUPS: ReadonlyArray<{ key: string; labelKey: string; cod
   {
     key: "seAsia",
     labelKey: "langGroupSeAsia",
-    codes: ["th", "lo", "my", "ms", "fil", "jv", "su", "ace", "pag", "pam", "ceb"],
+    codes: ["th", "lo", "my", "km", "ms", "fil", "jv", "su", "ace", "pag", "pam", "ceb"],
   },
   {
     key: "africa",
