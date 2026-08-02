@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
-import { Row, Col, Form, Select, Switch, Flex, Tooltip, Typography, Checkbox, Input, Button, Tag, Divider, theme } from "antd";
+import { ConfigProvider, Row, Col, Form, Select, Switch, Flex, Tooltip, Typography, Checkbox, Input, Button, Tag, Divider, theme } from "antd";
 import type { SelectProps } from "antd";
 import { SearchOutlined, SwapOutlined, CaretRightOutlined, CaretDownOutlined } from "@ant-design/icons";
 import { useTranslations } from "next-intl";
@@ -23,6 +23,11 @@ interface LanguageSelectorProps {
   handleSwapLanguages?: () => void;
   setTargetLanguages: (value: string[]) => void;
   setMultiLanguageMode: (value: boolean) => void;
+  /**
+   * 翻译进行中整块禁用。语言在点「翻译」那一刻就被闭包快照定死,运行中改只会
+   * 让控件翻转而产物纹丝不动 —— 想换语言,先取消(缓存即断点),改完再跑。
+   */
+  disabled?: boolean;
 }
 
 /**
@@ -37,7 +42,7 @@ interface LanguageSelectorProps {
  *   selected chips above the grid let user see + remove individual picks;
  *   mobile single-column grid so long native labels don't overflow.
  */
-const LanguageSelector = ({ sourceLanguage, targetLanguage, targetLanguages, multiLanguageMode, handleLanguageChange, handleSwapLanguages, setTargetLanguages, setMultiLanguageMode }: LanguageSelectorProps) => {
+const LanguageSelector = ({ sourceLanguage, targetLanguage, targetLanguages, multiLanguageMode, handleLanguageChange, handleSwapLanguages, setTargetLanguages, setMultiLanguageMode, disabled = false }: LanguageSelectorProps) => {
   const t = useTranslations("common");
   const { sourceOptions, targetOptions } = useLanguageOptions();
   const isMobile = useIsMobile();
@@ -138,7 +143,7 @@ const LanguageSelector = ({ sourceLanguage, targetLanguage, targetLanguages, mul
             {t(p.labelKey)}
           </Button>
         ))}
-        <Button size="small" onClick={handleClearAll} disabled={targetLanguages.length === 0}>
+        <Button size="small" onClick={handleClearAll} disabled={targetLanguages.length === 0 || undefined}>
           {t("clearAll")}
         </Button>
       </Flex>
@@ -230,6 +235,9 @@ const LanguageSelector = ({ sourceLanguage, targetLanguage, targetLanguages, mul
   );
 
   return (
+    // ConfigProvider 一点锁全:两个 Select、交换按钮、多语言开关都消费
+    // DisabledContext;多选弹层锁上后根本打不开,里面的控件无需单独处理。
+    <ConfigProvider componentDisabled={disabled}>
     <div
       style={{
         padding: token.paddingSM,
@@ -262,7 +270,9 @@ const LanguageSelector = ({ sourceLanguage, targetLanguage, targetLanguages, mul
                 size="small"
                 icon={<SwapOutlined />}
                 onClick={handleSwapLanguages}
-                disabled={sourceLanguage === "auto" || multiLanguageMode}
+                // `|| undefined` 而非裸布尔:antd 是「自己的 disabled ?? context」,
+                // 条件为假时传下去的显式 false 会把外层运行中锁整个顶掉。
+                disabled={sourceLanguage === "auto" || multiLanguageMode || undefined}
                 aria-label={`${t("sourceLanguage")} ⇄ ${t("targetLanguage")}`}
               />
             </Tooltip>
@@ -339,6 +349,7 @@ const LanguageSelector = ({ sourceLanguage, targetLanguage, targetLanguages, mul
         </Tooltip>
       </Flex>
     </div>
+    </ConfigProvider>
   );
 };
 

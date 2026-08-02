@@ -232,11 +232,13 @@ const ApiStatusBlock = ({ disabled = false }: ApiStatusBlockProps) => {
           <Tag
             color={glossaryEnabled && activeGlossaryPreset ? "success" : "default"}
             role="button"
-            tabIndex={0}
+            tabIndex={disabled ? -1 : 0}
+            aria-disabled={disabled}
             aria-label={tGlossary("title")}
-            style={{ cursor: "pointer", margin: 0 }}
-            onClick={() => setApiSettingsOpen(true)}
+            style={{ cursor: disabled ? "not-allowed" : "pointer", margin: 0, opacity: disabled ? 0.5 : 1 }}
+            onClick={disabled ? undefined : () => setApiSettingsOpen(true)}
             onKeyDown={(e) => {
+              if (disabled) return;
               if (e.key === "Enter" || e.key === " ") {
                 e.preventDefault();
                 setApiSettingsOpen(true);
@@ -249,9 +251,13 @@ const ApiStatusBlock = ({ disabled = false }: ApiStatusBlockProps) => {
           </Tag>
           )}
         </Space>
+        {/* 运行中锁住抽屉入口 —— 抽屉内部因此完全不用锁:mask 保证「抽屉开着时
+            开不了跑」(翻译按钮在遮罩后面),入口锁保证「跑着时开不了抽屉」。
+            想改设置,先取消(缓存即断点),取消后这里自然解锁。 */}
         <Button
           type="link"
           size="small"
+          disabled={disabled}
           onClick={() => setApiSettingsOpen(true)}
           style={{ padding: 0, fontWeight: 500, textDecoration: "underline", textUnderlineOffset: "3px" }}>
           {t("moreProviderSettings")} →

@@ -660,6 +660,7 @@ const SubtitleTranslator = () => {
             }
             style={cardStyle}>
             <Dragger
+              disabled={isTranslating}
               customRequest={({ file }) => {
                 clearResults();
                 handleFileUpload(file as File);
@@ -685,6 +686,7 @@ const SubtitleTranslator = () => {
 
             {uploadMode === "single" && (
               <SourceArea
+                locked={isTranslating}
                 sourceText={sourceText}
                 setSourceText={setSourceText}
                 stats={sourceStats}
@@ -774,6 +776,7 @@ const SubtitleTranslator = () => {
                 handleSwapLanguages={handleSwapLanguages}
                 setTargetLanguages={setTargetLanguages}
                 setMultiLanguageMode={setMultiLanguageMode}
+                disabled={isTranslating}
               />
             </Form>
 
@@ -816,6 +819,7 @@ const SubtitleTranslator = () => {
                         <Alert type="warning" showIcon title={tSubtitle("unsupportedSub")} />
                       )}
                       <Segmented
+                        disabled={isTranslating}
                         block
                         size="small"
                         value={exportMode}
@@ -836,6 +840,7 @@ const SubtitleTranslator = () => {
 
                       {needsBilingual && (
                         <Segmented
+                        disabled={isTranslating}
                           block
                           size="small"
                           value={bilingualOrder}
@@ -851,6 +856,7 @@ const SubtitleTranslator = () => {
                       {showBilingualFormatChoice && (
                         <Tooltip title={tSubtitle("bilingualFormatTooltip")}>
                           <Segmented
+                        disabled={isTranslating}
                             block
                             size="small"
                             value={bilingualFormat}
@@ -866,6 +872,7 @@ const SubtitleTranslator = () => {
                       {showNativeRebuildChoice && (
                         <Tooltip title={tSubtitle("assNativeModeTooltip")}>
                           <Segmented
+                        disabled={isTranslating}
                             block
                             size="small"
                             value={assNativeRebuild ? "rebuild" : "source"}
@@ -880,7 +887,7 @@ const SubtitleTranslator = () => {
 
                       {showAssStyle && (
                         <Tooltip title={tSubtitle("assStyleTooltip")}>
-                          <Button size="small" icon={<FormatPainterOutlined />} onClick={() => setAssStyleOpen(true)}>
+                          <Button size="small" icon={<FormatPainterOutlined />} disabled={isTranslating} onClick={() => setAssStyleOpen(true)}>
                             {tSubtitle("assStyleButton")}
                           </Button>
                         </Tooltip>
@@ -898,6 +905,7 @@ const SubtitleTranslator = () => {
                   ),
                   children: (
                     <AdvancedTranslationSettings
+                      disabled={isTranslating}
                       customFileName={customFileName}
                       setCustomFileName={setCustomFileName}
                       removeChars={removeChars}

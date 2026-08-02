@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Flex, Input, InputNumber, Row, Col, Tooltip, Switch, Form, Typography } from "antd";
+import { ConfigProvider, Flex, Input, InputNumber, Row, Col, Tooltip, Switch, Form, Typography } from "antd";
 import { useTranslations } from "next-intl";
 import Section from "@/app/components/styled/Section";
 
@@ -27,6 +27,9 @@ interface AdvancedTranslationSettingsProps {
   setSingleFileMode?: (value: boolean) => void;
   // Optional: custom children for component-specific settings (rendered before the common settings)
   children?: React.ReactNode;
+  // 翻译进行中整块禁用(含调用方塞进来的 children)。整条翻译链跑在点击那一刻的
+  // 闭包快照上,运行中改这些只会"看起来生效了"——想改,先取消(缓存即断点)。
+  disabled?: boolean;
 }
 
 const AdvancedTranslationSettings: React.FC<AdvancedTranslationSettingsProps> = ({
@@ -41,12 +44,17 @@ const AdvancedTranslationSettings: React.FC<AdvancedTranslationSettingsProps> = 
   useCache,
   setUseCache,
   children,
+  disabled = false,
   singleFileMode,
   setSingleFileMode,
 }) => {
   const t = useTranslations("common");
 
   return (
+    // ConfigProvider componentDisabled:一点锁全(Switch/InputNumber/Input 与
+    // children 里的控件都消费 DisabledContext),不用逐控件写 disabled。
+    // ⚠ 若日后往里放 Segmented:antd 6 的 Segmented 不读 DisabledContext,得显式传。
+    <ConfigProvider componentDisabled={disabled}>
     <Flex vertical gap="middle">
       {/* 1. General Switches */}
       <Section variant="neutral" noGap>
@@ -99,6 +107,7 @@ const AdvancedTranslationSettings: React.FC<AdvancedTranslationSettingsProps> = 
         </Form>
       </Section>
     </Flex>
+    </ConfigProvider>
   );
 };
 
