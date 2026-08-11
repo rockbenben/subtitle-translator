@@ -116,3 +116,15 @@ export const isAbortError = (error: unknown): boolean => {
 export const isCascadedAbort = (error: unknown): boolean => {
   return error instanceof Error && error.message === "Translation aborted";
 };
+
+/**
+ * message + cause 的诊断文本。Node 的 fetch 把真实原因(ECONNREFUSED、
+ * 证书错误、坏端口)全塞进 error.cause,message 只有一句 "fetch failed" ——
+ * 只拼 message 会让停掉的 Ollama、打错的端口、坏 TLS 代理塌成同一句话。
+ * 供 CLI/引擎的 stderr 诊断用;网页展示层走 describeError(带 i18n 提示)。
+ */
+export const formatErrorWithCause = (error: unknown): string => {
+  const msg = (error as Error)?.message ?? String(error);
+  const cause = (error as Error)?.cause;
+  return cause ? `${msg} — ${(cause as Error)?.message ?? String(cause)}` : msg;
+};
