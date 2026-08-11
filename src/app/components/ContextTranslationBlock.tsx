@@ -62,6 +62,10 @@ const ContextTranslationBlock = ({ enabled, onEnabledChange, disabled = false }:
                 min={1}
                 max={500}
                 step={1}
+                // precision={0}:step 只约束步进按钮,手输 3.5 照样落进 localStorage。
+                // 小数会让 new Array(20.5) 抛 RangeError(且在请求已计费之后)。
+                // 引擎侧 positiveInt 仍然兜底 —— 那是防历史脏值,这里是关水龙头。
+                precision={0}
                 value={config.contextWindow as number}
                 onChange={(v) => handleParamChange("contextWindow", 100, v)}
                 disabled={disabled}
@@ -76,6 +80,7 @@ const ContextTranslationBlock = ({ enabled, onEnabledChange, disabled = false }:
                 min={1}
                 max={50}
                 step={1}
+                precision={0}
                 value={config.contextBatchSize as number}
                 onChange={(v) => handleParamChange("contextBatchSize", 3, v)}
                 disabled={disabled}

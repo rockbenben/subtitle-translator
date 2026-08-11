@@ -6,7 +6,7 @@ import { PlusOutlined, DeleteOutlined, UploadOutlined, DownloadOutlined, SearchO
 import { useTranslations } from "next-intl";
 import { useTranslationContext } from "@/app/components/TranslationContext";
 import { languages } from "@/app/lib/translation/languages-data";
-import { downloadFile, decodeFileBytes } from "@/app/utils";
+import { downloadFile, decodeFileBytes, getErrorMessage } from "@/app/utils";
 import { mergeImportedTerms, parseGlossaryTsv, type GlossaryTerm } from "@/app/lib/translation/glossary";
 
 const LANG_OPTIONS = languages.filter((l) => l.value !== "auto").map((l) => ({ label: `${l.name} (${l.nativelabel})`, value: l.value }));
@@ -111,7 +111,11 @@ const GlossaryDrawer = ({ open, onClose }: { open: boolean; onClose: () => void 
         }
       } catch (error) {
         console.error("Glossary import failed:", error);
-        message.error(tCommon("fileReadFailed"));
+        // 【带上原始消息】,同 useFileUpload 的理由:decodeFileBytes 判不出编码时
+        // 抛的是一句可操作的指引("re-save the file as UTF-8"),裸 fileReadFailed
+        // 把它整个吞掉。这里比翻译工具更需要它 —— 中文 Windows 上 Excel 导出的
+        // GBK TSV 正是这个功能存在的场景,而本抽屉连编码回退都没有。
+        message.error(`${tCommon("fileReadFailed")}: ${getErrorMessage(error)}`);
       }
     };
     // Don't swallow a failed read (locked file, odd encoding) silently.

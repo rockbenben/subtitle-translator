@@ -2,7 +2,7 @@
 import { useState, useRef } from "react";
 import { App } from "antd";
 import { useTranslations } from "next-intl";
-import { normalizeNewlines, decodeFileBytes } from "@/app/utils";
+import { normalizeNewlines, decodeFileBytes, getErrorMessage } from "@/app/utils";
 import type { UploadFile, UploadProps } from "antd";
 
 // Shared dedup predicate: match by name + size
@@ -45,7 +45,14 @@ const useFileUpload = () => {
         // jschardet 加载失败 / 解码异常等：别让 onload 静默 reject（否则下方 finally 之外
         // 的 setIsFileProcessing(false) 永远不执行，处理中遮罩会一直转）。
         console.error("处理文件出错：", error);
-        message.warning(t("fileProcessFailed"));
+        // 【带上原始消息】。decodeFileBytes 在判不出编码时抛的是一句可操作的
+        // 指引("unrecognized text encoding — re-save the file as UTF-8"),
+        // 而通用的 fileProcessFailed 把它整个吞掉:中文 Windows 上 Excel/记事本
+        // 存出的短 GBK 字幕会被 jschardet 误判成 IBM855 之类(实测),用户只看到
+        // 「文件处理失败」,而三个翻译工具都没有手动选编码的入口 —— 等于无路可走。
+        // getErrorMessage 而非手写 instanceof:后者对【非 Error 抛出】(字符串、
+        // 对象)返回空串,又退回成裸的「文件处理失败」—— 正是这段改动要消除的。
+        message.warning(`${t("fileProcessFailed")}: ${getErrorMessage(error)}`);
         onError?.();
       } finally {
         setIsFileProcessing(false);
