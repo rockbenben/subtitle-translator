@@ -101,6 +101,11 @@ const useTranslationState = () => {
   // UI shows Alert with retry button; cache hits skip re-translation.
   const [failedCount, setFailedCount] = useState<number>(0);
   const [failedLines, setFailedLines] = useState<FailedLine[]>([]);
+  // 本轮软失败槽位的【引用副本】—— 引擎的 LineTranslatedEvent 只有 index,
+  // 没有 failed 字段(失败行不发射),实时行列表要用它把已发射的槽标记成
+  // 「这一行最终没译出」。ref 同步更新(不触发渲染),与 failedLines 永远
+  // 一起改(同 runHadFailuresRef / runHadFailures 的「同一事实双副本」约定)。
+  const failedLinesRef = useRef<FailedLine[]>([]);
   // Lang-level failures: in multi-language batch mode, codes of langs that
   // errored out entirely. Replaces noisy per-lang toasts. See md-translator #7.
   const [failedLangs, setFailedLangs] = useState<string[]>([]);
@@ -164,7 +169,7 @@ const useTranslationState = () => {
   };
 
   // Extracted concerns
-  const { isTranslating, setIsTranslating, progressPercent, setProgressPercent, progressInfo, abortControllerRef, disposedRef, makeUpdateProgress, resetProgress } = useTranslationProgress();
+  const { isTranslating, setIsTranslating, progressPercent, setProgressPercent, progressInfo, abortControllerRef, disposedRef, makeUpdateProgress, resetProgress, liveLines, clearLiveLines, recordLiveLine, markLiveLinesFailed } = useTranslationProgress();
 
   // ─── 取消 ────────────────────────────────────────────────────────────────
   // 取消【完全复用】既有的级联中止链路:abort 本轮 controller → 在飞请求与
@@ -627,6 +632,12 @@ const useTranslationState = () => {
         setRunHadFailures(true);
         setFailedCount((prev) => prev + outcome.failures.length);
         setFailedLines((prev) => [...prev, ...outcome.failures]);
+        failedLinesRef.current = [...failedLinesRef.current, ...outcome.failures];
+        // 实时行列表把本轮已发射的槽按 index 标记为 failed —— 引擎不发射
+        // 失败行,但已发射的同槽行(缓存命中后又失败、替换重试同槽)必须
+        // 显示成「这一行没译出」。ref 在此【同步】读到本轮累计的失败槽位
+        // (含多语言循环里早先语种的),不受 setState 异步影响。
+        markLiveLinesFailed(outcome.failures.map((f) => f.index).filter((i): i is number => i !== undefined));
         if (lastErrorRef.current) setFailedReason(lastErrorRef.current);
       }
 
@@ -652,6 +663,7 @@ const useTranslationState = () => {
   const clearFailures = () => {
     setFailedCount(0);
     setFailedLines([]);
+    failedLinesRef.current = [];
     setFailedLangs([]);
     setFailedReason("");
     lastErrorRef.current = null;
@@ -858,6 +870,10 @@ const useTranslationState = () => {
     isTranslating,
     setIsTranslating,
     resetProgress,
+    liveLines,
+    clearLiveLines,
+    recordLiveLine,
+    markLiveLinesFailed,
     apiSettingsOpen,
     setApiSettingsOpen,
     progressPercent,

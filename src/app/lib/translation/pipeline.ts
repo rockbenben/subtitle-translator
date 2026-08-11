@@ -67,6 +67,19 @@ export interface PipelineDeps {
    * hard-wired here. Headless callers (CLI) omit it and get translateCore.
    */
   translate?: (params: TranslateTextParams) => Promise<string>;
+  /**
+   * Live per-line results: fired the moment a line's translation is finalized
+   * (glossary enforcement included), so the UI can stream rows while the run
+   * is still in flight. One event per SUCCESSFUL or cache-hit slot — failed
+   * lines are deliberately NOT emitted here: they surface later, together,
+   * through PipelineOutcome.failures + the soft-fill convention (the failure
+   * panel is their single home). Absent (CLI): no-op, nothing streams.
+   *
+   * 与 onProgress 的分工:onProgress 是「行数 / 总量」的计数信号;本回调是
+   * 「这一行译完了」的内容信号,同一行可能先发 onProgress 再发本回调,
+   * 消费方按 index 对齐、不要假设顺序。
+   */
+  onLineTranslated?: (result: LineTranslatedEvent) => void;
   /** External cancellation (cancel button / Ctrl-C). The pipeline chains its own run controller off it. */
   signal?: AbortSignal;
   /**
@@ -133,6 +146,15 @@ export type TranslateBatchMeta = {
   lineNumbers?: number[];
   fileName?: string;
   /**
+   * 本批的实时结果 streamer —— 引擎每译完一行(术语表处理完毕后)推一个
+   * 事件。通过 meta 传入而非 PipelineDeps:渲染所需(物理行号/文件内序数)
+   * 是【本批】的事,依赖里塞进来会让所有调用方被迫构造它;而依赖只听
+   * onProgress / onRateLimit 这类【计数】信号。web 壳
+   * (SubtitleTranslator → translateBatch 的 meta)在这里挂自己的 streamer,
+   * CLI handler 不传。
+   */
+  onLineTranslated?: (result: LineTranslatedEvent) => void;
+  /**
    * 【出参】调用方传一个空 Set,引擎把本次软填(保留原文)的槽位下标写进去。
    *
    * 为什么是出参而不是返回值:translateBatch 返回 string[],被三个工具页和四条
@@ -143,6 +165,27 @@ export type TranslateBatchMeta = {
    */
   collectSoftFilled?: Set<number>;
 };
+
+/**
+ * 一行译完的实时事件 —— 引擎逐行发出,消费方(网页壳)立即上屏。
+ * `index` 是【本批 contentLines 里的下标】(0-based),原样呈现称为
+ * `displayIndex`(= index + 1,与进度条「current / total」同源,都数已完成的
+ * 行);`line` 是物理源行号(missing 时为 undefined,同 FailedLine.line 的
+ * lineNumbers 回退语义)。`original` 是这一行的原始文本,`translation` 是
+ * 最终译文(术语表处理后)。
+ */
+export interface LineTranslatedEvent {
+  /** Index of the source line within this batch's contentLines (0-based). */
+  index: number;
+  /** 1-based display index (index + 1) — the number users see in the UI. */
+  displayIndex: number;
+  /** Physical source line number when known; undefined for derived arrays. */
+  line?: number;
+  /** The original source text of the line. */
+  original: string;
+  /** The final translation (after glossary enforcement). */
+  translation: string;
+}
 
 export type PipelineRuntimeConfig = TranslationConfig & {
   translationMethod: string;
@@ -271,10 +314,22 @@ type RunCtx = {
   onRateLimit?: () => void;
   onAuthAbort?: () => void;
   getGlossaryTerms: (targetLang: string) => GlossaryTerm[];
+  /** Live per-line stream (batch-level, from TranslateBatchMeta.onLineTranslated). */
+  emitLine?: (result: LineTranslatedEvent) => void;
   noteError: (error: unknown) => void;
   noteRateLimited: () => void;
   wasRateLimited: () => boolean;
 };
+
+/**
+ * Build the batch's emitLine streamer from its meta. Kept as a helper so all
+ * three batch paths (context / line / chunk) fire through one construction.
+ */
+const makeEmitLine =
+  (config: PipelineRuntimeConfig, meta: TranslateBatchMeta | undefined): ((result: Omit<LineTranslatedEvent, "line"> & { line?: number }) => void) | undefined =>
+    meta?.onLineTranslated
+      ? (r) => meta.onLineTranslated!({ ...r, line: r.line ?? failureLine(config, meta, r.index) })
+      : undefined;
 
 /** Chain an internal run controller off the external signal; returns cleanup. */
 const chainSignal = (run: AbortController, external?: AbortSignal): (() => void) => {
@@ -578,9 +633,26 @@ const enforceGlossaryOnLine = async (sourceLine: string, rawTranslated: string, 
 // 暴露给 JSONTranslator 的自带循环),它把并发、节流、进度、失败收集全部还给
 // 调用方,调用方于是长成第二个 pipeline 并且真的漂移过(delayTime)。自带循环
 // 的工具一律「收集 → translateLines → 回写」,别再开单行口子。
-const translateSingleWithGlossary = async (text: string, cacheSuffix: string, config: PipelineRuntimeConfig, ctx: RunCtx, fullText?: string): Promise<string> => {
+//
+// ⚠ index 参数是【0-based 批内下标】(= failureLine 的 index 语义,FailedLine
+// 也是用它)。调用方持有行号映射(meta.lineNumbers)时传它,否则传 undefined
+// 由 emitLine 按 ordinal 回填。绝对不要在这里 +1:那会在 lineNumbers 存在时
+// 把物理行号当成批内下标,发射出指向别人家的 index。
+const translateSingleWithGlossary = async (
+  text: string,
+  cacheSuffix: string,
+  config: PipelineRuntimeConfig,
+  ctx: RunCtx,
+  fullText?: string,
+  index?: number,
+): Promise<string> => {
   const raw = await translateSingle(text, cacheSuffix, config, ctx, fullText);
-  return enforceGlossaryOnLine(text, raw ?? "", cacheSuffix, config, ctx, fullText);
+  const final = await enforceGlossaryOnLine(text, raw ?? "", cacheSuffix, config, ctx, fullText);
+  // 实时流唯一发射点:三条批量路径(line 并发 / chunk 营救 / LLM 上下文批的
+  // 逐槽处理)都从这里收口,术语表处理完毕后的【最终】译文在此可见。失败行
+  // 不在此发射 —— 它们属于 failure 面板的统一呈现,别拆成零零碎碎的流。
+  ctx.emitLine?.({ index: index ?? 0, displayIndex: (index ?? 0) + 1, original: text, translation: final });
+  return final;
 };
 
 /** deps.translate wins; otherwise the built-in cache-aware translateCore. */
@@ -724,7 +796,11 @@ const translateWithContext = async (
           // slots get soft-filled with the raw source later (see "Final
           // soft-fail"), so a fully-failed line stays the untouched original
           // instead of a half-localized mix like "斯派克, hi".
-          translatedLines[batchStart + j] = await enforceGlossaryOnLine(batchSources[j], translatedBatch[j], cacheSuffix, runtimeConfig, ctx, fullText);
+          const enforced = await enforceGlossaryOnLine(batchSources[j], translatedBatch[j], cacheSuffix, runtimeConfig, ctx, fullText);
+          translatedLines[batchStart + j] = enforced;
+          // 实时流:这一槽立刻可见(emit 与缓存写之间无 await —— 事件先于
+          // 批次级 purges 与缓存写,任何顺序都只是"即时"的差别)。
+          ctx.emitLine?.({ index: batchStart + j, displayIndex: batchStart + j + 1, original: batchSources[j], translation: enforced });
           // Cache the finalized line by its source text so a future run skips
           // it (see prefillFromLineCache above). Survives the batch-level purge
           // because it's keyed by the single line, not the batch window.
@@ -1050,6 +1126,7 @@ const runTranslateLines = async (
     onRateLimit: deps.onRateLimit,
     // NOT deps.onAuthAbort: inside translateLines the run controller is
     // pipeline-internal; aborting it already tears down every peer of THIS run.
+    emitLine: makeEmitLine(config, meta),
     getGlossaryTerms: deps.getGlossaryTerms ?? (() => []),
     noteError: (error) => {
       state.lastError = error;
@@ -1142,7 +1219,7 @@ const runTranslateLines = async (
           if (runController.signal.aborted) throw new Error("Translation aborted");
           try {
             // Glossary on success only; the catch below soft-fills the raw source.
-            translatedLines[index] = await translateSingleWithGlossary(line, cacheSuffix, runtimeConfig, ctx, fullText);
+            translatedLines[index] = await translateSingleWithGlossary(line, cacheSuffix, runtimeConfig, ctx, fullText, index);
           } catch (error) {
             // Auth error already tripped THIS run's controller inside translateSingle.
             // It must propagate raw so Promise.all kills the batch and the caller's
@@ -1286,7 +1363,7 @@ const runTranslateLines = async (
           if (runController.signal.aborted) throw new Error("Translation aborted");
           const srcLine = chunkSourceLines[j];
           try {
-            const one = await translateSingle(srcLine, cacheSuffix, runtimeConfig, ctx, fullText);
+            const one = await translateSingleWithGlossary(srcLine, cacheSuffix, runtimeConfig, ctx, fullText, chunkStartK + j);
             // 空串按失败处理(与「空串译文记失败」的既有约定一致);
             // 换行替换成空格:本流是 join("\n") 的,单行译文里混进一个换行会把
             // 【这一块其后每一行】整体下移 —— 正是这里要修的那种损坏。
@@ -1304,6 +1381,19 @@ const runTranslateLines = async (
             failedK.add(chunkStartK + j);
           }
           if (j < chunkLineCount - 1) await abortableSleep(config.delayTime || 200, runController.signal);
+        }
+        // 第二轮 emit 的【唯一理由】是把行内换行压成空格后的最终文本覆盖掉
+        // translateSingleWithGlossary 里发出的初版(同一 index,recordLiveLine
+        // 在队尾原位覆盖;乱序则队尾续写,保留两行 —— 内容一致,无害)。
+        // failedK 槽位(请求失败 → helper 未 emit;空串结果 → helper 已 emit 但
+        // 会随 failure 流程被标成「未译出」)一律跳过 —— 失败行不属于实时流,
+        // 别把"原文副本"当译文上屏。
+        // ⚠ 别用 rescued[j] !== chunkSourceLines[j] 作判据:专有名词/数字这类
+        // 合法译成自身的行会被当成"没译出"漏掉 —— 与 isSoftFilledHalf 同款教训。
+        for (let j = 0; j < chunkLineCount; j++) {
+          if (!failedK.has(chunkStartK + j)) {
+            ctx.emitLine?.({ index: chunkStartK + j, displayIndex: chunkStartK + j + 1, original: chunkSourceLines[j], translation: rescued[j] });
+          }
         }
         processed = rescued.join("\n");
       } else {

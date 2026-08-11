@@ -1,6 +1,15 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import type { LineTranslatedEvent } from "@/app/lib/translation/pipeline";
+
+/** A single live line in the streaming results list. */
+export interface LiveLine {
+  index: number;
+  original: string;
+  translation: string;
+  failed: boolean;
+}
 
 /**
  * Progress + abort state for a single translation run.
@@ -55,6 +64,44 @@ export const useTranslationProgress = () => {
     setProgressInfo({ current: 0, total: 0 });
   };
 
+  // ─── 实时逐行结果(与进度条并行的第二通道)──────────────────────────────
+  // 每一行译完立即上屏,不等整批结束(LLM 上下文批一条 20-60s,逐行批一条
+  // ~200ms)。只记录【本批】的 event 流;失败的线不在这里呈现 —— 失败面板
+  // 是它们的统一出口,这里混入"原文副本"只会让用户以为译出了。
+  // 有序追加(Set + 数组而非 Map):run 以行序发射(线路径下标严格递增;上下文
+  // 批在批次内自增),Set 天然去重跨通道重复(替换重试同槽)。文档变化/重跑
+  // 由调用方 clearLiveLines 复位。
+  const [liveLines, setLiveLines] = useState<LiveLine[]>([]);
+  const liveLinesRef = useRef<LiveLine[]>([]);
+  const livePosRef = useRef(0);
+  const clearLiveLines = () => {
+    liveLinesRef.current = [];
+    livePosRef.current = 0;
+    setLiveLines([]);
+  };
+  // 新行入流。同一 index 再发(替换重试 / 重复发射)时覆盖原位,其余追加。
+  // ⚠ 只处理【内容】;「这一行最终没译出」的标记走 markLiveLinesFailed。
+  const recordLiveLine = (result: LineTranslatedEvent) => {
+    const line: LiveLine = { index: result.index, original: result.original, translation: result.translation, failed: false };
+    const list = liveLinesRef.current;
+    const pos = livePosRef.current;
+    if (pos < list.length && list[pos].index === line.index) {
+      list[pos] = line; // 替换重试同一槽 —— 覆盖而非追加
+    } else {
+      livePosRef.current = list.length; // 乱序(替换没有命中队尾)时收缩到队尾续写
+      list.push(line);
+    }
+    setLiveLines([...list]);
+  };
+  // 把已发射的行标记为最终失败(失败面板确认这些槽位保留原文后调用)。
+  // 只翻 failed 位,不动 original/translation —— 用户已经看到的内容不抹掉。
+  const markLiveLinesFailed = (indices: Iterable<number>) => {
+    const idx = new Set(indices);
+    if (idx.size === 0) return;
+    liveLinesRef.current = liveLinesRef.current.map((l) => (idx.has(l.index) ? { ...l, failed: true } : l));
+    setLiveLines([...liveLinesRef.current]);
+  };
+
   return {
     isTranslating,
     setIsTranslating,
@@ -66,5 +113,9 @@ export const useTranslationProgress = () => {
     disposedRef,
     makeUpdateProgress,
     resetProgress,
+    liveLines,
+    clearLiveLines,
+    recordLiveLine,
+    markLiveLinesFailed,
   };
 };

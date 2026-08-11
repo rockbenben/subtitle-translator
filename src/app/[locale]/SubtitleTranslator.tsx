@@ -35,6 +35,7 @@ import LanguageSelector from "@/app/components/LanguageSelector";
 import ApiStatusBlock from "@/app/components/ApiStatusBlock";
 import ContextTranslationBlock from "@/app/components/ContextTranslationBlock";
 import TranslationProgressStrip from "@/app/components/TranslationProgressStrip";
+import LiveTranslationResults from "@/app/components/LiveTranslationResults";
 import { useTranslationContext } from "@/app/components/TranslationContext";
 import ResultCard from "@/app/components/ResultCard";
 import BilingualReviewPanel from "./BilingualReviewPanel";
@@ -110,6 +111,9 @@ const SubtitleTranslator = () => {
     isTranslating,
     setIsTranslating,
     resetProgress,
+    liveLines,
+    clearLiveLines,
+    recordLiveLine,
     progressPercent,
     setProgressPercent,
     progressInfo,
@@ -288,6 +292,9 @@ const SubtitleTranslator = () => {
       // 取消刹车:translateBatch 的入口守卫本来也会把后续语言逐个抛掉(级联标记
       // → 下面 catch 静默 continue),在这里刹住只是不做那 N 次空转。
       if (isCancelRequested()) break;
+      // 每个语言(或文件)开始前清掉上一轮的实时行 —— 新一轮结果从空列表
+      // 重新累积(多语言循环里每个 lang 的流是独立的)。
+      clearLiveLines();
       try {
         // Translate content using the specific target language
         // 软填(保留原文)槽位:removeChars 绝不能碰 —— 碰了就写出既非原文也非
@@ -298,6 +305,13 @@ const SubtitleTranslator = () => {
           lineNumbers: sourceLineNumbers,
           fileName,
           collectSoftFilled: softFilled,
+          // 实时逐行流:引擎每译完一行(术语表处理完毕)就推一个事件,这里立刻
+          // 进 liveLines 上屏 —— 不等待整批返回。与进度条并行,互不干扰。
+          // 「这一行最终没译出」的标记由 hook 在 failure 面板更新时统一处理
+          // (markLiveLinesFailed),这里只管内容流。
+          onLineTranslated: (result) => {
+            recordLiveLine(result);
+          },
         });
         // removeChars 只清理【原始译文】,且必须在 ASS 标签/verbatim 还原【之前】
         // 应用 —— restore 之后应用会损坏 \N 硬换行、{\anX} 标签和绘图坐标行。
@@ -421,6 +435,9 @@ const SubtitleTranslator = () => {
     // {current,total,latest} 不清,投影弹窗会在新一轮首行返回前(LLM 批次
     // 可达 20-60s)一直放映【上一轮】的最终计数和最后一句译文。
     resetProgress();
+    // 批量路径:整批文件开跑前清掉实时行(单文件路径由 runTranslation →
+    // performTranslation 的 clearLiveLines 清)。
+    clearLiveLines();
     failedFilesRef.current = 0;
     // Batch path doesn't go through the hook's runTranslation — reset ALL failure
     // state (not just langs) so counts don't accumulate across runs and the failure
@@ -532,6 +549,7 @@ const SubtitleTranslator = () => {
     setNeedsBilingualSuffix(false);
     setTranslatedTextBilingual(false);
     setTranslatedTextLang(null);
+    clearLiveLines();
     clearFailures();
   };
 
@@ -635,6 +653,11 @@ const SubtitleTranslator = () => {
               currentCount={progressInfo.current}
               totalCount={progressInfo.total}
             />
+
+            {/* 实时逐行结果 —— 与进度条并行:每译完一行立即出现,不等整批。
+                只在「正在翻译或已有实时行」时渲染;失败行以琥珀「未译出」
+                标记,细节归下方失败面板。 */}
+            {(isTranslating || liveLines.length > 0) && <LiveTranslationResults lines={liveLines} isTranslating={isTranslating} />}
           </Card>
         </Col>
 
