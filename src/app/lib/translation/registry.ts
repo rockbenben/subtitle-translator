@@ -694,6 +694,24 @@ export const PROVIDERS = {
       { label: "MiniMax M3", value: "minimax/minimax-m3", thinking: true },
     ],
   },
+  atlascloud: {
+    kind: "openai-compat",
+    category: "aggregator",
+    label: "Atlas Cloud",
+    endpoint: "https://api.atlascloud.ai/v1/chat/completions",
+    defaultModel: "qwen/qwen3.8-max",
+    defaultTemperature: 0.7,
+    docs: "https://www.atlascloud.ai/docs",
+    apiKeyUrl: "https://www.atlascloud.ai/console/api-keys",
+    // Atlas Cloud exposes a shared OpenAI-compatible endpoint for its hosted
+    // text models. Keep thinking controls hidden because support and request
+    // shape vary by the selected upstream model.
+    models: [
+      { label: "Qwen3.8 Max", value: "qwen/qwen3.8-max" },
+      { label: "DeepSeek V4 Flash", value: "deepseek-ai/deepseek-v4-flash" },
+      { label: "GLM-5.2", value: "zai-org/glm-5.2" },
+    ],
+  },
   groq: {
     kind: "openai-compat",
     category: "aggregator",
