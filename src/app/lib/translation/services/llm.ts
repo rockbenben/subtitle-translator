@@ -8,9 +8,9 @@ import {
   isAdaptiveThinkingClaude,
   isCustomModel,
   isThinkingModel,
+  isApiKeyOptional,
   OPENAI_COMPAT_KEYS,
   OPENAI_COMPAT_PROVIDERS,
-  URL_IS_PRIMARY_CRED,
   type OpenAICompatProviderKey,
   type OpenAICompatProviderSpec,
 } from "../registry";
@@ -43,11 +43,10 @@ const openAICompatRequest = async (cfg: OpenAICompatRequestConfig): Promise<stri
   const { params, serviceName, endpoint, defaultModel, defaultTemperature, extraHeaders, extraBody } = cfg;
   const { apiKey, model, temperature } = params;
   const { effectiveSystemPrompt, prompt } = preparePrompts(params);
-  // URL_IS_PRIMARY_CRED methods (litellm): URL is the credential, apiKey is
-  // optional — self-hosted gateways commonly run keyless, so skip requireApiKey
-  // and omit Authorization when no key is set. Consulted directly from the same
-  // set that drives UI + validation; no parallel flag to keep in sync.
-  const key = URL_IS_PRIMARY_CRED.has(params.translationMethod) ? apiKey?.trim() : requireApiKey(serviceName, apiKey);
+  // apiKey 可选的服务跳过 requireApiKey —— 判据查 registry 的 isApiKeyOptional,
+  // 与 getConfigStatus(驱动 UI 标签与 validate)是同一个,不在这里重拼一遍 OR。
+  // 拦下一个 UI 刚标成「无需配置」的服务,是自相矛盾。
+  const key = isApiKeyOptional(params.translationMethod) ? apiKey?.trim() : requireApiKey(serviceName, apiKey);
   // Model optional when BOTH user model and spec default are empty (only
   // litellm: defaultModel "" by design). Omit the field — same semantics as
   // the hand-written `llm` Custom service — so server-side defaults apply
@@ -91,6 +90,7 @@ const resolveEndpoint = (key: OpenAICompatProviderKey, spec: OpenAICompatProvide
   resolveRelayableEndpoint(key, {
     customUrl: acceptsCustomUrl(spec) ? params.url : undefined,
     useRelay: spec.defaultUseRelay !== undefined && params.useRelay,
+    relayBase: params.relayBase,
     direct: spec.endpoint,
   });
 
@@ -306,10 +306,14 @@ export const deepseek: TranslationService = async (params) => {
     // 附 status。
     const status = (error as { status?: number } | null)?.status;
     if (relayHintWouldHelp(params) && (status === 403 || (error instanceof Error && error.message.includes("[403]")))) {
-      // "Forbidden" in the message keeps isAuthError's keyword classification
-      // (auth → whole-batch abort: every line would fail identically); the
-      // errorHintKey gives the display layer the localized relay remediation.
-      throw Object.assign(new Error(`DeepSeek API returned 403 Forbidden. Please ${RELAY_HINT_MARKER} in API Settings.`), { errorHintKey: "errorHintRelay403" });
+      // ⚠ 【status 必须带上】。这里换了一个新 Error,原来的 status 就丢了 ——
+      // 而整轮凭据快停(isDefiniteAuthFailure)只认数值 401/403,不认消息文本
+      // (消息里一个 "Forbidden" 就掐掉整批太危险,见 retry.ts 那段注释)。
+      // 不带 status 的话,这个【被本注释称为 load-bearing 的旗舰场景】——浏览器
+      // 源被 DeepSeek 拦——反而不触发快停:10 文件 × 3 语言各打一轮注定失败的请求。
+      // 消息里的 "Forbidden" 仍保留,它负责 isAuthError 的单行分类;
+      // errorHintKey 给显示层本地化的中转补救提示。三者各司其职。
+      throw Object.assign(new Error(`DeepSeek API returned 403 Forbidden. Please ${RELAY_HINT_MARKER} in API Settings.`), { status: 403, errorHintKey: "errorHintRelay403" });
     }
     throw error;
   }
@@ -506,7 +510,7 @@ export const yandex: TranslationService = withRelayHint(async (params) => {
   return openAICompatRequest({
     params: { ...params, model },
     serviceName: "Yandex",
-    endpoint: resolveRelayableEndpoint("yandex", { customUrl: params.url, useRelay: params.useRelay, direct: YANDEX_DIRECT_ENDPOINT }),
+    endpoint: resolveRelayableEndpoint("yandex", { customUrl: params.url, useRelay: params.useRelay, relayBase: params.relayBase, direct: YANDEX_DIRECT_ENDPOINT }),
     defaultModel: model,
     defaultTemperature: defaultConfigs.yandex.temperature as number,
   });
@@ -711,7 +715,7 @@ export const claude: TranslationService = withRelayHint(async (params) => {
   // Claude speaks the Anthropic Messages protocol, NOT chat/completions, so
   // the shared precedence gets the claude-flavored normalizer (bare hosts →
   // /v1/messages, anything with a path trusted verbatim).
-  const endpoint = resolveRelayableEndpoint("claude", { customUrl: params.url, useRelay, direct: CLAUDE_DIRECT_ENDPOINT, normalize: completeClaudeUrl });
+  const endpoint = resolveRelayableEndpoint("claude", { customUrl: params.url, useRelay, relayBase: params.relayBase, direct: CLAUDE_DIRECT_ENDPOINT, normalize: completeClaudeUrl });
 
   const data = await fetchJSON(endpoint, {
     method: "POST",

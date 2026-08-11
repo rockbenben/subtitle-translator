@@ -9,8 +9,8 @@ import {
   BINARY_EFFORT_VENDORS,
   URL_IS_PRIMARY_CRED,
   getConfigStatus,
+  isApiKeyOptional,
   testTranslationWithTimeout,
-  clearTranslationCache,
   getDefaultConfig,
   isThinkingModel,
   isThinkingCapableProvider,
@@ -20,9 +20,12 @@ import {
   migrateConfig,
   categorizedOptions,
   completeOpenAICompatUrl,
+  LLM_RELAY_BASE,
+  isValidRelayBase,
   supportsGlossary,
   type ReasoningEffort,
 } from "@/app/lib/translation";
+import { translationCache } from "@/app/lib/storage/indexedDBStorage";
 import { useTranslationContext } from "@/app/components/TranslationContext";
 import { DEFAULT_PROMPT_PRESET_ID } from "@/app/hooks/usePromptPresets";
 import { describeError } from "@/app/utils";
@@ -61,6 +64,8 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
     deleteLlmPreset,
     updateLlmPreset,
     requestTimeoutSec,
+    relayBase,
+    setRelayBase,
   } = useTranslationContext();
 
   const [testingService, setTestingService] = useState<string | null>(null);
@@ -74,6 +79,8 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
   const config = migrateConfig(translationConfigs?.[service], defaultConfig);
   // 自定义 URL 已填 → 优先于中转开关(resolveRelayableEndpoint 优先级 1 > 2)。
   const customUrlSet = typeof config?.url === "string" && config.url.trim() !== "";
+  // 空 = 用内置中转,不算错;非空但不合法(漏 https://、javascript: 等)才标红。
+  const relayBaseInvalid = relayBase.trim() !== "" && !isValidRelayBase(relayBase);
 
   // Thinking-effort visibility: per-model gate via `models[].thinking: true`
   // in registry. State stored per-model in `config.thinkingEffort[sku]` where
@@ -123,7 +130,7 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
 
   const resetTranslationCache = async () => {
     try {
-      const count = await clearTranslationCache();
+      const count = await translationCache.clear();
       message.success(`${t("resetCacheSuccess")} (${count})`);
     } catch (error) {
       console.error("Failed to clear cache:", error);
@@ -152,9 +159,10 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
       return;
     }
 
-    // URL_IS_PRIMARY_CRED services treat URL as the credential — apiKey is
-    // optional (local LM Studio / llama.cpp typically don't require one).
-    if (config.apiKey !== undefined && !URL_IS_PRIMARY_CRED.has(service) && !`${config.apiKey}`.trim()) {
+    // 判据走 registry 的 isApiKeyOptional(URL 即凭证 ∪ 免配置),不是只看
+    // URL_IS_PRIMARY_CRED —— 后者会在某个免配置服务带上可选 apiKey 时,用
+    // "enterApiKey" 拦住一个 UI 旁边正标着「free」的服务。
+    if (config.apiKey !== undefined && !isApiKeyOptional(service) && !`${config.apiKey}`.trim()) {
       message.error(tCommon("enterApiKey"));
       return;
     }
@@ -171,7 +179,9 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
       setTestingService(service);
       // 共用入口统一处理超时(= requestTimeoutSec,与正式翻译同源)与
       // thinking 参数派生 —— 原则与实现都在 testTranslationWithTimeout。
-      const { error: testError, timedOut } = await testTranslationWithTimeout(service, config, requestTimeoutSec, isLLMModel ? systemPrompt : undefined, isLLMModel ? userPrompt : undefined);
+      // 手动并 relayBase:本表单操作的是【任意】service(不限当前选中),走不了
+      // getSelectedConfig 咽喉 —— 全仓唯一需要手动合并的消费者。
+      const { error: testError, timedOut } = await testTranslationWithTimeout(service, { ...config, relayBase }, requestTimeoutSec, isLLMModel ? systemPrompt : undefined, isLLMModel ? userPrompt : undefined);
       if (!testError) {
         message.success(`${currentService?.label || service} - ${t("testConfigSuccess")}`);
       } else {
@@ -454,7 +464,7 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
                     )}
                   </Flex>
                 }
-                required={!URL_IS_PRIMARY_CRED.has(service)}>
+                required={!isApiKeyOptional(service)}>
                 <Input.Password
                   autoComplete="off"
                   placeholder={`${tCommon("enter")} ${currentService?.label} API Key`}
@@ -497,8 +507,27 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
             {config?.useRelay !== undefined && (
               // URL 已填时开关不生效 —— 置灰 + 文案说明因果,而非隐藏(隐藏会布局
               // 跳动且丢失可发现性)。开关状态保留,清空 URL 后立即恢复("待命"语义)。
-              <Form.Item label={t("useRelay")} extra={customUrlSet ? t("useRelayOverridden") : t("useRelayTooltip")} style={{ marginBottom: 0 }}>
+              <Form.Item label={t("useRelay")} extra={customUrlSet ? t("useRelayOverridden") : t("useRelayTooltip")} style={{ marginBottom: config.useRelay && !customUrlSet ? 24 : 0 }}>
                 <Switch checked={config.useRelay as boolean | undefined} disabled={customUrlSet} onChange={(checked) => handleConfigChange(service, "useRelay", checked)} aria-label={t("useRelay")} />
+              </Form.Item>
+            )}
+            {/* 中转地址:全局值(不进 per-provider config),只在这个 provider 的中转
+                真会生效时才露出 —— 开关关着、或被自定义 URL 顶掉时,它对本次配置
+                毫无影响,常驻只会让人以为改了有用。文案明写"对所有 provider 生效",
+                因为它长在 per-provider 表单里,不说清楚会被当成只管当前这个。 */}
+            {config?.useRelay === true && !customUrlSet && (
+              // 非法值(最常见:漏写 https://)当场标红并说明 —— 否则 relayUrl
+              // 会静默回落内置中转,用户以为自建生效了,而任何报错都不指向
+              // 「少了协议头」。判据与导入/运行时同一份(isValidRelayBase)。
+              <Form.Item label={t("relayBase")} extra={relayBaseInvalid ? t("relayBaseInvalid") : t("relayBaseExtra")} validateStatus={relayBaseInvalid ? "error" : undefined} style={{ marginBottom: 0 }}>
+                <Input
+                  value={relayBase}
+                  onChange={(e) => setRelayBase(e.target.value)}
+                  placeholder={LLM_RELAY_BASE}
+                  aria-label={t("relayBase")}
+                  spellCheck={false}
+                  allowClear
+                />
               </Form.Item>
             )}
           </Form>
@@ -605,6 +634,7 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
                   max={128000}
                   className="!w-full"
                   value={config?.maxTokens as number | undefined}
+                  precision={0}
                   onChange={(value) => handleConfigChange(service, "maxTokens", value ?? 0)}
                   aria-label={t("maxTokens")}
                 />
@@ -682,6 +712,7 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
                   min={1}
                   className="!w-full"
                   value={config.chunkSize as number | undefined}
+                  precision={0}
                   onChange={(value) => handleConfigChange(service, "chunkSize", value ?? 1)}
                   aria-label={t("chunkSize")}
                 />
@@ -693,6 +724,7 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
                   min={1}
                   className="!w-full"
                   value={config?.batchSize as number | undefined}
+                  precision={0}
                   onChange={(value) => handleConfigChange(service, "batchSize", value ?? 1)}
                   aria-label={t("batchSize")}
                 />
@@ -705,6 +737,7 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
                   max={500}
                   className="!w-full"
                   value={config?.contextWindow as number | undefined}
+                  precision={0}
                   onChange={(value) => handleConfigChange(service, "contextWindow", value ?? 1)}
                   aria-label={t("contextWindow")}
                 />
@@ -717,6 +750,7 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
                   max={50}
                   className="!w-full"
                   value={config?.contextBatchSize as number | undefined}
+                  precision={0}
                   onChange={(value) => handleConfigChange(service, "contextBatchSize", value ?? 1)}
                   aria-label={t("contextBatchSize")}
                 />
@@ -730,6 +764,7 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
                   min={1}
                   className="!w-full"
                   value={config.delayTime as number | undefined}
+                  precision={0}
                   onChange={(value) => handleConfigChange(service, "delayTime", value ?? 1)}
                   aria-label={t("delayTime")}
                 />

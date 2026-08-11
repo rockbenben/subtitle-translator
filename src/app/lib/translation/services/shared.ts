@@ -21,8 +21,121 @@ export const useLocalApi = process.env.NODE_ENV === "development" || process.env
 // the upstream directly.
 export const LLM_RELAY_BASE = "https://llm-proxy.api2026.workers.dev";
 
-/** Build the relay URL for a given provider key (e.g. `relayUrl("openai")`). */
-export const relayUrl = (provider: string): string => `${LLM_RELAY_BASE}/api/${provider}`;
+/**
+ * Build the relay URL for a provider key (e.g. `relayUrl("openai")`).
+ *
+ * `base` is the user's own relay, empty/absent = the built-in one. Only the
+ * ORIGIN is user-supplied — the `/api/{provider}` path is a protocol contract
+ * between this client and scripts/llm-proxy-worker.js, so a self-hosted relay
+ * is a deploy of that same Worker source, not an arbitrary endpoint. That's
+ * exactly what makes ONE base cover every relay provider at once; per-provider
+ * endpoints that don't follow the contract belong in the custom-URL field,
+ * which outranks the relay entirely.
+ */
+export const relayUrl = (provider: string, base?: string): string => {
+  // 【拼接必须用 normalizeRelayBase 的产物,不能用原始串】—— 校验与拼接必须对
+  // 同一个输入有同一种理解,否则界面绿灯而运行时打错地方。
+  // (历史:带 `?token=` 的 base 曾经【通过】校验,裸拼得到
+  // `…?token=abc/api/openai`,整个 /api/{provider} 落进查询串、fetch 打到根路径,
+  // Worker 对每个 provider 都回 400。现在 normalizeRelayBase 直接拒掉带
+  // search/hash 的 base,那条路走不到了 —— 但"用产物拼"这条纪律仍然要守:
+  // 下一个被加进 normalizeRelayBase 的规范化步骤同样得作用于拼接。)
+  const trimmed = base?.trim();
+  if (!trimmed) return `${LLM_RELAY_BASE}/api/${provider}`;
+  const normalized = normalizeRelayBase(trimmed);
+  // ⚠ 【非空但不合法 ≠ 没填】,绝不静默回落到内置中转。这个字段决定 apiKey
+  // 发到【哪台机器】:自建中转的用户填错(把 base 写成 `…/api`、漏掉 scheme)
+  // 时若回落,他的 key 就被送到他正要避开的那台公共 Worker 上,而翻译照常成功
+  // ——唯一的信号是折叠抽屉里一个红框。宁可整轮翻译失败也不能悄悄换目的地。
+  // 空串是另一回事:那是"用内置中转"的正常表达,上面已直接回落。
+  if (!normalized) {
+    throw new Error(`${RELAY_BASE_INVALID_MARKER}: ${trimmed} — fix it in API Settings, or clear it to use the built-in relay`);
+  }
+  return `${normalized}/api/${provider}`;
+};
+
+/**
+ * 中转地址不合法的分类标记 —— 同 RELAY_HINT_MARKER 的用法:消息里嵌它,
+ * retry.ts 的 NON_RETRYABLE_MESSAGES 引它,改措辞不会静默破坏分类。
+ *
+ * 必须【不可重试】:这是配置错误,不是瞬时故障。下一次尝试读的是同一个
+ * localStorage 值,必然同样失败 —— 不标的话(错误无 status → isRetryableError
+ * 的 `!status` 判真)每一行都会烧满重试预算,几百行的文件要转很久才报出
+ * 一个用户改一下输入框就能解决的问题。
+ */
+export const RELAY_BASE_INVALID_MARKER = "relay base is not a usable http(s) origin";
+
+/**
+ * 把用户填的 relay base 规范化成 `origin + pathname`(去尾斜杠);不合法返回
+ * undefined。
+ *
+ * 带 search/hash 的一律【拒绝】,不是静默丢弃。relayUrl 要在 base 后面接
+ * `/api/{provider}`,查询串会把那个路径段吞掉,所以它在这个位置确实没有意义 ——
+ * 但"没有意义"不等于"可以当它不存在":`https://gw.example.com/relay/?k=SECRET`
+ * 正是带共享密钥的自建 Worker 的典型形状,悄悄抹掉 `?k=` 之后请求会打到用户
+ * 自己的机器上却【没有那把钥匙】,一路 401/403,整份文档软失败进面板报一堆
+ * 原始 HTTP 错误,而设置界面上那行 URL 连同 token 还原样显示着 —— 屏幕上没有
+ * 任何东西指向真正的原因。拒绝掉,红框当场说清楚。
+ */
+const normalizeRelayBase = (base: string): string | undefined => {
+  const cleaned = base.trim();
+  if (!cleaned) return undefined;
+  let parsed: URL;
+  try {
+    parsed = new URL(cleaned);
+  } catch {
+    return undefined;
+  }
+  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return undefined;
+  if (parsed.search || parsed.hash) return undefined;
+  const path = parsed.pathname.replace(/\/+$/, "");
+  // base 不是 endpoint:relayUrl 会自己拼 /api/{provider}(理由见 isValidRelayBase)。
+  if (/\/api(\/|$)/.test(path)) return undefined;
+  return `${parsed.origin}${path}`;
+};
+
+/**
+ * relayBase 【能不能用】—— 运行时(relayUrl 拼不出地址就抛)与 UI 即时校验
+ * (TranslationSettings 的红框)共用这一条,两者必须同判据,否则界面绿灯而
+ * 运行时报错。
+ *
+ * ⚠ 设置导入(sanitizeSettings)【不用】它,用的是 isSafeRelayBaseProtocol ——
+ * 那里问的是另一个问题「能不能收进设置」,只看协议安全。理由见那个函数的注释:
+ * 按"能不能用"丢字段会把 `…/relay/?k=SECRET` 这类合法自建地址静默删掉,而同
+ * 一份文件里的 useRelay 与 apiKey 照常导入,key 就去了内置公共中转。
+ *
+ * 只放行可解析的 http(s):裸域名会变成打向本站的相对路径(见 relayUrl),
+ * javascript:/data: 则是注入面 —— 而这个字段决定 apiKey 发到哪台机器,
+ * 所以三个入口不能各写一半。空串【不算非法】,它是"用内置中转"的正常表达,
+ * 由调用方各自处理(relayUrl 回落、sanitize 保留、UI 不报错)。
+ *
+ * 实现直接复用 normalizeRelayBase,于是【校验通过 ⇔ 拼得出地址】恒成立。
+ * 分成两份写过一次:那时校验看解析后的 URL、拼接用原始串,`?token=abc` 校验
+ * 绿灯却拼出 `…?token=abc/api/openai`(路径段被查询串吞掉)。
+ */
+export const isValidRelayBase = (base: string): boolean => normalizeRelayBase(base) !== undefined;
+
+/**
+ * 只问一件事:这个值【危险】吗 —— 即它会不会把 apiKey 送到 http(s) 之外的地方。
+ *
+ * 与 isValidRelayBase 分开,因为两者服务于不同的判断:
+ *   · isValidRelayBase = "能不能用"(还要求无查询串、不是 /api 端点)——
+ *     驱动 UI 红框与运行时抛错,用户看得见、改得动。
+ *   · 本函数 = "能不能收进设置"—— sanitizeSettings 用它决定是否【丢字段】。
+ * 只按前者丢字段会造成一个更糟的洞:分享来的设置里 `…/relay/?k=SECRET` 这种
+ * 合法自建地址被静默删掉,而同一份文件里的 useRelay:true 和 apiKey 照常导入 ——
+ * 接收方看到绿色"导入成功",之后每次翻译都把 key 发到内置公共中转。
+ * 保留它:红框会说地址不可用,运行时也会抛,两处都看得见;而 javascript:/data:
+ * 这类真正危险的值仍然被丢掉。
+ */
+export const isSafeRelayBaseProtocol = (base: string): boolean => {
+  try {
+    const { protocol } = new URL(base.trim());
+    return protocol === "http:" || protocol === "https:";
+  } catch {
+    return false;
+  }
+};
 
 // Third-party proxy services (community-maintained endpoints)
 // These are external proxy/relay services that provide:
@@ -31,7 +144,6 @@ export const relayUrl = (provider: string): string => `${LLM_RELAY_BASE}/api/${p
 //   - Regional access optimization or rate limit workarounds
 export const THIRD_PARTY_ENDPOINTS = {
   deeplx: "https://deeplx-serverless.api2026.workers.dev/translate",
-  deepseekRelay: relayUrl("deepseek"),
 } as const;
 
 // Proxy endpoints for services that need CORS bypass
@@ -87,13 +199,20 @@ export const completeOpenAICompatUrl = (url: string): string => {
  * and the custom claude / yandex services:
  *   1. custom URL set      → use it (self-hosted relay or alternate direct
  *                            endpoint), normalized by `normalize`
- *   2. useRelay ON, no URL → the shared Cloudflare relay (LLM_RELAY_BASE)
+ *   2. useRelay ON, no URL → a relay: the user's `relayBase` if they set one,
+ *                            otherwise the built-in LLM_RELAY_BASE
  *   3. otherwise           → the official direct endpoint
+ *
+ * Tiers 1 and 2 are both "somewhere other than the vendor", but they are NOT
+ * redundant: the custom URL is one provider's full endpoint and bypasses the
+ * relay contract, while relayBase swaps the relay host for EVERY provider at
+ * once and keeps the /api/{provider} routing. Hence custom URL still wins —
+ * it's the more specific statement.
  */
-export const resolveRelayableEndpoint = (relayKey: string, opts: { customUrl?: string; useRelay?: boolean; direct: string; normalize?: (url: string) => string }): string => {
+export const resolveRelayableEndpoint = (relayKey: string, opts: { customUrl?: string; useRelay?: boolean; relayBase?: string; direct: string; normalize?: (url: string) => string }): string => {
   const customUrl = opts.customUrl?.trim();
   if (customUrl) return (opts.normalize ?? completeOpenAICompatUrl)(customUrl);
-  if (opts.useRelay) return relayUrl(relayKey);
+  if (opts.useRelay) return relayUrl(relayKey, opts.relayBase);
   return opts.direct;
 };
 
@@ -206,7 +325,7 @@ export const fetchJSON = async (url: string, init?: RequestInit): Promise<unknow
     // model URI) burned the full retry budget on every batch.
     const error = Object.assign(new Error(formatHttpError(data, response.status)), { status: response.status });
     // 429: surface the server's own Retry-After so the shared cooldown gate
-    // (hooks/translation/retry.ts) waits exactly as told instead of guessing.
+    // (lib/translation/retry.ts) waits exactly as told instead of guessing.
     if (response.status === 429) {
       const retryAfterMs = parseRetryAfterMs(response.headers.get("retry-after"));
       if (retryAfterMs !== undefined) Object.assign(error, { retryAfterMs });
