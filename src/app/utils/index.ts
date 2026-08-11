@@ -1,3 +1,4 @@
+export * from "./encoding";
 export * from "./errorUtils";
 export * from "./fileTypes";
 export * from "./fileUtils";

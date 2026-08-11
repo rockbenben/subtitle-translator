@@ -4,7 +4,6 @@ import { LLM_MODELS, deriveThinkingParams } from "./registry";
 import type { GlossaryTerm } from "./glossary";
 import type { TranslationConfig } from "./types";
 import { normalizePrompt } from "./services/shared";
-import { translationCache } from "@/app/lib/storage/indexedDBStorage";
 
 export const CACHE_PREFIX = "t_";
 
@@ -125,38 +124,4 @@ export const generateCacheKey = (text: string, cacheSuffix: string): string => {
   const encoded = safe.length <= 32 ? encodeURIComponent(safe) : null;
   const key = encoded && encoded.length <= 50 ? encoded : SparkMD5.hash(safe);
   return `${CACHE_PREFIX}${key}_${cacheSuffix}`;
-};
-
-export const getCachedTranslation = async (cacheKey: string): Promise<string | null> => {
-  return translationCache.get(cacheKey);
-};
-
-/**
- * Batch cache read in a single IndexedDB transaction — used by the per-line
- * prefill (cross-run skip) so a long file's re-run does one transaction
- * instead of one per line. Result order matches `cacheKeys`; misses are null.
- */
-export const getCachedTranslations = async (cacheKeys: string[]): Promise<(string | null)[]> => {
-  return translationCache.getMany(cacheKeys);
-};
-
-export const setCachedTranslation = async (cacheKey: string, translation: string): Promise<void> => {
-  return translationCache.set(cacheKey, translation);
-};
-
-/**
- * Purge one cached entry by its source text + suffix. Used by the context
- * path when a batch response fails marker extraction: the cache layer caches
- * every 200 response BEFORE extraction runs, so a marker-dropped/merged reply
- * would otherwise be replayed verbatim to every retry with the same batch
- * text (always, for ≤window whole-file batches) AND to every future run of
- * the same file — making short files permanently untranslatable until the
- * user manually clears the cache.
- */
-export const deleteCachedTranslation = async (text: string, cacheSuffix: string): Promise<void> => {
-  return translationCache.delete(generateCacheKey(text, cacheSuffix));
-};
-
-export const clearTranslationCache = async (): Promise<number> => {
-  return translationCache.clear();
 };

@@ -3,7 +3,12 @@
 // providers. The async test-ping stays inside the hook because it needs message
 // + setTranslationMethod (deeplx auto-fallback).
 
-import { checkLanguageSupport, getConfigStatus, URL_ALSO_REQUIRED, URL_IS_PRIMARY_CRED, type TranslationConfig } from "@/app/lib/translation";
+// 子模块导入(不走 "@/app/lib/translation" barrel):barrel 会拖进
+// indexedDBStorage 等浏览器专属模块,而本文件是纯函数,CLI(Node)的翻译前
+// 校验直接复用它 —— 同 lib/translation/retry.ts 的导入纪律。
+import { checkLanguageSupport } from "@/app/lib/translation/utils";
+import { getConfigStatus, URL_ALSO_REQUIRED, URL_IS_PRIMARY_CRED } from "@/app/lib/translation/registry";
+import type { TranslationConfig } from "@/app/lib/translation/types";
 
 export type ValidateInputsResult = { ok: true } | { ok: false; errorKey: "enterApiKey" | "enterApiUrl" } | { ok: false; errorMessage: string };
 
@@ -82,16 +87,25 @@ export const validateTranslationInputs = (opts: ValidateInputsOpts): ValidateInp
  * is reachable or the credentials valid, so editing them shouldn't re-probe.
  * Plain JSON string — the memo is an in-memory Set, so no hashing is needed.
  */
-export const pingSignature = (method: string, config: TranslationConfig | undefined): string =>
+export const pingSignature = (method: string, config: (TranslationConfig & { relayBase?: string }) | undefined): string =>
   JSON.stringify({
     method,
     url: config?.url ?? "",
     apiKey: config?.apiKey ?? "",
     model: config?.model ?? "",
+    // region / apiVersion(Azure)与 folderId(Yandex)决定这次探测【实际打到
+    // 哪个租户/部署】—— 换了它们,旧探测的结论对新目标不成立。
     region: config?.region ?? "",
     apiVersion: config?.apiVersion ?? "",
     folderId: config?.folderId ?? "",
+    // useRelay 换掉整条 wire path,而且翻转它正是浏览器直连撞 CORS 时的官方
+    // 修法 —— 用户照做之后,红色 failed 徽章绝不能还挂着。
     useRelay: config?.useRelay ?? false,
+    // Global setting merged in by the caller (it lives OUTSIDE per-provider
+    // config — see PipelineRuntimeConfig). Changing the relay host is changing
+    // which server answers the probe; a pass against the old relay must not
+    // be replayed for the new one.
+    relayBase: config?.relayBase ?? "",
     // Request-shape field, not a prompt: flips a Gemma-served backend between
     // 200 and a deterministic 400 ("system role not supported"), so a probe
     // pass from the other toggle state must not be replayed.

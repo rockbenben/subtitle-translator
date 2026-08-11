@@ -11,7 +11,7 @@
 // LRC(歌词,无可靠 end 时间)走行级的 parseReviewTexts / replaceReviewText。
 
 import { splitTextIntoLines } from "@/app/utils";
-import { filterSubLines, findTimeLineIndexBefore, VTT_SRT_TIME, SBV_TIME_REGEX, TIME_ARROW_SPLIT } from "./subtitleUtils";
+import { filterSubLines, findTimeLineIndexBefore, VTT_SRT_TIME, SBV_TIME_REGEX, TIME_ARROW_SPLIT } from "@/app/lib/translation/formats/subtitle";
 
 export interface SubtitleCue {
   /** 1-based 展示序号(按出现顺序重排,与源文件 cue 序号无关) */

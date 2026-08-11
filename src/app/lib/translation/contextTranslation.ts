@@ -42,7 +42,29 @@ export const isBlankLine = (line: string | undefined): boolean => !(line ?? "").
  * lookups through one transaction (vs one `get` per line) is what keeps a
  * cache-heavy re-run of a long file from paying per-line IndexedDB overhead.
  */
-export const prefillFromLineCache = async (contentLines: string[], translatedLines: (string | undefined)[], cacheGetMany: (texts: string[]) => Promise<(string | null)[]>): Promise<void> => {
+export const prefillFromLineCache = async (
+  contentLines: string[],
+  translatedLines: (string | undefined)[],
+  cacheGetMany: (texts: string[]) => Promise<(string | null)[]>,
+  /**
+   * 命中项落盘【前】的加工。必须传术语表 enforcement:同一批缓存键里混着两种
+   * 内容 —— 上下文路径存的是已 enforce 的成品,而 translateCore(逐行/chunk
+   * 路径)存的是【服务原始输出】。其它读路径都在读之后再 enforce 一遍抹平这个
+   * 差异,回填若直接装配原始值,用户只要在两次运行之间切过上下文开关(或在
+   * MT 与 LLM 之间换过 provider),已缓存的那些行就会静默地不再受术语表约束
+   * —— 同一份文件里一部分行生效一部分不生效,零请求零报错。
+   * 对已 enforce 的条目再跑一次是无害的(leak-through 幂等)。
+   *
+   * ⚠ 【必须是同步纯函数】。曾经传的是整个 enforceGlossaryOnLine,它在检出错译时
+   * 会发一次严格重译请求 —— 放在这个 for-await 循环里就是逐条串行、不过 pLimit、
+   * 且全部发生在第一次 updateProgress 之前:一份缓存齐全的长文件会卡在 0% 好几
+   * 分钟,把「缓存即断点 / 瞬间回放」这条承诺直接打碎。而当初要修的那个 bug
+   * (缓存回填绕过术语表)复现出来的是 leak-through 没生效,跟严格重试无关。
+   * 缓存命中的行拿到的是「上一轮已经付过费的译文」,给它补上纯替换即可;
+   * 真要重译,那是下一次非缓存运行的事。
+   */
+  postProcess?: (source: string, cached: string) => string,
+): Promise<void> => {
   // Only non-blank, still-undefined slots are lookup candidates (write-once).
   const pending: number[] = [];
   for (let i = 0; i < contentLines.length; i++) {
@@ -61,7 +83,15 @@ export const prefillFromLineCache = async (contentLines: string[], translatedLin
     const hit = hits[p];
     // Re-check write-once: a concurrent path can't touch translatedLines here
     // (single-threaded), but the guard documents intent and is cheap.
-    if (hit != null && translatedLines[pending[p]] === undefined) translatedLines[pending[p]] = hit;
+    // 判据是 truthy 而非 `!= null` —— 与 translateCore 的 `if (cachedTranslation)`
+    // 【必须一致】。空串曾在这里算命中:同一个键在逐行/chunk 路径上被判未命中
+    // 而重译,在上下文路径上却被写进 translatedLines,而引擎把「槽位有值」定义
+    // 为已完成 —— 那一行以空字幕 cue / 消失的 Markdown 段落出货,却计入 100%
+    // 进度、零失败、exit 0。同一份文件仅因上下文开关而产出不同结果。
+    // (空串怎么进的缓存:CLI 的缓存是可手工编辑的 JSON,并发写也可能截断。)
+    if (hit && translatedLines[pending[p]] === undefined) {
+      translatedLines[pending[p]] = postProcess ? postProcess(contentLines[pending[p]], hit) : hit;
+    }
   }
 };
 

@@ -4,7 +4,7 @@ import React, { useState, useMemo } from "react";
 import { Drawer, Segmented, AutoComplete, Button, InputNumber, ColorPicker, Form, Row, Col, Typography, App, Divider } from "antd";
 import { useTranslations } from "next-intl";
 import { useIsMobile } from "@/app/hooks/useIsMobile";
-import { ASS_STYLE_PRESETS, type AssStyleConfig, type AssLineStyle, type AssStylePreset } from "./subtitleUtils";
+import { ASS_STYLE_PRESETS, type AssStyleConfig, type AssLineStyle, type AssStylePreset } from "@/app/lib/translation/formats/subtitle";
 import { FONT_SUGGESTION_GROUPS } from "./assFonts";
 import AssStylePreview from "./AssStylePreview";
 

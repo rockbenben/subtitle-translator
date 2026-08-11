@@ -278,3 +278,34 @@ export const applyGlossaryToText = (text: string, terms: GlossaryTerm[]): string
     }),
   );
 };
+
+const NO_TERMS: GlossaryTerm[] = [];
+
+/**
+ * Pure derivation of the per-target-language helpers — lives in lib so the
+ * web hook (useGlossaryPresets) and the CLI share ONE filter predicate and
+ * ONE memoization strategy. The per-request system-prompt block is composed
+ * downstream (translateSingle) from getGlossaryTerms, filtered to the terms
+ * the request text actually contains.
+ */
+export const deriveGlossaryHelpers = (glossaryEnabled: boolean, activePreset: GlossaryPreset | undefined) => {
+  // Reference-stable per-language term arrays: compileGlossary memoizes its
+  // compiled regex set on the array reference (WeakMap), and applyGlossary
+  // runs once per translated line — a fresh array per call would recompile
+  // the full regex set per line.
+  const termsByLang = new Map<string, GlossaryTerm[]>();
+  const getGlossaryTerms = (targetLang: string): GlossaryTerm[] => {
+    if (!glossaryEnabled || !activePreset) return NO_TERMS;
+    let terms = termsByLang.get(targetLang);
+    if (!terms) {
+      // The web hook hands in a sanitized preset (sanitizePresetTerms), the
+      // CLI hands in sanitizeSettings output — keep the shape guard anyway
+      // for tests/direct use.
+      terms = (activePreset.terms ?? []).filter((t) => t.targetLang === targetLang && typeof t.source === "string" && t.source.trim());
+      termsByLang.set(targetLang, terms);
+    }
+    return terms;
+  };
+  const applyGlossary = (text: string, targetLang: string): string => applyGlossaryToText(text, getGlossaryTerms(targetLang));
+  return { getGlossaryTerms, applyGlossary };
+};

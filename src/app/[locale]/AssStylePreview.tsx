@@ -2,7 +2,7 @@
 
 import React from "react";
 import { useTranslations } from "next-intl";
-import { resolveBilingualFonts, scriptOf, type AssStyleConfig, type AssLineStyle } from "./subtitleUtils";
+import { resolveBilingualFonts, scriptOf, type AssStyleConfig, type AssLineStyle } from "@/app/lib/translation/formats/subtitle";
 
 // 预览示例文字:按文字系统取,使预览真正展示该语言字体的渲染(而非用拉丁文字撑中文字体)。
 const SAMPLE_BY_SCRIPT: Record<string, string> = {

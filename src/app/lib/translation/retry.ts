@@ -1,7 +1,11 @@
 // Translation retry configuration and utilities
 
-import { LLM_MODELS, RELAY_HINT_MARKER } from "@/app/lib/translation";
-import { isAbortError, isCascadedAbort } from "@/app/utils";
+// Submodule imports (not the "@/app/lib/translation" barrel, not "@/app/utils"):
+// this file must stay importable from Node (CLI/server) — the barrels carry
+// "use client" / browser-only modules (file-saver) that a Node entry must not pull.
+import { LLM_MODELS } from "./registry";
+import { RELAY_HINT_MARKER, RELAY_BASE_INVALID_MARKER } from "./services/shared";
+import { isAbortError, isCascadedAbort } from "@/app/utils/errorUtils";
 
 // MT-categorized services that actually delegate to an LLM runtime under the
 // hood (Qwen-MT → Qwen, translategemma → Gemma 3). They share LLM-style
@@ -11,6 +15,8 @@ const LLM_BACKED_MT_SERVICES: ReadonlySet<string> = new Set(["qwenMt", "translat
 
 // User-configurable defaults (in seconds for timeout)
 export const DEFAULT_RETRY_COUNT = 3;
+/** 逐行/逐值翻译的默认并发。引擎与 JSON 工具各有一条循环,共用这个数。 */
+export const DEFAULT_BATCH_SIZE = 10;
 export const DEFAULT_RETRY_TIMEOUT = 180; // seconds — covers P99 of LLM thinking + typical batches; power users bump via Advanced Settings
 
 export interface RetryConfig {
@@ -44,6 +50,26 @@ export const isAuthError = (error: unknown): boolean => {
 };
 
 /**
+ * 凭据【确定】失效 —— 只认协议事实(HTTP 401/403),不认消息文本。
+ *
+ * isAuthError 比它宽:为了兜住不返回 status 的 provider,它还匹配消息子串
+ * ("unauthorized" / "forbidden" …)。那对"这一行别重试"来说够用 —— 猜错的代价
+ * 是少重试一行。但用来决定【整轮生死】就不成比例了:Cloudflare 的机器人挑战页、
+ * 公司代理的错误页、provider 返回 200 但正文是 HTML —— 正文里出现一个
+ * "Forbidden" 就会让 10 个文件的批量任务在第 3 个上提前终止,后面 7 个零请求。
+ *
+ * 两种错误的代价不对称,所以两个判据分开:
+ *   · 该停没停 = 多打几轮注定失败的请求,用户看失败面板点重试即可(而且现在
+ *     那些轮次会被正确记账,不再静默丢结果);
+ *   · 不该停停了 = 一次瞬时故障让整批提前结束,用户得从头再来。
+ * 用协议事实控整轮,用宽判据控单行。
+ */
+export const isDefiniteAuthFailure = (error: unknown): boolean => {
+  const { status } = getErrorInfo(error);
+  return status === 401 || status === 403;
+};
+
+/**
  * Errors that retrying won't fix — bail out immediately so the user isn't stuck
  * at 0% for 30-60s of doomed retries. These are thrown by service layers when the
  * next attempt will fail the same way — notably the shared CORS → "enable API
@@ -58,7 +84,7 @@ export const isAuthError = (error: unknown): boolean => {
  * response has finish_reason==="length" — same input + same max_tokens
  * truncates at the same boundary every time, so retries are pure waste.
  */
-const NON_RETRYABLE_MESSAGES = [RELAY_HINT_MARKER.toLowerCase(), "请在 api 设置中开启", "max_tokens reached"];
+const NON_RETRYABLE_MESSAGES = [RELAY_HINT_MARKER.toLowerCase(), "请在 api 设置中开启", "max_tokens reached", RELAY_BASE_INVALID_MARKER.toLowerCase()];
 
 /**
  * Check if error is retryable (server errors or rate limits).
@@ -128,10 +154,20 @@ export const getRetryConfig = (translationMethod: string, userConfig?: UserRetry
 };
 
 /**
+ * setTimeout 的延时是 32 位有符号毫秒:超过 2^31-1(约 24.8 天)会【溢出成 1ms】
+ * 并打一条 TimeoutOverflowWarning。delayTime 的 UI 只有 min 没有 max、
+ * sanitizeSettings 的上界也有意是 Infinity,所以用户填个 3000000000 是够得着的
+ * —— 那一刻每个行间/批间暂停全部消失,整轮以满并发打向那个【本来正是要限速的】
+ * provider,换回一批 429 软失败。夹到上限而不是丢弃:用户的意图是"尽量慢",
+ * 给他能表达的最慢值,比悄悄退回默认间隔更接近他要的东西。
+ */
+const MAX_TIMEOUT_MS = 2 ** 31 - 1;
+
+/**
  * Delay helper function
  */
 export const delay = (ms: number): Promise<void> => {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, Math.min(ms, MAX_TIMEOUT_MS)));
 };
 
 /**
@@ -140,11 +176,15 @@ export const delay = (ms: number): Promise<void> => {
  * 裸 delay 会让取消按钮干转到睡满为止。
  * 叫醒时【resolve 而非 reject】:每个调用点的下一行本就是 signal 检查/入口守卫,
  * 由它们决定退出路径;在这里 reject 反而多一条要处理的异常形态。
+ * (translateLines 线路径的 delayTime 节流直接依赖这一条:它睡在【译文已写入
+ * 槽位之后】的任务内,reject 会让 Promise.all 把一批成功翻译整体打成异常。)
+ *
+ * 同 delay:夹到 setTimeout 的 32 位上限,详见 MAX_TIMEOUT_MS。
  */
 export const abortableSleep = (ms: number, signal?: AbortSignal): Promise<void> =>
   new Promise((resolve) => {
     if (signal?.aborted) return resolve();
-    const timer = setTimeout(done, ms);
+    const timer = setTimeout(done, Math.min(ms, MAX_TIMEOUT_MS));
     function done() {
       signal?.removeEventListener("abort", done);
       clearTimeout(timer);
@@ -225,7 +265,14 @@ export const rateLimitGate = {
     const now = Date.now();
     const prev = gateStates.get(method);
     if (prev && now < prev.until) return false;
-    const escalated = prev && now - prev.until < ESCALATION_WINDOW_MS ? Math.min(prev.cooldownMs * 2, RATE_LIMIT_MAX_COOLDOWN_MS) : RATE_LIMIT_BASE_COOLDOWN_MS;
+    // 升级【不得缩短】上一次的冷却。RATE_LIMIT_MAX_COOLDOWN_MS 是我们自己
+    // 递增阶梯的天花板(1s→2s→…→60s),不是给服务器指令封顶用的:上一次冷却
+    // 若来自 `Retry-After: 120`,裸 Math.min 会把「升级后」算成 60s —— 客户端
+    // 以一半的间隔反复去撞一个明确说了要等两分钟的 provider,在严格 provider
+    // 或共享免费端点上只会延长/加重限流,本轮软失败的行反而更多。
+    // 外层 Math.max 只在 prev 超过天花板时起作用(即只可能由 Retry-After 造成),
+    // 常规阶梯 1→2→4→…→60 完全不受影响。
+    const escalated = prev && now - prev.until < ESCALATION_WINDOW_MS ? Math.max(prev.cooldownMs, Math.min(prev.cooldownMs * 2, RATE_LIMIT_MAX_COOLDOWN_MS)) : RATE_LIMIT_BASE_COOLDOWN_MS;
     const cooldownMs = retryAfterMs ?? escalated;
     gateStates.set(method, { until: now + cooldownMs, cooldownMs });
     return true;
