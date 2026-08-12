@@ -35,7 +35,7 @@ import LanguageSelector from "@/app/components/LanguageSelector";
 import ApiStatusBlock from "@/app/components/ApiStatusBlock";
 import ContextTranslationBlock from "@/app/components/ContextTranslationBlock";
 import TranslationProgressStrip from "@/app/components/TranslationProgressStrip";
-import LiveTranslationResults from "@/app/components/LiveTranslationResults";
+import LiveTranslationResults from "./LiveTranslationResults";
 import { useTranslationContext } from "@/app/components/TranslationContext";
 import ResultCard from "@/app/components/ResultCard";
 import BilingualReviewPanel from "./BilingualReviewPanel";
@@ -111,7 +111,7 @@ const SubtitleTranslator = () => {
     isTranslating,
     setIsTranslating,
     resetProgress,
-    liveLines,
+    liveLinesStore,
     clearLiveLines,
     recordLiveLine,
     progressPercent,
@@ -305,12 +305,25 @@ const SubtitleTranslator = () => {
           lineNumbers: sourceLineNumbers,
           fileName,
           collectSoftFilled: softFilled,
-          // 实时逐行流:引擎每译完一行(术语表处理完毕)就推一个事件,这里立刻
-          // 进 liveLines 上屏 —— 不等待整批返回。与进度条并行,互不干扰。
-          // 「这一行最终没译出」的标记由 hook 在 failure 面板更新时统一处理
+          // 实时逐行流:引擎每定稿一行就推一个事件,这里立刻上屏 —— 不等整批
+          // 返回。「这一行最终没译出」的标记由 hook 在失败面板更新时统一处理
           // (markLiveLinesFailed),这里只管内容流。
+          //
+          // ⚠ ASS 必须在这里还原成人能读的形态。发给引擎的是 cleanLines
+          // (prepareAssForTranslation 把 `\N`+标签串换成了 ###n### 占位符),
+          // 引擎忠实地把它当"原文"发回来 —— 直接上屏就是满面板的 ###0###。
+          // 原文取 contentLines(文件里的真样子),译文过一遍与导出同一个
+          // restoreAssAfterTranslation:面板看到的和最终文件里的是同一形态。
           onLineTranslated: (result) => {
-            recordLiveLine(result);
+            recordLiveLine(
+              isAss
+                ? {
+                    ...result,
+                    original: contentLines[result.index] ?? result.original,
+                    translation: restoreAssAfterTranslation([result.translation], [tagMaps[result.index]])[0],
+                  }
+                : result,
+            );
           },
         });
         // removeChars 只清理【原始译文】,且必须在 ASS 标签/verbatim 还原【之前】
@@ -654,10 +667,13 @@ const SubtitleTranslator = () => {
               totalCount={progressInfo.total}
             />
 
-            {/* 实时逐行结果 —— 与进度条并行:每译完一行立即出现,不等整批。
-                只在「正在翻译或已有实时行」时渲染;失败行以琥珀「未译出」
-                标记,细节归下方失败面板。 */}
-            {(isTranslating || liveLines.length > 0) && <LiveTranslationResults lines={liveLines} isTranslating={isTranslating} />}
+            {/* 实时逐行结果 —— 与进度条并行:每定稿一行立即出现,不等整批。
+                ⚠ 只在【跑动时】渲染。它的全部价值是"等待时看见正在发生什么";
+                跑完之后正下方就是完整结果区,再顶着一个不再实时、内容还重复的
+                320px 面板,只是把结果区往下推。进度条不同 —— 它跑完要留成续跑
+                凭据(停在第几行、还能不能续),所以那条自己管自己的 ✕。
+                失败行以琥珀「未译出」标记,细节归下方失败面板。 */}
+            {isTranslating && <LiveTranslationResults store={liveLinesStore} processedCount={progressInfo.current} />}
           </Card>
         </Col>
 

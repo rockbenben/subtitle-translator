@@ -207,15 +207,14 @@
     "errorHintRelay": "Ağ hatası (muhtemelen CORS) — API Ayarlarında \"API Aktarıcı\"yı açın",
     "errorHintRelay403": "API 403 Forbidden döndürdü — API Ayarlarında \"API Aktarıcı\"yı açın",
     "errorHintGeminiKey": "Gemini'ye ulaşılamıyor: önce ağınızı kontrol edin (bazı ağlar Google hizmetlerine doğrudan erişemez). Ağ sorunsuzsa, 19 Haziran 2026'dan itibaren Google kısıtlamasız API anahtarlarını reddediyor — anahtarınızı AI Studio'da yeniden oluşturun (varsayılan olarak kısıtlı) veya Google Cloud Console'da eski anahtara Gemini API kısıtlaması ekleyin",
-    "rateLimitCooldown": "İstek sınırına ulaşıldı — kısa bir duraklamadan sonra otomatik olarak yeniden denenecek",
-    "liveResults": "Live results",
-    "liveWaiting": "Waiting for the first line…",
-    "liveEmpty": "No live results yet — start a translation run",
-    "liveLinesCount": "lines",
-    "liveNotTranslated": "not translated"
+    "rateLimitCooldown": "İstek sınırına ulaşıldı — kısa bir duraklamadan sonra otomatik olarak yeniden denenecek"
   },
   "SubtitleTranslator": {
     "clientDescription": "Altyazı yükleyin veya içerik yapıştırın. Hızlı çeviri için hedef dili seçin. Toplu işlemeyi destekler ve zaman çizelgesini korur.",
+    "liveResults": "Canlı sonuçlar",
+    "liveWaiting": "İlk satır bekleniyor…",
+    "liveNotTranslated": "Çevrilmedi",
+    "liveNoneSucceeded": "Bu turda henüz çevrilen satır yok — aşağıdaki hata ayrıntılarına bakın",
     "subtitleFormat": "Çeviri çıktısı",
     "translatedOnly": "Çevrilmiş",
     "bilingual": "İki Dilli",

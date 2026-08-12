@@ -67,19 +67,6 @@ export interface PipelineDeps {
    * hard-wired here. Headless callers (CLI) omit it and get translateCore.
    */
   translate?: (params: TranslateTextParams) => Promise<string>;
-  /**
-   * Live per-line results: fired the moment a line's translation is finalized
-   * (glossary enforcement included), so the UI can stream rows while the run
-   * is still in flight. One event per SUCCESSFUL or cache-hit slot — failed
-   * lines are deliberately NOT emitted here: they surface later, together,
-   * through PipelineOutcome.failures + the soft-fill convention (the failure
-   * panel is their single home). Absent (CLI): no-op, nothing streams.
-   *
-   * 与 onProgress 的分工:onProgress 是「行数 / 总量」的计数信号;本回调是
-   * 「这一行译完了」的内容信号,同一行可能先发 onProgress 再发本回调,
-   * 消费方按 index 对齐、不要假设顺序。
-   */
-  onLineTranslated?: (result: LineTranslatedEvent) => void;
   /** External cancellation (cancel button / Ctrl-C). The pipeline chains its own run controller off it. */
   signal?: AbortSignal;
   /**
@@ -146,12 +133,14 @@ export type TranslateBatchMeta = {
   lineNumbers?: number[];
   fileName?: string;
   /**
-   * 本批的实时结果 streamer —— 引擎每译完一行(术语表处理完毕后)推一个
-   * 事件。通过 meta 传入而非 PipelineDeps:渲染所需(物理行号/文件内序数)
-   * 是【本批】的事,依赖里塞进来会让所有调用方被迫构造它;而依赖只听
-   * onProgress / onRateLimit 这类【计数】信号。web 壳
-   * (SubtitleTranslator → translateBatch 的 meta)在这里挂自己的 streamer,
-   * CLI handler 不传。
+   * 本批的实时结果 streamer —— 引擎每定稿一行就推一个事件,网页壳据此在整批
+   * 返回【之前】逐行上屏。通过 meta 传入而非 PipelineDeps:它是「这一行的
+   * 内容」这种【本批】信号,而依赖只听 onProgress / onRateLimit 这类【计数】
+   * 信号(后者被每个文件、每个语种复用,塞进去会逼所有调用方构造它)。
+   * CLI handler 不传 —— 缺省即整条实时链路是 no-op。
+   *
+   * ⚠ 只发【成功】的槽位。失败行统一由 PipelineOutcome.failures + 软填约定
+   * 呈现在失败面板里,这里再发一份"原文副本"会让用户以为它译出来了。
    */
   onLineTranslated?: (result: LineTranslatedEvent) => void;
   /**
@@ -167,23 +156,27 @@ export type TranslateBatchMeta = {
 };
 
 /**
- * 一行译完的实时事件 —— 引擎逐行发出,消费方(网页壳)立即上屏。
- * `index` 是【本批 contentLines 里的下标】(0-based),原样呈现称为
- * `displayIndex`(= index + 1,与进度条「current / total」同源,都数已完成的
- * 行);`line` 是物理源行号(missing 时为 undefined,同 FailedLine.line 的
- * lineNumbers 回退语义)。`original` 是这一行的原始文本,`translation` 是
- * 最终译文(术语表处理后)。
+ * 一行定稿的实时事件 —— 引擎逐行发出,消费方(网页壳)立即上屏。
+ *
+ * ⚠ `index` 恒为【contentLines 里的下标】(0-based),与 FailedLine.index 同一
+ * 空间 —— 网页壳正是靠这一点把 outcome.failures 的 index 对回已上屏的行。
+ * chunk 路径内部按【非空行】下标 k 走,发射前必须经 sourceIdx[k] 换回来;
+ * 直接发 k 会在含空行的文件里指向别人家的行(空行数就是偏移量)。
+ *
+ * ⚠ `line`(物理源行号)【必须】带上,不能以"消费方手里有 meta.lineNumbers、
+ * 让它自己映射"为由省掉 —— 那正是上一版的做法,而没有任何消费方真的去映射:
+ * 面板于是打 contentLines 序数(cue #12),正下方失败面板打真实行号(47),
+ * 两者同样式并排,用户照着面板跳过去落在时间轴上。同一份数据的两种坐标同屏
+ * 出现,就得由【发出方】统一,不能指望每个消费方各自记得换算。
  */
 export interface LineTranslatedEvent {
   /** Index of the source line within this batch's contentLines (0-based). */
   index: number;
-  /** 1-based display index (index + 1) — the number users see in the UI. */
-  displayIndex: number;
-  /** Physical source line number when known; undefined for derived arrays. */
+  /** Physical source line number (meta.lineNumbers), same value as FailedLine.line. */
   line?: number;
-  /** The original source text of the line. */
+  /** The original source text of the line (pristine — not the flattened wire form). */
   original: string;
-  /** The final translation (after glossary enforcement). */
+  /** The final translation (after glossary enforcement / newline flattening). */
   translation: string;
 }
 
@@ -320,16 +313,6 @@ type RunCtx = {
   noteRateLimited: () => void;
   wasRateLimited: () => boolean;
 };
-
-/**
- * Build the batch's emitLine streamer from its meta. Kept as a helper so all
- * three batch paths (context / line / chunk) fire through one construction.
- */
-const makeEmitLine =
-  (config: PipelineRuntimeConfig, meta: TranslateBatchMeta | undefined): ((result: Omit<LineTranslatedEvent, "line"> & { line?: number }) => void) | undefined =>
-    meta?.onLineTranslated
-      ? (r) => meta.onLineTranslated!({ ...r, line: r.line ?? failureLine(config, meta, r.index) })
-      : undefined;
 
 /** Chain an internal run controller off the external signal; returns cleanup. */
 const chainSignal = (run: AbortController, external?: AbortSignal): (() => void) => {
@@ -634,24 +617,15 @@ const enforceGlossaryOnLine = async (sourceLine: string, rawTranslated: string, 
 // 调用方,调用方于是长成第二个 pipeline 并且真的漂移过(delayTime)。自带循环
 // 的工具一律「收集 → translateLines → 回写」,别再开单行口子。
 //
-// ⚠ index 参数是【0-based 批内下标】(= failureLine 的 index 语义,FailedLine
-// 也是用它)。调用方持有行号映射(meta.lineNumbers)时传它,否则传 undefined
-// 由 emitLine 按 ordinal 回填。绝对不要在这里 +1:那会在 lineNumbers 存在时
-// 把物理行号当成批内下标,发射出指向别人家的 index。
-const translateSingleWithGlossary = async (
-  text: string,
-  cacheSuffix: string,
-  config: PipelineRuntimeConfig,
-  ctx: RunCtx,
-  fullText?: string,
-  index?: number,
-): Promise<string> => {
+// ⚠ index 是【contentLines 下标】,必填。曾经是 `index?` + 发射时 `index ?? 0`:
+// 漏传的调用方不会报错,而是把每一行都发成 index 0,面板里永远只有一行在原地
+// 被覆盖 —— 一个静默到极点的失效。必填让漏传变成编译错误。
+const translateSingleWithGlossary = async (text: string, cacheSuffix: string, config: PipelineRuntimeConfig, ctx: RunCtx, index: number, fullText?: string): Promise<string> => {
   const raw = await translateSingle(text, cacheSuffix, config, ctx, fullText);
   const final = await enforceGlossaryOnLine(text, raw ?? "", cacheSuffix, config, ctx, fullText);
-  // 实时流唯一发射点:三条批量路径(line 并发 / chunk 营救 / LLM 上下文批的
-  // 逐槽处理)都从这里收口,术语表处理完毕后的【最终】译文在此可见。失败行
-  // 不在此发射 —— 它们属于 failure 面板的统一呈现,别拆成零零碎碎的流。
-  ctx.emitLine?.({ index: index ?? 0, displayIndex: (index ?? 0) + 1, original: text, translation: final });
+  // 实时流:术语表处理完毕后的【最终】译文在此可见。失败行不在此发射 ——
+  // 它们走 failure 面板的统一呈现(catch 在调用方,到不了这里)。
+  ctx.emitLine?.({ index, original: text, translation: final });
   return final;
 };
 
@@ -719,6 +693,17 @@ const translateWithContext = async (
       // 那里面的严格重译会在这个串行循环里逐条发请求,见 postProcess 的注释。
       (_source, cached) => applyGlossary(ctx, cached, runtimeConfig.targetLanguage),
     );
+  }
+
+  // 实时流:此刻【已经定稿】的槽位(上一轮缓存命中的行)一次性补发 —— 它们
+  // 永远到不了下面的模型调用点,不在这里发的话续跑一份翻过的文件会是:进度条
+  // 一路走到 100%,实时面板从头到尾停在「等待第一行译文…」。全命中时
+  // translateSingleBatch 更是整批 early-return,一个事件都不会有。
+  // (空行也在已定稿之列,由 emitLine 接缝统一挡掉。)
+  if (ctx.emitLine) {
+    for (let i = 0; i < contentLines.length; i++) {
+      if (translatedLines[i] !== undefined) ctx.emitLine({ index: i, original: contentLines[i], translation: translatedLines[i] });
+    }
   }
 
   const translateSingleBatch = async (batchStart: number, batchEnd: number, contextWindow: number): Promise<boolean> => {
@@ -798,9 +783,8 @@ const translateWithContext = async (
           // instead of a half-localized mix like "斯派克, hi".
           const enforced = await enforceGlossaryOnLine(batchSources[j], translatedBatch[j], cacheSuffix, runtimeConfig, ctx, fullText);
           translatedLines[batchStart + j] = enforced;
-          // 实时流:这一槽立刻可见(emit 与缓存写之间无 await —— 事件先于
-          // 批次级 purges 与缓存写,任何顺序都只是"即时"的差别)。
-          ctx.emitLine?.({ index: batchStart + j, displayIndex: batchStart + j + 1, original: batchSources[j], translation: enforced });
+          // 实时流:这一槽立刻可见,不等整批 20-60s 的请求全部回来。
+          ctx.emitLine?.({ index: batchStart + j, original: batchSources[j], translation: enforced });
           // Cache the finalized line by its source text so a future run skips
           // it (see prefillFromLineCache above). Survives the batch-level purge
           // because it's keyed by the single line, not the batch window.
@@ -1126,7 +1110,14 @@ const runTranslateLines = async (
     onRateLimit: deps.onRateLimit,
     // NOT deps.onAuthAbort: inside translateLines the run controller is
     // pipeline-internal; aborting it already tears down every peer of THIS run.
-    emitLine: makeEmitLine(config, meta),
+    // 实时流的【唯一接缝】—— 两件横切的事都在这里做一遍,不在四个发射点各写
+    // 一遍(发射点还会增加:现在是行路径 / 上下文批 / 上下文缓存补发 / chunk
+    // 块,漏一个的症状都只在特定文件上才看得见):
+    //   ① 空行不上屏 —— 它们是原样穿过的占位,发出去就是一排空行夹在译文里。
+    //   ② 补上物理行号 —— 发射点手里只有批内下标;`meta.lineNumbers` 只有这
+    //      一层有。缺了它面板就只能打序数,和失败面板的行号对不上(见
+    //      LineTranslatedEvent 的注释)。
+    emitLine: meta?.onLineTranslated ? (event) => void (isBlankLine(event.original) || meta.onLineTranslated!({ ...event, line: event.line ?? failureLine(config, meta, event.index) })) : undefined,
     getGlossaryTerms: deps.getGlossaryTerms ?? (() => []),
     noteError: (error) => {
       state.lastError = error;
@@ -1219,7 +1210,7 @@ const runTranslateLines = async (
           if (runController.signal.aborted) throw new Error("Translation aborted");
           try {
             // Glossary on success only; the catch below soft-fills the raw source.
-            translatedLines[index] = await translateSingleWithGlossary(line, cacheSuffix, runtimeConfig, ctx, fullText, index);
+            translatedLines[index] = await translateSingleWithGlossary(line, cacheSuffix, runtimeConfig, ctx, index, fullText);
           } catch (error) {
             // Auth error already tripped THIS run's controller inside translateSingle.
             // It must propagate raw so Promise.all kills the batch and the caller's
@@ -1363,7 +1354,7 @@ const runTranslateLines = async (
           if (runController.signal.aborted) throw new Error("Translation aborted");
           const srcLine = chunkSourceLines[j];
           try {
-            const one = await translateSingleWithGlossary(srcLine, cacheSuffix, runtimeConfig, ctx, fullText, chunkStartK + j);
+            const one = await translateSingle(srcLine, cacheSuffix, runtimeConfig, ctx, fullText);
             // 空串按失败处理(与「空串译文记失败」的既有约定一致);
             // 换行替换成空格:本流是 join("\n") 的,单行译文里混进一个换行会把
             // 【这一块其后每一行】整体下移 —— 正是这里要修的那种损坏。
@@ -1382,19 +1373,6 @@ const runTranslateLines = async (
           }
           if (j < chunkLineCount - 1) await abortableSleep(config.delayTime || 200, runController.signal);
         }
-        // 第二轮 emit 的【唯一理由】是把行内换行压成空格后的最终文本覆盖掉
-        // translateSingleWithGlossary 里发出的初版(同一 index,recordLiveLine
-        // 在队尾原位覆盖;乱序则队尾续写,保留两行 —— 内容一致,无害)。
-        // failedK 槽位(请求失败 → helper 未 emit;空串结果 → helper 已 emit 但
-        // 会随 failure 流程被标成「未译出」)一律跳过 —— 失败行不属于实时流,
-        // 别把"原文副本"当译文上屏。
-        // ⚠ 别用 rescued[j] !== chunkSourceLines[j] 作判据:专有名词/数字这类
-        // 合法译成自身的行会被当成"没译出"漏掉 —— 与 isSoftFilledHalf 同款教训。
-        for (let j = 0; j < chunkLineCount; j++) {
-          if (!failedK.has(chunkStartK + j)) {
-            ctx.emitLine?.({ index: chunkStartK + j, displayIndex: chunkStartK + j + 1, original: chunkSourceLines[j], translation: rescued[j] });
-          }
-        }
         processed = rescued.join("\n");
       } else {
         // ⚠ 削掉的尾部空行【必须写回 processed】。上一版只削了本地副本 produced,
@@ -1405,6 +1383,34 @@ const runTranslateLines = async (
         // 也就是说那个 while 削行不仅没帮上忙,还把本来会被检出的错位变成了静默
         // 损坏 —— 不削的话行数不符会命中上面的分支,走逐行营救。
         processed = produced.join("\n");
+      }
+      // 实时流:本块定稿后【在这里】一次性发射 —— 三条分支(行数正好 / 请求
+      // 失败 / 逐行营救)出来时 processed 的行数都已等于 chunkLineCount,这是
+      // 唯一同时覆盖它们的收口点。上一版把发射写在营救分支【里】,于是 chunk
+      // 路径的默认服务(gtxFreeAPI)跑正常的一轮时一行都不出:只有服务并/拆
+      // 了行、触发营救,面板才会有内容。
+      // failedK 的槽位跳过 —— 它们装的是保留下来的原文,不是译文。
+      // ⚠ 换回 contentLines 空间(sourceIdx[k]),且 original 取【原始】
+      // contentLines[i] 而非 chunkSourceLines[j]:后者是进 wire 前压过的
+      // (换行→空格、deeplx 的 "<>"→"< >"),拿它上屏等于把降级后的形态当原文
+      // 展示给用户。
+      // ⚠ 发射前必须过 applyGlossary,判据必须和下面重组时的 `unusable` 一致 ——
+      // 这两件事都在【本循环之后】才对输出做,发射点在循环【之内】,漏掉哪个
+      // 面板就和最终文件对不上:
+      //   · 不过 applyGlossary → 配了术语表时面板显示未强制术语的译文,用户看
+      //     着「Spike」下载下来却是「斯派克」(chunk 是默认服务 gtxFreeAPI 的路)
+      //   · 只跳 failedK → 服务把某槽吐成空串时,它在这里还没进 failedK(要等
+      //     下面 `unusable` 才判),于是被当成功行发出去,面板渲染成「原文 +
+      //     空白译文」,像渲染坏了,而同一行随后被记为失败
+      if (ctx.emitLine) {
+        const finalLines = processed.split("\n");
+        for (let j = 0; j < chunkLineCount; j++) {
+          const k = chunkStartK + j;
+          const translated = finalLines[j];
+          if (failedK.has(k) || translated === undefined || translated.trim() === "") continue;
+          const i = sourceIdx[k];
+          ctx.emitLine({ index: i, original: contentLines[i], translation: applyGlossary(ctx, translated, config.targetLanguage) });
+        }
       }
       translatedChunks.push(processed);
       chunkStartK += chunkLineCount;

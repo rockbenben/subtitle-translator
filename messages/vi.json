@@ -207,15 +207,14 @@
     "errorHintRelay": "Lỗi mạng (có thể do CORS) — hãy bật \"Chuyển tiếp API\" trong Cài đặt API",
     "errorHintRelay403": "API trả về 403 Forbidden — hãy bật \"Chuyển tiếp API\" trong Cài đặt API",
     "errorHintGeminiKey": "Không thể kết nối Gemini: hãy kiểm tra mạng trước (một số mạng không thể truy cập trực tiếp dịch vụ Google). Nếu mạng bình thường, từ 19/06/2026 Google từ chối các API key không giới hạn — hãy tạo lại key trong AI Studio (mặc định đã giới hạn) hoặc thêm giới hạn Gemini API cho key cũ trong Google Cloud Console",
-    "rateLimitCooldown": "Đạt giới hạn yêu cầu — tạm dừng một lát rồi tự động thử lại",
-    "liveResults": "Live results",
-    "liveWaiting": "Waiting for the first line…",
-    "liveEmpty": "No live results yet — start a translation run",
-    "liveLinesCount": "lines",
-    "liveNotTranslated": "not translated"
+    "rateLimitCooldown": "Đạt giới hạn yêu cầu — tạm dừng một lát rồi tự động thử lại"
   },
   "SubtitleTranslator": {
     "clientDescription": "Tải lên phụ đề hoặc dán nội dung. Chọn ngôn ngữ đích để dịch nhanh. Hỗ trợ xử lý hàng loạt và giữ nguyên dòng thời gian.",
+    "liveResults": "Kết quả trực tiếp",
+    "liveWaiting": "Đang chờ dòng đầu tiên…",
+    "liveNotTranslated": "Chưa dịch",
+    "liveNoneSucceeded": "Lượt này chưa có dòng nào được dịch — xem chi tiết lỗi bên dưới",
     "subtitleFormat": "Kết quả dịch",
     "translatedOnly": "Đã dịch",
     "bilingual": "Song ngữ",

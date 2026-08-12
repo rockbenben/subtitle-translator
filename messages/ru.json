@@ -207,15 +207,14 @@
     "errorHintRelay": "Ошибка сети (возможно, CORS) — включите «Ретранслятор API» в настройках API",
     "errorHintRelay403": "API вернул 403 Forbidden — включите «Ретранслятор API» в настройках API",
     "errorHintGeminiKey": "Не удаётся подключиться к Gemini: сначала проверьте сеть (некоторые сети не имеют прямого доступа к сервисам Google). Если сеть в порядке, с 19.06.2026 Google отклоняет неограниченные API-ключи — создайте ключ заново в AI Studio (по умолчанию с ограничением) или добавьте ограничение Gemini API к старому ключу в консоли Google Cloud",
-    "rateLimitCooldown": "Достигнут лимит запросов — короткая пауза, повтор произойдёт автоматически",
-    "liveResults": "Live results",
-    "liveWaiting": "Waiting for the first line…",
-    "liveEmpty": "No live results yet — start a translation run",
-    "liveLinesCount": "lines",
-    "liveNotTranslated": "not translated"
+    "rateLimitCooldown": "Достигнут лимит запросов — короткая пауза, повтор произойдёт автоматически"
   },
   "SubtitleTranslator": {
     "clientDescription": "Загрузите файл субтитров или вставьте содержимое, выберите целевой язык для быстрого перевода. Поддерживает пакетную обработку и автоматически сохраняет временную шкалу.",
+    "liveResults": "Результаты в реальном времени",
+    "liveWaiting": "Ожидание первой строки…",
+    "liveNotTranslated": "Не переведено",
+    "liveNoneSucceeded": "В этом запуске пока нет переведённых строк — подробности об ошибках ниже",
     "subtitleFormat": "Вывод перевода",
     "translatedOnly": "Перевод",
     "bilingual": "Двуязычный",

@@ -101,11 +101,6 @@ const useTranslationState = () => {
   // UI shows Alert with retry button; cache hits skip re-translation.
   const [failedCount, setFailedCount] = useState<number>(0);
   const [failedLines, setFailedLines] = useState<FailedLine[]>([]);
-  // 本轮软失败槽位的【引用副本】—— 引擎的 LineTranslatedEvent 只有 index,
-  // 没有 failed 字段(失败行不发射),实时行列表要用它把已发射的槽标记成
-  // 「这一行最终没译出」。ref 同步更新(不触发渲染),与 failedLines 永远
-  // 一起改(同 runHadFailuresRef / runHadFailures 的「同一事实双副本」约定)。
-  const failedLinesRef = useRef<FailedLine[]>([]);
   // Lang-level failures: in multi-language batch mode, codes of langs that
   // errored out entirely. Replaces noisy per-lang toasts. See md-translator #7.
   const [failedLangs, setFailedLangs] = useState<string[]>([]);
@@ -169,7 +164,7 @@ const useTranslationState = () => {
   };
 
   // Extracted concerns
-  const { isTranslating, setIsTranslating, progressPercent, setProgressPercent, progressInfo, abortControllerRef, disposedRef, makeUpdateProgress, resetProgress, liveLines, clearLiveLines, recordLiveLine, markLiveLinesFailed } = useTranslationProgress();
+  const { isTranslating, setIsTranslating, progressPercent, setProgressPercent, progressInfo, abortControllerRef, disposedRef, makeUpdateProgress, resetProgress, liveLinesStore, clearLiveLines, recordLiveLine, markLiveLinesFailed } = useTranslationProgress();
 
   // ─── 取消 ────────────────────────────────────────────────────────────────
   // 取消【完全复用】既有的级联中止链路:abort 本轮 controller → 在飞请求与
@@ -632,11 +627,14 @@ const useTranslationState = () => {
         setRunHadFailures(true);
         setFailedCount((prev) => prev + outcome.failures.length);
         setFailedLines((prev) => [...prev, ...outcome.failures]);
-        failedLinesRef.current = [...failedLinesRef.current, ...outcome.failures];
-        // 实时行列表把本轮已发射的槽按 index 标记为 failed —— 引擎不发射
-        // 失败行,但已发射的同槽行(缓存命中后又失败、替换重试同槽)必须
-        // 显示成「这一行没译出」。ref 在此【同步】读到本轮累计的失败槽位
-        // (含多语言循环里早先语种的),不受 setState 异步影响。
+        // 实时面板把已上屏的槽按 index 标记为「未译出」。绝大多数失败行压根
+        // 没上过屏(引擎不发射失败行),markLiveLinesFailed 对它们是 no-op;
+        // 真正要处理的是【先成功后作废】的槽 —— 上下文路径补发过缓存命中的
+        // 行、随后整批 purge 重译又失败,面板上那一行必须翻成琥珀,不能留着
+        // 一份看起来译好了的旧译文。
+        // ⚠ 只喂【本次 outcome】的 failures,不是累计值:index 是文件内下标,
+        // 多语言/多文件循环里换个文件就换了一套坐标,喂累计值会照着上一个
+        // 文件的下标去标本文件的行。
         markLiveLinesFailed(outcome.failures.map((f) => f.index).filter((i): i is number => i !== undefined));
         if (lastErrorRef.current) setFailedReason(lastErrorRef.current);
       }
@@ -663,7 +661,6 @@ const useTranslationState = () => {
   const clearFailures = () => {
     setFailedCount(0);
     setFailedLines([]);
-    failedLinesRef.current = [];
     setFailedLangs([]);
     setFailedReason("");
     lastErrorRef.current = null;
@@ -788,6 +785,13 @@ const useTranslationState = () => {
     // 自行开关。Progress modal 在 validate 的 test ping 阶段也保持可见,体验连续。
     setIsTranslating(true);
     resetProgress();
+    // ⚠ 必须在这里清实时行,不能只靠下游 performTranslation 的语言循环 ——
+    // isTranslating 一置真面板就挂载,而紧接着的 `await validate()` 是一次
+    // 【真实网络探测】(macrotask,慢端点可达数秒),React 早已提交渲染:
+    // 这段时间面板会带着【上一个文件】的译文当作本轮的实时输出展示。批量路径
+    // (工具页的 handleMultipleTranslate)本来就在 validate 前清,两个入口必须
+    // 对称,否则只有单文件路径复现,而它才是默认用法。
+    clearLiveLines();
     glossarySnapshotRef.current = new Map();
     try {
       const isValid = await validate();
@@ -870,10 +874,11 @@ const useTranslationState = () => {
     isTranslating,
     setIsTranslating,
     resetProgress,
-    liveLines,
+    liveLinesStore,
     clearLiveLines,
     recordLiveLine,
-    markLiveLinesFailed,
+    // markLiveLinesFailed 【不】导出:失败标记只有引擎回包这一个正确时机
+    // (translateBatch 里那处),从外面驱动就又是一个「就标一行」的口子。
     apiSettingsOpen,
     setApiSettingsOpen,
     progressPercent,

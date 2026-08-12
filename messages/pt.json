@@ -207,15 +207,14 @@
     "errorHintRelay": "Erro de rede (possivelmente CORS) — ative o \"Relay da API\" nas configurações de API",
     "errorHintRelay403": "A API retornou 403 Forbidden — ative o \"Relay da API\" nas configurações de API",
     "errorHintGeminiKey": "Não foi possível conectar ao Gemini: verifique primeiro sua rede (algumas redes não alcançam diretamente os serviços do Google). Se a rede estiver bem, desde 19/06/2026 o Google rejeita chaves de API sem restrições — gere novamente sua chave no AI Studio (restrita por padrão) ou adicione uma restrição de Gemini API à chave antiga no Console do Google Cloud",
-    "rateLimitCooldown": "Limite de requisições atingido — pausando brevemente, repetiremos automaticamente",
-    "liveResults": "Live results",
-    "liveWaiting": "Waiting for the first line…",
-    "liveEmpty": "No live results yet — start a translation run",
-    "liveLinesCount": "lines",
-    "liveNotTranslated": "not translated"
+    "rateLimitCooldown": "Limite de requisições atingido — pausando brevemente, repetiremos automaticamente"
   },
   "SubtitleTranslator": {
     "clientDescription": "Envie legendas ou cole conteúdo. Selecione o idioma de destino para tradução rápida. Suporta processamento em lote e preserva a linha do tempo.",
+    "liveResults": "Resultados ao vivo",
+    "liveWaiting": "Aguardando a primeira linha…",
+    "liveNotTranslated": "Não traduzido",
+    "liveNoneSucceeded": "Nenhuma linha traduzida ainda — veja os detalhes da falha abaixo",
     "subtitleFormat": "Saída da tradução",
     "translatedOnly": "Traduzido",
     "bilingual": "Bilíngue",

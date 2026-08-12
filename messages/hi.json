@@ -207,15 +207,14 @@
     "errorHintRelay": "नेटवर्क त्रुटि (संभवतः CORS प्रतिबंध)। API सेटिंग्स में \"API रिले\" चालू करें",
     "errorHintRelay403": "API ने 403 Forbidden लौटाया। API सेटिंग्स में \"API रिले\" चालू करें",
     "errorHintGeminiKey": "Gemini से कनेक्ट नहीं हो सका: पहले नेटवर्क जांचें (कुछ नेटवर्क Google सेवाओं तक सीधे नहीं पहुंच पाते)। नेटवर्क ठीक होने पर, 19 जून 2026 से Google अप्रतिबंधित API कुंजियों को अस्वीकार करता है — AI Studio में कुंजी फिर से बनाएं (डिफ़ॉल्ट रूप से प्रतिबंधित) या Google Cloud कंसोल में पुरानी कुंजी पर Gemini API प्रतिबंध जोड़ें",
-    "rateLimitCooldown": "अनुरोध सीमा — थोड़ी देर रुककर स्वचालित रूप से पुनः प्रयास होगा",
-    "liveResults": "Live results",
-    "liveWaiting": "Waiting for the first line…",
-    "liveEmpty": "No live results yet — start a translation run",
-    "liveLinesCount": "lines",
-    "liveNotTranslated": "not translated"
+    "rateLimitCooldown": "अनुरोध सीमा — थोड़ी देर रुककर स्वचालित रूप से पुनः प्रयास होगा"
   },
   "SubtitleTranslator": {
     "clientDescription": "उपशीर्षक अपलोड करें या सामग्री पेस्ट करें। त्वरित अनुवाद के लिए लक्ष्य भाषा चुनें। बैच प्रोसेसिंग का समर्थन करता है और समयरेखा को संरक्षित करता है।",
+    "liveResults": "लाइव परिणाम",
+    "liveWaiting": "पहली पंक्ति की प्रतीक्षा में…",
+    "liveNotTranslated": "अनुवाद नहीं हुआ",
+    "liveNoneSucceeded": "इस बार अभी तक कोई पंक्ति अनुवादित नहीं हुई — नीचे विफलता विवरण देखें",
     "subtitleFormat": "अनुवाद आउटपुट",
     "translatedOnly": "अनुवादित",
     "bilingual": "द्विभाषी",

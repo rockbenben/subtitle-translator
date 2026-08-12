@@ -207,15 +207,14 @@
     "errorHintRelay": "خطأ في الشبكة (قد يكون بسبب قيود CORS) — فعِّل «ترحيل API» في إعدادات API",
     "errorHintRelay403": "أعادت واجهة API الخطأ 403 (محظور) — فعِّل «ترحيل API» في إعدادات API",
     "errorHintGeminiKey": "تعذّر الوصول إلى Gemini: تحقق من الشبكة أولًا (بعض الشبكات لا تصل مباشرة إلى خدمات Google). إذا كانت الشبكة سليمة، فمنذ 19 يونيو 2026 ترفض Google مفاتيح API غير المقيّدة — أعد إنشاء مفتاحك في AI Studio (مقيّد افتراضيًا) أو أضف قيد Gemini API للمفتاح القديم في وحدة تحكم Google Cloud",
-    "rateLimitCooldown": "تم تجاوز حد الطلبات — إيقاف مؤقت قصير ثم إعادة المحاولة تلقائيًا",
-    "liveResults": "Live results",
-    "liveWaiting": "Waiting for the first line…",
-    "liveEmpty": "No live results yet — start a translation run",
-    "liveLinesCount": "lines",
-    "liveNotTranslated": "not translated"
+    "rateLimitCooldown": "تم تجاوز حد الطلبات — إيقاف مؤقت قصير ثم إعادة المحاولة تلقائيًا"
   },
   "SubtitleTranslator": {
     "clientDescription": "قم بتحميل الترجمات أو لصق المحتوى. اختر لغة الهدف للترجمة السريعة. يدعم المعالجة المجمعة ويحافظ على الجدول الزمني.",
+    "liveResults": "النتائج المباشرة",
+    "liveWaiting": "في انتظار السطر الأول…",
+    "liveNotTranslated": "لم تتم الترجمة",
+    "liveNoneSucceeded": "لم تتم ترجمة أي سطر في هذه الجولة — راجع تفاصيل الفشل أدناه",
     "subtitleFormat": "إخراج الترجمة",
     "translatedOnly": "مترجم",
     "bilingual": "ثنائي",

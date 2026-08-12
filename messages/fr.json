@@ -207,15 +207,14 @@
     "errorHintRelay": "Erreur réseau (probablement CORS) — activez « Relais API » dans les paramètres API",
     "errorHintRelay403": "L'API a renvoyé 403 Forbidden — activez « Relais API » dans les paramètres API",
     "errorHintGeminiKey": "Impossible de joindre Gemini : vérifiez d'abord votre réseau (certains réseaux ne peuvent pas atteindre directement les services Google). Si le réseau fonctionne, Google rejette depuis le 19 juin 2026 les clés API sans restriction — régénérez votre clé dans AI Studio (restreinte par défaut) ou ajoutez une restriction Gemini API à l'ancienne clé dans la console Google Cloud",
-    "rateLimitCooldown": "Limite de requêtes atteinte — courte pause, nouvelle tentative automatique",
-    "liveResults": "Live results",
-    "liveWaiting": "Waiting for the first line…",
-    "liveEmpty": "No live results yet — start a translation run",
-    "liveLinesCount": "lines",
-    "liveNotTranslated": "not translated"
+    "rateLimitCooldown": "Limite de requêtes atteinte — courte pause, nouvelle tentative automatique"
   },
   "SubtitleTranslator": {
     "clientDescription": "Téléchargez des sous-titres ou collez le contenu. Sélectionnez la langue cible pour une traduction rapide. Supporte le traitement par lot et conserve la chronologie.",
+    "liveResults": "Résultats en direct",
+    "liveWaiting": "En attente de la première ligne…",
+    "liveNotTranslated": "Non traduit",
+    "liveNoneSucceeded": "Aucune ligne traduite pour l'instant — voir les détails d'échec ci-dessous",
     "subtitleFormat": "Sortie de la traduction",
     "translatedOnly": "Traduit",
     "bilingual": "Bilingue",

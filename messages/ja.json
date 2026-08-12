@@ -207,15 +207,14 @@
     "errorHintRelay": "ネットワークエラー（CORS 制限の可能性があります）。API 設定で「API 中継」を有効にしてください",
     "errorHintRelay403": "API が 403 Forbidden を返しました。API 設定で「API 中継」を有効にしてください",
     "errorHintGeminiKey": "Gemini に接続できません。まずネットワークを確認してください（一部のネットワークでは Google サービスに直接接続できません）。ネットワークに問題がなければ、2026年6月19日以降 Google は無制限の API キーを拒否しています。AI Studio でキーを再生成する（デフォルトで制限付き）か、Google Cloud コンソールで既存キーに Gemini API 制限を追加してください",
-    "rateLimitCooldown": "レート制限に達したため少し待機し、自動的に再試行します",
-    "liveResults": "Live results",
-    "liveWaiting": "Waiting for the first line…",
-    "liveEmpty": "No live results yet — start a translation run",
-    "liveLinesCount": "lines",
-    "liveNotTranslated": "not translated"
+    "rateLimitCooldown": "レート制限に達したため少し待機し、自動的に再試行します"
   },
   "SubtitleTranslator": {
     "clientDescription": "字幕ファイルをアップロードまたは内容を貼り付け、翻訳先言語を選択して素早く翻訳。一括処理に対応し、タイムラインを自動保持。",
+    "liveResults": "リアルタイム結果",
+    "liveWaiting": "最初の行の翻訳を待っています…",
+    "liveNotTranslated": "未翻訳",
+    "liveNoneSucceeded": "この実行ではまだ翻訳できた行がありません — 下の失敗情報をご確認ください",
     "subtitleFormat": "訳文の出力",
     "translatedOnly": "訳文のみ",
     "bilingual": "対訳",
