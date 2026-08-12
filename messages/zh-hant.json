@@ -207,7 +207,12 @@
     "errorHintRelay": "網路錯誤（可能是 CORS 限制），請在 API 設定中開啟「中轉 API」",
     "errorHintRelay403": "介面回傳 403 禁止存取，請在 API 設定中開啟「中轉 API」",
     "errorHintGeminiKey": "無法連線 Gemini：請先檢查網路（部分網路環境無法直連 Google 服務）。若網路正常，則可能是 Google 自 2026-06-19 起拒絕「無限制 API Key」——請在 AI Studio 重新產生金鑰（預設已限制），或在 Google Cloud 主控台為舊金鑰新增 Gemini API 限制",
-    "rateLimitCooldown": "請求過於頻繁，已自動暫停片刻後重試"
+    "rateLimitCooldown": "請求過於頻繁，已自動暫停片刻後重試",
+    "liveResults": "实时结果",
+    "liveWaiting": "等待第一行译文…",
+    "liveEmpty": "还没有实时结果 —— 开始一轮翻译即可看到",
+    "liveLinesCount": "行",
+    "liveNotTranslated": "未译出"
   },
   "SubtitleTranslator": {
     "clientDescription": "上傳字幕檔案或粘貼內容，選擇目標語言即可快速翻譯。支持批量處理，自動保留時間軸。",

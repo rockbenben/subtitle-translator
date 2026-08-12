@@ -207,7 +207,12 @@
     "errorHintRelay": "Network error (possibly CORS) — enable \"API Relay\" in API Settings",
     "errorHintRelay403": "The API returned 403 Forbidden — enable \"API Relay\" in API Settings",
     "errorHintGeminiKey": "Cannot reach Gemini: check your network first (some networks cannot reach Google services directly). If the network is fine, Google has been rejecting unrestricted API keys since June 19, 2026 — regenerate your key in AI Studio (restricted by default) or add a Gemini API restriction to the old key in Google Cloud Console",
-    "rateLimitCooldown": "Rate limited — pausing briefly, will retry automatically"
+    "rateLimitCooldown": "Rate limited — pausing briefly, will retry automatically",
+    "liveResults": "Live results",
+    "liveWaiting": "Waiting for the first line…",
+    "liveEmpty": "No live results yet — start a translation run",
+    "liveLinesCount": "lines",
+    "liveNotTranslated": "not translated"
   },
   "SubtitleTranslator": {
     "clientDescription": "Upload subtitles or paste content. Select target language for fast translation. Supports batch processing and retains timelines.",
