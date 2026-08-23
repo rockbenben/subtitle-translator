@@ -14,8 +14,9 @@ export const translationServices: Record<TranslationMethod, TranslationService> 
   webgoogletranslate: traditional.webgoogletranslate,
   qwenMt: traditional.qwenMt,
   translategemma: traditional.translategemma,
+  milmmt: traditional.milmmt,
 
-  // LLM APIs — 12 OpenAI-compatible services auto-registered from OPENAI_COMPAT_PROVIDERS
+  // LLM APIs — OpenAI-compatible services auto-registered from OPENAI_COMPAT_PROVIDERS
   ...llm.openAICompatServices,
 
   // LLM APIs — special-case providers that don't fit the OpenAI-compatible shape

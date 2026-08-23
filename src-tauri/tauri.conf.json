@@ -2,7 +2,7 @@
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "Subtitle Translator",
   "mainBinaryName": "SubtitleTranslator",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "identifier": "com.rockbenben.subtitletranslator",
   "build": {
     "frontendDist": "../out",
@@ -25,7 +25,9 @@
         "fullscreen": false
       }
     ],
-    "security": { "csp": null }
+    "security": {
+      "csp": null
+    }
   },
   "bundle": {
     "active": true,
@@ -34,14 +36,25 @@
     "category": "Productivity",
     "shortDescription": "Batch subtitle & document translator",
     "longDescription": "Translate subtitles and documents in batches across many languages, fully offline-capable as a native desktop app.",
-    "icon": ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.icns", "icons/icon.ico"],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
     "windows": {
-      "webviewInstallMode": { "type": "downloadBootstrapper", "silent": true }
+      "webviewInstallMode": {
+        "type": "downloadBootstrapper",
+        "silent": true
+      }
     }
   },
   "plugins": {
     "updater": {
-      "endpoints": ["https://github.com/rockbenben/subtitle-translator/releases/latest/download/latest.json"],
+      "endpoints": [
+        "https://github.com/rockbenben/subtitle-translator/releases/latest/download/latest.json"
+      ],
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDhBM0FEMzc1RDdFMDc1MzIKUldReWRlRFhkZE02aXBkTXR4cE9VcTM3U1hSaWpsdWRCUDFoclkzdDBtSTVGMEJRaDB2TWRvNGsK"
     }
   }

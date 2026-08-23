@@ -2,11 +2,11 @@
 
 import { useMemo, useState } from "react";
 import { Drawer, Table, Input, Button, Select, Space, Upload, App, Typography, Alert, Tooltip, Dropdown } from "antd";
-import { PlusOutlined, DeleteOutlined, UploadOutlined, DownloadOutlined, SearchOutlined } from "@ant-design/icons";
+import { PlusOutlined, DeleteOutlined, UploadOutlined, DownloadOutlined, SearchOutlined, DownOutlined } from "@ant-design/icons";
 import { useTranslations } from "next-intl";
 import { useTranslationContext } from "@/app/components/TranslationContext";
 import { languages } from "@/app/lib/translation/languages-data";
-import { downloadFile, decodeFileBytes } from "@/app/utils";
+import { downloadFile, decodeFileBytes, getErrorMessage } from "@/app/utils";
 import { mergeImportedTerms, parseGlossaryTsv, type GlossaryTerm } from "@/app/lib/translation/glossary";
 
 const LANG_OPTIONS = languages.filter((l) => l.value !== "auto").map((l) => ({ label: `${l.name} (${l.nativelabel})`, value: l.value }));
@@ -111,7 +111,11 @@ const GlossaryDrawer = ({ open, onClose }: { open: boolean; onClose: () => void 
         }
       } catch (error) {
         console.error("Glossary import failed:", error);
-        message.error(tCommon("fileReadFailed"));
+        // 【带上原始消息】,同 useFileUpload 的理由:decodeFileBytes 判不出编码时
+        // 抛的是一句可操作的指引("re-save the file as UTF-8"),裸 fileReadFailed
+        // 把它整个吞掉。这里比翻译工具更需要它 —— 中文 Windows 上 Excel 导出的
+        // GBK TSV 正是这个功能存在的场景,而本抽屉连编码回退都没有。
+        message.error(`${tCommon("fileReadFailed")}: ${getErrorMessage(error)}`);
       }
     };
     // Don't swallow a failed read (locked file, odd encoding) silently.
@@ -156,7 +160,7 @@ const GlossaryDrawer = ({ open, onClose }: { open: boolean; onClose: () => void 
     <Drawer title={`${t("drawerTitle")}${activeGlossaryPreset ? ` · ${activeGlossaryPreset.name}` : ""}`} open={open} onClose={onClose} size="min(520px, 90vw)">
       <Space style={{ width: "100%", marginBottom: 12 }} wrap>
         <span id="glossary-lang-label">{tCommon("targetLanguage")}</span>
-        <Select aria-labelledby="glossary-lang-label" style={{ minWidth: 200 }} showSearch optionFilterProp="label" value={selectedLang} onChange={setSelectedLang} options={LANG_OPTIONS} />
+        <Select aria-labelledby="glossary-lang-label" style={{ minWidth: 200 }} showSearch={{ optionFilterProp: "label" }} value={selectedLang} onChange={setSelectedLang} options={LANG_OPTIONS} />
         <Tooltip title={t("tsvHint")}>
           <Upload accept=".tsv,.txt" showUploadList={false} beforeUpload={importTsv}>
             <Button icon={<UploadOutlined />}>{t("importTsv")}</Button>
@@ -164,17 +168,21 @@ const GlossaryDrawer = ({ open, onClose }: { open: boolean; onClose: () => void 
         </Tooltip>
         {/* Split button: click = current language (2-col, DeepL-TSV compatible);
             menu = all languages (3-col with targetLang). */}
-        <Dropdown.Button
-          menu={{
-            items: [{ key: "all", label: t("exportAllTsv") }],
-            onClick: ({ key }) => {
-              if (key === "all") exportAllTsv();
-            },
-          }}
-          onClick={exportTsv}
-          disabled={allTerms.length === 0}>
-          <DownloadOutlined /> {t("exportTsv")}
-        </Dropdown.Button>
+        <Space.Compact>
+          <Button icon={<DownloadOutlined />} onClick={exportTsv} disabled={allTerms.length === 0}>
+            {t("exportTsv")}
+          </Button>
+          <Dropdown
+            menu={{
+              items: [{ key: "all", label: t("exportAllTsv") }],
+              onClick: ({ key }) => {
+                if (key === "all") exportAllTsv();
+              },
+            }}
+            disabled={allTerms.length === 0}>
+            <Button icon={<DownOutlined />} />
+          </Dropdown>
+        </Space.Compact>
       </Space>
       <Space style={{ width: "100%", marginBottom: 12, justifyContent: "space-between" }} wrap>
         <Input allowClear prefix={<SearchOutlined />} style={{ width: 220 }} placeholder={t("searchPlaceholder")} aria-label={t("searchPlaceholder")} value={search} onChange={(e) => setSearch(e.target.value)} />

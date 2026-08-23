@@ -19,8 +19,17 @@ const TARGET_LANG_MAPPING: Record<string, string> = {
 const options = { maxRetries: 5, minTimeout: 60000 };
 
 export async function POST(req: NextRequest) {
+  let body: TranslationRequest;
   try {
-    const body = (await req.json()) as TranslationRequest;
+    body = (await req.json()) as TranslationRequest;
+  } catch {
+    // Must not fall through to the generic 500 below — the browser client's
+    // isRetryableError retries every 5xx three times, and a body that failed to
+    // parse fails identically on each attempt.
+    return NextResponse.json({ error: "Invalid JSON in request body" }, { status: 400 });
+  }
+
+  try {
     const { text, source_lang, target_lang: rawTargetLang, authKey, tag_handling } = body;
 
     if (typeof text !== "string" || !text || typeof rawTargetLang !== "string" || !rawTargetLang) {
@@ -40,18 +49,16 @@ export async function POST(req: NextRequest) {
       tag_handling ? { tagHandling: tag_handling } : undefined,
     );
 
+    // translateText's return type is `T extends string ? TextResult : TextResult[]`
+    // — the array overload only fires for array input, which the string-type gate
+    // above rejects. So `result` is always a single TextResult here.
     return NextResponse.json({
-      translations: Array.isArray(result)
-        ? result.map((item) => ({
-            detected_source_language: item.detectedSourceLang,
-            text: item.text,
-          }))
-        : [
-            {
-              detected_source_language: result.detectedSourceLang,
-              text: result.text,
-            },
-          ],
+      translations: [
+        {
+          detected_source_language: result.detectedSourceLang,
+          text: result.text,
+        },
+      ],
     });
   } catch (error: unknown) {
     console.error("DeepL translation error:", error);

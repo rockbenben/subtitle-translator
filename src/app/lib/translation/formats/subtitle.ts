@@ -1,3 +1,13 @@
+import { splitBySpaces } from "@/app/utils/textUtils";
+
+/**
+ * 字幕翻译的默认值 —— 网页端(SubtitleTranslator 的 useLocalStorage 初值)与
+ * CLI(cliFormat 的 subtitle handler,--no-context 只做显式覆盖)共用的单一
+ * 来源(与 markdown.ts 的 MARKDOWN_DEFAULTS 同款)。contextAware 默认开:
+ * 字幕行短、上下文对齐收益大,是这个格式的正确默认。
+ */
+export const SUBTITLE_DEFAULTS: { contextAware: boolean } = { contextAware: true };
+
 // 用于匹配 VTT/SRT 时间行（支持默认小时省略、多位数小时以及 1 到 3 位毫秒值）。
 // 分隔符两侧按 WebVTT 规范允许「一个或多个空格/Tab」—— 单空格硬编码曾把
 // Tab/双空格分隔的合法 VTT 整文件判为"无内容"。
@@ -87,6 +97,54 @@ export const detectSubtitleFormat = (lines: string[]): "ass" | "vtt" | "srt" | "
   // 箭头时间码是更强信号,SBV 排在 srt/vtt 之后:真 SBV 不含 --> 行
   if (sbvCount > 0) return "sbv";
   return "error";
+};
+
+/**
+ * 空译文规则的【判据本体】—— 译文为空就回退原文。
+ *
+ * 规则一:译文为空的槽位【回退原文】,绝不产出空的一半。空的一半在 SRT/VTT 里
+ * 就是 cue 分隔符(整条 cue 被截断,原文变孤立块、其后全错位),在 ASS 里是多一个
+ * \N 硬换行(渲染出空行并把文字挤位),在 LRC 里是一个孤零零的 " / "。
+ *
+ * 规则二:【不能删】空槽位。下游按位置配对原文半区与译文半区(校对面板、任何
+ * 逐行对照的工具),删一行就整体错位 —— 3 行原文配 2 行译文,L2 的译文被读成 T3。
+ *
+ * 触发条件不止一种:removeChars 清空整行、VTT 里只含内联标签的 cue 剥完即空、
+ * 模型返回空槽、软失败回填空串。所以别在装配点自己写 `.trim() === ""`,走这里。
+ *
+ * 判据一处,动作分三类(同 isSoftFilledHalf:规则写一次,动作因格式而异):
+ * - 标量回退 —— 本函数:ASS 重新排版(逐条累加)、ASS 原地替换的译文半区
+ * - 数组回退 —— fillEmptyTranslations:buildVttBilingualSrt、SRT/VTT/SBV cue 聚合
+ * - 就地早退 —— 回退目标不是"同一行的原文半区"而是整条输出行,无法套用本函数:
+ *   仅译文模式写回物理行、ASS 双语写回整条 Dialogue、LRC 写回 `时间戳 + 原文`
+ */
+export const orElseSource = (trans: string, orig: string): string => (trans.trim() === "" ? orig : trans);
+
+/** 逐行套用 {@link orElseSource} 的数组形式。origs 短于 trans 时缺位按空串处理。 */
+export const fillEmptyTranslations = (trans: string[], origs: string[]): string[] => trans.map((t, i) => orElseSource(t, origs[i] ?? ""));
+
+/**
+ * 【共享判据】这一行是否该只输出一半 —— 即它是【软失败回填的原文】。
+ *
+ * ⚠ 判据是【下标】,不是字符串相等。上一版比较 trans === orig,看似等价,
+ * 实际把一类完全正常的翻译也吃掉了一半:专有名词(Tokyo)、数字、OK、♪、
+ * 招牌文字在 en→de/es、zh→zh-hant 这类导出里【合法地】译成自身。用户要的是
+ * 双语,拿到的却是部分 cue 只剩一种语言的残缺文件;ASS 路径更糟 —— 只输出
+ * origLine 会让那行用 Secondary 样式/位置渲染,在视频中间显出一行错位字幕。
+ *
+ * 引擎本来就精确知道哪些槽位是软填的(FailedLine.index → softFilledIndices),
+ * 两个调用点(SubtitleTranslator 的 collectSoftFilled、CLI handler 的
+ * outcome.failures)都已经拿着这个集合 —— 之前只是没往下传。
+ *
+ * softFilled 为 undefined 时【一律拼两半】:宁可对真软失败的行复读一次,
+ * 也不要把正常译文吃掉 —— 前者只是啰嗦,后者是数据缺失。
+ */
+const isSoftFilledHalf = (index: number, softFilled?: ReadonlySet<number>): boolean => softFilled?.has(index) === true;
+
+/** 两半拼接,软填槽位只出一次(判据见 isSoftFilledHalf)。 */
+export const joinBilingualHalves = (allOrig: string, allTrans: string, isOriginalFirst: boolean, joiner: string, isSoftFilled = false): string => {
+  if (isSoftFilled) return allOrig;
+  return isOriginalFirst ? `${allOrig}${joiner}${allTrans}` : `${allTrans}${joiner}${allOrig}`;
 };
 
 export type BilingualFormat = "ass" | "srt";
@@ -262,7 +320,12 @@ export const filterSubLines = (lines: string[], fileType: string) => {
       }
 
       if (startExtracting) {
-        extractedContent = trimmedLine.replace(/\[\d{2}:\d{2}(\.\d{2,3})?\]/g, "").trim();
+        // 增强 LRC(A2)的逐词时间戳 <mm:ss.xx> 与 VTT 卡拉 OK 时间戳同形同命:
+        // 译文词序全变,逐词戳无从还原,送引擎只会被挪位/改写 —— 同 VTT 分支剥掉。
+        extractedContent = trimmedLine
+          .replace(/\[\d{2}:\d{2}(\.\d{2,3})?\]/g, "")
+          .replace(VTT_INLINE_TIMESTAMP, "")
+          .trim();
         // 只有当去除时间标记后内容不为空时，才认为是有效内容
         // (纯时间标记行如 "[01:23.45]" 是 LRC 的间奏锚点,不应送 LLM 翻译)。
         // 只判非空,不复用 isValidSubtitleLine:它的整数过滤是给 SRT cue 序号
@@ -366,9 +429,12 @@ export const buildAssBilingualBody = (
   // 清理后的原文(filterSubLines 的 contentLines,已剥 VTT 内联标签)。ASS 不认识
   // <c.color…>/卡拉 OK 时间戳,直接嵌 lines[index] 原始行会把字面标签渲染上屏。
   // 可选参数:不传时退回原始行(旧调用方兼容)。
-  cleanedContents?: string[]
+  cleanedContents?: string[],
+  softFilled?: ReadonlySet<number>
 ): string => {
-  type CueEntry = { assStart: string; assEnd: string; translation: string; original: string };
+  // allSoftFilled:多行 cue 聚合时取【与】—— 只要有一行真译出来了,这条 cue
+  // 就该照常出双语;全部软填才只出原文那一条。
+  type CueEntry = { assStart: string; assEnd: string; translation: string; original: string; allSoftFilled: boolean };
   // Map key = 时间码行的【行号】(findTimeLineIndexBefore):文本 key 会把时间码
   // 逐字节相同的两个独立 cue 错误合并(内容跨文件"传送")。行号唯一,同一物理
   // cue 的多行内容仍正确聚合。
@@ -380,12 +446,16 @@ export const buildAssBilingualBody = (
     const timeLine = lines[timeIdx].trim();
 
     const originalText = cleanedContents?.[i] ?? lines[index];
-    const translatedText = translatedLines[i];
+    // 逐条累加不经数组,用标量形式。不套的话空译文会拼出一个尾随的 \\N 硬换行,
+    // 渲染成空行并把文字挤位;整条为空时直接产出一条空 Dialogue。
+    const translatedText = orElseSource(translatedLines[i], originalText);
 
+    const lineSoftFilled = isSoftFilledHalf(i, softFilled);
     const existing = subtitles.get(timeIdx);
     if (existing) {
       existing.translation += `\\N${translatedText}`;
       existing.original += `\\N${originalText}`;
+      existing.allSoftFilled = existing.allSoftFilled && lineSoftFilled;
     } else {
       const [startTime, endTime] = timeLine.split(TIME_ARROW_SPLIT).map((t) => t.trim().split(/\s/)[0]);
       subtitles.set(timeIdx, {
@@ -393,14 +463,17 @@ export const buildAssBilingualBody = (
         assEnd: convertTimeToAss(endTime.trim()),
         translation: translatedText,
         original: originalText,
+        allSoftFilled: lineSoftFilled,
       });
     }
   });
 
   return Array.from(subtitles.values())
-    .map(({ assStart, assEnd, translation, original }) => {
+    .map(({ assStart, assEnd, translation, original, allSoftFilled }) => {
       const transLine = `Dialogue: 0,${assStart},${assEnd},${STYLE_TRANSLATION},NTP,0000,0000,0000,,${translation}`;
       const origLine = `Dialogue: 0,${assStart},${assEnd},${STYLE_ORIGINAL},NTP,0000,0000,0000,,${original}`;
+      // 整条 cue 都是软填(未译出)→ 只出一条,别复读(判据见 isSoftFilledHalf)。
+      if (allSoftFilled) return origLine;
       // 在上的角色放第二行(后绘制 → 画在上)。
       return isOriginalFirst ? `${transLine}\n${origLine}` : `${origLine}\n${transLine}`;
     })
@@ -512,20 +585,22 @@ export const vttToSrt = (vttText: string): string => {
  * 拼 SRT,绝不重扫正文。对规范输入与旧 vttToSrt 路径逐字节一致(时间码 .→,、
  * 丢弃 cue settings / WEBVTT / NOTE / cue id、剥 VTT 内联标签、cue 间一个空行)。
  */
-export const buildVttBilingualSrt = (lines: string[], contentIndices: number[], translatedLines: string[], isOriginalFirst: boolean): string => {
+export const buildVttBilingualSrt = (lines: string[], contentIndices: number[], translatedLines: string[], isOriginalFirst: boolean, softFilled?: ReadonlySet<number>): string => {
   const stripInline = (s: string) => s.replace(VTT_INLINE_C_TAG, "").replace(VTT_INLINE_TIMESTAMP, "");
-  type CueGroup = { timeLine: string; origs: string[]; trans: string[] };
+  type CueGroup = { timeLine: string; origs: string[]; trans: string[]; allSoftFilled: boolean };
   // key = 时间码行号(同 generateSubtitle 的双语聚合):时间码文本相同的两个独立 cue 不合并
   const cueGroups = new Map<number, CueGroup>();
   contentIndices.forEach((index, i) => {
     const timeIdx = findTimeLineIndexBefore(lines, index);
     if (timeIdx === -1) return;
+    const lineSoftFilled = isSoftFilledHalf(i, softFilled);
     const existing = cueGroups.get(timeIdx);
     if (existing) {
       existing.origs.push(lines[index]);
       existing.trans.push(translatedLines[i]);
+      existing.allSoftFilled = existing.allSoftFilled && lineSoftFilled;
     } else {
-      cueGroups.set(timeIdx, { timeLine: lines[timeIdx], origs: [lines[index]], trans: [translatedLines[i]] });
+      cueGroups.set(timeIdx, { timeLine: lines[timeIdx], origs: [lines[index]], trans: [translatedLines[i]], allSoftFilled: lineSoftFilled });
     }
   });
 
@@ -533,9 +608,11 @@ export const buildVttBilingualSrt = (lines: string[], contentIndices: number[], 
   const cues: string[] = [];
   for (const group of cueGroups.values()) {
     seq += 1;
-    const allOrig = group.origs.map(stripInline).join("\n");
-    const allTrans = group.trans.map(stripInline).join("\n");
-    const body = isOriginalFirst ? `${allOrig}\n${allTrans}` : `${allTrans}\n${allOrig}`;
+    const origs = group.origs.map(stripInline);
+    // 空译文回退原文并保持逐行对齐(判据见 orElseSource):空的一半
+    // 会在时间轴后紧跟一个空行,而空行是 SRT 的 cue 分隔符 —— 整条 cue 被截断。
+    const trans = fillEmptyTranslations(group.trans.map(stripInline), origs);
+    const body = joinBilingualHalves(origs.join("\n"), trans.join("\n"), isOriginalFirst, "\n", group.allSoftFilled);
     cues.push(`${seq}\n${normalizeVttTimeLine(group.timeLine.trim())}\n${body}`);
   }
   // 与 vttToSrt 收尾一致:合并 3+ 连续空行(空译文留下的尾随空行 + cue 间空行)
@@ -545,29 +622,57 @@ export const buildVttBilingualSrt = (lines: string[], contentIndices: number[], 
 // ASS 覆盖标签处理：翻译前剥离，翻译后还原
 // 匹配行首连续的 ASS 覆盖标签块，如 {\an8}、{\an8\i1\b1}
 const ASS_LEADING_TAGS_REGEX = /^(\{[^}]*\})+/;
-// 匹配所有 ASS 覆盖标签块（用于剥离内联标签）
+// 匹配所有 ASS 覆盖标签块（用于剥离段内的内联标签）
 const ASS_ALL_TAGS_REGEX = /\{[^}]*\}/g;
-// 匹配 ASS 换行符 \N 和 \n（字面反斜杠+字母，非转义字符）
-const ASS_NEWLINE_REGEX = /\\[Nn]/g;
+// 保护槽 = 一个 \N/\n 硬换行,连同【紧贴其前后】的整串覆盖标签。排版行(sign)就长这样:
+// 每个 \N 开一个新的视觉分段,分段样式写在断点旁的标签里 —— 标签从所在位置起生效,
+// 中间没有字,所以 `England{\c}\NLondon` 与 `England\N{\c}London` 语义相同,野生字幕
+// 两种写法都有,都得保住。段【内】的标签(`the {\i1}second{\i0} door`)不进保护槽 ——
+// 见下面的取舍说明。
+const ASS_SEGMENT_BREAK_REGEX = /(?:\{[^}]*\})*\\[Nn](?:\{[^}]*\})*/g;
+// 占位符形态。发出侧写死 ###n###;还原侧宽松些(引擎可能在井号/数字间塞空格),
+// 且只在该行确实有保护槽时才跑,认不出编号的一律清掉 —— 字面 token 泄进字幕比丢标签更难看。
+const assSpanToken = (n: number): string => `###${n}###`;
+// ⚠ 井号必须【定长上界】而不是 #+:相邻两槽(\N 紧跟一个 {\c…} 标签,正是报告里那种
+// 排版行)在 wire 上是 ###1######2###,贪婪的 #+ 会把中间六个井号一口吞掉,后一槽剩下
+// 半截 "2###" 泄进字幕。
+const ASS_SPAN_TOKEN_REGEX = /#{1,3} ?(\d+) ?#{1,3}/g;
 
 // 绘图模式检测:{\p1}..{\p9}(含小数 \p1.5 等)开启矢量绘图,其后的"文本"
 // 是坐标指令(m 0 0 l 100 0 …),不是语言内容。
 const ASS_DRAWING_MODE_REGEX = /\{[^}]*\\p\s*[1-9]/;
 
-interface AssTagMap {
+export interface AssTagMap {
   /** 行首的覆盖标签，如 "{\an8}" */
   leadingTags: string;
+  /** 行内保护槽的原文,按 ###n### 编号回填(见 prepareAssForTranslation) */
+  spans?: string[];
   /** 整行原样保留(绘图模式等不可翻译行):还原时直接返回该值 */
   verbatim?: string;
 }
 
 /**
- * 翻译前：剥离 ASS 覆盖标签，将 \N/\n 转为真实换行
- * - {\...} 头部标签记录后剥离，内联标签直接剥离
- * - \N/\n 转为 \n，让 AI 自然理解换行
+ * 翻译前：剥离行首覆盖标签，分段断点换成编号占位符
+ * - {\...} 头部标签记录后剥离(译文重新补回行首)
+ * - `\N` 连同紧贴其前后的标签串换成 ###n### 占位符,还原时按编号回填
+ * - 段内的内联 {\...} 标签直接剥离(不记录,回不来)
  * - 绘图模式行({\p1} 矢量遮罩)整行跳过:坐标串不是文本,送翻译会被改写,
  *   双语导出还会把坐标垃圾渲染上屏。cleanLines 占位 ""(空白行不进翻译),
  *   还原时原样返回。
+ *
+ * ⚠ `\N` 曾经转成真实换行、其后的标签跟段内标签一样直接删 —— 对排版行是净丢失:
+ * chunk 路径(gtxFreeAPI 默认服务)按行 join/split 对齐,进 wire 前把真实换行压成
+ * 空格(pipeline.ts),于是 `{\pos(…)}Air mail:\NEngland\N{\c&H464687&}London` 译出来
+ * 是一行连排、分段颜色全丢(subtitle-translator 报告的原形)。占位符是实测选型:
+ * 字面 \N 送 gtx 回来是 "NEngland"(反斜杠被吃),PUA 私用区字符被整个剥掉只剩裸数字
+ * (往字幕里注入垃圾),###n### 在 zh/ja/ar/fr 上原样回传(2026-08-11 实测)。
+ *
+ * ⚠ 段【内】标签刻意不保护 —— 试过,是负收益:`the {\i1}second{\i0} door` 会变成
+ * `the ###0###second###1### door`,引擎把被占位符夹住的词当成标记边界【原样吐回】,
+ * 译文里留一个没翻的 "second"。丢个斜体没人报过,句子里嵌个外文词一眼就看见。
+ * 分段断点没这问题:它落在句子边界上,两侧都是完整句子。
+ * 引擎仍可能把长句正中的占位符整个吃掉(实测会),那一槽还原不出就丢弃 —— 那是
+ * 排版换行,libass 本来也会重新折行,绝不留半截 token 在字幕里。
  */
 export const prepareAssForTranslation = (contentLines: string[]): { cleanLines: string[]; tagMaps: AssTagMap[] } => {
   const cleanLines: string[] = [];
@@ -589,13 +694,28 @@ export const prepareAssForTranslation = (contentLines: string[]): { cleanLines: 
       remaining = line.substring(leadingTags.length);
     }
 
-    // 2. 剥离剩余文本中的内联覆盖标签
+    // 2. 分段断点(\N + 其后的标签串):记录原文,替身送出。必须排在剥离之前,
+    //    否则 \N 后面的分段样式会先被当成普通内联标签删掉。
+    const spans: string[] = [];
+    remaining = remaining.replace(ASS_SEGMENT_BREAK_REGEX, (span) => {
+      spans.push(span);
+      return assSpanToken(spans.length - 1);
+    });
+
+    // 3. 剥离段内的内联覆盖标签(占位符不含花括号,不会被这一步碰到)
     remaining = remaining.replace(ASS_ALL_TAGS_REGEX, "");
 
-    // 3. 将 ASS 换行符 \N/\n 转为真实换行
-    remaining = remaining.replace(ASS_NEWLINE_REGEX, "\n");
+    // 4. 无正文行(标签 + \N 之外没有任何文字):整行 verbatim,不送翻译。
+    //    旧代码里这种行变成 "\n",trim 后是空行、两条批处理路径都不发送;
+    //    换成占位符后它非空了 —— 送出去只会白花一次请求,还可能拿回被引擎
+    //    改写的 token 垃圾(裸数字)直接进字幕。没有可翻译内容,原样保留即正确。
+    if (remaining.replace(ASS_SPAN_TOKEN_REGEX, "").trim() === "") {
+      tagMaps.push({ leadingTags: "", verbatim: line });
+      cleanLines.push("");
+      continue;
+    }
 
-    tagMaps.push({ leadingTags });
+    tagMaps.push({ leadingTags, spans });
     cleanLines.push(remaining);
   }
 
@@ -603,7 +723,7 @@ export const prepareAssForTranslation = (contentLines: string[]): { cleanLines: 
 };
 
 /**
- * 翻译后：将真实换行转回 \N，还原行首覆盖标签;verbatim 行原样返回
+ * 翻译后：占位符回填行内标签/\N，真实换行转回 \N，还原行首覆盖标签;verbatim 行原样返回
  */
 export const restoreAssAfterTranslation = (translatedLines: string[], tagMaps: AssTagMap[]): string[] => {
   return translatedLines.map((line, i) => {
@@ -611,16 +731,67 @@ export const restoreAssAfterTranslation = (translatedLines: string[], tagMaps: A
     if (!map) return line;
     if (map.verbatim !== undefined) return map.verbatim;
 
-    // 1. 将真实换行转回 ASS 硬换行 \N
+    // 1. 将真实换行转回 ASS 硬换行 \N(LLM 自己插的换行也走这条)
     let restored = line.replace(/\n/g, "\\N");
 
-    // 2. 还原行首覆盖标签
+    // 2. 回填行内保护槽。只在该行确实有槽时才跑,免得动到正文里的 "#1#" 之类。
+    //    先按精确形态 ###n### 回填 —— 宽松网先跑会把「正文字面 #1 紧贴 token」
+    //    (`Round #1###0###Fight`)从字面 # 起贪婪吞成半截假 token,槽回填不上还
+    //    泄出 "0###"。宽松网只兜引擎塞空格/吞井号的残兵;已回填过的编号(引擎
+    //    重复回传)与认不出的编号一律清掉,不留字面 token。
+    const spans = map.spans;
+    if (spans?.length) {
+      const consumed = new Set<number>();
+      spans.forEach((span, n) => {
+        const exact = assSpanToken(n);
+        if (restored.includes(exact)) {
+          restored = restored.replace(exact, () => span);
+          consumed.add(n);
+        }
+      });
+      restored = restored.replace(ASS_SPAN_TOKEN_REGEX, (_, d: string) => {
+        const n = Number(d);
+        if (consumed.has(n) || spans[n] === undefined) return "";
+        consumed.add(n);
+        return spans[n];
+      });
+    }
+
+    // 3. 还原行首覆盖标签
     if (map.leadingTags) {
       restored = map.leadingTags + restored;
     }
 
     return restored;
   });
+};
+
+/**
+ * removeChars 的 ASS 版:跳过 ###n### 保护槽 token,只清理可见译文段
+ * (与 markdown 的 applyRemoveCharsToMarkdown 同因同方)。通用版
+ * applyRemoveCharsToLines 的 replaceAll 命中 token —— 用户删 `#`(字幕里
+ * 常当音符用)会把 ###0### 削成裸 `0`,还原正则认不出,数字直接泄进字幕。
+ * 必须在 restoreAssAfterTranslation【之前】调用(还原后清理会损坏 \N/标签)。
+ * 跨 token 边界的多字符词删不到 —— 与 markdown 版同一个已接受语义。
+ */
+const ASS_SPAN_TOKEN_SPLIT_REGEX = /(###\d+###)/;
+const ASS_SPAN_TOKEN_EXACT_REGEX = /^###\d+###$/;
+export const applyRemoveCharsToAssLines = (lines: string[], removeChars: string): string[] => {
+  if (!removeChars.trim()) return lines;
+  const chars = splitBySpaces(removeChars);
+  return lines.map((line) =>
+    line
+      .split(ASS_SPAN_TOKEN_SPLIT_REGEX)
+      .map((seg) => {
+        if (ASS_SPAN_TOKEN_EXACT_REGEX.test(seg)) return seg;
+        let cleaned = seg;
+        chars.forEach((c) => {
+          cleaned = cleaned.replaceAll(c, "");
+        });
+        return cleaned;
+      })
+      .join("")
+  );
 };
 
 // ── ASS 样式辅助:颜色 / 双语字体解析 ────────────────────────────
@@ -798,7 +969,9 @@ export const buildNativeAssRebuild = (
   sourceLang: string,
   targetLang: string,
   isOriginalFirst: boolean,
-  cleanedContents?: string[]
+  cleanedContents?: string[],
+  // 末位可选:插在中间会让既有位置实参整体错位(tsc 已当场抓到一次)。
+  softFilled?: ReadonlySet<number>
 ): string => {
   const header = buildAssHeader(config, sourceLang, targetLang);
 
@@ -811,9 +984,10 @@ export const buildNativeAssRebuild = (
   }
 
   // 行号 → {译文, 原文文本}
-  const byIndex = new Map<number, { trans: string; orig: string }>();
+  const byIndex = new Map<number, { trans: string; orig: string; slot: number }>();
+  // slot = translatedLines 的下标 —— 软填集合按它计,而外层循环走的是物理行号。
   contentIndices.forEach((idx, i) => {
-    byIndex.set(idx, { trans: translatedLines[i], orig: cleanedContents?.[i] ?? lines[idx] });
+    byIndex.set(idx, { trans: translatedLines[i], orig: cleanedContents?.[i] ?? lines[idx], slot: i });
   });
 
   const out: string[] = [];
@@ -823,14 +997,209 @@ export const buildNativeAssRebuild = (
       const parts = lines[i].split(",");
       const start = parts[1]?.trim() ?? "0:00:00.00";
       const end = parts[2]?.trim() ?? "0:00:00.00";
-      const transText = stripAllAssTags(entry.trans);
       const origText = stripAllAssTags(entry.orig);
+      const transText = orElseSource(stripAllAssTags(entry.trans), origText);
       const transLine = `Dialogue: 0,${start},${end},${STYLE_TRANSLATION},NTP,0000,0000,0000,,${transText}`;
       const origLine = `Dialogue: 0,${start},${end},${STYLE_ORIGINAL},NTP,0000,0000,0000,,${origText}`;
-      out.push(isOriginalFirst ? `${transLine}\n${origLine}` : `${origLine}\n${transLine}`);
+      // 软填(未译出)→ 只出一条,别复读(判据见 isSoftFilledHalf)。
+      out.push(isSoftFilledHalf(entry.slot, softFilled) ? origLine : isOriginalFirst ? `${transLine}\n${origLine}` : `${origLine}\n${transLine}`);
     } else {
       out.push(lines[i]); // 非对白/verbatim 原样保留
     }
   }
   return `${header}\n${out.join("\n")}`;
+};
+
+/**
+ * Assemble the final subtitle file from translated content lines. Pure —
+ * extracted verbatim from SubtitleTranslator's generateSubtitle closure so the
+ * CLI shares the exact same assembly (bilingual modes + ASS/LRC/SRT/VTT/SBV
+ * quirks). removeChars/ASS-tag-restore happen BEFORE this (see callers).
+ */
+export const assembleSubtitleOutput = (input: {
+  /** All physical lines of the source file. */
+  lines: string[];
+  /** Physical index of each translatable content line (from filterSubLines). */
+  contentIndices: number[];
+  /** Cleaned translatable text per content line (VTT inline tags stripped) — feeds the ASS conversion branches. */
+  contentLines: string[];
+  /** Translated text per content line — post removeChars + restoreAssAfterTranslation. */
+  translatedLines: string[];
+  fileType: string;
+  assContentStartIndex: number;
+  /** From prepareAssForTranslation; empty array for non-ASS sources. */
+  tagMaps: AssTagMap[];
+  isBilingual: boolean;
+  isOriginalFirst: boolean;
+  bilingualFormat: BilingualFormat;
+  assNativeRebuild: boolean;
+  assStyle: AssStyleConfig;
+  sourceLanguage: string;
+  exportLang: string;
+  /**
+   * 软填(保留原文)槽位下标 —— translatedLines 的下标,不是物理行号。
+   * 双语装配据此决定哪些行只输出一半(判据见 isSoftFilledHalf)。
+   * 省略时【一律拼两半】:宁可对真软失败的行复读,也不要把合法译成自身的
+   * 行(专有名词/数字/♪)吃掉一半。
+   */
+  softFilledIndices?: ReadonlySet<number>;
+}): string => {
+  const { lines, contentIndices, contentLines, translatedLines, fileType, assContentStartIndex, tagMaps, isBilingual, isOriginalFirst, bilingualFormat, assNativeRebuild, assStyle, sourceLanguage, exportLang, softFilledIndices: softFilled } = input;
+  // null = "drop from final join" sentinel,用于 SRT/VTT 多行 cue 聚合后跳过补位行
+  const outputLines: (string | null)[] = [...lines];
+
+  contentIndices.forEach((index, i) => {
+    // 译文为空(removeChars 清空整行、或 VTT 纯内联标签行剥完即空)时回退
+    // 原文行(与失败面板"保留原文"同语义):仅译文模式下空行会让该 cue 失去
+    // 唯一内容行 —— 重新解析丢 cue,对照校对面板源/译按序数硬配对整体后移
+    // 错位,用户"修正"的译文写回到另一个 cue。
+    // 双语模式走下面的分支单独处理(SRT/VTT 拼接时空译文同样会断掉 cue)。
+    if (!isBilingual && translatedLines[i].trim() === "") {
+      outputLines[index] = lines[index];
+      return;
+    }
+    if (fileType === "ass") {
+      const originalLine = lines[index];
+      // verbatim 行(绘图模式 {\p1} 坐标等不可翻译行):双语装配会把坐标
+      // 串复制两份,第二份在 {\p0} 后被 libass 当字面文本渲染上屏 ——
+      // 原样单次输出,无双语配对(本就没有可翻译内容)。
+      if (tagMaps[i]?.verbatim !== undefined) {
+        outputLines[index] = originalLine;
+        return;
+      }
+      const prefix = originalLine.substring(0, originalLine.split(",", assContentStartIndex).join(",").length + 1);
+      if (isBilingual) {
+        const translatedLine = translatedLines[i];
+        // 空译文回退原文(判据见 orElseSource,此处回退目标是整条 Dialogue 而非
+        // 译文半区,故就地早退):拼上去会多出一个尾随 \\N 硬换行,libass 渲染出
+        // 一行空白并把文字挤位。
+        if (translatedLine.trim() === "") {
+          outputLines[index] = originalLine;
+          return;
+        }
+        // restoreAssAfterTranslation 给 translatedLine 重新补了行首覆盖标签(如 {\an8})。
+        // 双语拼接时,leading tags 应该只在 \N 前的那一半出现一次——后半部分剥离避免标签重叠。
+        const stripLeadingAssTags = (s: string) => s.replace(/^(\{[^}]*\})+/, "");
+        const originalContent = originalLine.split(",").slice(assContentStartIndex).join(",").trim();
+        // 软填(未译出)→ 原样输出这一条,别拼成 `原文\N原文`(判据见 isSoftFilledHalf)。
+        if (isSoftFilledHalf(i, softFilled)) {
+          outputLines[index] = originalLine;
+          return;
+        }
+        outputLines[index] = isOriginalFirst
+          ? `${originalLine}\\N${stripLeadingAssTags(translatedLine)}`
+          : `${prefix}${translatedLine}\\N${stripLeadingAssTags(originalContent)}`;
+      } else {
+        outputLines[index] = `${prefix}${translatedLines[i]}`;
+      }
+    } else if (fileType === "lrc") {
+      const originalLine = lines[index];
+      // 提取原始行中的所有时间标记
+      const timeMatches = originalLine.match(LRC_TIME_REGEX_GLOBAL) || [];
+      const timePrefix = timeMatches.join("");
+
+      if (isBilingual) {
+        const translatedLine = translatedLines[i];
+        const originalContent = originalLine.replace(LRC_TIME_REGEX_GLOBAL, "").trim();
+        // 空译文回退原文(判据见 orElseSource,此处回退目标带时间戳前缀,故就地
+        // 早退):拼上去会留下一个孤零零的 " / " 和空的一半。
+        if (translatedLine.trim() === "") {
+          outputLines[index] = `${timePrefix} ${originalContent}`;
+          return;
+        }
+        // 软填(未译出)→ 只出一次,别写成 `原文 / 原文`(判据见 isSoftFilledHalf)。
+        if (isSoftFilledHalf(i, softFilled)) {
+          outputLines[index] = `${timePrefix} ${originalContent}`;
+          return;
+        }
+        // LRC 是行内 / 分隔(非真上下),"原文在上"映射为"原文在前"(同 SRT/VTT 多行 cue 视觉一致)
+        outputLines[index] = isOriginalFirst
+          ? `${timePrefix} ${originalContent} / ${translatedLine}`
+          : `${timePrefix} ${translatedLine} / ${originalContent}`;
+      } else {
+        outputLines[index] = `${timePrefix} ${translatedLines[i]}`;
+      }
+    } else {
+      // SRT/VTT 双语:isOriginalFirst=true 时原文在上,反之译文在上
+      if (isBilingual) {
+        const orig = lines[index];
+        const trans = translatedLines[i];
+        // 译文为空时【只输出原文】,绝不能拼一个空半行:`${trans}\n${orig}` 在
+        // 译文为空时会在时间轴后紧跟一个空行,而空行是 SRT/VTT 的 cue 分隔符
+        // —— 所有解析器都会就此结束这条 cue,于是它渲染成空白,原文变成一个
+        // 孤立块,其后整份文件错位。上面那句"双语模式原文仍在,不受影响"只对
+        // ASS 成立(ASS 一行一 Dialogue,没有空行分隔语义)。
+        // 空译文、以及软填槽位都只输出原文那一条 —— 判据见 isSoftFilledHalf,
+        // 与其余五个装配点同一条规则:同一轮翻译不该因为源是 .srt 还是 .ass
+        // 而产生不同行为。
+        outputLines[index] = trans.trim() === "" || isSoftFilledHalf(i, softFilled) ? orig : isOriginalFirst ? `${orig}\n${trans}` : `${trans}\n${orig}`;
+      } else {
+        outputLines[index] = translatedLines[i];
+      }
+    }
+  });
+
+  let finalSubtitle = "";
+
+  // SRT/VTT 双语统一按 format 选择:format=ass 转 ASS;format=srt 走原文叠加分支。
+  // VTT + srt 单独走 buildVttBilingualSrt:从已知 cue 结构直接拼 SRT,绝不把插好
+  // 译文的文本再喂 vttToSrt 重解析 —— 否则某 cue 的原文/译文正文行若以时间码开头
+  // 会被误判成新 cue,拆 cue、丢译文、其后整体重编号错位。
+  const shouldConvertToAssBilingual = isBilingual && bilingualFormat === "ass" && (fileType === "srt" || fileType === "vtt");
+  if (isBilingual && fileType === "ass" && assNativeRebuild) {
+    // 原生 ASS「重新排版」:丢弃源样式,用本工具预设把每条 Dialogue 重排成干净双语;
+    // verbatim/非对白行原样保留(上面的 forEach 逐行装配在此分支被忽略)。
+    const verbatimIndices = new Set(contentIndices.filter((_, i) => tagMaps[i]?.verbatim !== undefined));
+    finalSubtitle = buildNativeAssRebuild(lines, contentIndices, translatedLines, verbatimIndices, assStyle, sourceLanguage, exportLang, isOriginalFirst, contentLines, softFilled);
+  } else if (shouldConvertToAssBilingual) {
+    // 第 5 参传清理后的 contentLines:原始行带 VTT 内联标签(<c.color…>/卡拉
+    // OK 时间戳),ASS 渲染器会把它们字面画上屏。
+    finalSubtitle = `${buildAssHeader(assStyle, sourceLanguage, exportLang)}\n${buildAssBilingualBody(lines, contentIndices, translatedLines, isOriginalFirst, contentLines, softFilled)}`;
+  } else if (isBilingual && bilingualFormat === "srt" && fileType === "vtt") {
+    finalSubtitle = buildVttBilingualSrt(lines, contentIndices, translatedLines, isOriginalFirst, softFilled);
+  } else {
+    // SRT/VTT/SBV 双语 + format=srt:按 cue 聚合,组内"所有原文" + "所有译文",
+    // 避免多行 cue 出现"原-译-原-译"交错(逐行替换会留下的副作用)
+    if (isBilingual && (fileType === "srt" || fileType === "vtt" || fileType === "sbv")) {
+      // allSoftFilled 取【与】:cue 内只要有一行真译出来了就照常出双语。
+      type CueGroup = { firstIndex: number; origs: string[]; trans: string[]; allSoftFilled: boolean };
+      // key = 时间码行号(非文本):时间码文本相同的两个独立 cue 不能合并
+      // —— 文本 key 会把后面 cue 的内容搬到前面、留下空壳 cue。
+      const cueGroups = new Map<number, CueGroup>();
+
+      contentIndices.forEach((index, i) => {
+        const timeIdx = findTimeLineIndexBefore(lines, index, fileType === "sbv" ? SBV_TIME_REGEX : undefined);
+        if (timeIdx === -1) return;
+
+        const lineSoftFilled = isSoftFilledHalf(i, softFilled);
+        const existing = cueGroups.get(timeIdx);
+        if (existing) {
+          existing.origs.push(lines[index]);
+          existing.trans.push(translatedLines[i]);
+          existing.allSoftFilled = existing.allSoftFilled && lineSoftFilled;
+          outputLines[index] = null; // cue 内非首行,从输出中移除
+        } else {
+          cueGroups.set(timeIdx, { firstIndex: index, origs: [lines[index]], trans: [translatedLines[i]], allSoftFilled: lineSoftFilled });
+        }
+      });
+
+      cueGroups.forEach((group) => {
+        // 空译文【回退原文】,不是删掉。删掉会让两半行数不等 —— 3 行原文配 2 行
+        // 译文,任何按位置配对的下游(校对面板、逐行对照工具)都会把 L2 的译文
+        // 读成 T3。共享规则见 fillEmptyTranslations / joinBilingualHalves。
+        // (上面那条 `!isBilingual && trim() === ""` 的回退对 srt/vtt/sbv 双语
+        //  够不着 —— 本块会覆盖 outputLines,所以这里必须自己处理。)
+        const allOrig = group.origs.join("\n");
+        const allTrans = fillEmptyTranslations(group.trans, group.origs).join("\n");
+        outputLines[group.firstIndex] = joinBilingualHalves(allOrig, allTrans, isOriginalFirst, "\n", group.allSoftFilled);
+      });
+    }
+
+    // filter 去掉 cue 聚合留下的 null 占位
+    finalSubtitle = outputLines.filter((line): line is string => line !== null).join("\n");
+  }
+
+  // removeChars 已在调用方对【原始译文】逐行应用 —— 不再对装配后的
+  // 整个文件 replaceAll(那会摧毁时间码/ASS 字段)。
+  return finalSubtitle;
 };

@@ -2,10 +2,11 @@
 ⚡️ Subtitle Translator
 </h1>
 <p align="center">
-    English | <a href="./README-zh.md">中文</a>
-</p>
-<p align="center">
     <em>Blazing-fast batch subtitle translation for 120+ languages — powered by AI</em>
+</p>
+
+<p align="center">
+    <b>English</b> · <a href="./README.zh.md">简体中文</a>
 </p>
 
 <p align="center">
@@ -13,7 +14,9 @@
   <a href="https://tools.newzone.top/en/subtitle-translator"><img src="https://img.shields.io/badge/Live%20Demo-subtitle--translator-blue" alt="Live Demo"></a>
 </p>
 
-**Subtitle Translator** is a free, browser-based batch subtitle translation tool for `.srt`, `.ass`, `.vtt`, and `.lrc` files. With chunked compression and parallel processing it hits ~1 second per episode. Batch-upload a whole season at once, connect to 7 traditional translation APIs (DeepL, Google, Azure, DeepLX, Qwen-MT, TranslateGemma, GTX) or 17+ LLM providers, and translate into 120+ languages — or into several target languages in a single pass, each exported as its own file. Everything runs locally in your browser; subtitle content and API keys never touch a server.
+Paste a subtitle file into a general-purpose translator and two things go wrong: the model rewrites your timecodes, and you're doing it one file at a time. Subtitle Translator strips the timing out locally and sends **only the dialogue** to the engine — the timeline physically cannot be touched — then does a whole season in one drop.
+
+**Subtitle Translator** is a free, browser-based batch subtitle translation tool for `.srt`, `.ass`, `.vtt`, and `.lrc` files. With chunked compression and parallel processing it hits ~1 second per episode. Batch-upload a whole season at once, connect to 8 traditional translation APIs (DeepL, Google, Azure, DeepLX, Qwen-MT, TranslateGemma, GTX, Edge) or 27 LLM providers and gateways, and translate into 120+ languages — or into several target languages in a single pass, each exported as its own file. Everything runs locally in your browser; subtitle content and API keys never touch a server. A [CLI](#command-line) drives the same engine headlessly when you'd rather script it.
 
 👉 **Try it online**: <https://tools.newzone.top/en/subtitle-translator>
 
@@ -32,11 +35,12 @@
 - **Unlimited Caching** (IndexedDB): All translations cached locally with no browser-storage size limit; refreshing the page doesn't lose translated files.
 - **120+ Languages**: Translate to/from 120+ languages, with source defaulting to Auto-detect.
 - **Multi-Locale UI**: Powered by next-intl, with full UI translation across 18 languages.
+- **Command Line**: `yarn cli` runs the same engine, parsers, and cache from a terminal — see [Command Line](#command-line).
 - **Private by Design**: Fully client-side — subtitle content and API keys stay in your browser; LLM requests go directly from your browser to the API endpoint you configure.
 
 ## Translation APIs
 
-Supports **7 traditional MT APIs** and **17+ LLM providers**:
+Supports **8 traditional MT APIs** and **27 LLM providers and gateways**:
 
 ### Traditional APIs
 
@@ -49,10 +53,19 @@ Supports **7 traditional MT APIs** and **17+ LLM providers**:
 | **Qwen-MT**          | ★★★★☆   | ★★★★☆     | Alibaba DashScope quota               |
 | **TranslateGemma**   | ★★★★☆   | ★★★★☆     | Self-host (LM Studio / Ollama / etc.) |
 | **GTX API (Free)**   | ★★★☆☆   | ★★★☆☆     | Free (rate-limited)                   |
+| **Edge API (Free)**  | ★★★★☆   | ★★★☆☆     | Free (rate-limited)                   |
+
+GTX and Edge need no configuration at all — they are the zero-setup defaults, and each is the other's fallback.
 
 ### LLM Providers
 
-Supports **DeepSeek**, **OpenAI**, **Claude**, **Gemini**, **Qwen**, **Moonshot**, **Doubao**, **Zhipu GLM**, **MiniMax**, **Mistral**, **Perplexity**, **Cohere**, **OpenRouter**, **Groq**, **SiliconFlow**, **Nvidia NIM**, **Azure OpenAI**, plus any **Custom (OpenAI-compatible)** endpoint (Ollama / LM Studio / vLLM / Together AI / Fireworks AI etc.).
+**DeepSeek**, **OpenAI**, **Claude**, **Gemini**, **Qwen**, **Moonshot (Kimi)**, **Doubao**, **Xiaomi MiMo**, **Zhipu GLM**, **MiniMax**, **Baidu ERNIE**, **Tencent Hunyuan**, **Mistral**, **xAI (Grok)**, **Perplexity**, **Cohere**, and **YandexGPT**.
+
+### Gateways
+
+**OpenRouter**, **OpenCode Zen**, **Groq**, **SiliconFlow**, **Atlas Cloud**, **GitHub Models**, **Nvidia NIM**, **Azure OpenAI**, **LiteLLM**, plus any **Custom (OpenAI-compatible)** endpoint (Ollama / LM Studio / vLLM / Together AI / Fireworks AI etc.).
+
+Providers walled off from browsers by CORS can be routed through an API relay. The built-in relay works out of the box; **API Settings → Relay address** points every relayed provider at your own deployment of the relay Worker instead.
 
 LLM modes give you:
 
@@ -102,37 +115,60 @@ LLM modes can send surrounding lines as context for each batch, improving dialog
 
 See the [full FAQ in the docs](https://docs.newzone.top/en/guide/translation/subtitle-translator/) for more.
 
-## Tech Stack
+## Command Line
 
-- **Framework**: [Next.js 16](https://nextjs.org/) (App Router) + React 19 with the React Compiler
-- **UI**: [Ant Design 6](https://ant.design/) + [Tailwind CSS 4](https://tailwindcss.com/)
-- **i18n**: [next-intl](https://next-intl-docs.vercel.app/)
-- **Caching**: [idb](https://github.com/jakearchibald/idb) (IndexedDB)
-- **Encoding Detection**: [jschardet](https://github.com/aadsm/jschardet)
+`yarn cli` translates files headlessly over the **same** engine as the web app — same parsers, same retry and rate-limit handling, same cache keys. Configure the service once in the browser, hit **Export settings**, and hand the JSON to the CLI; nothing has to be re-entered.
 
-## Getting Started
+```bash
+yarn install   # once
 
-### Requirements
+# A whole season into Chinese on the free GTX API — no key, no config.
+yarn cli -i s01e01.srt -i s01e02.srt -t zh
 
-- Node.js >= 20.9.0
-- Yarn (recommended), npm, or pnpm
+# Two targets in one pass, bilingual, using your exported keys/prompts/glossary.
+yarn cli -i movie.srt -t zh -t ja --bilingual -s ~/subtitle-settings.json -o out/
 
-### Install & Run
+# A local model — nothing leaves the machine.
+yarn cli -i movie.ass -t zh -m llm --url http://localhost:11434/v1 --model qwen3
+
+# One-off override on top of a settings file.
+yarn cli -i movie.vtt -t de -m deepseek --api-key sk-xxx
+```
+
+Output lands beside the input (or in `-o <dir>`) as `movie.zh.srt`. Bilingual runs add `_bilingual`, and for `.srt` / `.vtt` sources they default to ASS with separate styles per line — `movie.zh_bilingual.ass`. Pass `--bilingual-format srt` to stay in SRT.
+
+| Option                                                        | Meaning |
+| ------------------------------------------------------------- | --- |
+| `-i, --input <file>`                                          | Input file. Repeatable. |
+| `-t, --to <lang>`                                             | Target language. Repeatable. Default `zh`. |
+| `-f, --from <lang>`                                           | Source language. Default `auto`. |
+| `-m, --method <id>`                                           | Service id. Default `gtxFreeAPI`; `--list-methods` prints them all. |
+| `-s, --settings <file>`                                       | Settings JSON exported from the web UI (keys, prompts, glossary, retry…). |
+| `-o, --out-dir <dir>`                                         | Output directory. Default: next to each input. |
+| `--api-key` · `--url` · `--model`                             | One-off overrides for the chosen service. |
+| `--bilingual` · `--original-first` · `--bilingual-format <ass\|srt>` | Bilingual output. |
+| `--no-context`                                                | Turn off context-aware LLM batching (on by default for subtitles). |
+| `--no-cache` · `--cache-file <file>`                          | Cache control. Default `~/.translate-cli-cache.json`. |
+| `--relay` · `--no-relay`                                      | Route through the API relay. Off by default — Node has no CORS to work around. |
+| `--format <fmt>`                                              | Force a format instead of inferring it from the extension. |
+
+Subtitles are not the only input: the same command handles Markdown (`.md`, `.markdown`, `.mdx` — code blocks, links and LaTeX protected by default) and JSON locale files (`.json` — keys untouched, values translated). `yarn cli --list-formats` prints the mapping, `yarn cli --help` the full option list including the Markdown-specific flags.
+
+Runs are resumable: every translated line is cached, so re-running after a `Ctrl-C`, a rate-limit wall, or a handful of failed lines only pays for what is still missing.
+
+Exit codes: `0` everything translated · `1` finished but some lines soft-failed (kept as source text in the output) or a file failed · `2` bad invocation · `130` cancelled.
+
+## Run It Yourself
+
+Node.js >= 20.9.0 and Yarn (or npm / pnpm).
 
 ```bash
 git clone https://github.com/rockbenben/subtitle-translator.git
 cd subtitle-translator
 
 yarn install
-yarn dev
-```
-
-Visit [http://localhost:3000](http://localhost:3000).
-
-### Production Build
-
-```bash
-yarn build
+yarn dev        # http://localhost:3000
+yarn build      # production build
 ```
 
 ## Documentation & Deployment
@@ -149,7 +185,3 @@ Contributions are welcome! Feel free to open issues and pull requests.
 2. Run `yarn` and `yarn dev` locally
 3. Add tests / docs when applicable
 4. Submit a PR with a clear description
-
-## License
-
-MIT © 2025 [rockbenben](https://github.com/rockbenben). See [LICENSE](./LICENSE).

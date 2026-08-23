@@ -23,42 +23,16 @@ export const downloadFile = (content: string | Blob | ArrayBuffer, fileName: str
 };
 
 /**
- * 把文件字节解码为字符串(编码自适应)。
- * 策略:先用 UTF-8 fatal 模式对全文试解 —— UTF-8 是自验证编码,成功即几乎
- * 确定是 UTF-8;失败(GBK/Big5/UTF-16 等 legacy 编码)才取样喂 jschardet 检测。
- * 从 useFileUpload.readFile 中提取成共享工具:词汇表 TSV / 保护规则词典的
- * 导入此前用 readAsText(只会按 UTF-8 解),中文 Windows 上 Excel 导出的
- * ANSI/GBK 文件被解成 U+FFFD 乱码后【静默持久化】进 localStorage,翻译/转换
- * 时规则永远匹配不上。
+ * 拆分「文件名 → 主名 + 后缀」的唯一规则。首字符的点不算后缀（`.backup` 是
+ * 无后缀的文件名，不是扩展名），无后缀时回落到 `.txt`。
+ *
+ * 同一份文件名在同一个工具的不同导出按钮下必须得到相同后缀，所以规则只留一处。
+ * 注：useExportFilename / subtitleUtils 里还有各自的历史实现（返回值形状不同、
+ * 回落值不同），归并它们要动翻译系列工具，未一并处理。
  */
-export const decodeFileBytes = async (buffer: ArrayBuffer): Promise<string> => {
-  const uint8Array = new Uint8Array(buffer);
-  try {
-    return new TextDecoder("utf-8", { fatal: true }).decode(uint8Array);
-  } catch {
-    // Sample first 512KB for encoding detection (avoids converting full file to string)
-    const SAMPLE_SIZE = 512 * 1024;
-    const sample = uint8Array.subarray(0, Math.min(SAMPLE_SIZE, uint8Array.length));
-    // Build binary string where charCode === byte value (required by jschardet).
-    // Cannot use TextDecoder("latin1") because browsers map it to Windows-1252,
-    // which remaps bytes 0x80-0x9F to different code points and breaks detection.
-    let sampleString = "";
-    for (let i = 0; i < sample.length; i += 8192) {
-      sampleString += String.fromCharCode.apply(null, sample.subarray(i, i + 8192) as unknown as number[]);
-    }
-
-    // 检测编码(基于样本),后续仍对完整内容进行解码。Lazy load jschardet。
-    const jschardet = (await import("jschardet")).default;
-    const detected = jschardet.detect(sampleString);
-
-    // jschardet 可能返回 TextDecoder 不认的标签(或乱码标签),
-    // new TextDecoder(label) 会抛 RangeError —— 回退到 utf-8 而不是让调用方崩掉。
-    let decoder: TextDecoder;
-    try {
-      decoder = new TextDecoder(detected.encoding || "utf-8");
-    } catch {
-      decoder = new TextDecoder("utf-8");
-    }
-    return decoder.decode(uint8Array);
-  }
+export const splitFileName = (fileName: string, defaultExt = ".txt"): { nameWithoutExt: string; ext: string } => {
+  const dotIndex = fileName.lastIndexOf(".");
+  if (dotIndex > 0) return { nameWithoutExt: fileName.slice(0, dotIndex), ext: fileName.slice(dotIndex) };
+  return { nameWithoutExt: fileName, ext: defaultExt };
 };
+

@@ -3,9 +3,9 @@
 import { useMemo } from "react";
 import { useLocalStorage } from "@/app/hooks/useLocalStorage";
 import { usePresetCollection } from "@/app/hooks/usePresetCollection";
-import { applyGlossaryToText, type GlossaryPreset, type GlossaryTerm } from "@/app/lib/translation/glossary";
-
-const NO_TERMS: GlossaryTerm[] = [];
+// 纯函数部分(deriveGlossaryHelpers)住在 lib/translation/glossary —— CLI 与
+// 本 hook 共用同一份过滤谓词与 memo 策略,消费方直接从 lib 导入,不设 shim。
+import { deriveGlossaryHelpers, type GlossaryPreset, type GlossaryTerm } from "@/app/lib/translation/glossary";
 
 const isValidTerm = (t: unknown): t is GlossaryTerm => {
   const term = t as Partial<GlossaryTerm> | null;
@@ -22,32 +22,6 @@ const isValidTerm = (t: unknown): t is GlossaryTerm => {
  */
 export const sanitizePresetTerms = (preset: GlossaryPreset | undefined): GlossaryPreset | undefined =>
   preset ? { ...preset, terms: (Array.isArray(preset.terms) ? preset.terms : []).filter(isValidTerm) } : undefined;
-
-/**
- * Pure derivation of the per-target-language helpers — extracted so it can be
- * unit-tested without React. The per-request system-prompt block is composed
- * downstream (translateSingle) from getGlossaryTerms, filtered to the terms
- * the request text actually contains.
- */
-export const deriveGlossaryHelpers = (glossaryEnabled: boolean, activePreset: GlossaryPreset | undefined) => {
-  // Reference-stable per-language term arrays: glossary.ts memoizes its
-  // compiled regex set on the array reference, and applyGlossary runs once per
-  // translated line — a fresh array per call would recompile per line.
-  const termsByLang = new Map<string, GlossaryTerm[]>();
-  const getGlossaryTerms = (targetLang: string): GlossaryTerm[] => {
-    if (!glossaryEnabled || !activePreset) return NO_TERMS;
-    let terms = termsByLang.get(targetLang);
-    if (!terms) {
-      // The hook hands in a sanitized preset (sanitizePresetTerms), but this
-      // helper is also exported for tests/direct use — keep the shape guard.
-      terms = (activePreset.terms ?? []).filter((t) => t.targetLang === targetLang && typeof t.source === "string" && t.source.trim());
-      termsByLang.set(targetLang, terms);
-    }
-    return terms;
-  };
-  const applyGlossary = (text: string, targetLang: string): string => applyGlossaryToText(text, getGlossaryTerms(targetLang));
-  return { getGlossaryTerms, applyGlossary };
-};
 
 /**
  * Named glossary presets + master toggle, backed by localStorage. Mirrors

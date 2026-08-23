@@ -35,6 +35,7 @@
     "nameRequired": "用語集の名前を入力してください"
   },
   "common": {
+    "supportEscapeChars": "エスケープ文字対応：\\n (改行)、\\r (復帰)、\\t (タブ)、\\s (スペース)、\\\\ (バックスラッシュ)",
     "skipToContent": "メインコンテンツにスキップ",
     "fileProcessFailed": "ファイルの処理に失敗しました。エンコードを確認するか、別のファイルをお試しください",
     "fileReadFailed": "ファイルの読み込みに失敗しました",
@@ -58,6 +59,11 @@
     "selectMultiTargetLanguages": "複数の翻訳先言語を選択",
     "noTargetLanguage": "少なくとも1つの翻訳先言語を選択してください。",
     "translationError": "翻訳失敗",
+    "translationCancelled": "翻訳をキャンセルしました",
+    "translationStopped": "停止しました",
+    "resumeFromCache": "翻訳済みの行はキャッシュ済みです。もう一度翻訳すると続きから再開します",
+    "cancelKeepsProgress": "キャンセルしても翻訳済みの分は残ります",
+    "dismiss": "閉じる",
     "translationAPI": "翻訳API",
     "enter": "入力",
     "getApiKey": "APIキーを取得",
@@ -83,6 +89,7 @@
     "extractText": "テキスト抽出",
     "translationResult": "翻訳結果",
     "copy": "コピー",
+    "expand": "続きを読む",
     "remove": "削除",
     "exportFile": "エクスポート",
     "exportAllFile": "すべてエクスポート",
@@ -90,15 +97,16 @@
     "extractedText": "抽出されたテキスト",
     "translating": "翻訳中",
     "translateDone": "翻訳完了",
+    "translateDonePartial": "失敗した行は原文のまま残っています",
+    "translateDoneIncomplete": "一部が完了していません",
     "multiTranslating": "翻訳中、合計言語数：",
     "model": "モデル",
     "sameLanguageTarget": "翻訳元と翻訳先が同じ言語です。自動的に翻訳先を調整しました：",
     "sameLanguageSource": "翻訳元と翻訳先が同じ言語です。自動的に翻訳元を調整しました：",
     "enterApiKey": "APIキーを入力するか、無料APIに切り替えてください。",
-    "enterApiUrl": "「API 設定」でAPIエンドポイントを設定してください。",
-    "deepLXUnavailable": "DeepLX サービスに一時的に接続できません。GTX API (Free) に自動的に切り替えました。",
-    "deeplUnavailable": "DeepL サービスに一時的に接続できません。「API 設定」の関連設定を確認してください。",
-    "llmUnavailable": "LLM サービスに一時的に接続できません。「API 設定」の関連設定を確認してください。",
+    "enterApiUrl": "「その他のProvider設定」でAPIエンドポイントを設定してください。",
+    "serviceUnavailable": "{service} に一時的に接続できません。ネットワークとサービスのアドレスを確認し、しばらくしてから再試行するか、別の翻訳サービスをご利用ください。",
+    "serviceUnavailableSwitched": "{service} に一時的に接続できないため、{fallback} に自動で切り替えました。元のサービスを使い続ける場合は、確認後に設定で戻してください。",
     "noFileUploaded": "処理するファイルをアップロードしてください。",
     "translationExported": "翻訳完了、ファイルをエクスポートしました",
     "noSourceText": "テキストを入力または貼り付けてください。",
@@ -114,6 +122,7 @@
     "importSettingTooltip": "ファイルから設定をインポート",
     "exportSettingSuccess": "設定をエクスポートしました",
     "exportSettingError": "エクスポートに失敗しました。再試行してください",
+    "dictLoadFailed": "変換辞書の読み込みに失敗しました。ネットワークを確認するかページを再読み込みしてください",
     "importSettingSuccess": "設定をインポートしました",
     "importSettingError": "インポートに失敗しました。再試行してください",
     "removeCharsAfterTranslation": "翻訳後に文字を削除",
@@ -135,8 +144,9 @@
     "customExportFilename": "エクスポートファイル名の形式",
     "customExportFilenameTooltip": "'{'name'}' = 元のファイル名, '{'lang'}' = 言語, '{'ext'}' = 拡張子, '{'date'}' = 日付, '{'time'}' = 時間；多言語モードでは '{'lang'}' が自動追加され、ファイル名の衝突を防ぎます",
     "partialFailureTitle": "{count}行の翻訳に失敗しました",
-    "partialFailureDesc": "失敗した行は元のテキストでプレースホルダーされており、ファイル構造に影響しません。この種の失敗は多くがネットワークの揺らぎや翻訳サービスの一時的な不安定によるもので、無料サービスやセルフホストのサーバーで特に起こりやすく、設定の問題ではありません。「再試行」をクリックすれば続行できます（成功した行はキャッシュから読み込まれ、再翻訳されません）。それでも失敗する場合は、しばらくしてから再試行するか別の翻訳サービスをお試しください。「失敗した行を表示」して手動で処理することもできます。",
-    "retryFailedLines": "再試行",
+    "partialFailureDesc": "これらの行は原文のまま残っており、ファイル構造は保たれています。再試行は該当行だけを送信し、残りはキャッシュから復元します。",
+    "partialFailureWhy": "無料・自前サーバーで起きやすく、たいてい設定の問題ではありません。",
+    "retryFailedLines": "失敗した行を再試行",
     "viewFailedLines": "失敗した行を表示",
     "failedLinesModalTitle": "失敗した{count}行",
     "copyAllFailed": "すべてコピー",
@@ -166,12 +176,9 @@
     "smartLineBreak": "スマート改行",
     "replaceText": "テキスト置換",
     "generateJson": "JSON生成",
-    "gtxFreeAPIUnavailable": "GTX Free サービスに一時的に接続できません。ネットワーク制限の可能性があります。しばらくしてから再試行するか、別の翻訳サービスに切り替えてください。",
-    "edgeFreeAPIUnavailable": "Edge Free サービスに一時的に接続できません。ネットワーク制限の可能性があります。しばらくしてから再試行するか、別の翻訳サービスに切り替えてください。",
-    "translategemmaUnavailable": "TranslateGemma サービスに一時的に接続できません。ローカルサーバー（LM Studio / llama.cpp / Ollama）が起動していて URL が正しいか確認してください。",
     "networkUnavailable": "翻訳サービスに一時的に接続できません。ネットワークの問題かサービス側の一時的な不具合の可能性があります。しばらくしてから再試行するか、別の翻訳サービスに切り替えてください。",
     "translationTimeout": "翻訳リクエストがタイムアウトしました。ネットワークが遅いか、サービスの応答に時間がかかっている可能性があります。しばらくしてから再試行するか、別の翻訳サービスに切り替えてください。",
-    "translationTimeoutLocal": "ローカルモデルの翻訳がタイムアウトしました。ローカル LLM は繰り返しループで停止することがあります。詳細設定で max_tokens（出力上限）を下げ、選択したソース言語が実際のテキストと一致しているか確認してください。",
+    "translationTimeoutLocal": "ローカルモデルの翻訳がタイムアウトしました。よくある原因：同時実行数がローカルサーバーの並列スロット数を超え、リクエストがサーバー側で待機したままタイムアウトする／モデルが同じ出力を繰り返すループに陥る（多くは元言語の選択ミス）。このサービスの「呼び出しパラメータ → 同時翻訳行数」を下げるか「詳細設定 → タイムアウト」を延ばし、選択した元言語が実際のテキストと一致しているか確認してください。",
     "langGroupCommon": "よく使う",
     "langGroupEurope": "ヨーロッパ",
     "langGroupMiddleEast": "中東",
@@ -198,13 +205,18 @@
     "errorHint429": "リクエストが多すぎます。しばらくしてから再試行してください",
     "errorHint456": "今期の翻訳クォータを使い切りました",
     "errorHint5xx": "サーバーエラーです。しばらくしてから再試行してください",
-    "errorHintRelay": "ネットワークエラー（CORS 制限の可能性があります）。API 設定で「API 中継」を有効にしてください",
-    "errorHintRelay403": "API が 403 Forbidden を返しました。API 設定で「API 中継」を有効にしてください",
+    "errorHintRelay": "ネットワークエラー（CORS 制限の可能性があります）。「その他のProvider設定」で「API 中継」を有効にしてください",
+    "errorHintRelay403": "API が 403 Forbidden を返しました。「その他のProvider設定」で「API 中継」を有効にしてください",
+    "errorHintGeminiKey": "Gemini に接続できません。まずネットワークを確認してください（一部のネットワークでは Google サービスに直接接続できません）。ネットワークに問題がなければ、2026年6月19日以降 Google は無制限の API キーを拒否しています。AI Studio でキーを再生成する（デフォルトで制限付き）か、Google Cloud コンソールで既存キーに Gemini API 制限を追加してください",
     "rateLimitCooldown": "レート制限に達したため少し待機し、自動的に再試行します"
   },
   "SubtitleTranslator": {
     "clientDescription": "字幕ファイルをアップロードまたは内容を貼り付け、翻訳先言語を選択して素早く翻訳。一括処理に対応し、タイムラインを自動保持。",
-    "subtitleFormat": "字幕形式",
+    "liveResults": "リアルタイム結果",
+    "liveWaiting": "最初の行の翻訳を待っています…",
+    "liveNotTranslated": "未翻訳",
+    "liveNoneSucceeded": "この実行ではまだ翻訳できた行がありません — 下の失敗情報をご確認ください",
+    "subtitleFormat": "訳文の出力",
     "translatedOnly": "訳文のみ",
     "bilingual": "対訳",
     "exportBoth": "両方",
@@ -282,6 +294,7 @@
     "testConfigFail": "APIテスト失敗、設定を確認してください。",
     "url": "インターフェースアドレス",
     "urlExtra": "localhostおよびリモートアドレスに対応",
+    "endpointDocs": "ドキュメントを見る",
     "deeplxUrlExtra": "任意。空欄にすると当方の公開サーバーを使用します",
     "urlOptionalExtra": "任意。空欄にするとデフォルトのエンドポイントを使用します",
     "customApiHelp": "OpenAI 互換 API のエンドポイントが利用できます — ローカル (Ollama / LM Studio / vLLM) またはクラウド (Together AI / Fireworks AI など)",
@@ -294,6 +307,7 @@
     "userPromptExtra": "カスタム翻訳プロンプト、空欄の場合はデフォルトを使用。変数説明",
     "for": "を",
     "textToTranslate": "翻訳対象テキスト",
+    "fullText": "全文",
     "chunkSize": "チャンクサイズ",
     "chunkSizeExtra": "複数行テキスト（字幕、Markdownなど）はこのサイズで分割して翻訳されます",
     "batchSize": "同時翻訳行数",
@@ -305,15 +319,20 @@
     "contextWindow": "コンテキスト行数",
     "contextWindowExtra": "1 バッチあたりの行数。大きいほどリクエスト数が減り高速化しますが、モデルのトークン上限を超える可能性",
     "delayTime": "遅延時間",
+    "delayTimeExtra": "リクエストとリクエストの間の待機時間。レート制限に頻繁にかかる場合は大きくして速度を落とします",
     "useRelay": "API 中継",
-    "useRelayTooltip": "CORS や 403 エラーが発生した場合は API 中継を有効にしてください",
-    "useRelayOverridden": "カスタム URL が設定されているため、リクエストはその URL に直接送信され、このスイッチは無効です。URL を消去すると再び有効になります",
+    "useRelayTooltip": "CORS や 403 エラーが出る場合は API 中継を有効にしてください。有効時はリクエストが中継を経由してプロバイダーへ届きます。転送のみで保存はしません。",
+    "useRelayCustomUrl": "カスタムエンドポイント使用中：公開リレーは宣言済みのアドレスのみ転送するため、このアドレスが公開リレーに送られることはなく、直接接続されます。リレー経由にするには、オンにして下の欄に自前のリレーアドレスを入力してください。",
+    "relayBase": "中継アドレス",
+    "relayBaseExtra": "空欄の場合は内蔵の中継を使用します。このアドレスは中継を有効にしたすべてのサービスに適用され、当サイトと同じ中継 Worker を自分でデプロイする必要があります。",
+    "relayBaseInvalid": "アドレスが無効です。http:// または https:// で始まり、クエリ文字列や #フラグメントを含まず、/api エンドポイントでもない完全な URL が必要です（中継のホストまたはパス接頭辞のみを入力してください）。修正するまで翻訳は失敗します。空欄にすると内蔵の中継を使用します。",
     "reasoningEffort": "推論強度",
     "reasoningEffortExtra": "Off で思考モードを無効化（既定）。有効にすると通常は精度が向上しますが、応答が遅くなりトークン消費が増えます。カスタムモデルには Auto もあり、モデル本来の既定に従います（Off で API エラーになる場合のみ使用）。",
+    "reasoningEffortNoOff": "このサービスは思考のオフに対応していません。Min は最低レベルを送信するため、推論は行われ課金も発生します。上げるほど精度は上がりますが、遅く高コストになります。カスタムモデルには Auto（モデル既定に従う）もあります。",
     "presetSelect": "プリセットを選択",
     "presetSave": "新しいプリセットとして保存",
     "presetDelete": "現在のプリセットを削除",
-    "presetNamePlaceholder": "プリセット名を入力",
+    "presetNamePlaceholder": "プリセット名（例：映像字幕 / 技術文書）",
     "presetSaved": "新しいプリセットとして保存しました",
     "presetDeleted": "現在のプリセットを削除しました",
     "presetNameRequired": "プリセット名を入力してください",
@@ -338,7 +357,7 @@
     "subtitleTranslator": {
       "title": "字幕翻訳機",
       "description": "SRT、ASS、VTT、SBV、LRC字幕を一括翻訳、120以上の言語に対応",
-      "metaTitle": "字幕翻訳 - SRT/ASS/VTT/SBV/LRC 一括 AI 翻訳とバイリンガル字幕",
+      "metaTitle": "字幕翻訳 - SRT/ASS/VTT/SBV/LRC一括 AI翻訳・バイリンガル",
       "metaDescription": "AI 字幕翻訳、SRT/ASS/VTT/SBV/LRC 一括変換、DeepSeek/Claude/GPT 25+ エンジン、タイムコード保持で二言語字幕。",
       "faq": [
         {
@@ -397,7 +416,7 @@
     },
     "textSplitter": {
       "title": "テキスト分割",
-      "description": "長文をスマートに分割、AI入力とSNSに最適"
+      "description": "長文を区切り記号・文字数・文単位で分割、結合し直しも可能"
     },
     "chineseConversion": {
       "title": "繁体・簡体字変換",
@@ -414,6 +433,10 @@
     "dataBatch": {
       "title": "テキスト処理ツール（自用）",
       "description": "Excel 表データの一括重複削除・列抽出・テキスト結合、複数ルールを順次実行"
+    },
+    "textJoiner": {
+      "title": "テキスト結合ツール",
+      "description": "複数のテキスト列をテンプレートで行ごとに結合し、CSV・SQL・JSONを一括生成"
     },
     "jsonValueExtractor": {
       "title": "JSON値抽出",
@@ -471,11 +494,11 @@
   },
   "Metadata": {
     "title": "ToolsByAI | 無料で使えるAI翻訳＆データ処理ツール集",
-    "description": "ToolsByAI、17 個の無料ツール：字幕・Markdown・JSON i18n 翻訳、テキストや JSON 一括処理。25+ AI エンジン。",
+    "description": "ToolsByAI、19 個の無料ツール：字幕・Markdown・JSON i18n 翻訳、テキストや JSON 一括処理。25+ AI エンジン。",
     "homeTitle": "ToolsByAI ツールセット",
-    "homeDescription": "20+ ツール。多言語翻訳、テキスト処理、JSONデータ変換など、開発者とクリエイターの効率向上を支援。",
+    "homeDescription": "19 ツール。多言語翻訳、テキスト処理、JSONデータ変換など、開発者とクリエイターの効率向上を支援。",
     "ogTitle": "ToolsByAI | 無料で使えるAI翻訳＆データ処理ツール集",
-    "ogDescription": "ToolsByAI、17 個の無料ツール：字幕・Markdown・JSON i18n 翻訳、テキストや JSON 一括処理。25+ AI エンジン。"
+    "ogDescription": "ToolsByAI、19 個の無料ツール：字幕・Markdown・JSON i18n 翻訳、テキストや JSON 一括処理。25+ AI エンジン。"
   },
   "languages": {
     "auto": "自動検出",
@@ -573,6 +596,7 @@
     "th": "タイ語",
     "lo": "ラオ語",
     "my": "ビルマ語",
+    "km": "クメール語",
     "ms": "マレー語",
     "fil": "フィリピン語（タガログ語）",
     "jv": "ジャワ語",
@@ -618,6 +642,11 @@
     "reaction4": "不明",
     "placeholder": "メッセージを残してください。ログインは不要です（メールアドレスを入力すると返信通知を受け取れます）",
     "metaDescription": "Tools By AI のフィードバックページ：バグ報告、機能リクエスト、使用例を共有。Waline ベース、匿名投稿可。"
+  },
+  "AppError": {
+    "title": "ページの読み込みエラー",
+    "description": "ページを読み込めませんでした。サイトの更新直後に発生することがあります。再読み込みしてください。",
+    "reload": "再読み込み"
   },
   "NotFound": {
     "title": "ページが見つかりません",

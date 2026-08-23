@@ -42,7 +42,7 @@ export const getErrorHintKey = (error: unknown): string | null => {
 // 返回的真实诊断("[429] quota exceeded for model X"),保留 + 追加提示。
 // relay 两键:原文是服务层的英文兜底句,诊断信息(CORS/403)已含在提示
 // 文案里,原文无增量 —— 同样只显示提示。
-const HINT_REPLACES_MESSAGE = new Set(["networkUnavailable", "translationTimeout", "translationTimeoutLocal", "errorHintRelay", "errorHintRelay403"]);
+const HINT_REPLACES_MESSAGE = new Set(["networkUnavailable", "translationTimeout", "translationTimeoutLocal", "errorHintRelay", "errorHintRelay403", "errorHintGeminiKey"]);
 
 /**
  * 面向用户的错误描述:原始 message + 本地化的可行动提示(HTTP status 映射),
@@ -115,4 +115,16 @@ export const isAbortError = (error: unknown): boolean => {
  */
 export const isCascadedAbort = (error: unknown): boolean => {
   return error instanceof Error && error.message === "Translation aborted";
+};
+
+/**
+ * message + cause 的诊断文本。Node 的 fetch 把真实原因(ECONNREFUSED、
+ * 证书错误、坏端口)全塞进 error.cause,message 只有一句 "fetch failed" ——
+ * 只拼 message 会让停掉的 Ollama、打错的端口、坏 TLS 代理塌成同一句话。
+ * 供 CLI/引擎的 stderr 诊断用;网页展示层走 describeError(带 i18n 提示)。
+ */
+export const formatErrorWithCause = (error: unknown): string => {
+  const msg = (error as Error)?.message ?? String(error);
+  const cause = (error as Error)?.cause;
+  return cause ? `${msg} — ${(cause as Error)?.message ?? String(cause)}` : msg;
 };

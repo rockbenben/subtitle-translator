@@ -4,8 +4,9 @@ import { useState, useRef, useEffect } from "react";
 import { Select, Input, Button, Tag, Space, Flex, Typography, Tooltip, App, theme } from "antd";
 import { ApiOutlined, BookOutlined, ThunderboltOutlined } from "@ant-design/icons";
 import { useTranslations } from "next-intl";
-import { categorizedOptions, findMethodLabel, getConfigStatus, supportsGlossary, testTranslationWithTimeout, URL_IS_PRIMARY_CRED, DEFAULT_SYSTEM_PROMPT, DEFAULT_USER_PROMPT } from "@/app/lib/translation";
+import { categorizedOptions, findMethodLabel, getConfigStatus, isApiKeyOptional, supportsGlossary, testTranslationWithTimeout, DEFAULT_SYSTEM_PROMPT, DEFAULT_USER_PROMPT } from "@/app/lib/translation";
 import { describeError } from "@/app/utils";
+import { pingSignature } from "@/app/hooks/translation/validation";
 import { useTranslationContext } from "@/app/components/TranslationContext";
 import { useIsMobile } from "@/app/hooks/useIsMobile";
 
@@ -46,15 +47,11 @@ const ApiStatusBlock = ({ disabled = false }: ApiStatusBlockProps) => {
   // detect against the previous render's snapshot and reset synchronously.
   // React discards the in-progress render and immediately re-renders with
   // the cleared state — no useEffect cascading render needed.
-  // Covers every reachability-relevant field (same definition as pingSignature
-  // in validation.ts): region/apiVersion (Azure) and folderId (Yandex) change
-  // which tenant/deployment a test actually hit; useRelay changes the entire
-  // wire path — flipping it is the documented fix for browser-direct CORS
-  // failures, so a stale red "failed" badge must not survive the toggle.
-  // sendSystemPrompt 同 pingSignature:它翻转 Gemma 后端 200/400(请求形状
-  // 字段),恰是测试失败后用户会去扳的开关 —— 漏掉它,红色 failed 徽章在
-  // 用户应用了文档建议的修复后仍然挂着。
-  const identity = `${translationMethod}|${config?.apiKey ?? ""}|${config?.url ?? ""}|${config?.model ?? ""}|${config?.region ?? ""}|${config?.apiVersion ?? ""}|${config?.folderId ?? ""}|${config?.useRelay ?? false}|${config?.sendSystemPrompt ?? true}`;
+  // 失效判据 = pingSignature(「决定 wire 打到哪」的那组字段,逐字段的理由写在
+  // validation.ts 里那个对象字面量的字段注释上)。此前这里手抄了一份同样的
+  // 清单,靠注释与它同步 —— 加 relayBase 时就得两处都改,而只有 pingSignature
+  // 有回归测试。
+  const identity = pingSignature(translationMethod, config);
   const [prevIdentity, setPrevIdentity] = useState(identity);
   if (prevIdentity !== identity) {
     setPrevIdentity(identity);
@@ -139,10 +136,8 @@ const ApiStatusBlock = ({ disabled = false }: ApiStatusBlockProps) => {
     status === "failed" ? token.colorErrorBorder :
     token.colorBorderSecondary;
 
-  // Hide apiKey input for URL-primary services (llm — apiKey optional/hidden by intent;
-  // translategemma — apiKey not in defaults at all so already hidden, but keep the
-  // condition consistent so future URL-primary services don't accidentally show it).
-  const showApiKey = config?.apiKey !== undefined && !URL_IS_PRIMARY_CRED.has(translationMethod);
+  // apiKey 输入框只对【真的需要 key】的服务显示,判据与保存校验、服务层同一个。
+  const showApiKey = config?.apiKey !== undefined && !isApiKeyOptional(translationMethod);
 
   return (
     <section
@@ -162,7 +157,7 @@ const ApiStatusBlock = ({ disabled = false }: ApiStatusBlockProps) => {
       </Flex>
 
       {/* Mobile: stack Select on top, apiKey input below — 145px-each compact
-          row truncates "Custom (OpenAI-compatible)" / "Tencent Hunyuan (混元)"
+          row truncates "Custom (OpenAI-compatible)" / "TokenHub (Tencent)"
           beyond recognition. Desktop keeps the dense single-row layout. */}
       {isMobile ? (
         <Flex vertical gap={token.marginXS}>
@@ -232,11 +227,13 @@ const ApiStatusBlock = ({ disabled = false }: ApiStatusBlockProps) => {
           <Tag
             color={glossaryEnabled && activeGlossaryPreset ? "success" : "default"}
             role="button"
-            tabIndex={0}
+            tabIndex={disabled ? -1 : 0}
+            aria-disabled={disabled}
             aria-label={tGlossary("title")}
-            style={{ cursor: "pointer", margin: 0 }}
-            onClick={() => setApiSettingsOpen(true)}
+            style={{ cursor: disabled ? "not-allowed" : "pointer", margin: 0, opacity: disabled ? 0.5 : 1 }}
+            onClick={disabled ? undefined : () => setApiSettingsOpen(true)}
             onKeyDown={(e) => {
+              if (disabled) return;
               if (e.key === "Enter" || e.key === " ") {
                 e.preventDefault();
                 setApiSettingsOpen(true);
@@ -249,9 +246,13 @@ const ApiStatusBlock = ({ disabled = false }: ApiStatusBlockProps) => {
           </Tag>
           )}
         </Space>
+        {/* 运行中锁住抽屉入口 —— 抽屉内部因此完全不用锁:mask 保证「抽屉开着时
+            开不了跑」(翻译按钮在遮罩后面),入口锁保证「跑着时开不了抽屉」。
+            想改设置,先取消(缓存即断点),取消后这里自然解锁。 */}
         <Button
           type="link"
           size="small"
+          disabled={disabled}
           onClick={() => setApiSettingsOpen(true)}
           style={{ padding: 0, fontWeight: 500, textDecoration: "underline", textUnderlineOffset: "3px" }}>
           {t("moreProviderSettings")} →

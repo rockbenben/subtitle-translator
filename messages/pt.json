@@ -35,6 +35,7 @@
     "nameRequired": "Nome do glossário obrigatório"
   },
   "common": {
+    "supportEscapeChars": "Suporta caracteres escape: \\n (nova linha), \\r (retorno), \\t (tab), \\s (espaço), \\\\ (barra invertida)",
     "skipToContent": "Pular para o conteúdo principal",
     "fileProcessFailed": "Falha ao processar o arquivo — verifique a codificação ou tente outro",
     "fileReadFailed": "Falha ao ler o arquivo",
@@ -58,6 +59,11 @@
     "selectMultiTargetLanguages": "Selecione vários idiomas de destino",
     "noTargetLanguage": "Selecione pelo menos um idioma de destino.",
     "translationError": "Falha na tradução",
+    "translationCancelled": "Tradução cancelada",
+    "translationStopped": "Parado",
+    "resumeFromCache": "As linhas traduzidas ficam em cache: traduza de novo para continuar de onde parou",
+    "cancelKeepsProgress": "Cancelar mantém o que já foi traduzido",
+    "dismiss": "Fechar",
     "translationAPI": "API de Tradução",
     "enter": "Entrar",
     "getApiKey": "Obter Chave API",
@@ -83,6 +89,7 @@
     "extractText": "Extrair Texto",
     "translationResult": "Resultado",
     "copy": "Copiar",
+    "expand": "mais",
     "remove": "Remover",
     "exportFile": "Exportar",
     "exportAllFile": "Exportar Tudo",
@@ -90,15 +97,16 @@
     "extractedText": "Texto Extraído",
     "translating": "Traduzindo...",
     "translateDone": "Tradução concluída",
+    "translateDonePartial": "As linhas com falha mantiveram o texto original",
+    "translateDoneIncomplete": "Alguns itens não foram concluídos",
     "multiTranslating": "Traduzindo, total de idiomas:",
     "model": "Modelo",
     "sameLanguageTarget": "Idiomas de origem e destino iguais; destino ajustado automaticamente para",
     "sameLanguageSource": "Idiomas de origem e destino iguais; origem ajustada automaticamente para",
     "enterApiKey": "Insira a chave API ou mude para API Gratuita.",
-    "enterApiUrl": "Por favor, configure a URL da API em 'Configurações de API'.",
-    "deepLXUnavailable": "O serviço DeepLX está temporariamente inacessível, mudou automaticamente para GTX API (Free).",
-    "deeplUnavailable": "O serviço DeepL está temporariamente inacessível, verifique as configurações relacionadas em Configurações de API.",
-    "llmUnavailable": "O serviço LLM está temporariamente inacessível, verifique as configurações relacionadas em Configurações de API.",
+    "enterApiUrl": "Por favor, configure a URL da API em \"Mais configurações do Provider\".",
+    "serviceUnavailable": "{service} está temporariamente inacessível — verifique a rede e o endereço do serviço, tente novamente mais tarde ou mude para outro serviço de tradução.",
+    "serviceUnavailableSwitched": "{service} está temporariamente inacessível — mudámos automaticamente para {fallback}. Verifique-o e volte a selecioná-lo nas definições se quiser continuar a usá-lo.",
     "noFileUploaded": "Por favor, envie um arquivo primeiro.",
     "translationExported": "Tradução concluída, arquivos exportados",
     "noSourceText": "Por favor, insira ou cole o texto.",
@@ -114,6 +122,7 @@
     "importSettingTooltip": "Importar configuração de arquivo",
     "exportSettingSuccess": "Configurações exportadas",
     "exportSettingError": "Falha ao exportar, tente novamente",
+    "dictLoadFailed": "Falha ao carregar o dicionário de conversão — verifique a rede ou recarregue a página",
     "importSettingSuccess": "Configurações importadas",
     "importSettingError": "Falha ao importar, tente novamente",
     "removeCharsAfterTranslation": "Remover caracteres após tradução",
@@ -135,8 +144,9 @@
     "customExportFilename": "Padrão de nome de arquivo",
     "customExportFilenameTooltip": "'{'name'}' = nome original, '{'lang'}' = idioma, '{'ext'}' = extensão, '{'date'}' = data, '{'time'}' = hora; no modo multilíngue, '{'lang'}' é adicionado automaticamente para evitar conflitos de nome",
     "partialFailureTitle": "{count} linha(s) falharam",
-    "partialFailureDesc": "As linhas que falharam mantiveram o texto original como espaço reservado, o arquivo continua utilizável. Essas falhas geralmente são oscilações de rede ou instabilidade temporária do serviço de tradução — serviços gratuitos e servidores auto-hospedados são especialmente propensos, e não é um problema de configuração sua. Clique em Tentar novamente para continuar (as linhas bem-sucedidas vêm do cache, sem retradução); se continuar falhando, tente novamente mais tarde ou troque para outro serviço de tradução. Ou clique em Ver linhas que falharam para tratá-las manualmente.",
-    "retryFailedLines": "Tentar novamente",
+    "partialFailureDesc": "Essas linhas mantiveram o texto original, então a estrutura do arquivo está intacta. Tentar novamente reenvia só elas; o resto vem do cache.",
+    "partialFailureWhy": "Comum em serviços gratuitos e auto-hospedados — normalmente não é a sua configuração.",
+    "retryFailedLines": "Tentar linhas com falha",
     "viewFailedLines": "Ver linhas que falharam",
     "failedLinesModalTitle": "{count} linha(s) que falharam",
     "copyAllFailed": "Copiar tudo",
@@ -164,14 +174,11 @@
     "batchDownloaded": "Processamento concluído, arquivos baixados automaticamente",
     "sourceTextPlaceholder": "Digite ou cole o texto a ser processado...",
     "smartLineBreak": "Quebra de linha inteligente",
-    "replaceText": "Substituir texto ",
+    "replaceText": "Substituir texto",
     "generateJson": "Gerar JSON",
-    "gtxFreeAPIUnavailable": "O serviço GTX Free está temporariamente inacessível — pode ser uma restrição de rede. Tente novamente mais tarde ou troque para outro serviço de tradução.",
-    "edgeFreeAPIUnavailable": "O serviço Edge Free está temporariamente inacessível — pode ser uma restrição de rede. Tente novamente mais tarde ou troque para outro serviço de tradução.",
-    "translategemmaUnavailable": "O serviço TranslateGemma está temporariamente inacessível, verifique se o seu servidor local (LM Studio / llama.cpp / Ollama) está em execução e o URL está correto.",
     "networkUnavailable": "O serviço de tradução está temporariamente inacessível — pode ser um problema de rede ou o serviço está com algum problema momentâneo. Tente novamente mais tarde ou troque para outro serviço de tradução.",
     "translationTimeout": "A solicitação de tradução expirou — pode ser uma rede lenta ou o serviço está demorando muito para responder. Tente novamente mais tarde ou troque para outro serviço de tradução.",
-    "translationTimeoutLocal": "O tempo da tradução com o modelo local esgotou. Um LLM local pode travar em um loop de repetição — reduza max_tokens (o limite de saída) nas Configurações avançadas e verifique se o idioma de origem selecionado corresponde ao texto real.",
+    "translationTimeoutLocal": "Tempo esgotado na tradução com o modelo local. Causas comuns: a concorrência excede os slots paralelos do seu servidor local e os pedidos ficam em fila até expirar; ou o modelo entra num ciclo de repetição (normalmente idioma de origem errado). Reduza «Parâmetros de chamada → Linhas simultâneas» neste serviço ou aumente «Configurações Avançadas → Tempo limite», e confirme que o idioma de origem corresponde ao texto.",
     "langGroupCommon": "Comuns",
     "langGroupEurope": "Europa",
     "langGroupMiddleEast": "Médio Oriente",
@@ -198,13 +205,18 @@
     "errorHint429": "Limite de requisições excedido, tente novamente mais tarde",
     "errorHint456": "Cota de tradução esgotada neste período",
     "errorHint5xx": "Erro do servidor, tente novamente mais tarde",
-    "errorHintRelay": "Erro de rede (possivelmente CORS) — ative o \"Relay da API\" nas configurações de API",
-    "errorHintRelay403": "A API retornou 403 Forbidden — ative o \"Relay da API\" nas configurações de API",
+    "errorHintRelay": "Erro de rede (possivelmente CORS) — ative o \"Relay da API\" em \"Mais configurações do Provider\"",
+    "errorHintRelay403": "A API retornou 403 Forbidden — ative o \"Relay da API\" em \"Mais configurações do Provider\"",
+    "errorHintGeminiKey": "Não foi possível conectar ao Gemini: verifique primeiro sua rede (algumas redes não alcançam diretamente os serviços do Google). Se a rede estiver bem, desde 19/06/2026 o Google rejeita chaves de API sem restrições — gere novamente sua chave no AI Studio (restrita por padrão) ou adicione uma restrição de Gemini API à chave antiga no Console do Google Cloud",
     "rateLimitCooldown": "Limite de requisições atingido — pausando brevemente, repetiremos automaticamente"
   },
   "SubtitleTranslator": {
     "clientDescription": "Envie legendas ou cole conteúdo. Selecione o idioma de destino para tradução rápida. Suporta processamento em lote e preserva a linha do tempo.",
-    "subtitleFormat": "Formato de Legendas",
+    "liveResults": "Resultados ao vivo",
+    "liveWaiting": "Aguardando a primeira linha…",
+    "liveNotTranslated": "Não traduzido",
+    "liveNoneSucceeded": "Nenhuma linha traduzida ainda — veja os detalhes da falha abaixo",
+    "subtitleFormat": "Saída da tradução",
     "translatedOnly": "Traduzido",
     "bilingual": "Bilíngue",
     "exportBoth": "Ambos",
@@ -282,6 +294,7 @@
     "testConfigFail": "Teste API Falhou, verifique config.",
     "url": "URL API",
     "urlExtra": "Suporta localhost e endereços remotos",
+    "endpointDocs": "Ver documentação",
     "deeplxUrlExtra": "Opcional, deixe vazio para usar nosso servidor público",
     "urlOptionalExtra": "Opcional — deixe vazio para usar o endpoint padrão",
     "customApiHelp": "Funciona com qualquer endpoint de API compatível com OpenAI — servidores locais (Ollama / LM Studio / vLLM) ou serviços em nuvem (Together AI / Fireworks AI / etc).",
@@ -294,6 +307,7 @@
     "userPromptExtra": "Prompt tradução personalizado, deixar vazio para padrão. Variáveis:",
     "for": "para",
     "textToTranslate": "texto a traduzir",
+    "fullText": "texto completo",
     "chunkSize": "Tamanho Fragmento",
     "chunkSizeExtra": "Texto multilinha (Legendas, Markdown) será dividido por este tamanho",
     "batchSize": "Linhas simultâneas",
@@ -305,15 +319,20 @@
     "contextWindow": "Linhas de contexto",
     "contextWindowExtra": "Linhas por lote. Mais alto = menos solicitações e mais velocidade, mas pode exceder o limite de tokens do modelo",
     "delayTime": "Atraso",
+    "delayTimeExtra": "Tempo de espera entre requisições consecutivas. Aumente se você é limitado com frequência",
     "useRelay": "Relay da API",
-    "useRelayTooltip": "Ative o relay da API em caso de erros CORS ou 403",
-    "useRelayOverridden": "Um URL personalizado está definido — as solicitações vão diretamente para ele e este botão não tem efeito; limpe o URL para reativá-lo",
+    "useRelayTooltip": "Ative o relay de API se encontrar erros de CORS ou 403. As requisições passam pelo relay a caminho do provedor; ele apenas encaminha, sem armazenar nada.",
+    "useRelayCustomUrl": "Endpoint personalizado em uso: o relay público integrado só encaminha endereços que ele declara, portanto este endereço nunca é enviado para lá — as solicitações vão diretas. Para passar por um relay, ative o interruptor e insira abaixo o endereço do seu próprio relay.",
+    "relayBase": "Endereço do relay",
+    "relayBaseExtra": "Deixe vazio para usar o relay integrado. Este endereço vale para todos os serviços com relay ativado e exige a sua própria implantação do mesmo Worker de relay.",
+    "relayBaseInvalid": "Endereço inválido — é necessário um URL completo começando por http:// ou https://, sem string de consulta nem #fragmento, e que não seja um endpoint /api (indique apenas o host ou o prefixo de caminho do relay). A tradução falhará até ser corrigido; deixe o campo vazio para usar o relay integrado.",
     "reasoningEffort": "Esforço de raciocínio",
     "reasoningEffortExtra": "Off desativa o pensamento (padrão); ativá-lo geralmente é mais preciso, mas mais lento e consome mais tokens. Modelos personalizados também oferecem Auto = seguir o padrão integrado do modelo (use apenas se Off causar erro de API).",
+    "reasoningEffortNoOff": "Este provedor não permite desativar o raciocínio: Min envia o nível mais baixo, que continua raciocinando e sendo cobrado. Níveis mais altos costumam ser mais precisos, porém mais lentos e caros. Modelos personalizados também oferecem Auto = seguir o padrão do próprio modelo.",
     "presetSelect": "Selecionar predefinição",
     "presetSave": "Salvar como nova predefinição",
     "presetDelete": "Excluir predefinição atual",
-    "presetNamePlaceholder": "Digite o nome da predefinição",
+    "presetNamePlaceholder": "Nome da predefinição (ex.: Legendas / Documentação técnica)",
     "presetSaved": "Salvo como nova predefinição",
     "presetDeleted": "Predefinição atual excluída",
     "presetNameRequired": "Digite um nome para a predefinição",
@@ -339,7 +358,7 @@
       "title": "Tradutor Legendas",
       "description": "Tradução em lote SRT, ASS, VTT, SBV, LRC. 120+ idiomas.",
       "metaTitle": "Tradutor de Legendas | Lote SRT/VTT/ASS + Bilíngue",
-      "metaDescription": "Tradutor IA de legendas para SRT, ASS, VTT, SBV, LRC. 25+ motores: DeepSeek, Claude, GPT, DeepL. 120+ idiomas, timecodes preservados, bilíngue.",
+      "metaDescription": "Tradutor IA de legendas SRT, ASS, VTT, SBV, LRC. 25+ motores: DeepSeek, Claude, GPT, DeepL. 120+ idiomas, timecodes, bilíngue.",
       "faq": [
         {
           "q": "Quais formatos de legenda são suportados? É possível traduzir SRT, ASS, VTT, SBV e LRC?",
@@ -397,7 +416,7 @@
     },
     "textSplitter": {
       "title": "Divisor de Texto",
-      "description": "Divisão inteligente de texto longo para IA e redes sociais"
+      "description": "Divida textos longos por separador, tamanho ou frase — e junte de volta"
     },
     "chineseConversion": {
       "title": "Conversor Simp/Trad",
@@ -414,6 +433,10 @@
     "dataBatch": {
       "title": "Processador de Texto",
       "description": "Processamento em lote de dados Excel — deduplicação, extração de colunas, fusão, regras encadeadas"
+    },
+    "textJoiner": {
+      "title": "Unificador de Texto",
+      "description": "Combine várias colunas de texto linha por linha com modelos para gerar em lote CSV, SQL e JSON"
     },
     "jsonValueExtractor": {
       "title": "Extrator Valor JSON",
@@ -463,7 +486,7 @@
     "textParser": "Ferramentas Texto",
     "jsonParser": "Ferramentas JSON",
     "dataParser": "Ferramentas Dados",
-    "otherTools": "Outras Ferramentas",
+    "otherTools": "Mais ferramentas",
     "externalTools": {
       "legendtalk": "Mesa-redonda de pensadores de IA",
       "imgprompt": "Prompts de imagem de IA"
@@ -471,11 +494,11 @@
   },
   "Metadata": {
     "title": "ToolsByAI - Ferramentas de IA e Dados para Desenvolvedores",
-    "description": "ToolsByAI: 17 ferramentas open source grátis para tradução de legendas, Markdown, JSON i18n e processamento em lote. 25+ motores IA.",
+    "description": "ToolsByAI: 19 ferramentas open source grátis para tradução de legendas, Markdown, JSON i18n e processamento em lote. 25+ motores IA.",
     "homeTitle": "Suíte ToolsByAI",
-    "homeDescription": "20+ ferramentas para tradução, texto, JSON e conversão de dados. Impulsione a eficiência de desenvolvedores e criadores.",
+    "homeDescription": "19 ferramentas para tradução, texto, JSON e conversão de dados. Impulsione a eficiência de desenvolvedores e criadores.",
     "ogTitle": "ToolsByAI - Ferramentas Dev IA Gratuitas e Open Source",
-    "ogDescription": "ToolsByAI: 17 ferramentas open source grátis para tradução de legendas, Markdown, JSON i18n e processamento em lote. 25+ motores IA."
+    "ogDescription": "ToolsByAI: 19 ferramentas open source grátis para tradução de legendas, Markdown, JSON i18n e processamento em lote. 25+ motores IA."
   },
   "languages": {
     "auto": "Detecção Auto",
@@ -573,6 +596,7 @@
     "th": "Tailandês",
     "lo": "Laosiano",
     "my": "Birmanês",
+    "km": "Khmer",
     "ms": "Malaio",
     "fil": "Filipino (Tagalo)",
     "jv": "Javanês",
@@ -617,7 +641,12 @@
     "reaction3": "O quê?",
     "reaction4": "Confuso",
     "placeholder": "Deixe uma mensagem (não requer login, email opcional para resposta)",
-    "metaDescription": "Página de feedback do Tools By AI: relate bugs, sugira recursos, compartilhe casos de uso. Baseado em Waline, publicação anônima, grátis."
+    "metaDescription": "Página de feedback do Tools By AI: relate bugs, sugira recursos ou compartilhe ideias. Baseado em Waline, anônimo, grátis."
+  },
+  "AppError": {
+    "title": "Falha ao carregar a página",
+    "description": "Não foi possível carregar a página; isso pode acontecer logo após uma atualização do site. Recarregue a página.",
+    "reload": "Recarregar"
   },
   "NotFound": {
     "title": "Página não encontrada",

@@ -1,6 +1,6 @@
 {
   "name": "subtitle-translator",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "license": "MIT",
   "scripts": {
     "dev": "next dev",
@@ -10,6 +10,7 @@
     "start": "next start",
     "lint": "eslint",
     "outdated": "ncu",
+    "cli": "tsx scripts/cli.ts",
     "tauri": "tauri",
     "update-version": "node src-tauri/update-version.js"
   },
@@ -23,13 +24,13 @@
     "file-saver": "^2.0.5",
     "idb": "^8.0.3",
     "jschardet": "^3.1.4",
-    "next": "16.2.9",
+    "next": "16.3.2",
     "next-intl": "^4",
     "next-themes": "^0.4.6",
     "p-limit": "^7.3.0",
     "p-retry": "^7.1.1",
-    "react": "19.2.7",
-    "react-dom": "19.2.7",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
     "rtl-detect": "^1.1.2",
     "spark-md5": "^3.0.2"
   },
@@ -45,8 +46,9 @@
     "babel-plugin-react-compiler": "^1.0.0",
     "cross-env": "10.1.0",
     "eslint": "^9",
-    "eslint-config-next": "16.2.9",
+    "eslint-config-next": "16.3.2",
     "tailwindcss": "^4",
+    "tsx": "^4.23.1",
     "type-fest": "^5",
     "typescript": "^5"
   },

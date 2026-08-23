@@ -1,9 +1,9 @@
 // Translation services - Traditional APIs (GTX, Google, DeepL, Azure)
 
-import type { TranslationService } from "../types";
+import type { TranslateTextParams, TranslationService } from "../types";
 import { defaultConfigs } from "../registry";
 import { isMethodSupportedForLanguage } from "../languages-data";
-import { getLanguageName } from "../utils";
+import { getLanguageName, isValidLanguageValue } from "../utils";
 import { fetchJSON, formatHttpError, parseRetryAfterMs, requireApiKey, requireUrl, completeOpenAICompatUrl, PROXY_ENDPOINTS, THIRD_PARTY_ENDPOINTS, getOpenAICompatContent } from "./shared";
 
 // DeepL source language: Chinese variants → ZH, Portuguese variants → PT, fil → TL
@@ -459,13 +459,15 @@ export const qwenMt: TranslationService = async (params) => {
 // short-name variants). Any code not listed passes through using its `value`
 // as-is and `languages[].name` for the prompt name. Adding a new TranslateGemma
 // override here is the only place to touch — no parallel LANG_INFO to maintain.
-const TRANSLATEGEMMA_OVERRIDES: Record<string, { code?: string; name?: string }> = {
+// null 原型:语言代码是外部输入(CLI 参数/导入的设置文件),字面量对象会让
+// `TRANSLATEGEMMA_OVERRIDES["constructor"]` 返回 Object 函数而不是 undefined。
+const TRANSLATEGEMMA_OVERRIDES: Record<string, { code?: string; name?: string }> = Object.assign(Object.create(null), {
   zh: { code: "zh-Hans", name: "Chinese" }, // ours: "Simplified Chinese"
   "zh-hant": { code: "zh-Hant", name: "Chinese" }, // ours: "Traditional Chinese"
   "pt-br": { code: "pt-BR", name: "Portuguese" }, // ours: "Portuguese (Brazil)"
   "pt-pt": { code: "pt-PT", name: "Portuguese" }, // ours: "Portuguese (Portugal)"
   fil: { code: "fil-PH", name: "Filipino" }, // ours: "Filipino(Tagalog)"
-};
+});
 
 // Defense-in-depth: validate already blocks `auto`, yue, and bho
 // before we get here, but a future code path (direct API consumer, CLI, etc.)
@@ -474,7 +476,9 @@ const getTranslategemmaLangInfo = (code: string): { code: string; name: string }
   if (code === "auto") {
     throw new Error("TranslateGemma requires an explicit source language (auto-detect not supported). / TranslateGemma 不支持自动检测源语言，请明确选择源语言。");
   }
-  if (!isMethodSupportedForLanguage("translategemma", code)) {
+  // 同 getMilmmtLangName:先查在不在语言表里 —— denylist 是派生的,表外代码
+  // 两个集合都不在,只查 isMethodSupportedForLanguage 就是 fail-open。
+  if (!isValidLanguageValue(code) || !isMethodSupportedForLanguage("translategemma", code)) {
     throw new Error(`TranslateGemma does not support language code "${code}". / TranslateGemma 不支持该语言代码：${code}`);
   }
   const override = TRANSLATEGEMMA_OVERRIDES[code];
@@ -502,20 +506,25 @@ ${text.trim()}<end_of_turn>
 `;
 };
 
-// TranslateGemma is invoked one source segment per request — the registry sets
-// no chunkSize, so useTranslationState ALWAYS takes the line-by-line path
-// (one request per content line). The official model card defines the output
-// as a single string ("Output: Text translated into the target language") and
-// documents no candidate-list behavior. But the 4B model, prompted off its
-// native chat template (we pre-render to /v1/completions to survive LM Studio),
-// occasionally spills a newline-separated list of synonyms for short/ambiguous
-// inputs (可能 / 也许 / 大概 / 八成 / 好像). Left verbatim, that multi-line block
-// lands in ONE line-slot and downstream assembly renders it as several lines,
-// shifting bilingual/subtitle output. Since every request carries exactly one
-// segment, any newline in the output is a candidate separator, never a second
-// translation — keep only the first non-empty candidate to enforce the
-// documented single-translation contract.
-export const firstTranslategemmaCandidate = (raw: string): string => {
+// Both local MT models are invoked one source segment per request — neither
+// registry entry sets chunkSize, so the pipeline ALWAYS takes the line-by-line
+// path. Their model cards define the output as a single string and document no
+// candidate-list behavior. But TranslateGemma 4B, prompted off its native chat
+// template (we pre-render to /v1/completions to survive LM Studio), spills a
+// newline-separated list of synonyms for short/ambiguous inputs (可能 / 也许 /
+// 大概 / 八成 / 好像); MiLMMT, being a raw-completion model, can likewise keep
+// going after its answer. Left verbatim, that multi-line block lands in ONE
+// line-slot and downstream assembly renders it as several lines, shifting
+// bilingual/subtitle output — so we keep only the first non-empty candidate.
+//
+// 无条件折叠是【安全的】,因为 localCompletionsTranslate 保证送进来的源文本
+// 恒为单行(多行值在那里被拆成逐行往返)。曾经这里带过一个 `source` 参数、
+// 「源是多行就原样返回」—— 那是在修同一个 bug 的半路上:它保住了内容,却把
+// 一个结构上无效的提示词继续发出去(见 localCompletionsTranslate 的拆行注释),
+// 而且判据用的是【未 trim 的】源文,与提示词构造里的 `text.trim()` 错配:
+// 一个尾随换行的单行值("Loading…\n",i18n 里再普通不过)会让折叠静默失效,
+// 同样两个字节一致的请求得到两种后处理,决定权在一个根本没到模型的字符上。
+export const firstTranslationCandidate = (raw: string): string => {
   return (
     raw
       .trim()
@@ -523,6 +532,137 @@ export const firstTranslategemmaCandidate = (raw: string): string => {
       .map((line) => line.trim())
       .find((line) => line !== "") ?? ""
   );
+};
+
+// /v1/chat/completions → /v1/completions. The two are siblings on every
+// OpenAI-compat server we care about (LM Studio, koboldcpp, vLLM, llama.cpp,
+// HF TGI); the user's URL points at chat, and we need the legacy endpoint where
+// the prompt passes through untouched (no chat template applied server-side).
+//
+// ⚠ 【改 pathname,别对整串做 $ 锚定的正则替换】。completeOpenAICompatUrl 刻意
+// 把路径插在 search 之前(见 shared.ts 的注释),所以一个带查询串的自建网关
+// (`https://gw.tld/?token=SECRET` —— sanitizeSettings 明确保留这种形状)补全后
+// 是 `…/v1/chat/completions?token=SECRET`,`$` 永远匹配不上 → 裸补全请求体
+// (只有 prompt、没有 messages)被打到 chat 端点:严格运行时 400,宽松运行时
+// 给预渲染好的提示词【再套一层 chat template】—— 正是这整条路径存在的理由。
+const toCompletionsEndpoint = (u: string): string => {
+  try {
+    const parsed = new URL(u);
+    parsed.pathname = parsed.pathname.replace(/\/chat\/completions$/, "/completions");
+    return parsed.toString();
+  } catch {
+    // 解析不了就退回字面替换,交给 fetch 去报更清楚的错(同 completeOpenAICompatUrl)
+    return u.replace(/\/chat\/completions$/, "/completions");
+  }
+};
+
+// ─── Local self-hosted MT weights: shared /v1/completions path ───────────────
+// TranslateGemma and MiLMMT are the same animal: translation-specialized
+// weights the user runs themselves (LM Studio / llama.cpp / koboldcpp / vLLM
+// —— 【不含 Ollama】，它在 /v1/completions 上仍然套 Modelfile 模板，把下面
+// 预渲染好的提示词再包一层；源码出处见 registry 的
+// RAW_PROMPT_RUNTIME_ENDPOINTS), documented with a FIXED prompt string and
+// greedy decoding, invoked
+// one source segment per request. Both must pre-render that prompt and POST to
+// /v1/completions rather than /v1/chat/completions — each for its own reason,
+// see the two builders — after which everything (URL rewrite, optional bearer,
+// input-scaled max_tokens, truncation guard, candidate collapsing) is
+// identical. One function on purpose: a second hand-written copy is exactly how
+// the max_tokens / finish_reason hardening below ends up applying to only one.
+const localCompletionsTranslate = async (opts: { serviceName: string; params: TranslateTextParams; buildPrompt: (line: string) => string; stop: string[] }): Promise<string> => {
+  const { serviceName, params, buildPrompt, stop } = opts;
+  const { url, apiKey, model, text } = params;
+  const apiEndpoint = completeOpenAICompatUrl(requireUrl(serviceName, url));
+  const completionsUrl = toCompletionsEndpoint(apiEndpoint);
+
+  // Local LM Studio / llama.cpp typically don't require a key — only attach
+  // Authorization when the user provides one (hosted setups, gated proxies).
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (apiKey?.trim()) {
+    headers.Authorization = `Bearer ${apiKey}`;
+  }
+
+  // 清空模型名 = 【用运行时当前加载的那个】，字段留空就不发 model。
+  // 这是本地服务器必需的逃生口：模型 id 由运行时决定（LM Studio 与
+  // Ollama / llama.cpp 各报各的，量化后缀也会进去），注册表里那个默认值
+  // 只是个猜测，猜错就是 404。默认值仍然生效 —— 它由 migrateConfig
+  // 写进 config，新用户照常拿到；只有【用户亲手清空】才会不发。
+  // ⚠ 曾经写的是 `model?.trim() || defaultConfigs.X.model`：用户清空后
+  // 界面显示空、线上照发默认名，“用当前加载的模型”这个最自然的自救
+  // 动作直接失效，而且无从察觉。语义与 Custom (llm) 对齐。
+  const effectiveModel = model?.trim();
+
+  const requestOne = async (line: string): Promise<string> => {
+    // Cap the output budget to ~2× the input length (+headroom), clamped to
+    // [64, 2048]. A translation never legitimately runs much longer than its
+    // source, so this generous ceiling is invisible on the happy path. Its real
+    // job is bounding the WORST case: greedy decoding (temperature 0, no
+    // sampling to escape a loop) on out-of-distribution input — most often a
+    // source-language mismatch, since neither model has auto-detect and both
+    // bake the declared source language into the prompt — can fail to emit its
+    // stop token and run away toward the token budget. At a flat 2048 on a local
+    // 12B (a few tok/s), that runaway burns the FULL per-request timeout
+    // (180–300s) before aborting. Scaling the cap to the input means a runaway
+    // hits finish_reason==="length" in seconds → the "max_tokens reached"
+    // soft-fail fires fast instead of grinding for minutes. Genuinely long
+    // inputs (≥~1KB) still get the full 2048 (clamp).
+    const maxTokens = Math.min(2048, Math.max(64, Math.ceil(line.length * 2) + 32));
+
+    const requestBody: Record<string, unknown> = {
+      prompt: buildPrompt(line),
+      // Hardcoded greedy decoding — both model cards document exactly one recipe
+      // (TranslateGemma `do_sample=False`, MiLMMT `temperature=0, top_k=1`).
+      // Sent explicitly so OpenAI-compat servers (LM Studio etc.) don't fall back
+      // to their UI default temperature.
+      temperature: 0,
+      max_tokens: maxTokens,
+      stop,
+    };
+    if (effectiveModel) requestBody.model = effectiveModel;
+
+    const data = await fetchJSON(completionsUrl, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(requestBody),
+      signal: params.signal,
+    });
+
+    const choice = (data as { choices?: Array<{ text?: string; finish_reason?: string }> } | null)?.choices?.[0];
+    const responseText = choice?.text;
+    if (typeof responseText !== "string") {
+      throw new Error(`Invalid response format from ${serviceName}`);
+    }
+    // finish_reason === "length" 表示 max_tokens 截断 —— 抛错(让重试/失败面板
+    // 接管),否则截断的半截译文被当成功结果返回并缓存,用户无从察觉。
+    if (choice?.finish_reason === "length") {
+      throw new Error(`${serviceName} output truncated (max_tokens reached) — text too long for one batch`);
+    }
+    return firstTranslationCandidate(responseText);
+  };
+
+  // 【一行进一行出】。两个模型的提示词模板都是【行分隔】的 —— MiLMMT 尤其:
+  // 它的重复单元就是 `{语言名}: 文本`,把多行文本整块塞进去,第 2 行起没有语言
+  // 标签、与"新的一个字段"无法区分,而这两个模型的指令跟随能力恰恰是被刻意
+  // 剥掉的(小米在讨论区原话),认不出那是同一段的延续。实测:模型要么只答第一
+  // 行(半个值没了、finish_reason 还是 "stop",截断守卫根本不触发),要么把模板
+  // 里的语言标签回显进译文。
+  //
+  // 字幕与 Markdown 上游已经逐行切好,走不到这里;真正的来源是 JSON 的值
+  // (整个值一格,i18n 里带 \n 的多行描述很常见)。拆开逐行往返后行数由构造
+  // 保证,候选折叠也重新变得无条件安全 —— 与 gtxLegacy 的
+  // "STRICTLY ONE LINE PER REQUEST" 同一条纪律。
+  //
+  // ⚠ 刻意【串行】,不是 Promise.all:这一个值本来只占外层并发的一个槽位,
+  // 并行展开会让 batchSize×N 个请求同时压向本地服务器 —— 而本地服务器多为
+  // 单并行槽(llama.cpp 默认 --parallel 1),那正是超时的头号来源。同 chunk
+  // 逐行营救的既有取舍。空行原样保留,不发请求(空提示词对模型没有意义)。
+  const lines = text.split("\n");
+  if (lines.length === 1) return requestOne(text);
+  const results: string[] = [];
+  for (const line of lines) {
+    results.push(line.trim() ? await requestOne(line) : line);
+  }
+  return results.join("\n");
 };
 
 // NOTE: the former GET /models health check was removed deliberately — some
@@ -554,73 +694,98 @@ export const firstTranslategemmaCandidate = (raw: string): string => {
 // prompt (buildTranslategemmaPrompt) and the runtime tokenizes it as-is.
 // Works uniformly in LM Studio, llama.cpp server, vLLM, HF TGI.
 export const translategemma: TranslationService = async (params) => {
-  const { url, apiKey, model, sourceLanguage, targetLanguage, text } = params;
-  const serviceName = "TranslateGemma";
-  const apiEndpoint = completeOpenAICompatUrl(requireUrl(serviceName, url));
-  // /v1/chat/completions and /v1/completions are siblings on every OpenAI-compat
-  // server we care about (LM Studio, vLLM, llama.cpp, HF TGI). The user's URL
-  // points at chat; rewrite to the legacy completions endpoint where prompts
-  // pass through untouched (no chat template applied server-side).
-  const completionsUrl = apiEndpoint.replace(/\/chat\/completions$/, "/completions");
-
-  const sourceInfo = getTranslategemmaLangInfo(sourceLanguage);
-  const targetInfo = getTranslategemmaLangInfo(targetLanguage);
-  const prompt = buildTranslategemmaPrompt(sourceInfo, targetInfo, text);
-
-  // Local LM Studio / llama.cpp typically don't require a key — only attach
-  // Authorization when the user provides one (hosted setups, gated proxies).
-  const headers: Record<string, string> = { "Content-Type": "application/json" };
-  if (apiKey?.trim()) {
-    headers.Authorization = `Bearer ${apiKey}`;
-  }
-
-  // Cap the output budget to ~2× the input length (+headroom), clamped to
-  // [64, 2048]. A translation never legitimately runs much longer than its
-  // source, so this generous ceiling is invisible on the happy path. Its real
-  // job is bounding the WORST case: greedy decoding (temperature 0, no
-  // sampling to escape a loop) on out-of-distribution input — most often a
-  // source-language mismatch, since TranslateGemma has no auto-detect and
-  // bakes the declared source_lang into the prompt — can fail to emit
-  // <end_of_turn> and run away toward the token budget. At a flat 2048 on a
-  // local 12B (a few tok/s), that runaway burns the FULL per-request timeout
-  // (180–300s) before aborting. Scaling the cap to the input means a runaway
-  // hits finish_reason==="length" in seconds → the existing "max_tokens
-  // reached" soft-fail fires fast instead of grinding for minutes. Genuinely
-  // long inputs (≥~1KB) still get the full 2048 (clamp), unchanged from before.
-  const maxTokens = Math.min(2048, Math.max(64, Math.ceil(text.length * 2) + 32));
-
-  const requestBody: Record<string, unknown> = {
-    prompt,
-    // Hardcoded greedy decoding — matches Google's official `do_sample=False`
-    // recipe. Sent explicitly so OpenAI-compat servers (LM Studio etc.) don't
-    // fall back to their UI default temperature.
-    temperature: 0,
-    max_tokens: maxTokens,
+  const sourceInfo = getTranslategemmaLangInfo(params.sourceLanguage);
+  const targetInfo = getTranslategemmaLangInfo(params.targetLanguage);
+  return localCompletionsTranslate({
+    serviceName: "TranslateGemma",
+    params,
+    buildPrompt: (line) => buildTranslategemmaPrompt(sourceInfo, targetInfo, line),
     // Hard stop at the turn boundary — without it, some runtimes keep
     // generating past the answer (echoing example pairs, role tokens, etc).
     stop: ["<end_of_turn>"],
-  };
-  const effectiveModel = model?.trim() || defaultConfigs.translategemma.model;
-  if (effectiveModel) requestBody.model = effectiveModel;
-
-  const data = await fetchJSON(completionsUrl, {
-    method: "POST",
-    headers,
-    body: JSON.stringify(requestBody),
-    signal: params.signal,
   });
+};
 
-  const choice = (data as { choices?: Array<{ text?: string; finish_reason?: string }> } | null)?.choices?.[0];
-  const responseText = choice?.text;
-  if (typeof responseText !== "string") {
-    throw new Error("Invalid response format from TranslateGemma");
+// ─── MiLMMT-46 (Xiaomi) ─────────────────────────────────────────────────────
+// Gemma3-12B post-trained for translation only (arXiv 2608.10812). Same class
+// as TranslateGemma — self-hosted seq2seq MT, no context, no glossary — but a
+// blunter instrument: Xiaomi state on the model's HF discussion page that
+// post-training "largely stripped away" instruction-following and that the
+// model "perceives [tags and instructions] as noise rather than commands". So
+// the prompt below IS the whole interface; there is nothing a user prompt or a
+// system prompt could do here except corrupt the input distribution.
+//
+// Language-name overrides: the model card closes its supported-language list
+// with "Please use the language name specified above", and those names differ
+// from ours in exactly six places. Everything else passes through
+// getLanguageName — same "only declare the differences" rule as TranslateGemma.
+// ⚠ null 原型。字面量对象继承 Object.prototype,`MILMMT_LANG_NAMES["constructor"]`
+// 返回的是 `Object` 函数而不是 undefined,`??` 于是不触发 —— 实测
+// `-f constructor` 会把 `function Object() { [native code] }` 拼进提示词。
+// 语言代码来自 CLI 参数/导入的设置文件,是外部输入,不能当自家键名用。
+// TRANSLATEGEMMA_OVERRIDES 同理(见那边)。
+const MILMMT_LANG_NAMES: Record<string, string> = Object.assign(Object.create(null), {
+  zh: "Chinese (Simplified)", // ours: "Simplified Chinese"
+  "zh-hant": "Chinese (Traditional)", // ours: "Traditional Chinese"
+  "pt-br": "Portuguese", // the card lists one undifferentiated "Portuguese"
+  "pt-pt": "Portuguese",
+  nb: "Norwegian", // ours: "Norwegian Bokmål"
+  fil: "Tagalog", // ours: "Filipino(Tagalog)"
+});
+
+// Defense-in-depth, same as TranslateGemma: validate already blocks `auto` and
+// the unsupported codes, but a direct API consumer / CLI path could bypass it.
+const getMilmmtLangName = (code: string): string => {
+  if (code === "auto") {
+    throw new Error("MiLMMT requires an explicit source language (auto-detect not supported). / MiLMMT 不支持自动检测源语言，请明确选择源语言。");
   }
-  // finish_reason === "length" 表示 max_tokens 截断 —— 抛错(让重试/失败面板
-  // 接管),否则截断的半截译文被当成功结果返回并缓存,用户无从察觉。
-  if (choice?.finish_reason === "length") {
-    throw new Error("TranslateGemma output truncated (max_tokens reached) — text too long for one batch");
+  // ⚠ 两道判据缺一不可。UNSUPPORTED_LANGS.milmmt 是按 master − 允许表【派生】
+  // 的,所以【表外】代码两个集合都不在,isMethodSupportedForLanguage 直接放行
+  // —— 只查它就是 fail-open。而 CLI 明确允许表外代码透传给服务端判定
+  // (scripts/cli.ts 只警告不拦),于是 `-t pt` 会发出 `… to pt:`:模型卡明写
+  // "Please use the language name specified above",一个裸代码在那个位置不是
+  // 语言名,整份文件按贪心解码计费翻完、写出、exit 0。先查在不在语言表里。
+  if (!isValidLanguageValue(code) || !isMethodSupportedForLanguage("milmmt", code)) {
+    throw new Error(`MiLMMT does not support language code "${code}". / MiLMMT 不支持该语言代码：${code}`);
   }
-  // Collapse any newline-separated candidate list to the first translation —
-  // see firstTranslategemmaCandidate for why this is safe (one segment/request).
-  return firstTranslategemmaCandidate(responseText);
+  return MILMMT_LANG_NAMES[code] ?? getLanguageName(code);
+};
+
+// Verbatim from the model card's "Translation Prompt" block. Deliberately raw:
+// no <bos> (`add_bos_token: false`, and the card's transformers example passes
+// `add_special_tokens=False`), no turn markers, no trailing space after the
+// final colon. The model's own chat template is a pure passthrough
+// (`{% for message in messages %}{{ message.content }}{% endfor %}`), so
+// /v1/chat/completions would be equivalent IF the runtime used it — but that
+// template ships only in the new-format chat_template.jinja (tokenizer_config
+// .json has none), which older GGUF converters drop, leaving the runtime to
+// guess a Gemma chat template and inject <start_of_turn> markers. Pre-rendering
+// to /v1/completions makes the wire format independent of that lottery.
+export const buildMilmmtPrompt = (sourceName: string, targetName: string, text: string): string => {
+  return `Translate this from ${sourceName} to ${targetName}:\n${sourceName}: ${text.trim()}\n${targetName}:`;
+};
+
+export const milmmt: TranslationService = async (params) => {
+  const sourceName = getMilmmtLangName(params.sourceLanguage);
+  const targetName = getMilmmtLangName(params.targetLanguage);
+  return localCompletionsTranslate({
+    serviceName: "MiLMMT",
+    params,
+    buildPrompt: (line) => buildMilmmtPrompt(sourceName, targetName, line),
+    // A completion-style prompt with no turn markers invites the classic
+    // base-model failure: after answering, keep going and fabricate the NEXT
+    // example. `<eos>` normally lands first; when it doesn't, these stop the
+    // runaway immediately instead of grinding to max_tokens and discarding a
+    // perfectly good first line.
+    //
+    // 三条都是【模板自己的重复单元】,所以只可能在一句完整译文【之后】命中:
+    //   1. 下一条指令头
+    //   2. `\n{源语言名}:` —— 模板的重复单元其实是 `{语言名}: 文本`,续写最常
+    //      见的形态是伪造下一对,而不是重来一句 "Translate this from"。漏掉它
+    //      实测会让 `甲\n乙\nEnglish: fabricated` 整串流进结果。
+    //   3. `<end_of_turn>` —— MiLMMT 是 Gemma3 派生,eos 本应是 `<eos>`,但
+    //      GGUF 转换器若没把 Gemma 的 turn token 标成 special,它会以字面量
+    //      漏进正文(translategemma 的 stop 里就带着它,这里一并带上不花钱)。
+    stop: ["\nTranslate this from", `\n${sourceName}:`, "<end_of_turn>"],
+  });
 };

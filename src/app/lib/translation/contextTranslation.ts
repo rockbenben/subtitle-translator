@@ -42,7 +42,29 @@ export const isBlankLine = (line: string | undefined): boolean => !(line ?? "").
  * lookups through one transaction (vs one `get` per line) is what keeps a
  * cache-heavy re-run of a long file from paying per-line IndexedDB overhead.
  */
-export const prefillFromLineCache = async (contentLines: string[], translatedLines: (string | undefined)[], cacheGetMany: (texts: string[]) => Promise<(string | null)[]>): Promise<void> => {
+export const prefillFromLineCache = async (
+  contentLines: string[],
+  translatedLines: (string | undefined)[],
+  cacheGetMany: (texts: string[]) => Promise<(string | null)[]>,
+  /**
+   * 命中项落盘【前】的加工。必须传术语表 enforcement:同一批缓存键里混着两种
+   * 内容 —— 上下文路径存的是已 enforce 的成品,而 translateCore(逐行/chunk
+   * 路径)存的是【服务原始输出】。其它读路径都在读之后再 enforce 一遍抹平这个
+   * 差异,回填若直接装配原始值,用户只要在两次运行之间切过上下文开关(或在
+   * MT 与 LLM 之间换过 provider),已缓存的那些行就会静默地不再受术语表约束
+   * —— 同一份文件里一部分行生效一部分不生效,零请求零报错。
+   * 对已 enforce 的条目再跑一次是无害的(leak-through 幂等)。
+   *
+   * ⚠ 【必须是同步纯函数】。曾经传的是整个 enforceGlossaryOnLine,它在检出错译时
+   * 会发一次严格重译请求 —— 放在这个 for-await 循环里就是逐条串行、不过 pLimit、
+   * 且全部发生在第一次 updateProgress 之前:一份缓存齐全的长文件会卡在 0% 好几
+   * 分钟,把「缓存即断点 / 瞬间回放」这条承诺直接打碎。而当初要修的那个 bug
+   * (缓存回填绕过术语表)复现出来的是 leak-through 没生效,跟严格重试无关。
+   * 缓存命中的行拿到的是「上一轮已经付过费的译文」,给它补上纯替换即可;
+   * 真要重译,那是下一次非缓存运行的事。
+   */
+  postProcess?: (source: string, cached: string) => string,
+): Promise<void> => {
   // Only non-blank, still-undefined slots are lookup candidates (write-once).
   const pending: number[] = [];
   for (let i = 0; i < contentLines.length; i++) {
@@ -61,7 +83,15 @@ export const prefillFromLineCache = async (contentLines: string[], translatedLin
     const hit = hits[p];
     // Re-check write-once: a concurrent path can't touch translatedLines here
     // (single-threaded), but the guard documents intent and is cheap.
-    if (hit != null && translatedLines[pending[p]] === undefined) translatedLines[pending[p]] = hit;
+    // 判据是 truthy 而非 `!= null` —— 与 translateCore 的 `if (cachedTranslation)`
+    // 【必须一致】。空串曾在这里算命中:同一个键在逐行/chunk 路径上被判未命中
+    // 而重译,在上下文路径上却被写进 translatedLines,而引擎把「槽位有值」定义
+    // 为已完成 —— 那一行以空字幕 cue / 消失的 Markdown 段落出货,却计入 100%
+    // 进度、零失败、exit 0。同一份文件仅因上下文开关而产出不同结果。
+    // (空串怎么进的缓存:CLI 的缓存是可手工编辑的 JSON,并发写也可能截断。)
+    if (hit && translatedLines[pending[p]] === undefined) {
+      translatedLines[pending[p]] = postProcess ? postProcess(contentLines[pending[p]], hit) : hit;
+    }
   }
 };
 
@@ -242,6 +272,40 @@ const CONTEXT_DESCRIPTIONS = {
   },
 } as const;
 
+/**
+ * 「相邻同译」检测(subtitle-translator#44 的残余形态):模型把两行译成同一句、
+ * 且【补齐了各自的标记】—— 块数正确、没有缺口,提取层四道守卫全部放行,是唯一
+ * 一种此前完全无检查的静默损坏。
+ *
+ * ⚠ 本函数【只做触发器,不做裁决】。上次撤销的方案(trans[j] 字面包含
+ * trans[j+1])错在拿启发式直接清槽 —— 短对白误杀率极高,丢的是内容。这里的
+ * 判据故意窄得多(相邻 + 完全相等 + 源文不同),且命中后 pipeline 只做一件事:
+ * 对涉事各行发【独立单行请求】重译,用复译结果覆盖。合并在单行请求里物理上
+ * 不可能;合法同译(源文 "Yeah."/"Yes." 都译成"是的。")复译后得到同样的结果,
+ * 内容一字不动 —— 误报的最坏代价是几个多余请求,永远不是丢内容。
+ * 【包含检测仍然禁止】,别把这个函数往那个方向扩。
+ *
+ * 判据(全部满足才算):
+ *   - 相邻两槽译文非空且 trim 后完全相等(合并天然发生在相邻行)
+ *   - 两行源文都非空白、且 trim 后不同(歌词重复行源文相同,天然排除;
+ *     源文相同 → 同译是正确输出)
+ * 连续 3+ 槽同译按同一簇全部纳入。返回去重升序的槽位下标。
+ */
+export const findAdjacentDuplicateSlots = (results: readonly string[], sourceLines: readonly string[]): number[] => {
+  const hit = new Set<number>();
+  for (let j = 0; j + 1 < results.length; j++) {
+    const a = (results[j] ?? "").trim();
+    const b = (results[j + 1] ?? "").trim();
+    if (a === "" || a !== b) continue;
+    const sa = (sourceLines[j] ?? "").trim();
+    const sb = (sourceLines[j + 1] ?? "").trim();
+    if (isBlankLine(sa) || isBlankLine(sb) || sa === sb) continue;
+    hit.add(j);
+    hit.add(j + 1);
+  }
+  return [...hit].sort((x, y) => x - y);
+};
+
 export const buildContextPrompt = (baseUserPrompt: string, batchSize: number, documentType: "subtitle" | "markdown" | "generic" = "subtitle"): string => {
   const ctx = CONTEXT_DESCRIPTIONS[documentType];
 
@@ -251,7 +315,7 @@ export const buildContextPrompt = (baseUserPrompt: string, batchSize: number, do
   //
   // The format example below uses the literal X placeholder, NOT a concrete
   // digit. A digit (e.g. `[TRANSLATE_0]translation[/TRANSLATE_0]`) is parseable by
-  // NUMBERED_TRANSLATE_RE: a model that echoes the format example (acknowledged
+// NUMBERED_TRANSLATE_RE: a model that echoes the format example (acknowledged
   // "模型回显残渣") would have that echo win slot 0 under the first-wins rule,
   // shipping the literal word "translation" on line 0 — flagged success + cached.
   // `[TRANSLATE_X]` can't match `\d+`, so an echo is inert. Keep it non-numeric.

@@ -1,3 +1,5 @@
+"use client";
+
 import {
   BgColorsOutlined,
   DatabaseOutlined,
@@ -22,205 +24,135 @@ import {
   OrderedListOutlined,
   ToolOutlined,
   MessageOutlined,
+  DiffOutlined,
+  MergeCellsOutlined,
 } from "@ant-design/icons";
 import Link from "next/link";
 import { useTranslations, useLocale } from "next-intl";
+import { isChineseLocale } from "@/app/utils";
+import { TOOL_REGISTRY, TOOL_KEYS, toolPathsByGroup, type ToolKey } from "@/app/lib/toolRegistry";
 
-interface Project {
-  titleKey: string;
-  descriptionKey: string;
-  key: string;
-  icon: React.ReactNode;
-  onlyzh?: boolean;
-}
+// 子项目导航：本仓库对应的工具走相对首页 `/${locale}`，其余工具指向主站。
+// 工具集合 / 分组 / 标题全部从 TOOL_REGISTRY + i18n 派生 —— 不再硬编码、不再有
+// onlyzh 隐藏（文本类工具均已 i18n 化，应在所有语言下显示）。
+const MAIN_SITE = "https://tools.newzone.top";
+// ⚠ 每个子项目只改这一行：本仓库对应工具的 path（见 TOOL_REGISTRY）。
+const CURRENT_TOOL_PATH = "subtitle-translator";
 
-const projectCategories = {
-  translate: ["json-translate", "subtitle-translator", "md-translator"],
-  textParser: ["text-splitter", "chinese-conversion", "novel-processor", "regex-matcher", "text-processor"],
-  jsonParser: ["json-value-extractor", "json-node-edit", "json-value-transformer", "json-value-swapper", "json-node-inserter", "json-sort-classify", "json-match-update"],
-  dataParser: ["data-parser/flare", "data-parser/img-prompt"],
+/** Per-tool icon — icons are React nodes (UI-only), so they live here, not in
+ *  TOOL_REGISTRY. TS enforces one entry per ToolKey. */
+const TOOL_ICONS: Record<ToolKey, React.ReactNode> = {
+  subtitleTranslator: <VideoCameraOutlined />,
+  mdTranslator: <FileMarkdownOutlined />,
+  jsonTranslate: <TranslationOutlined />,
+  textSplitter: <ScissorOutlined />,
+  chineseConversion: <SwapOutlined />,
+  novelProcessor: <FontSizeOutlined />,
+  textToolbox: <CodeOutlined />,
+  textJoiner: <MergeCellsOutlined />,
+  textDiff: <DiffOutlined />,
+  dataBatch: <ProfileOutlined />,
+  jsonValueExtractor: <FileSearchOutlined />,
+  jsonNodeEdit: <EditOutlined />,
+  jsonValueTransformer: <FileSyncOutlined />,
+  jsonValueSwapper: <SwapOutlined />,
+  jsonNodeInserter: <NodeIndexOutlined />,
+  jsonSortClassify: <OrderedListOutlined />,
+  jsonMatchUpdate: <UnorderedListOutlined />,
+  dataParserFlare: <LinkOutlined />,
+  dataParserImgPrompt: <UnorderedListOutlined />,
 };
 
-export const projects = [
-  {
-    titleKey: "tools.jsonTranslate.title",
-    descriptionKey: "tools.jsonTranslate.description",
-    key: "json-translate",
-    icon: <TranslationOutlined />,
-  },
-  {
-    titleKey: "tools.subtitleTranslator.title",
-    descriptionKey: "tools.subtitleTranslator.description",
-    key: "subtitle-translator",
-    icon: <VideoCameraOutlined />,
-  },
-  {
-    titleKey: "tools.mdTranslator.title",
-    descriptionKey: "tools.mdTranslator.description",
-    key: "md-translator",
-    icon: <FileMarkdownOutlined />,
-  },
-  {
-    titleKey: "tools.textSplitter.title",
-    descriptionKey: "tools.textSplitter.description",
-    key: "text-splitter",
-    icon: <ScissorOutlined />,
-  },
-  {
-    titleKey: "简繁转换",
-    descriptionKey: "批量转换简体、台湾繁体、香港繁体和日本新字体",
-    key: "chinese-conversion",
-    icon: <SwapOutlined />,
-    onlyzh: true,
-  },
-  {
-    titleKey: "长文本/小说整理器",
-    descriptionKey: "一键修复下载小说的格式问题，智能换行排版",
-    key: "novel-processor",
-    icon: <FontSizeOutlined />,
-    onlyzh: true,
-  },
-  {
-    titleKey: "正则文本助手",
-    descriptionKey: "集成正则匹配、排序、过滤等功能，进行文本批量处理",
-    key: "regex-matcher",
-    icon: <CodeOutlined />,
-    onlyzh: true,
-  },
-  {
-    titleKey: "自用文本处理",
-    descriptionKey: "自用多种规则的文本处理工具",
-    key: "text-processor",
-    icon: <ProfileOutlined />,
-    onlyzh: true,
-  },
-  {
-    titleKey: "tools.jsonValueExtractor.title",
-    descriptionKey: "tools.jsonValueExtractor.description",
-    key: "json-value-extractor",
-    icon: <FileSearchOutlined />,
-  },
-  {
-    titleKey: "tools.jsonNodeEdit.title",
-    descriptionKey: "tools.jsonNodeEdit.description",
-    key: "json-node-edit",
-    icon: <EditOutlined />,
-  },
-  {
-    titleKey: "tools.jsonValueTransformer.title",
-    descriptionKey: "tools.jsonValueTransformer.description",
-    key: "json-value-transformer",
-    icon: <FileSyncOutlined />,
-  },
-  {
-    titleKey: "tools.jsonValueSwapper.title",
-    descriptionKey: "tools.jsonValueSwapper.description",
-    key: "json-value-swapper",
-    icon: <SwapOutlined />,
-  },
-  {
-    titleKey: "tools.jsonNodeInserter.title",
-    descriptionKey: "tools.jsonNodeInserter.description",
-    key: "json-node-inserter",
-    icon: <NodeIndexOutlined />,
-  },
-  {
-    titleKey: "tools.jsonSortClassify.title",
-    descriptionKey: "tools.jsonSortClassify.description",
-    key: "json-sort-classify",
-    icon: <OrderedListOutlined />,
-  },
-  {
-    titleKey: "tools.jsonMatchUpdate.title",
-    descriptionKey: "tools.jsonMatchUpdate.description",
-    key: "json-match-update",
-    icon: <UnorderedListOutlined />,
-  },
-  {
-    titleKey: "tools.dataParserFlare.title",
-    descriptionKey: "tools.dataParserFlare.description",
-    key: "data-parser/flare",
-    icon: <LinkOutlined />,
-  },
-  {
-    titleKey: "tools.dataParserImgPrompt.title",
-    descriptionKey: "tools.dataParserImgPrompt.description",
-    key: "data-parser/img-prompt",
-    icon: <UnorderedListOutlined />,
-  },
-];
-
-const projectsMap = projects.reduce((acc: Record<string, Project>, project) => {
-  acc[project.key] = project;
+/** path → toolKey, for looking up icon / i18n title from a category path. */
+const PATH_TO_KEY = TOOL_KEYS.reduce<Record<string, ToolKey>>((acc, k) => {
+  acc[TOOL_REGISTRY[k].path] = k;
   return acc;
 }, {});
+
+/** UI grouping derived from TOOL_REGISTRY — single source of truth. */
+const projectCategories = {
+  translate: toolPathsByGroup("translate"),
+  textParser: toolPathsByGroup("textParser"),
+  jsonParser: toolPathsByGroup("jsonParser"),
+  dataParser: toolPathsByGroup("dataParser"),
+} as const;
+
+interface ExternalTool {
+  title: string;
+  key: string;
+  icon: React.ReactNode;
+  chineseOnly?: boolean;
+}
+
+const externalTools: ExternalTool[] = [
+  { title: "ChatGPT Shortcut", key: "aishort", icon: <ExperimentOutlined /> },
+  { title: "Legend Talk", key: "legendtalk", icon: <MessageOutlined /> },
+  { title: "IMGPrompt", key: "imgprompt", icon: <BgColorsOutlined /> },
+  { title: "LearnData 开源笔记", key: "learndata", icon: <BookOutlined />, chineseOnly: true },
+];
+
+const getExternalHref = (key: string, locale: string, isChinese: boolean): string => {
+  switch (key) {
+    case "aishort":
+      if (locale === "zh") return "https://www.aishort.top/";
+      if (locale === "zh-hant") return "https://www.aishort.top/zh-Hant";
+      if (locale === "id") return "https://www.aishort.top/ind";
+      return `https://www.aishort.top/${locale}`;
+    case "imgprompt":
+      return `https://prompt.newzone.top/${locale}`;
+    case "legendtalk":
+      return "https://talk.newzone.top";
+    case "learndata":
+      return "https://newzone.top/";
+    default:
+      return "#";
+  }
+};
 
 export const useAppMenu = () => {
   const t = useTranslations();
   const locale = useLocale();
-  const isChineseLocale = locale === "zh" || locale === "zh-hant";
+  const isChinese = isChineseLocale(locale);
 
-  const createMenuItem = (projectKey: string) => {
-    const project = projectsMap[projectKey];
-    if (!project || (project.onlyzh && locale !== "zh")) {
-      return null;
-    }
+  // 当前工具 → 相对首页；其它工具 → 主站。所有工具均已 i18n，无 onlyzh 隐藏。
+  const createMenuItem = (path: string) => {
+    const toolKey = PATH_TO_KEY[path];
+    if (!toolKey) return null;
+    const href = path === CURRENT_TOOL_PATH ? `/${locale}` : `${MAIN_SITE}/${locale}/${path}`;
     return {
-      label: <Link href={`https://tools.newzone.top/${locale}/${project.key}`}>{project.onlyzh && locale === "zh" ? project.titleKey : t(project.titleKey)}</Link>,
-      key: project.key,
-      icon: project.icon,
+      label: (
+        <Link href={href} prefetch={false}>
+          {t(`tools.${toolKey}.title`)}
+        </Link>
+      ),
+      key: path,
+      icon: TOOL_ICONS[toolKey],
     };
   };
 
-  const generateCategoryItems = (categoryKeys: string[]) => {
-    return categoryKeys.map(createMenuItem).filter(Boolean);
+  // 当前工具是首页/品牌入口，不在分组里重复列出。
+  const generateCategoryItems = (paths: readonly string[]) => paths.filter((p) => p !== CURRENT_TOOL_PATH).map(createMenuItem).filter(Boolean);
+
+  const createExternalToolItem = (tool: ExternalTool) => {
+    if (tool.chineseOnly && !isChinese) return null;
+    return {
+      label: (
+        <a href={getExternalHref(tool.key, locale, isChinese)} target="_blank" rel="noopener noreferrer">
+          {tool.title}
+        </a>
+      ),
+      key: tool.key,
+      icon: tool.icon,
+    };
   };
 
-  const otherToolsItems = [
-    {
-      label: (
-        <a href={isChineseLocale ? "https://www.aishort.top/" : `https://www.aishort.top/${locale}`} target="_blank" rel="noopener noreferrer">
-          ChatGPT Shortcut
-        </a>
-      ),
-      key: "aishort",
-      icon: <ExperimentOutlined />,
-    },
-    {
-      label: (
-        <a href={`http://chat.newzone.top/?lang=${isChineseLocale ? "zh" : "en"}`} target="_blank" rel="noopener noreferrer">
-          ChatBox
-        </a>
-      ),
-      key: "ChatBox",
-      icon: <MessageOutlined />,
-    },
-    {
-      label: (
-        <a href={`https://prompt.newzone.top/app/${locale}`} target="_blank" rel="noopener noreferrer">
-          IMGPrompt
-        </a>
-      ),
-      key: "IMGPrompt",
-      icon: <BgColorsOutlined />,
-    },
-  ];
+  const otherToolsItems = externalTools.map(createExternalToolItem).filter(Boolean);
 
-  if (isChineseLocale) {
-    otherToolsItems.push({
-      label: (
-        <a href="https://newzone.top/" target="_blank" rel="noopener noreferrer">
-          LearnData 开源笔记
-        </a>
-      ),
-      key: "LearnData",
-      icon: <BookOutlined />,
-    });
-  }
+  const currentToolKey = PATH_TO_KEY[CURRENT_TOOL_PATH];
 
   const menuItems = [
     {
-      label: <Link href={`/${locale}`}>{t("navigation.home")}</Link>,
+      label: <Link href={`/${locale}`}>{currentToolKey ? t(`tools.${currentToolKey}.title`) : t("navigation.home")}</Link>,
       key: "home",
     },
     {
@@ -254,7 +186,7 @@ export const useAppMenu = () => {
       children: otherToolsItems,
     },
     {
-      label: <Link href={`https://tools.newzone.top/${locale}/feedback`}>{t("feedback.feedback1")}</Link>,
+      label: <Link href={`${MAIN_SITE}/${locale}/feedback`}>{t("feedback.feedback1")}</Link>,
       key: "feedback",
     },
   ];

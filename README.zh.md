@@ -2,10 +2,11 @@
 ⚡️ Subtitle Translator
 </h1>
 <p align="center">
-    <a href="./README.md">English</a> | 中文
-</p>
-<p align="center">
     <em>AI 驱动的批量字幕翻译，支持 120+ 种语言，秒级完成</em>
+</p>
+
+<p align="center">
+    <a href="./README.md">English</a> · <b>简体中文</b>
 </p>
 
 <p align="center">
@@ -13,7 +14,9 @@
   <a href="https://tools.newzone.top/zh/subtitle-translator"><img src="https://img.shields.io/badge/%E5%9C%A8%E7%BA%BF%E4%BD%93%E9%AA%8C-subtitle--translator-blue" alt="在线体验"></a>
 </p>
 
-**Subtitle Translator** 是一款免费、纯浏览器运行的批量字幕翻译工具，支持 `.srt`、`.ass`、`.vtt`、`.lrc` 等格式。通过分块压缩 + 并行处理，可达到 1 集电视剧 ≈ 1 秒的翻译速度。可一次性批量上传整季字幕，接入 7 种传统翻译 API（DeepL、Google、Azure、DeepLX、Qwen-MT、TranslateGemma、GTX）和 17+ 种 LLM，覆盖 120+ 种语言——还能一次翻译成多种目标语言，每种语言各导出为独立文件。全程在浏览器本地完成，字幕内容与 API Key 不经过服务器。
+把字幕文件丢进通用翻译器，会遇到两件麻烦：模型顺手改掉你的时间码，而且只能一个文件一个文件来。字幕翻译器在本地把时间轴剥离，**只把台词发给引擎**——时间线从物理上就碰不到——然后一次拖进整季。
+
+**Subtitle Translator** 是一款免费、纯浏览器运行的批量字幕翻译工具，支持 `.srt`、`.ass`、`.vtt`、`.lrc` 等格式。通过分块压缩 + 并行处理，可达到 1 集电视剧 ≈ 1 秒的翻译速度。可一次性批量上传整季字幕，接入 8 种传统翻译 API（DeepL、Google、Azure、DeepLX、Qwen-MT、TranslateGemma、GTX、Edge）和 27 种 LLM 与网关，覆盖 120+ 种语言——还能一次翻译成多种目标语言，每种语言各导出为独立文件。全程在浏览器本地完成，字幕内容与 API Key 不经过服务器。想脚本化批处理，还有一个共用同一套引擎的[命令行工具](#命令行)。
 
 👉 **在线体验**：<https://tools.newzone.top/zh/subtitle-translator>
 
@@ -32,11 +35,12 @@
 - **无上限缓存**（IndexedDB）：所有翻译结果本地缓存，无浏览器存储容量限制，刷新页面已译文件不丢失。
 - **120+ 种语言**：支持 120+ 种语言互译，源语言默认 Auto 自动检测。
 - **多语言界面**：基于 next-intl，支持 18 种界面语言。
+- **命令行**：`yarn cli` 在终端跑同一套引擎、解析器与缓存，详见[命令行](#命令行)。
 - **隐私优先**：完全前端处理——字幕内容与 API Key 仅保存在浏览器；LLM 请求直接从浏览器发往你配置的 API 端点。
 
 ## 翻译接口
 
-支持 **7 种传统翻译 API** 和 **17+ 种 LLM 服务**：
+支持 **8 种传统翻译 API** 和 **27 种 LLM 与网关**：
 
 ### 传统翻译 API
 
@@ -49,10 +53,19 @@
 | **Qwen-MT**          | ★★★★☆    | ★★★★☆  | 阿里云百炼（DashScope）配额     |
 | **TranslateGemma**   | ★★★★☆    | ★★★★☆  | 自部署（LM Studio / Ollama 等） |
 | **GTX API（免费）**  | ★★★☆☆    | ★★★☆☆  | 免费（有频率限制）              |
+| **Edge API（免费）** | ★★★★☆    | ★★★☆☆  | 免费（有频率限制）              |
+
+GTX 与 Edge 完全免配置，是开箱即用的默认项，且互为备胎。
 
 ### AI 大模型
 
-支持 **DeepSeek**、**OpenAI**、**Claude**、**Gemini**、**Qwen**、**Moonshot**、**Doubao**、**Zhipu GLM**、**MiniMax**、**Mistral**、**Perplexity**、**Cohere**、**OpenRouter**、**Groq**、**SiliconFlow**、**Nvidia NIM**、**Azure OpenAI**，以及任意 **Custom (OpenAI-compatible)** 端点（Ollama / LM Studio / vLLM / Together AI / Fireworks AI 等）。
+**DeepSeek**、**OpenAI**、**Claude**、**Gemini**、**Qwen**、**Moonshot (Kimi)**、**Doubao 豆包**、**Xiaomi MiMo**、**Zhipu GLM**、**MiniMax**、**Baidu ERNIE 文心**、**Tencent Hunyuan 混元**、**Mistral**、**xAI (Grok)**、**Perplexity**、**Cohere**、**YandexGPT**。
+
+### 聚合网关
+
+**OpenRouter**、**OpenCode Zen**、**Groq**、**SiliconFlow**、**Atlas Cloud**、**GitHub Models**、**Nvidia NIM**、**Azure OpenAI**、**LiteLLM**，以及任意 **Custom (OpenAI-compatible)** 端点（Ollama / LM Studio / vLLM / Together AI / Fireworks AI 等）。
+
+被 CORS 挡住浏览器直连的服务可走 API 中转。内置中转开箱即用；**API 设置 → 中转地址** 可把所有开了中转的服务一次性指向你自建的那份中转 Worker。
 
 LLM 模式提供：
 
@@ -102,37 +115,60 @@ LLM 模式可在每一批请求里携带前后文，提升对话连贯性和角�
 
 更多说明见 [官方文档完整 FAQ](https://docs.newzone.top/guide/translation/subtitle-translator/)。
 
-## 技术栈
+## 命令行
 
-- **框架**：[Next.js 16](https://nextjs.org/)（App Router）+ React 19 with React Compiler
-- **UI**：[Ant Design 6](https://ant.design/) + [Tailwind CSS 4](https://tailwindcss.com/)
-- **i18n**：[next-intl](https://next-intl-docs.vercel.app/)
-- **缓存**：[idb](https://github.com/jakearchibald/idb)（IndexedDB）
-- **编码检测**：[jschardet](https://github.com/aadsm/jschardet)
+`yarn cli` 在终端里跑的是**同一套**引擎——同样的解析器、同样的重试与限流处理、同样的缓存键。在浏览器里配好服务后点「导出设置」，把那份 JSON 交给 CLI 即可，无需重填任何配置。
 
-## 快速开始
+```bash
+yarn install   # 只需一次
 
-### 环境要求
+# 整季翻成中文，走免费 GTX，无需 key、无需配置
+yarn cli -i s01e01.srt -i s01e02.srt -t zh
 
-- Node.js >= 20.9.0
-- Yarn（推荐）、npm 或 pnpm
+# 一次两种目标语言 + 双语字幕，复用导出的 key / 提示词 / 术语表
+yarn cli -i movie.srt -t zh -t ja --bilingual -s ~/subtitle-settings.json -o out/
 
-### 安装与启动
+# 本地模型，数据不出本机
+yarn cli -i movie.ass -t zh -m llm --url http://localhost:11434/v1 --model qwen3
+
+# 在设置文件基础上临时覆盖
+yarn cli -i movie.vtt -t de -m deepseek --api-key sk-xxx
+```
+
+产物默认写在输入文件旁边（或 `-o <dir>`），命名为 `movie.zh.srt`。双语会追加 `_bilingual`；`.srt` / `.vtt` 源的双语默认导出为原文、译文分样式的 ASS（`movie.zh_bilingual.ass`），加 `--bilingual-format srt` 可保持 SRT。
+
+| 选项                                                          | 说明 |
+| ------------------------------------------------------------- | --- |
+| `-i, --input <file>`                                           | 输入文件，可重复 |
+| `-t, --to <lang>`                                              | 目标语言，可重复，默认 `zh` |
+| `-f, --from <lang>`                                            | 源语言，默认 `auto` |
+| `-m, --method <id>`                                            | 翻译服务，默认 `gtxFreeAPI`；`--list-methods` 列出全部 |
+| `-s, --settings <file>`                                        | 网页端导出的设置 JSON（密钥、提示词、术语表、重试参数等） |
+| `-o, --out-dir <dir>`                                          | 输出目录，默认与输入同目录 |
+| `--api-key` · `--url` · `--model`                              | 针对当前服务的临时覆盖 |
+| `--bilingual` · `--original-first` · `--bilingual-format <ass\|srt>` | 双语输出 |
+| `--no-context`                                                 | 关闭上下文关联批处理（字幕默认开启） |
+| `--no-cache` · `--cache-file <file>`                           | 缓存控制，默认 `~/.translate-cli-cache.json` |
+| `--relay` · `--no-relay`                                       | 是否走 API 中转。默认关闭——Node 端没有 CORS 需要绕 |
+| `--format <fmt>`                                               | 强制指定格式，不按扩展名推断 |
+
+不止字幕：同一条命令也处理 Markdown（`.md`、`.markdown`、`.mdx`，默认保护代码块、链接与 LaTeX）和 JSON 多语言文件（`.json`，只译值不动键）。`yarn cli --list-formats` 查看格式映射，`yarn cli --help` 查看完整选项（含 Markdown 专属开关）。
+
+翻译可续跑：每一行译文都进缓存，`Ctrl-C` 中断、撞上限流、或只有少数几行失败后再跑一次，只会为还缺的那部分付费。
+
+退出码：`0` 全部译完 · `1` 跑完但有行软失败（输出里保留原文）或有文件失败 · `2` 参数错误 · `130` 已取消。
+
+## 自行部署
+
+需要 Node.js >= 20.9.0 与 Yarn（或 npm / pnpm）。
 
 ```bash
 git clone https://github.com/rockbenben/subtitle-translator.git
 cd subtitle-translator
 
 yarn install
-yarn dev
-```
-
-打开 [http://localhost:3000](http://localhost:3000) 即可使用。
-
-### 构建生产版本
-
-```bash
-yarn build
+yarn dev        # http://localhost:3000
+yarn build      # 构建生产版本
 ```
 
 ## 文档与部署
@@ -149,7 +185,3 @@ yarn build
 2. 本地执行 `yarn` 与 `yarn dev`
 3. 适当补充测试 / 文档
 4. 提交 PR 并清晰描述变更
-
-## 许可协议
-
-MIT © 2025 [rockbenben](https://github.com/rockbenben)。详见 [LICENSE](./LICENSE)。

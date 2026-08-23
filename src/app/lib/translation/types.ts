@@ -34,6 +34,13 @@ export interface TranslateTextParams {
   userPrompt?: string;
   sendSystemPrompt?: boolean; // When false, omit the system message (Custom OpenAI-compat — Gemma-style chat templates rejecting system role)
   useRelay?: boolean;
+  /**
+   * Origin of the relay to use when `useRelay` is on. Empty/absent = the
+   * built-in one. GLOBAL, not per-provider: it travels beside `useRelay`
+   * rather than inside the provider config because one self-hosted Worker
+   * serves every provider under the same /api/{provider} contract.
+   */
+  relayBase?: string;
   // Thinking directive. An effort (low/medium/high) = thinking ON at that level;
   // the "auto" sentinel = OMIT the param and follow the server default; undefined =
   // the DEFAULT (no user entry) = thinking OFF, i.e. send the provider's explicit
@@ -66,6 +73,23 @@ export type ReasoningEffort = "low" | "medium" | "high";
 export type ThinkingDirective = ReasoningEffort | "auto";
 
 export type TranslationService = (params: TranslateTextParams) => Promise<string>;
+
+/**
+ * 全局运行旋钮 —— 不属于任何 provider config,却决定每次请求行为的五个值。
+ * 网页壳从各 useLocalStorage 键取,CLI 壳经 pickRuntimeGlobals 从设置文件取,
+ * 两边都只能通过 buildRuntimeConfig(pipeline.ts)并进 runtime config。
+ *
+ * 每个键【必填】(值可为 undefined):新增旋钮时先加在这里,两个薄壳的
+ * 调用点同时编译失败 —— 用类型系统替代"两份手抄清单要记得同步"
+ * (relayBase 曾在 CLI 清单上漏接过)。
+ */
+export type RuntimeGlobals = {
+  systemPrompt: string | undefined;
+  userPrompt: string | undefined;
+  retryCount: number | undefined;
+  requestTimeoutSec: number | undefined;
+  relayBase: string | undefined;
+};
 
 export interface TranslationConfig {
   apiKey?: string;

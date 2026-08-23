@@ -12,8 +12,17 @@ interface NvidiaRequest {
 const NVIDIA_API_URL = "https://integrate.api.nvidia.com/v1/chat/completions";
 
 export async function POST(req: NextRequest) {
+  let body: NvidiaRequest;
   try {
-    const body = (await req.json()) as NvidiaRequest;
+    body = (await req.json()) as NvidiaRequest;
+  } catch {
+    // Must not fall through to the generic 500 below — the browser client's
+    // isRetryableError retries every 5xx three times, and a body that failed to
+    // parse fails identically on each attempt.
+    return NextResponse.json({ error: "Invalid JSON in request body" }, { status: 400 });
+  }
+
+  try {
     const { apiKey, messages, model, temperature, top_p, chat_template_kwargs } = body;
 
     if (!Array.isArray(messages) || messages.length === 0) {
@@ -40,10 +49,16 @@ export async function POST(req: NextRequest) {
     if (top_p !== undefined) requestBody.top_p = top_p;
     if (chat_template_kwargs !== undefined) requestBody.chat_template_kwargs = chat_template_kwargs;
 
+    // Forward the incoming request's abort signal: when the browser gives up
+    // (per-request timeout in useTranslationState, or the user cancels), Next
+    // aborts req.signal and this cancels the upstream NIM call too. Without it
+    // the standalone/Docker server keeps a dangling connection to NVIDIA long
+    // after nobody is waiting for the answer.
     const response = await fetch(NVIDIA_API_URL, {
       method: "POST",
       headers,
       body: JSON.stringify(requestBody),
+      signal: req.signal,
     });
 
     // Get response as text first to handle non-JSON responses
@@ -97,6 +112,13 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(data);
   } catch (error: unknown) {
+    // Client walked away (cancel button / per-request timeout) — the abort we
+    // forwarded above surfaces here. Nobody is reading the response, so log
+    // nothing: users cancel routinely and this would flood a self-hoster's logs.
+    if (req.signal.aborted) {
+      return NextResponse.json({ error: "Request aborted by client" }, { status: 499 });
+    }
+
     console.error("Nvidia proxy error:", error);
 
     let errorMessage = "An unknown error occurred";

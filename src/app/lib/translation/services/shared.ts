@@ -5,7 +5,7 @@
 // (LLM_RELAY_BASE, THIRD_PARTY_ENDPOINTS, PROXY_ENDPOINTS) — change one there and
 // every service picks it up. BELOW them sit the helpers that turn a raw/partial
 // user-supplied URL into the address actually fetched (relayUrl,
-// completeOpenAICompatUrl, resolveRelayableEndpoint). Ordered so each line only
+// completeOpenAICompatUrl). Ordered so each line only
 // depends on what's above it: env flag → relay base + builder → endpoint maps →
 // URL-completion helper → the precedence rule that ties them together.
 // ============================================================================
@@ -21,8 +21,131 @@ export const useLocalApi = process.env.NODE_ENV === "development" || process.env
 // the upstream directly.
 export const LLM_RELAY_BASE = "https://llm-proxy.api2026.workers.dev";
 
-/** Build the relay URL for a given provider key (e.g. `relayUrl("openai")`). */
-export const relayUrl = (provider: string): string => `${LLM_RELAY_BASE}/api/${provider}`;
+/**
+ * Build the relay URL for a provider key (e.g. `relayUrl("openai")`).
+ *
+ * `base` is the user's own relay, empty/absent = the built-in one. Only the
+ * ORIGIN is user-supplied — the `/api/{provider}` path is a protocol contract
+ * between this client and scripts/llm-proxy-worker.js, so a self-hosted relay
+ * is a deploy of that same Worker source, not an arbitrary endpoint. That's
+ * exactly what makes ONE base cover every relay provider at once.
+ *
+ * 两个字段各管一件事,不要混:`base` = 【中转在哪台机器】(全局,一次设置对所有
+ * provider 生效);`targetEndpoint` = 【转发到哪个上游】(per-provider)。二者
+ * 同时生效、互不覆盖。
+ */
+export const relayUrl = (provider: string, base?: string, targetEndpoint?: string): string => {
+  // `targetEndpoint` = 要转发到的上游地址。Worker 按【自己声明的集合】校验后
+  // 转发:调用方只能命中集合里的地址,不能自带 —— 所以这不是开放代理。
+  // 省略 = 用该 provider 的默认端点(Worker 侧 allowed[0])。
+  const suffix = targetEndpoint ? `?endpoint=${encodeURIComponent(targetEndpoint)}` : "";
+  return relayBaseUrl(provider, base) + suffix;
+};
+
+const relayBaseUrl = (provider: string, base?: string): string => {
+  // 【拼接必须用 normalizeRelayBase 的产物,不能用原始串】—— 校验与拼接必须对
+  // 同一个输入有同一种理解,否则界面绿灯而运行时打错地方。
+  // (历史:带 `?token=` 的 base 曾经【通过】校验,裸拼得到
+  // `…?token=abc/api/openai`,整个 /api/{provider} 落进查询串、fetch 打到根路径,
+  // Worker 对每个 provider 都回 400。现在 normalizeRelayBase 直接拒掉带
+  // search/hash 的 base,那条路走不到了 —— 但"用产物拼"这条纪律仍然要守:
+  // 下一个被加进 normalizeRelayBase 的规范化步骤同样得作用于拼接。)
+  const trimmed = base?.trim();
+  if (!trimmed) return `${LLM_RELAY_BASE}/api/${provider}`;
+  const normalized = normalizeRelayBase(trimmed);
+  // ⚠ 【非空但不合法 ≠ 没填】,绝不静默回落到内置中转。这个字段决定 apiKey
+  // 发到【哪台机器】:自建中转的用户填错(把 base 写成 `…/api`、漏掉 scheme)
+  // 时若回落,他的 key 就被送到他正要避开的那台公共 Worker 上,而翻译照常成功
+  // ——唯一的信号是折叠抽屉里一个红框。宁可整轮翻译失败也不能悄悄换目的地。
+  // 空串是另一回事:那是"用内置中转"的正常表达,上面已直接回落。
+  if (!normalized) {
+    throw new Error(`${RELAY_BASE_INVALID_MARKER}: ${trimmed} — fix it in API Settings, or clear it to use the built-in relay`);
+  }
+  return `${normalized}/api/${provider}`;
+};
+
+/**
+ * 中转地址不合法的分类标记 —— 同 RELAY_HINT_MARKER 的用法:消息里嵌它,
+ * retry.ts 的 NON_RETRYABLE_MESSAGES 引它,改措辞不会静默破坏分类。
+ *
+ * 必须【不可重试】:这是配置错误,不是瞬时故障。下一次尝试读的是同一个
+ * localStorage 值,必然同样失败 —— 不标的话(错误无 status → isRetryableError
+ * 的 `!status` 判真)每一行都会烧满重试预算,几百行的文件要转很久才报出
+ * 一个用户改一下输入框就能解决的问题。
+ */
+export const RELAY_BASE_INVALID_MARKER = "relay base is not a usable http(s) origin";
+
+/**
+ * 把用户填的 relay base 规范化成 `origin + pathname`(去尾斜杠);不合法返回
+ * undefined。
+ *
+ * 带 search/hash 的一律【拒绝】,不是静默丢弃。relayUrl 要在 base 后面接
+ * `/api/{provider}`,查询串会把那个路径段吞掉,所以它在这个位置确实没有意义 ——
+ * 但"没有意义"不等于"可以当它不存在":`https://gw.example.com/relay/?k=SECRET`
+ * 正是带共享密钥的自建 Worker 的典型形状,悄悄抹掉 `?k=` 之后请求会打到用户
+ * 自己的机器上却【没有那把钥匙】,一路 401/403,整份文档软失败进面板报一堆
+ * 原始 HTTP 错误,而设置界面上那行 URL 连同 token 还原样显示着 —— 屏幕上没有
+ * 任何东西指向真正的原因。拒绝掉,红框当场说清楚。
+ */
+const normalizeRelayBase = (base: string): string | undefined => {
+  const cleaned = base.trim();
+  if (!cleaned) return undefined;
+  let parsed: URL;
+  try {
+    parsed = new URL(cleaned);
+  } catch {
+    return undefined;
+  }
+  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return undefined;
+  if (parsed.search || parsed.hash) return undefined;
+  const path = parsed.pathname.replace(/\/+$/, "");
+  // base 不是 endpoint:relayUrl 会自己拼 /api/{provider}(理由见 isValidRelayBase)。
+  if (/\/api(\/|$)/.test(path)) return undefined;
+  return `${parsed.origin}${path}`;
+};
+
+/**
+ * relayBase 【能不能用】—— 运行时(relayUrl 拼不出地址就抛)与 UI 即时校验
+ * (TranslationSettings 的红框)共用这一条,两者必须同判据,否则界面绿灯而
+ * 运行时报错。
+ *
+ * ⚠ 设置导入(sanitizeSettings)【不用】它,用的是 isSafeRelayBaseProtocol ——
+ * 那里问的是另一个问题「能不能收进设置」,只看协议安全。理由见那个函数的注释:
+ * 按"能不能用"丢字段会把 `…/relay/?k=SECRET` 这类合法自建地址静默删掉,而同
+ * 一份文件里的 useRelay 与 apiKey 照常导入,key 就去了内置公共中转。
+ *
+ * 只放行可解析的 http(s):裸域名会变成打向本站的相对路径(见 relayUrl),
+ * javascript:/data: 则是注入面 —— 而这个字段决定 apiKey 发到哪台机器,
+ * 所以三个入口不能各写一半。空串【不算非法】,它是"用内置中转"的正常表达,
+ * 由调用方各自处理(relayUrl 回落、sanitize 保留、UI 不报错)。
+ *
+ * 实现直接复用 normalizeRelayBase,于是【校验通过 ⇔ 拼得出地址】恒成立。
+ * 分成两份写过一次:那时校验看解析后的 URL、拼接用原始串,`?token=abc` 校验
+ * 绿灯却拼出 `…?token=abc/api/openai`(路径段被查询串吞掉)。
+ */
+export const isValidRelayBase = (base: string): boolean => normalizeRelayBase(base) !== undefined;
+
+/**
+ * 只问一件事:这个值【危险】吗 —— 即它会不会把 apiKey 送到 http(s) 之外的地方。
+ *
+ * 与 isValidRelayBase 分开,因为两者服务于不同的判断:
+ *   · isValidRelayBase = "能不能用"(还要求无查询串、不是 /api 端点)——
+ *     驱动 UI 红框与运行时抛错,用户看得见、改得动。
+ *   · 本函数 = "能不能收进设置"—— sanitizeSettings 用它决定是否【丢字段】。
+ * 只按前者丢字段会造成一个更糟的洞:分享来的设置里 `…/relay/?k=SECRET` 这种
+ * 合法自建地址被静默删掉,而同一份文件里的 useRelay:true 和 apiKey 照常导入 ——
+ * 接收方看到绿色"导入成功",之后每次翻译都把 key 发到内置公共中转。
+ * 保留它:红框会说地址不可用,运行时也会抛,两处都看得见;而 javascript:/data:
+ * 这类真正危险的值仍然被丢掉。
+ */
+export const isSafeRelayBaseProtocol = (base: string): boolean => {
+  try {
+    const { protocol } = new URL(base.trim());
+    return protocol === "http:" || protocol === "https:";
+  } catch {
+    return false;
+  }
+};
 
 // Third-party proxy services (community-maintained endpoints)
 // These are external proxy/relay services that provide:
@@ -31,7 +154,6 @@ export const relayUrl = (provider: string): string => `${LLM_RELAY_BASE}/api/${p
 //   - Regional access optimization or rate limit workarounds
 export const THIRD_PARTY_ENDPOINTS = {
   deeplx: "https://deeplx-serverless.api2026.workers.dev/translate",
-  deepseekRelay: relayUrl("deepseek"),
 } as const;
 
 // Proxy endpoints for services that need CORS bypass
@@ -59,6 +181,46 @@ export const PROXY_ENDPOINTS = {
  * (Fireworks /inference/v1, custom proxies, etc.) are returned unchanged —
  * those users know what they're doing.
  */
+// Claude-flavored URL completion (Anthropic Messages protocol — the
+// chat/completions normalizer would rewrite to the wrong path): a bare host
+// (self-hosted relay) gets /v1/messages appended; any URL that already has a
+// path is trusted verbatim. 放在 shared:与 completeOpenAICompatUrl 同为
+// 纯 URL 工具,且 registry.classifyEndpointUrl 也要用它(见那边注释)。
+export const completeClaudeUrl = (url: string): string => {
+  const cleaned = url.trim().replace(/\/+$/, "");
+  if (!cleaned || cleaned.endsWith("/messages")) return cleaned;
+  try {
+    const parsed = new URL(cleaned);
+    // 路径插在 search 之前:`https://gw.com?key=x` 若裸拼成 `…?key=x/v1/messages`,
+    // 路径整个落进查询串、fetch 打到网关根路径 —— 而带查询串的网关地址正是
+    // 消毒层明确保留的形态(「查询串是自建网关地址的一部分」)。
+    if (parsed.pathname === "" || parsed.pathname === "/") return `${parsed.protocol}//${parsed.host}/v1/messages${parsed.search}`;
+  } catch {
+    // Invalid URL — leave alone, fetch will throw a clearer error
+  }
+  return cleaned;
+};
+
+/**
+ * 比较/传输用的规范形:小写 scheme+host(URL 解析器自动做)、去掉路径尾斜杠与 hash。
+ * 不做等价化的两项是刻意的:http 与 https 不算同一个地址(安全语义不同),
+ * 查询串保留(自建网关的 `?token=` 是地址的一部分)。
+ * 解析不了的(无协议裸主机)原样返回 —— 那种输入 completeOpenAICompatUrl 同样不处理,
+ * 到 fetch 时才报错,两边一致。
+ *
+ * ⚠ 分类(registry.classifyEndpointUrl)与传输(relayUrl 的 ?endpoint=)必须都过它。
+ * 只在一侧规范化会造成:界面把 `https://API.MOONSHOT.AI/...` 判成官方端点、开关照常,
+ * 而中转侧是 exact match,收到大写主机直接 400。
+ */
+export const canonicalEndpoint = (raw: string): string => {
+  try {
+    const u = new URL(raw);
+    return `${u.protocol}//${u.host}${u.pathname.replace(/\/+$/, "")}${u.search}`;
+  } catch {
+    return raw;
+  }
+};
+
 export const completeOpenAICompatUrl = (url: string): string => {
   const cleaned = url.trim().replace(/\/+$/, "");
   if (!cleaned) return cleaned;
@@ -73,7 +235,8 @@ export const completeOpenAICompatUrl = (url: string): string => {
   try {
     const parsed = new URL(cleaned);
     if (parsed.pathname === "" || parsed.pathname === "/") {
-      return `${cleaned}/v1/chat/completions`;
+      // 同 completeClaudeUrl:路径插在 search 之前,别把它拼进查询串。
+      return `${parsed.protocol}//${parsed.host}/v1/chat/completions${parsed.search}`;
     }
   } catch {
     // Invalid URL — leave alone, requireUrl/fetch will throw a clearer error
@@ -82,19 +245,15 @@ export const completeOpenAICompatUrl = (url: string): string => {
 };
 
 /**
- * THE endpoint precedence for every relay-capable service — single
- * implementation, consumed by the openai-compat factory (resolveEndpoint)
- * and the custom claude / yandex services:
- *   1. custom URL set      → use it (self-hosted relay or alternate direct
- *                            endpoint), normalized by `normalize`
- *   2. useRelay ON, no URL → the shared Cloudflare relay (LLM_RELAY_BASE)
- *   3. otherwise           → the official direct endpoint
+ * 「这个 relayBase 实际指向的是不是内置公共中转」。空 = 内置;⚠ 非空但写的就是
+ * 内置地址【也是内置】—— 它是输入框的 placeholder,用户"把默认写明白"是最顺手
+ * 的操作,把它当"自建"会绕过 registry.relayWouldServe 的保护:带密钥的自定义
+ * 地址被原样发进公共 Worker 的日志。按规范形比,尾斜杠/大小写不改变指向。
+ * UI 的两处判据(blur 自动关中转、自定义地址提示文案)与引擎共用这一个。
  */
-export const resolveRelayableEndpoint = (relayKey: string, opts: { customUrl?: string; useRelay?: boolean; direct: string; normalize?: (url: string) => string }): string => {
-  const customUrl = opts.customUrl?.trim();
-  if (customUrl) return (opts.normalize ?? completeOpenAICompatUrl)(customUrl);
-  if (opts.useRelay) return relayUrl(relayKey);
-  return opts.direct;
+export const usesBuiltinRelay = (base?: string): boolean => {
+  const trimmed = base?.trim();
+  return !trimmed || canonicalEndpoint(trimmed) === canonicalEndpoint(LLM_RELAY_BASE);
 };
 
 // ============================================================================
@@ -206,7 +365,7 @@ export const fetchJSON = async (url: string, init?: RequestInit): Promise<unknow
     // model URI) burned the full retry budget on every batch.
     const error = Object.assign(new Error(formatHttpError(data, response.status)), { status: response.status });
     // 429: surface the server's own Retry-After so the shared cooldown gate
-    // (hooks/translation/retry.ts) waits exactly as told instead of guessing.
+    // (lib/translation/retry.ts) waits exactly as told instead of guessing.
     if (response.status === 429) {
       const retryAfterMs = parseRetryAfterMs(response.headers.get("retry-after"));
       if (retryAfterMs !== undefined) Object.assign(error, { retryAfterMs });
@@ -226,7 +385,9 @@ export const fetchJSON = async (url: string, init?: RequestInit): Promise<unknow
 // translation — without stripping, paragraphs of English CoT ship as the
 // translated line and get persisted in the cache. Anchored to the start so a
 // legitimate literal "<think>" later in translated text is never touched.
-const LEADING_THINK_BLOCK_RE = /^\s*<think>[\s\S]*?<\/think>\s*/i;
+// (?:…)+ 一口吞掉【连续多个】前导块 —— 单块正则只剥第一个,模型偶发连吐两段
+// 思考时第二段会原样进译文。仍锚定串首:正文里合法的字面 "<think>" 永不被碰。
+const LEADING_THINK_BLOCK_RE = /^(?:\s*<think>[\s\S]*?<\/think>)+\s*/i;
 
 export const getOpenAICompatContent = (data: unknown, serviceName: string): string => {
   const choice = (data as { choices?: Array<{ message?: { content?: string }; finish_reason?: string }> } | null)?.choices?.[0];
@@ -243,7 +404,7 @@ export const getOpenAICompatContent = (data: unknown, serviceName: string): stri
   return content.replace(LEADING_THINK_BLOCK_RE, "").trim();
 };
 
-export const getClaudeContent = (data: unknown, hasThinkingBlock: boolean): string => {
+export const getClaudeContent = (data: unknown): string => {
   const response = data as { content?: Array<{ type?: string; text?: string }>; stop_reason?: string } | null;
   const contentArray = response?.content;
   if (!Array.isArray(contentArray) || contentArray.length === 0) {
@@ -255,16 +416,12 @@ export const getClaudeContent = (data: unknown, hasThinkingBlock: boolean): stri
   if (response?.stop_reason === "max_tokens") {
     throw new Error("Claude response truncated — max_tokens reached. Split input into smaller chunks.");
   }
-  if (hasThinkingBlock) {
-    const textBlock = contentArray.find((block) => block.type === "text");
-    if (!textBlock || typeof textBlock.text !== "string") {
-      throw new Error("Invalid response format from Claude API (no text block found)");
-    }
-    return textBlock.text.trim();
+  // Always locate the text block by type rather than by position: thinking
+  // responses lead with thinking blocks, and adaptive-thinking models don't
+  // guarantee block order — positional [0] is only safe on plain responses.
+  const textBlock = contentArray.find((block) => block.type === "text");
+  if (!textBlock || typeof textBlock.text !== "string") {
+    throw new Error("Invalid response format from Claude API (no text block found)");
   }
-  const text = contentArray[0]?.text;
-  if (typeof text !== "string") {
-    throw new Error("Invalid response format from Claude API");
-  }
-  return text.trim();
+  return textBlock.text.trim();
 };

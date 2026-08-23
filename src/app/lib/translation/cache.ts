@@ -4,7 +4,6 @@ import { LLM_MODELS, deriveThinkingParams } from "./registry";
 import type { GlossaryTerm } from "./glossary";
 import type { TranslationConfig } from "./types";
 import { normalizePrompt } from "./services/shared";
-import { translationCache } from "@/app/lib/storage/indexedDBStorage";
 
 export const CACHE_PREFIX = "t_";
 
@@ -70,8 +69,8 @@ export const generateCacheSuffix = ({ sourceLanguage, targetLanguage, translatio
       // undefined and true hash identically — preserves caches from before
       // the toggle existed.
       ...(config?.sendSystemPrompt === false && { sendSystemPrompt: false }),
-      // URL = the backend selector for Custom (llm) and any allowCustomUrl
-      // provider. The Custom model field is DESIGNED to stay empty for
+      // URL = the backend selector for Custom (llm) and any url-carrying
+      // provider (universal on openai-compat). The Custom model field is DESIGNED to stay empty for
       // single-model servers (LM Studio / llama.cpp), so without hashing the
       // URL, pointing at a completely different backend replayed the old
       // model's translations from cache with zero wire traffic. Hashed only
@@ -98,12 +97,20 @@ export const generateCacheSuffix = ({ sourceLanguage, targetLanguage, translatio
     return `${base}_${SparkMD5.hash(JSON.stringify(payload))}`;
   }
 
-  if (translationMethod === "translategemma") {
-    // TranslateGemma is also non-LLM (specialized MT). The `model` name (e.g.
-    // translategemma-4b-it vs 9b-it) selects which weights load; temperature
-    // is hardcoded to 0 (greedy) so it doesn't affect cache identity. URL is
-    // hashed because it's the backend selector (URL_IS_PRIMARY_CRED) — two
-    // hosts can serve different weights under the same model string.
+  if (translationMethod === "translategemma" || translationMethod === "milmmt") {
+    // Both are self-hosted specialized MT (non-LLM). The `model` name (e.g.
+    // translategemma-4b-it vs 12b-it, MiLMMT-46-4B vs 12B) selects which
+    // weights load; temperature is hardcoded to 0 (greedy) so it doesn't affect
+    // cache identity. URL is hashed because it's the backend selector
+    // (URL_IS_PRIMARY_CRED) — two hosts can serve different weights under the
+    // same model string.
+    // ⚠ 已知且【有意接受】的残留洞：模型名留空时语义是“用运行时当前
+    // 加载的那个”，而这里只能把它当成 ""，于是同一个 URL 上换了权重
+    // （1B → 12B）会全量命中旧缓存、零请求返回旧模型的译文。与 Custom (llm)
+    // 完全同形（见上方 url 字段的注释：那里解决的是“换了地址”半边，
+    // “同地址换了模型”这半边同样无法从客户端察觉）。三家保持同一种
+    // 处理，别只给其中一家打补丁。用户切模型后想重跑：把模型名填上
+    // （不同名字 ⇒ 不同缓存键），或在高级设置里关掉缓存。
     const payload = {
       model: config?.model || "",
       ...(typeof config?.url === "string" && config.url.trim() && { url: config.url.trim() }),
@@ -125,38 +132,4 @@ export const generateCacheKey = (text: string, cacheSuffix: string): string => {
   const encoded = safe.length <= 32 ? encodeURIComponent(safe) : null;
   const key = encoded && encoded.length <= 50 ? encoded : SparkMD5.hash(safe);
   return `${CACHE_PREFIX}${key}_${cacheSuffix}`;
-};
-
-export const getCachedTranslation = async (cacheKey: string): Promise<string | null> => {
-  return translationCache.get(cacheKey);
-};
-
-/**
- * Batch cache read in a single IndexedDB transaction — used by the per-line
- * prefill (cross-run skip) so a long file's re-run does one transaction
- * instead of one per line. Result order matches `cacheKeys`; misses are null.
- */
-export const getCachedTranslations = async (cacheKeys: string[]): Promise<(string | null)[]> => {
-  return translationCache.getMany(cacheKeys);
-};
-
-export const setCachedTranslation = async (cacheKey: string, translation: string): Promise<void> => {
-  return translationCache.set(cacheKey, translation);
-};
-
-/**
- * Purge one cached entry by its source text + suffix. Used by the context
- * path when a batch response fails marker extraction: the cache layer caches
- * every 200 response BEFORE extraction runs, so a marker-dropped/merged reply
- * would otherwise be replayed verbatim to every retry with the same batch
- * text (always, for ≤window whole-file batches) AND to every future run of
- * the same file — making short files permanently untranslatable until the
- * user manually clears the cache.
- */
-export const deleteCachedTranslation = async (text: string, cacheSuffix: string): Promise<void> => {
-  return translationCache.delete(generateCacheKey(text, cacheSuffix));
-};
-
-export const clearTranslationCache = async (): Promise<number> => {
-  return translationCache.clear();
 };
