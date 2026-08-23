@@ -43,7 +43,7 @@
     "ignoredLangCodes": "認識できない言語コードを無視しました：{codes}",
     "partialExportFailed": "一部の言語のエクスポートに失敗しました：{items}",
     "userGuide": "利用ガイド",
-    "privacyNotice": "APIキーとデータはローカルブラウザにのみ保存され、プライバシーは保護されます。ご質問やご提案がございましたら、コミュニティまたはフィードバックページからお問い合わせください。",
+    "apiKeyPrivacy": "このブラウザーにのみ保存され、サーバーには同期されません。",
     "dragAndDropText": "クリックまたはファイルをここにドラッグしてアップロード",
     "supportedFormats": "対応フォーマット：",
     "configuration": "設定",

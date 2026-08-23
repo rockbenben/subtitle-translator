@@ -43,7 +43,7 @@
     "ignoredLangCodes": "Mengabaikan kode bahasa yang tidak dikenali: {codes}",
     "partialExportFailed": "Gagal mengekspor beberapa bahasa: {items}",
     "userGuide": "Panduan Pengguna",
-    "privacyNotice": "Kunci API dan data Anda hanya disimpan secara lokal di browser Anda untuk memastikan privasi. Jika Anda memiliki pertanyaan atau saran, silakan hubungi kami melalui komunitas atau halaman umpan balik.",
+    "apiKeyPrivacy": "Hanya disimpan di browser ini, tidak pernah disinkronkan ke server.",
     "dragAndDropText": "Klik atau seret file ke sini untuk mengunggah",
     "supportedFormats": "Format yang didukung:",
     "configuration": "Konfigurasi",

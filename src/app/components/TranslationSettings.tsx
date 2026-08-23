@@ -2,7 +2,7 @@
 
 import { Fragment, useMemo, useState, type KeyboardEvent } from "react";
 import { Form, Input, InputNumber, AutoComplete, Card, Typography, Button, Space, Flex, Tooltip, App, Switch, Select, Modal, Popconfirm, Tag, theme } from "antd";
-import { SaveOutlined, PlusOutlined, DeleteOutlined, InfoCircleOutlined } from "@ant-design/icons";
+import { SaveOutlined, PlusOutlined, DeleteOutlined, InfoCircleOutlined, LockOutlined } from "@ant-design/icons";
 import {
   TRANSLATION_PROVIDERS,
   LLM_MODELS,
@@ -504,7 +504,19 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
                     )}
                   </Flex>
                 }
-                required={!isApiKeyOptional(service)}>
+                required={!isApiKeyOptional(service)}
+                // 「密钥只存在本地」贴在【正在填的那个输入框下面】—— antd 的
+                // extra 槽就是给字段级说明的,字号/灰度/间距都是现成的。
+                // 它以前在【每个工具页的页头】上,19 页一字不差,而其中 12 页
+                // (文本分割 / 文本对照 / 全部 JSON 工具)根本不收 API key ——
+                // 对它们那是句空话,白占首屏。这句话回答的疑问只在 key 输入框
+                // 在眼前时才产生,所以它就该长在这里,别再往别处复制第二份。
+                extra={
+                  <span style={{ display: "inline-flex", alignItems: "flex-start", gap: 6 }}>
+                    <LockOutlined aria-hidden style={{ marginTop: "0.25em", flexShrink: 0 }} />
+                    <span>{tCommon("apiKeyPrivacy")}</span>
+                  </span>
+                }>
                 <Input.Password
                   autoComplete="off"
                   placeholder={`${tCommon("enter")} ${currentService?.label} API Key`}

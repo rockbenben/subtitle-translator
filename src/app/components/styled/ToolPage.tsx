@@ -6,7 +6,7 @@ import { QuestionCircleOutlined } from "@ant-design/icons";
 import { useTranslations } from "next-intl";
 import { TOOL_KEYS, groupOf, type ToolKey } from "@/app/lib/toolRegistry";
 
-const { Title, Paragraph, Link } = Typography;
+const { Title, Paragraph, Text, Link } = Typography;
 
 interface ToolPageProps {
   /** Icon rendered before the title. */
@@ -20,9 +20,6 @@ interface ToolPageProps {
   /** External user-guide URL. When provided, renders a "User Guide" link
    *  before the description text. */
   guideUrl?: string;
-  /** When true (default), renders the shared privacy notice as its own
-   *  quiet line under the description. Set false for tools that don't need it. */
-  withPrivacyNotice?: boolean;
   /** Body — the actual tool surface. */
   children: React.ReactNode;
 }
@@ -36,7 +33,7 @@ interface ToolPageProps {
  * Reads the H1 from `tools.<toolKey>.title` so the nav short name, the
  * Schema.org `name`, and the in-tool H1 stay in lock-step.
  */
-const ToolPage = ({ icon, toolKey, description, guideUrl, withPrivacyNotice = true, children }: ToolPageProps) => {
+const ToolPage = ({ icon, toolKey, description, guideUrl, children }: ToolPageProps) => {
   const t = useTranslations("common");
   const tTools = useTranslations("tools");
   const tNav = useTranslations("navigation");
@@ -48,19 +45,35 @@ const ToolPage = ({ icon, toolKey, description, guideUrl, withPrivacyNotice = tr
   // ReactNode 描述走下面的降级分支（只截断、无展开）。
   const descriptionText = typeof description === "string" ? description : null;
 
-  // 一段文字一件事。隐私说明【不再拼进描述】—— 它和「这个工具是干什么的」
-  // 是两件事,揉成一段的代价在窄屏上是实打实的:3 行截断按拼接后的长度算,
-  // 而隐私那句占了近六成,于是被截掉的恰恰是用户此刻唯一想读的描述
-  // (实测 390px:"…如有问题或建… 展开",描述后半段和整句隐私都进了折叠)。
-  // 拆开后截断只作用于描述,隐私那行短、恒定可见 —— 对一个要用户填 API key
-  // 的工具来说,那句话恒定可见本来就比藏进「展开」更有用。
-  const privacyNotice = withPrivacyNotice ? t("privacyNotice") : null;
+  // ⚠ 页头【不放隐私说明】。它曾经在这里,19 个工具页一字不差,而其中 12 个
+  // (文本分割 / 文本对照 / 全部 JSON 工具)根本不收 API key —— 对它们那句
+  // "您的 API 密钥…" 是句空话。它现在只有一份,挂在 TranslationSettings 里
+  // apiKey 输入框的 Form.Item extra 上。别再往页头加回来。
+  //
+  // ⚠ 描述用 0.65 那档,但【不能写 type="secondary"】—— antd 6 把它映射到
+  // --ant-color-text-description,实测那是 0.45(暗色下 rgba(240,237,228,.45),
+  // 对 #121110 只有 4.04:1,不到 WCAG AA 的 4.5)。真正的 0.65 是
+  // --ant-color-text-secondary(7.21:1)。直接引用【CSS 变量】而不是
+  // token.colorTextSecondary:Paragraph 自带 antd 的 css-var 作用域类,变量在
+  // 它自己身上有定义,所以解析得到,而且明暗两套都对。
+  //
+  // ⚠ 本文件的颜色【一律不写 style={{ color: token.xxx }}】。useToken() 返回
+  // 字面色值,而这个 header 在【亮色主题下拿到的是暗色那套】(成因见
+  // ThemesProvider 里那段说明):实测亮色下描述仍是 rgba(240,237,228,.65)、
+  // 强调条仍是暗色的 periwinkle —— 浅纸上的浅字,章节序号整行看不见。
+  // 替代:文本走 antd Typography(自带 css-var 作用域类),强调色走 globals.css
+  // 的 --accent(:root / html.dark 两套,与 ThemesProvider 同源镜像)。
 
-  // 正文栏宽上限。这个文件的文档注释一直写着 "narrow description column",
-  // 但此前【没有任何 max-width】—— 1920 下描述横跨 1232px,实测约 169 字符/行
-  // (舒适区 45–90),一段小字灰文拉满整屏,读起来是一堵墙而不是一句话。
-  // 640px @ 14px ≈ 45 个汉字 / 88 个拉丁字符每行,中西文都落在舒适区内。
-  const MEASURE = 640;
+  // 描述【铺满正文栏,不设 max-width】。
+  //
+  // 这是一次有代价的取舍,别当成疏漏改回去:1232px @ 14px ≈ 169 个拉丁字符 /
+  // 88 个汉字每行,远超排版上常说的 45–90 舒适区。长行真正的毛病是【回扫丢行】
+  // ——读完一行往回找下一行时容易串行——那主要发生在【多行连读的段落】里。
+  // 这里的描述只有 1–3 行,而且是一次性扫读,不是连读,所以代价可控。
+  // 换来的是页头不再有一块解释不清的右侧空白(试过封顶 640 / 680 / 双栏,
+  // 都被指出别扭),而且行数少一行、页头更矮。
+  //
+  // 想收窄的话只动这一处:给下面两个 Paragraph 加回 maxWidth 即可。
 
   const registryIndex = TOOL_KEYS.indexOf(toolKey as ToolKey);
   const crumb =
@@ -71,96 +84,74 @@ const ToolPage = ({ icon, toolKey, description, guideUrl, withPrivacyNotice = tr
   return (
     <>
       <header style={{ marginBottom: token.marginLG }}>
-        {/* 章节序号行同时安置「使用说明」链接：这一行本来右侧全空，链接放这里
-            不占额外高度，也把描述段落让给纯文本（见下方 ellipsis 的说明）。 */}
-        {(crumb || guideUrl) && (
-          <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12, marginBottom: 6 }}>
-            {crumb ? (
-              <span
-                className="font-mono"
-                aria-hidden
-                style={{
-                  fontSize: 11,
-                  letterSpacing: "0.18em",
-                  textTransform: "uppercase",
-                  color: token.colorTextTertiary,
-                }}>
-                <span style={{ color: token.colorPrimary }}>{crumb.slice(0, 2)}</span>
-                {crumb.slice(2)}
-              </span>
-            ) : (
-              <span />
-            )}
-            {guideUrl && (
-              // 12px 的链接文字本身只有 19px 高。加纵向内边距把可点区域撑到
-              // ≥24px(WCAG 2.2 SC 2.5.8 的下限),负外边距抵消掉,视觉位置不变 ——
-              // 触控区变大而排版一寸没动。这一行右侧本来全空,不会挤到别的东西。
-              <Link
-                href={guideUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ fontSize: 12, whiteSpace: "nowrap", display: "inline-flex", alignItems: "center", gap: 4, padding: "5px 6px", margin: "-5px -6px" }}>
-                <QuestionCircleOutlined /> {t("userGuide")}
-              </Link>
-            )}
-          </div>
+        {/* 刊头序号。 */}
+        {crumb && (
+          <Text
+            type="secondary"
+            className="font-mono"
+            aria-hidden
+            style={{
+              display: "block",
+              fontSize: 11,
+              letterSpacing: "0.18em",
+              textTransform: "uppercase",
+              marginBottom: 6,
+            }}>
+            <span style={{ color: "var(--accent)" }}>{crumb.slice(0, 2)}</span>
+            {crumb.slice(2)}
+          </Text>
         )}
-        <Title
-          level={1}
-          className="font-display"
-          style={{
-            fontSize: "clamp(26px, 3.4vw, 38px)",
-            fontWeight: 700,
-            lineHeight: 1.15,
-            letterSpacing: "-0.025em",
-            marginTop: 0,
-            marginBottom: token.marginXS,
-            display: "flex",
-            alignItems: "center",
-            gap: 12,
-          }}>
-          {icon && (
-            <span style={{ color: token.colorPrimary, fontSize: "0.85em", display: "inline-flex" }} aria-hidden>
-              {icon}
-            </span>
+        {/* 标题行：标题左、页面操作右 —— 工具页的通行形状(GitHub / Linear /
+            Stripe / Vercel 都是这个)。「使用说明」是这一页唯一的页面级操作,
+            放在【和 H1 同一行】的右端;它此前挂在上面那条装饰性序号行上,
+            比 H1 还高 32px,那才是它显得没着落的原因。 */}
+        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", columnGap: 24, rowGap: 4 }}>
+          <Title
+            level={1}
+            className="font-display"
+            style={{
+              fontSize: "clamp(26px, 3.4vw, 38px)",
+              fontWeight: 700,
+              lineHeight: 1.15,
+              letterSpacing: "-0.025em",
+              marginTop: 0,
+              marginBottom: 0,
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+            }}>
+            {icon && (
+              <span style={{ color: "var(--accent)", fontSize: "0.85em", display: "inline-flex" }} aria-hidden>
+                {icon}
+              </span>
+            )}
+            <span>{tTools(`${toolKey}.title`)}</span>
+          </Title>
+          {guideUrl && (
+            // 12px 的链接文字本身只有 19px 高。加纵向内边距把可点区域撑到
+            // ≥24px(WCAG 2.2 SC 2.5.8 的下限),负外边距抵消掉,视觉位置不变。
+            <Link
+              href={guideUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ fontSize: token.fontSizeSM, whiteSpace: "nowrap", display: "inline-flex", alignItems: "center", gap: 4, padding: "5px 6px", margin: "-5px -6px" }}>
+              <QuestionCircleOutlined aria-hidden /> {t("userGuide")}
+            </Link>
           )}
-          <span>{tTools(`${toolKey}.title`)}</span>
-        </Title>
-        <div
-          aria-hidden
-          style={{
-            height: 2,
-            width: 40,
-            background: token.colorPrimary,
-            marginBottom: token.marginSM,
-          }}
-        />
+        </div>
+        <div aria-hidden style={{ height: 2, width: 40, background: "var(--accent)", marginTop: token.marginXS, marginBottom: token.marginSM }} />
         {/* antd 只有在 children 是纯字符串时才会走 JS 量测、渲染「展开」链接;
             混入 ReactNode 就退化成 CSS 截断 —— 3 行以外的内容直接消失且无从展开。
             所以调用方传字符串描述时走上面那支,ReactNode 描述走下面的降级支。 */}
         {descriptionText && (
-          <Paragraph type="secondary" ellipsis={{ rows: 3, expandable: true, symbol: t("expand") }} style={{ marginBottom: 0, maxWidth: MEASURE }}>
+          <Paragraph ellipsis={{ rows: 3, expandable: true, symbol: t("expand") }} style={{ marginBottom: 0, color: "var(--ant-color-text-secondary)" }}>
             {descriptionText}
           </Paragraph>
         )}
         {!descriptionText && description && (
-          <Paragraph type="secondary" ellipsis={{ rows: 3 }} style={{ marginBottom: 0, maxWidth: MEASURE }}>
+          <Paragraph ellipsis={{ rows: 3 }} style={{ marginBottom: 0, color: "var(--ant-color-text-secondary)" }}>
             {description}
           </Paragraph>
-        )}
-        {privacyNotice && (
-          <p
-            style={{
-              margin: `${token.marginXS}px 0 0`,
-              // 字号小一号，行宽就要等比收窄 —— 否则同样 640px 下它每行的
-              // 字数反而比上面的描述多。两段的“每行几个字”对齐，读起来才是同一个节奏。
-              maxWidth: Math.round((MEASURE * token.fontSizeSM) / token.fontSize),
-              fontSize: token.fontSizeSM,
-              lineHeight: 1.6,
-              color: token.colorTextTertiary,
-            }}>
-            {privacyNotice}
-          </p>
         )}
       </header>
       {children}
