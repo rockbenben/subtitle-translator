@@ -151,6 +151,27 @@ export const sanitizeSettings = (settings: TranslationSettings): TranslationSett
   const sanitizeProviderConfig = (cfg: unknown): void => {
     if (typeof cfg !== "object" || cfg === null) return;
     const bag = cfg as Record<string, unknown>;
+    // per-provider 的 `url` 与 relayBase 同一类风险,判据也用同一个:它决定
+    // 【apiKey 发去哪】。此前这里只看数值字段,url 原样放行 —— 而 url 已经变成
+    // 全员配发的逃生口(不再被 migrateConfig 的键裁剪挡掉),于是一份分享来的设置
+    // 文件可以把任意 provider 改道。
+    // ⚠ 判据同样是【协议安全】而不是【是不是官方地址】:按后者过滤会把
+    // "自建网关 + 分享配置"这个正当场景整个封死,而那正是 url 字段存在的理由。
+    // 挡掉的是 javascript:/data: 这类根本不是 endpoint 的东西;剩下的残余风险
+    // (一个用户没亲手打过的 https 地址)与 relayBase 完全同级 —— 地址就摆在
+    // 设置表单里可见,这是这一层接受的边界。
+    // 非字符串一并丢:url 已是全员配发字段,migrateConfig 不再裁掉它,`url: 123`
+    // 会一路落进 localStorage,设置表单每次渲染 classifyEndpointUrl 就 TypeError
+    // (那边虽有自保,消毒层照样别放行 —— 别的消费方没有自保)。
+    // ⚠ 丢 url 时【连同 apiKey 一起丢】—— 与 relayBase 的「丢地址必须连 useRelay
+    // 一起关」同一条理由:url 决定这把 key 发去哪,地址没了、key 还在,下一次翻译
+    // 就把(本来配给自建网关的)key 直发厂商官方端点 —— 一台用户没选择的机器。
+    // 无协议头地址(my-host.example.com/…)在 fetch 层从来跑不通,之前是响亮报错;
+    // 只丢 url 会把它变成"静默改道",连 key 一起丢则是"可见的待填空位"。
+    if ("url" in bag && (typeof bag.url !== "string" || (bag.url.trim() !== "" && !isSafeRelayBaseProtocol(bag.url)))) {
+      delete bag.url;
+      delete bag.apiKey;
+    }
     for (const [field, [min, max]] of Object.entries(CONFIG_NUMERIC_BOUNDS)) {
       const v = bag[field];
       if (v === undefined) continue;

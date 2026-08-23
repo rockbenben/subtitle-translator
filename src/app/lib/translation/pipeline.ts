@@ -27,17 +27,18 @@ import { generateCacheKey, generateCacheSuffix } from "./cache";
 import { cleanTranslatedText, splitTextIntoChunks } from "./utils";
 import { DEFAULT_SYSTEM_PROMPT, DEFAULT_USER_PROMPT } from "./config";
 import { applyGlossaryToText, buildGlossaryPromptBlock, buildStrictGlossaryPromptBlock, filterTermsMatchingText, findGlossaryViolations, type GlossaryTerm } from "./glossary";
-import { getRetryConfig, rateLimitGate, abortableSleep, isAuthError, DEFAULT_BATCH_SIZE, DEFAULT_RETRY_COUNT, DEFAULT_RETRY_TIMEOUT, type UserRetryConfig } from "./retry";
-import { extractTranslatedLinesWithNumbers, buildContextPrompt, isBlankLine, prefillFromLineCache } from "./contextTranslation";
+import { getRetryConfig, rateLimitGate, abortableSleep, isAuthError, isRetryableError, DEFAULT_BATCH_SIZE, DEFAULT_RETRY_COUNT, DEFAULT_RETRY_TIMEOUT, type UserRetryConfig } from "./retry";
+// 自托管的那几家（llm / translategemma / milmmt）跑在本地运行时上，超时的主导
+// 原因不是网络/云服务，而是请求在单槽服务器上排队、或模型卡在复读循环，
+// 所以给专门的提示而不是通用的“服务慢，换一个”。
+// ⚠ 【直接用 URL_IS_PRIMARY_CRED，不另维一份名单】—— 这里曾经有个
+// LOCAL_TIMEOUT_HINT_METHODS，与它逐字相等：“哪几家是自托管”就是同一件事，
+// 两份名单分在两个文件里，下一个自托管 provider 志必只加一处，而漏掉这一
+// 处只会让错误提示退化（静默）。PREFLIGHT_PROBE_METHODS 同类，已记在 CLAUDE.md。
+import { URL_IS_PRIMARY_CRED } from "./registry";
+import { extractTranslatedLinesWithNumbers, findAdjacentDuplicateSlots, buildContextPrompt, isBlankLine, prefillFromLineCache } from "./contextTranslation";
 import { isAbortError, formatErrorWithCause } from "@/app/utils/errorUtils";
 
-// Methods that run against a LOCAL runtime (Ollama / LM Studio / llama.cpp),
-// where a per-request timeout most often means the model stalled in a repeat
-// loop or is just slow — NOT a network/cloud-service issue. A timeout on these
-// gets a method-specific hint (lower max_tokens, check source language) instead
-// of the generic "service slow, try another" message. translategemma always
-// runs local; `llm` Custom's primary audience is local self-hosters.
-const LOCAL_TIMEOUT_HINT_METHODS: ReadonlySet<string> = new Set(["translategemma", "llm"]);
 // Caps context window padding around a batch — without this, a large
 // contextWindow would request hundreds of neighbor lines per batch and blow
 // past the model's context limit on long inputs.
@@ -481,9 +482,15 @@ const translateSingle = async (text: string, cacheSuffix: string, config: Pipeli
     ...extras,
   } as TranslateTextParams;
 
+  // 实际发出的尝试次数(≠ retryCount 上限)。非重试类错误(401/403、CORS、
+  // max_tokens…)只试一次就停 —— 日志必须说【真实次数】:写死上限会让
+  // 「快停正常工作」和「快停被改坏、真重试了 N 次」打印得一模一样,
+  // 排查凭据/限流问题时还会误导成"用坏 key 打了 3 次"。
+  let attemptsMade = 0;
   try {
     return await pRetry(
       async () => {
+        attemptsMade++;
         // Check abort before each attempt — against THIS run's controller
         // (a retry interval can span a run boundary).
         // shouldStop:重试间隔(可达 30s)可能跨越 provider 卸载,而自带循环
@@ -515,7 +522,7 @@ const translateSingle = async (text: string, cacheSuffix: string, config: Pipeli
           // run.signal.aborted is set then — that's not a slow-model timeout, so
           // exclude it. Set before the rethrow so the soft-fail catch upstream
           // (noteError → describeError) localizes the right guidance.
-          if (isAbortError(error) && !run?.signal.aborted && LOCAL_TIMEOUT_HINT_METHODS.has(config.translationMethod)) {
+          if (isAbortError(error) && !run?.signal.aborted && URL_IS_PRIMARY_CRED.has(config.translationMethod)) {
             (error as { errorHintKey?: string }).errorHintKey = "translationTimeoutLocal";
           }
 
@@ -553,7 +560,11 @@ const translateSingle = async (text: string, cacheSuffix: string, config: Pipeli
         signal: run?.signal,
         onFailedAttempt: ({ error, attemptNumber, retriesLeft }) => {
           const textPreview = text.length > 30 ? `${text.substring(0, 30)}...` : text;
-          console.warn(`Translation attempt ${attemptNumber} failed for "${textPreview}": ${(error as Error).message} (${retriesLeft} retries left)`);
+          // retriesLeft 是【预算】,不是承诺:不可重试的错误(401/403、CORS 提示、
+          // max_tokens…)当场就停。说清哪一种,否则"还剩 3 次"后面直接终结,
+          // 读日志的人会以为重试链断了。
+          const willRetry = retriesLeft > 0 && isRetryableError(error);
+          console.warn(`Translation attempt ${attemptNumber} failed for "${textPreview}": ${(error as Error).message}` + (willRetry ? ` (${retriesLeft} retries left)` : " (not retryable — giving up)"));
         },
       },
     );
@@ -572,7 +583,11 @@ const translateSingle = async (text: string, cacheSuffix: string, config: Pipeli
     // 堆栈,以及引擎挂上去的 .status / .retryAfterMs / .errorHintKey。只留字符串
     // 的话,429(带 Retry-After)、422(拒绝 thinking 参数)、500 在控制台里
     // 长得一模一样,排查时无从下手。
-    console.error(`All ${retryCount} translation attempts failed for: "${textPreview}": ${formatErrorWithCause(error)}`, error);
+    // ⚠ retryCount 是【重试】次数,总尝试上限 = retryCount + 1(pRetry 的
+    // `retries` 语义)。旧文案直接印 retryCount 当"尝试次数",两个方向都报错了数:
+    // 401 只试 1 次却说 3 次,可重试的 500 试了 4 次也说 3 次。
+    const maxAttempts = retryCount + 1;
+    console.error(`Translation failed after ${attemptsMade} of max ${maxAttempts} attempt(s)${attemptsMade < maxAttempts ? " (stopped early — not retryable)" : ""} for: "${textPreview}": ${formatErrorWithCause(error)}`, error);
     throw error; // No fallback to original text - fail explicitly
   }
 };
@@ -758,6 +773,39 @@ const translateWithContext = async (
       // can catch a TRANSLATE slot that copied a forward-[CONTEXT] source line
       // verbatim (the NHK 红白 ≈+9 misalignment), not just within-batch echoes.
       const translatedBatch = extractTranslatedLinesWithNumbers(result || "", batchEnd - batchStart, batchSources, contextLines);
+
+      // 「相邻同译」修复(subtitle-translator#44 的残余形态:合并且补齐下一槽,
+      // 块数正确、无缺口,提取层守卫全部放行)。检测只当【触发器】,裁决交给
+      // 【独立单行复译】—— 单行请求里合并物理上不可能;合法同译(不同源文
+      // 恰好译成同一句)复译后结果不变,内容一字不动。误报的最坏代价是几个
+      // 多余请求,永远不是丢内容(上次撤销的包含检测错就错在启发式直接清槽)。
+      // 串行 + delayTime 节流,同 chunk 逐行营救的既有纪律:模型刚在这段内容上
+      // 出了怪,满并发轰回去是错误的反射。复译为空/失败 → 置 "" 落进下方既有的
+      // 缺口机制(软填/降窗重试);批级缓存先清,否则重试从缓存重放同一个坏响应。
+      // 只修【未定稿】的槽(write-once):已预填的槽提交时本来就会被丢弃。
+      const dupSlots = findAdjacentDuplicateSlots(translatedBatch, batchSources).filter((j) => translatedLines[batchStart + j] === undefined);
+      if (dupSlots.length > 0) {
+        ctx.noteError(
+          new Error(
+            `adjacent duplicate translations at lines ${dupSlots.map((j) => batchStart + j + 1).join(", ")} (sources differ) — the model likely merged lines; re-translating each independently.`,
+          ),
+        );
+        if (cache) await cache.delete(generateCacheKey(contextWithMarkers, cacheSuffix));
+        for (let d = 0; d < dupSlots.length; d++) {
+          const j = dupSlots[d];
+          if (run?.signal.aborted) throw new Error("Translation aborted");
+          try {
+            const one = await translateSingle(batchSources[j], cacheSuffix, runtimeConfig, ctx, fullText);
+            // 换行拍平成空格,同 chunk 营救:单行译文里混进换行会破坏逐行装配。
+            translatedBatch[j] = one && one.trim() ? one.replace(/\r?\n/g, " ") : "";
+          } catch (err) {
+            if (isAuthError(err)) throw err;
+            ctx.noteError(err);
+            translatedBatch[j] = "";
+          }
+          if (d < dupSlots.length - 1) await abortableSleep(runtimeConfig.delayTime || 200, run?.signal);
+        }
+      }
 
       // A response that failed extraction anywhere is useless to replay, but
       // the cache layer already stored it (every 200 is a "success" there —
@@ -1491,7 +1539,20 @@ export const runReachabilityProbe = async (translationMethod: TranslationMethod,
     ...(userPrompt && { userPrompt }),
     ...(signal && { signal }),
   };
-  const result = await translationServices[translationMethod](params);
-  if (!result) throw new Error("Translation Test failed, no result received.");
-  return result;
+  try {
+    const result = await translationServices[translationMethod](params);
+    if (!result) throw new Error("Translation Test failed, no result received.");
+    return result;
+  } catch (error) {
+    // max_tokens 截断【不算不可达】—— 服务器已经回答了，而可达性正是
+    // 这个探测唯一要测的东西。不特判的话：自托管 MT 的输出上限按输入长度
+    // 缩放，探测文本 "Hello, world!" 只能拿到地板值 64 tokens，模型一旦没及时
+    // 发 eos 就会 finish_reason==="length" → 该消息在 NON_RETRYABLE_MESSAGES 里
+    // → 预检闸走硬阻断分支，而成功才会 memoize，于是【每次重试都再烧
+    // 一次生成、永远开不了工】。而逐行跑时同一个错误只是单行软失败 ——
+    // 恰好违反 PREFLIGHT_PROBE_METHODS 自己声明的契约：“单发探测不得比它所
+    // 守护的翻译更严”(见 retry.ts isRetryableError 的注释)。
+    if (error instanceof Error && error.message.includes("max_tokens reached")) return "";
+    throw error;
+  }
 };

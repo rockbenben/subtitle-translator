@@ -5,7 +5,7 @@
 // (LLM_RELAY_BASE, THIRD_PARTY_ENDPOINTS, PROXY_ENDPOINTS) — change one there and
 // every service picks it up. BELOW them sit the helpers that turn a raw/partial
 // user-supplied URL into the address actually fetched (relayUrl,
-// completeOpenAICompatUrl, resolveRelayableEndpoint). Ordered so each line only
+// completeOpenAICompatUrl). Ordered so each line only
 // depends on what's above it: env flag → relay base + builder → endpoint maps →
 // URL-completion helper → the precedence rule that ties them together.
 // ============================================================================
@@ -28,11 +28,21 @@ export const LLM_RELAY_BASE = "https://llm-proxy.api2026.workers.dev";
  * ORIGIN is user-supplied — the `/api/{provider}` path is a protocol contract
  * between this client and scripts/llm-proxy-worker.js, so a self-hosted relay
  * is a deploy of that same Worker source, not an arbitrary endpoint. That's
- * exactly what makes ONE base cover every relay provider at once; per-provider
- * endpoints that don't follow the contract belong in the custom-URL field,
- * which outranks the relay entirely.
+ * exactly what makes ONE base cover every relay provider at once.
+ *
+ * 两个字段各管一件事,不要混:`base` = 【中转在哪台机器】(全局,一次设置对所有
+ * provider 生效);`targetEndpoint` = 【转发到哪个上游】(per-provider)。二者
+ * 同时生效、互不覆盖。
  */
-export const relayUrl = (provider: string, base?: string): string => {
+export const relayUrl = (provider: string, base?: string, targetEndpoint?: string): string => {
+  // `targetEndpoint` = 要转发到的上游地址。Worker 按【自己声明的集合】校验后
+  // 转发:调用方只能命中集合里的地址,不能自带 —— 所以这不是开放代理。
+  // 省略 = 用该 provider 的默认端点(Worker 侧 allowed[0])。
+  const suffix = targetEndpoint ? `?endpoint=${encodeURIComponent(targetEndpoint)}` : "";
+  return relayBaseUrl(provider, base) + suffix;
+};
+
+const relayBaseUrl = (provider: string, base?: string): string => {
   // 【拼接必须用 normalizeRelayBase 的产物,不能用原始串】—— 校验与拼接必须对
   // 同一个输入有同一种理解,否则界面绿灯而运行时打错地方。
   // (历史:带 `?token=` 的 base 曾经【通过】校验,裸拼得到
@@ -171,6 +181,46 @@ export const PROXY_ENDPOINTS = {
  * (Fireworks /inference/v1, custom proxies, etc.) are returned unchanged —
  * those users know what they're doing.
  */
+// Claude-flavored URL completion (Anthropic Messages protocol — the
+// chat/completions normalizer would rewrite to the wrong path): a bare host
+// (self-hosted relay) gets /v1/messages appended; any URL that already has a
+// path is trusted verbatim. 放在 shared:与 completeOpenAICompatUrl 同为
+// 纯 URL 工具,且 registry.classifyEndpointUrl 也要用它(见那边注释)。
+export const completeClaudeUrl = (url: string): string => {
+  const cleaned = url.trim().replace(/\/+$/, "");
+  if (!cleaned || cleaned.endsWith("/messages")) return cleaned;
+  try {
+    const parsed = new URL(cleaned);
+    // 路径插在 search 之前:`https://gw.com?key=x` 若裸拼成 `…?key=x/v1/messages`,
+    // 路径整个落进查询串、fetch 打到网关根路径 —— 而带查询串的网关地址正是
+    // 消毒层明确保留的形态(「查询串是自建网关地址的一部分」)。
+    if (parsed.pathname === "" || parsed.pathname === "/") return `${parsed.protocol}//${parsed.host}/v1/messages${parsed.search}`;
+  } catch {
+    // Invalid URL — leave alone, fetch will throw a clearer error
+  }
+  return cleaned;
+};
+
+/**
+ * 比较/传输用的规范形:小写 scheme+host(URL 解析器自动做)、去掉路径尾斜杠与 hash。
+ * 不做等价化的两项是刻意的:http 与 https 不算同一个地址(安全语义不同),
+ * 查询串保留(自建网关的 `?token=` 是地址的一部分)。
+ * 解析不了的(无协议裸主机)原样返回 —— 那种输入 completeOpenAICompatUrl 同样不处理,
+ * 到 fetch 时才报错,两边一致。
+ *
+ * ⚠ 分类(registry.classifyEndpointUrl)与传输(relayUrl 的 ?endpoint=)必须都过它。
+ * 只在一侧规范化会造成:界面把 `https://API.MOONSHOT.AI/...` 判成官方端点、开关照常,
+ * 而中转侧是 exact match,收到大写主机直接 400。
+ */
+export const canonicalEndpoint = (raw: string): string => {
+  try {
+    const u = new URL(raw);
+    return `${u.protocol}//${u.host}${u.pathname.replace(/\/+$/, "")}${u.search}`;
+  } catch {
+    return raw;
+  }
+};
+
 export const completeOpenAICompatUrl = (url: string): string => {
   const cleaned = url.trim().replace(/\/+$/, "");
   if (!cleaned) return cleaned;
@@ -185,7 +235,8 @@ export const completeOpenAICompatUrl = (url: string): string => {
   try {
     const parsed = new URL(cleaned);
     if (parsed.pathname === "" || parsed.pathname === "/") {
-      return `${cleaned}/v1/chat/completions`;
+      // 同 completeClaudeUrl:路径插在 search 之前,别把它拼进查询串。
+      return `${parsed.protocol}//${parsed.host}/v1/chat/completions${parsed.search}`;
     }
   } catch {
     // Invalid URL — leave alone, requireUrl/fetch will throw a clearer error
@@ -194,26 +245,15 @@ export const completeOpenAICompatUrl = (url: string): string => {
 };
 
 /**
- * THE endpoint precedence for every relay-capable service — single
- * implementation, consumed by the openai-compat factory (resolveEndpoint)
- * and the custom claude / yandex services:
- *   1. custom URL set      → use it (self-hosted relay or alternate direct
- *                            endpoint), normalized by `normalize`
- *   2. useRelay ON, no URL → a relay: the user's `relayBase` if they set one,
- *                            otherwise the built-in LLM_RELAY_BASE
- *   3. otherwise           → the official direct endpoint
- *
- * Tiers 1 and 2 are both "somewhere other than the vendor", but they are NOT
- * redundant: the custom URL is one provider's full endpoint and bypasses the
- * relay contract, while relayBase swaps the relay host for EVERY provider at
- * once and keeps the /api/{provider} routing. Hence custom URL still wins —
- * it's the more specific statement.
+ * 「这个 relayBase 实际指向的是不是内置公共中转」。空 = 内置;⚠ 非空但写的就是
+ * 内置地址【也是内置】—— 它是输入框的 placeholder,用户"把默认写明白"是最顺手
+ * 的操作,把它当"自建"会绕过 registry.relayWouldServe 的保护:带密钥的自定义
+ * 地址被原样发进公共 Worker 的日志。按规范形比,尾斜杠/大小写不改变指向。
+ * UI 的两处判据(blur 自动关中转、自定义地址提示文案)与引擎共用这一个。
  */
-export const resolveRelayableEndpoint = (relayKey: string, opts: { customUrl?: string; useRelay?: boolean; relayBase?: string; direct: string; normalize?: (url: string) => string }): string => {
-  const customUrl = opts.customUrl?.trim();
-  if (customUrl) return (opts.normalize ?? completeOpenAICompatUrl)(customUrl);
-  if (opts.useRelay) return relayUrl(relayKey, opts.relayBase);
-  return opts.direct;
+export const usesBuiltinRelay = (base?: string): boolean => {
+  const trimmed = base?.trim();
+  return !trimmed || canonicalEndpoint(trimmed) === canonicalEndpoint(LLM_RELAY_BASE);
 };
 
 // ============================================================================
@@ -345,7 +385,9 @@ export const fetchJSON = async (url: string, init?: RequestInit): Promise<unknow
 // translation — without stripping, paragraphs of English CoT ship as the
 // translated line and get persisted in the cache. Anchored to the start so a
 // legitimate literal "<think>" later in translated text is never touched.
-const LEADING_THINK_BLOCK_RE = /^\s*<think>[\s\S]*?<\/think>\s*/i;
+// (?:…)+ 一口吞掉【连续多个】前导块 —— 单块正则只剥第一个,模型偶发连吐两段
+// 思考时第二段会原样进译文。仍锚定串首:正文里合法的字面 "<think>" 永不被碰。
+const LEADING_THINK_BLOCK_RE = /^(?:\s*<think>[\s\S]*?<\/think>)+\s*/i;
 
 export const getOpenAICompatContent = (data: unknown, serviceName: string): string => {
   const choice = (data as { choices?: Array<{ message?: { content?: string }; finish_reason?: string }> } | null)?.choices?.[0];

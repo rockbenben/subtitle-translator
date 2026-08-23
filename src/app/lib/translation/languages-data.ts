@@ -185,6 +185,10 @@ export const languages: LanguageOption[] = [
 //                    as AZURE_LANG_MAP. Beware of the Transliterate-only entries
 //                    (be / tg) — they look supported in the docs but the Text
 //                    Translation API rejects them.
+//   MiLMMT-46:       https://huggingface.co/xiaomi-research/MiLMMT-46-12B-v1.0
+//                    46 languages, identical across the 1B / 4B / 12B v1.0
+//                    checkpoints (each card carries the same list, verified
+//                    2026-08-22). Allowlist below as MILMMT_SUPPORTED.
 //   TranslateGemma   https://huggingface.co/collections/google/translategemma
 //                    Three variants: 4b / 12b / 27b. ALL THREE share the same
 //                    55-language coverage (verified 2026-05-22 by reading each
@@ -221,6 +225,22 @@ const DEEPLX_SUPPORTED: ReadonlySet<string> = new Set([
   "en", "zh", "es", "fr", "de", "ja", "ko", "ar", "ru", "pt-br", "pt-pt", "id", "it",
   "pl", "uk", "nl", "ro", "el", "hu", "sv", "cs", "bg", "da", "fi", "nb", "sk", "lt",
   "sl", "lv", "et", "tr",
+]);
+
+// MiLMMT-46 allowlist — Xiaomi's 46-language MT model (Gemma3-12B derivative,
+// self-hosted like TranslateGemma). Transcribed from the model card's
+// "Supported Languages" list (2026-08-22); the card names 46 LANGUAGES, which
+// map to 47 master codes because "Portuguese" covers both our pt-br and pt-pt.
+// Same allowlist→denylist derivation as DeepLX: a new master code defaults to
+// blocked until someone checks it against the card, which is the safe side —
+// the model card warns performance "is not guaranteed" outside these 46.
+// Notable absences for subtitle users: uk (Ukrainian), sr (Serbian), the Baltic
+// three (lt/lv/et), and most Indic beyond bn/hi/ta/ur.
+const MILMMT_SUPPORTED: ReadonlySet<string> = new Set([
+  "ar", "az", "bg", "bn", "ca", "cs", "da", "de", "el", "en", "es", "fa", "fi", "fr",
+  "he", "hi", "hr", "hu", "id", "it", "ja", "kk", "km", "ko", "lo", "ms", "my", "nb",
+  "nl", "pl", "pt-br", "pt-pt", "ro", "ru", "sk", "sl", "sv", "ta", "th", "fil", "tr",
+  "ur", "uz", "vi", "yue", "zh", "zh-hant",
 ]);
 
 // Azure Translator denylist — used by both `azure` (official, keyed) and
@@ -283,6 +303,12 @@ const UNSUPPORTED_LANGS: Record<string, Set<string>> = {
     "xh", "yi", "zu",
   ]),
 
+  // MiLMMT-46 (Xiaomi) — derived as master − MILMMT_SUPPORTED (see above).
+  // `auto` is handled separately via REQUIRES_EXPLICIT_SOURCE; the six
+  // language-NAME overrides live in services/traditional.ts as
+  // MILMMT_LANG_NAMES, same "only declare the differences" rule as below.
+  milmmt: new Set(languages.map((l) => l.value).filter((v) => v !== "auto" && !MILMMT_SUPPORTED.has(v))),
+
   // TranslateGemma 4b-it. Conservative: deny everything not in WMT24++.
   // `auto` is handled separately via REQUIRES_EXPLICIT_SOURCE.
   // Code/name overrides for region-script variants (zh-Hans, pt-BR, etc.)
@@ -309,7 +335,7 @@ const UNSUPPORTED_LANGS: Record<string, Set<string>> = {
  * no language-detection mode. Triggers a different error message than UNSUPPORTED_LANGS
  * — "pick a real source" rather than "language not supported".
  */
-export const REQUIRES_EXPLICIT_SOURCE: ReadonlySet<string> = new Set(["translategemma"]);
+export const REQUIRES_EXPLICIT_SOURCE: ReadonlySet<string> = new Set(["translategemma", "milmmt"]);
 
 // ════════════════════════════════════════════════════════════════════════════
 // Regional grouping for the multi-language picker UI.

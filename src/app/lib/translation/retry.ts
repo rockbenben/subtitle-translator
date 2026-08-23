@@ -8,10 +8,10 @@ import { RELAY_HINT_MARKER, RELAY_BASE_INVALID_MARKER } from "./services/shared"
 import { isAbortError, isCascadedAbort } from "@/app/utils/errorUtils";
 
 // MT-categorized services that actually delegate to an LLM runtime under the
-// hood (Qwen-MT → Qwen, translategemma → Gemma 3). They share LLM-style
+// hood (Qwen-MT → Qwen, translategemma / milmmt → Gemma 3). They share LLM-style
 // retry semantics: context-length errors aren't retryable, since the next
 // attempt sends the same payload and hits the same limit.
-const LLM_BACKED_MT_SERVICES: ReadonlySet<string> = new Set(["qwenMt", "translategemma"]);
+const LLM_BACKED_MT_SERVICES: ReadonlySet<string> = new Set(["qwenMt", "translategemma", "milmmt"]);
 
 // User-configurable defaults (in seconds for timeout)
 export const DEFAULT_RETRY_COUNT = 3;

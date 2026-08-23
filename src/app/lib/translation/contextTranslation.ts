@@ -272,6 +272,40 @@ const CONTEXT_DESCRIPTIONS = {
   },
 } as const;
 
+/**
+ * 「相邻同译」检测(subtitle-translator#44 的残余形态):模型把两行译成同一句、
+ * 且【补齐了各自的标记】—— 块数正确、没有缺口,提取层四道守卫全部放行,是唯一
+ * 一种此前完全无检查的静默损坏。
+ *
+ * ⚠ 本函数【只做触发器,不做裁决】。上次撤销的方案(trans[j] 字面包含
+ * trans[j+1])错在拿启发式直接清槽 —— 短对白误杀率极高,丢的是内容。这里的
+ * 判据故意窄得多(相邻 + 完全相等 + 源文不同),且命中后 pipeline 只做一件事:
+ * 对涉事各行发【独立单行请求】重译,用复译结果覆盖。合并在单行请求里物理上
+ * 不可能;合法同译(源文 "Yeah."/"Yes." 都译成"是的。")复译后得到同样的结果,
+ * 内容一字不动 —— 误报的最坏代价是几个多余请求,永远不是丢内容。
+ * 【包含检测仍然禁止】,别把这个函数往那个方向扩。
+ *
+ * 判据(全部满足才算):
+ *   - 相邻两槽译文非空且 trim 后完全相等(合并天然发生在相邻行)
+ *   - 两行源文都非空白、且 trim 后不同(歌词重复行源文相同,天然排除;
+ *     源文相同 → 同译是正确输出)
+ * 连续 3+ 槽同译按同一簇全部纳入。返回去重升序的槽位下标。
+ */
+export const findAdjacentDuplicateSlots = (results: readonly string[], sourceLines: readonly string[]): number[] => {
+  const hit = new Set<number>();
+  for (let j = 0; j + 1 < results.length; j++) {
+    const a = (results[j] ?? "").trim();
+    const b = (results[j + 1] ?? "").trim();
+    if (a === "" || a !== b) continue;
+    const sa = (sourceLines[j] ?? "").trim();
+    const sb = (sourceLines[j + 1] ?? "").trim();
+    if (isBlankLine(sa) || isBlankLine(sb) || sa === sb) continue;
+    hit.add(j);
+    hit.add(j + 1);
+  }
+  return [...hit].sort((x, y) => x - y);
+};
+
 export const buildContextPrompt = (baseUserPrompt: string, batchSize: number, documentType: "subtitle" | "markdown" | "generic" = "subtitle"): string => {
   const ctx = CONTEXT_DESCRIPTIONS[documentType];
 
@@ -281,7 +315,7 @@ export const buildContextPrompt = (baseUserPrompt: string, batchSize: number, do
   //
   // The format example below uses the literal X placeholder, NOT a concrete
   // digit. A digit (e.g. `[TRANSLATE_0]translation[/TRANSLATE_0]`) is parseable by
-  // NUMBERED_TRANSLATE_RE: a model that echoes the format example (acknowledged
+// NUMBERED_TRANSLATE_RE: a model that echoes the format example (acknowledged
   // "模型回显残渣") would have that echo win slot 0 under the first-wins rule,
   // shipping the literal word "translation" on line 0 — flagged success + cached.
   // `[TRANSLATE_X]` can't match `\d+`, so an echo is inert. Keep it non-numeric.

@@ -373,7 +373,7 @@ const main = async (): Promise<number> => {
   };
 
   // API 中转是【浏览器专属的补丁】:defaultUseRelay 只为绕开某些 provider 的
-  // CORS 预检(hunyuan / yandex),Node 里根本没有 CORS。原样继承那个默认值
+  // CORS 预检(tokenhub / yandex),Node 里根本没有 CORS。原样继承那个默认值
   // 等于把用户的 API key 默默送去第三方 Cloudflare Worker —— 用户从没导出过
   // 网页设置、命令行也没有对应开关,想关都关不掉;中转一挂,直连本来能通的
   // 请求也跟着全灭。
@@ -387,7 +387,7 @@ const main = async (): Promise<number> => {
   //
   // ⚠ 默认值读 settings.translationConfigs[method],【不能】读 baseConfig:
   // baseConfig 已经过 migrateConfig,它会把 registry 的 defaultUseRelay 回填
-  // 进来(实测 hunyuan → true)。拿它当默认等于给 hunyuan/opencode 静默开启
+  // 进来(实测 tokenhub → true)。拿它当默认等于给 tokenhub/opencode 静默开启
   // 中转,而 Node 没有 CORS、这里本该默认直连 —— 正是这一条要防的事。
   baseConfig.useRelay = triState(args.relay, args["no-relay"], settings.translationConfigs?.[method]?.useRelay ?? false);
 
@@ -498,8 +498,11 @@ const main = async (): Promise<number> => {
   // 组装线与网页壳共用 buildRuntimeConfig(pipeline.ts);顶层全局旋钮经
   // pickRuntimeGlobals 拾取(单一清单在 settingsSchema)—— 新增旋钮时
   // RuntimeGlobals 类型让两个壳同时编译失败,不再逐字段手抄
-  // (relayBase 曾在这里漏接)。中转没有命令行 flag:单 provider 指别处走
-  // --url(优先级本就更高),想全局换中转宿主的用户必然已有设置文件。
+  // (relayBase 曾在这里漏接)。中转没有命令行 flag:两轴正交后 --url 只决定
+  // 【打哪个地址】,不再压过设置文件里的中转开关 —— useRelay:true + 自建
+  // relayBase 的设置文件配上 --url,请求会经 {relayBase}/api/{key}?endpoint=<url>
+  // 转发(自建 worker 没声明该地址则 400,如实拒绝);只有内置公共中转会对
+  // 自定义地址退回直连(registry.relayWouldServe)。想全局换中转宿主的用户必然已有设置文件。
   const buildConfig = (lang: string, independent: boolean): PipelineRuntimeConfig =>
     buildRuntimeConfig({
       translationMethod: method,

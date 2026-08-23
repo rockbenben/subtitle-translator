@@ -395,9 +395,11 @@ const useTranslationState = () => {
   //    try/finally 统一管;这里自己开关会与外层冲突,触发 progress modal 闪烁。
   // 2. 语言不支持只报错,不自动改 translationMethod(旧版偷偷 fallback 到
   //    DEFAULT_API,用户察觉不到 method 被换);换语言还是换 method 交给用户。
-  // 3. test ping 只对 deepl/deeplx/llm/gtxFreeAPI/translategemma(免费/自托管/
-  //    本地,可用性不稳)提前探测;付费 API 假定 key 可用,出错让翻译请求自己报。
-  // 4. ping 失败只有 deeplx 自动 fallback(自托管代理最易配错/挂);其余 4 个
+  // 3. test ping 只对 PREFLIGHT_PROBE_METHODS(免费共享 / 自托管本地,可用性
+  //    不稳且探测免费)提前探测;付费 API 假定 key 可用,出错让翻译请求自己报。
+  //    成员清单与判据都在 registry.ts 那个集合的注释里 —— 这里【不再罗列】,
+  //    抄一份名字到注释里的下场是它已经漏掉过 edgeFreeAPI。
+  // 4. ping 失败只有 deeplx 自动 fallback(自托管代理最易配错/挂);其余成员
   //    失败通常是真问题(key 错、服务真不可用),fallback 没意义。
   const validate = async () => {
     // 每轮 run 的唯一共用入口(runTranslation 与三个工具的自有循环都先走这里):
