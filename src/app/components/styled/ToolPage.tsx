@@ -20,8 +20,8 @@ interface ToolPageProps {
   /** External user-guide URL. When provided, renders a "User Guide" link
    *  before the description text. */
   guideUrl?: string;
-  /** When true (default), appends the shared privacy notice to the
-   *  description paragraph. Set false for tools that don't need it. */
+  /** When true (default), renders the shared privacy notice as its own
+   *  quiet line under the description. Set false for tools that don't need it. */
   withPrivacyNotice?: boolean;
   /** Body — the actual tool surface. */
   children: React.ReactNode;
@@ -46,8 +46,21 @@ const ToolPage = ({ icon, toolKey, description, guideUrl, withPrivacyNotice = tr
   // (shouldn't happen — invariant-tested) just skip the crumb.
   // 描述能拼成纯字符串时才有「展开」；调用方目前传的都是 t(...) 字符串，
   // ReactNode 描述走下面的降级分支（只截断、无展开）。
-  const descriptionText =
-    typeof description === "string" ? [description, withPrivacyNotice ? t("privacyNotice") : ""].filter(Boolean).join(" ") : null;
+  const descriptionText = typeof description === "string" ? description : null;
+
+  // 一段文字一件事。隐私说明【不再拼进描述】—— 它和「这个工具是干什么的」
+  // 是两件事,揉成一段的代价在窄屏上是实打实的:3 行截断按拼接后的长度算,
+  // 而隐私那句占了近六成,于是被截掉的恰恰是用户此刻唯一想读的描述
+  // (实测 390px:"…如有问题或建… 展开",描述后半段和整句隐私都进了折叠)。
+  // 拆开后截断只作用于描述,隐私那行短、恒定可见 —— 对一个要用户填 API key
+  // 的工具来说,那句话恒定可见本来就比藏进「展开」更有用。
+  const privacyNotice = withPrivacyNotice ? t("privacyNotice") : null;
+
+  // 正文栏宽上限。这个文件的文档注释一直写着 "narrow description column",
+  // 但此前【没有任何 max-width】—— 1920 下描述横跨 1232px,实测约 169 字符/行
+  // (舒适区 45–90),一段小字灰文拉满整屏,读起来是一堵墙而不是一句话。
+  // 640px @ 14px ≈ 45 个汉字 / 88 个拉丁字符每行,中西文都落在舒适区内。
+  const MEASURE = 640;
 
   const registryIndex = TOOL_KEYS.indexOf(toolKey as ToolKey);
   const crumb =
@@ -79,7 +92,14 @@ const ToolPage = ({ icon, toolKey, description, guideUrl, withPrivacyNotice = tr
               <span />
             )}
             {guideUrl && (
-              <Link href={guideUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, whiteSpace: "nowrap" }}>
+              // 12px 的链接文字本身只有 19px 高。加纵向内边距把可点区域撑到
+              // ≥24px(WCAG 2.2 SC 2.5.8 的下限),负外边距抵消掉,视觉位置不变 ——
+              // 触控区变大而排版一寸没动。这一行右侧本来全空,不会挤到别的东西。
+              <Link
+                href={guideUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ fontSize: 12, whiteSpace: "nowrap", display: "inline-flex", alignItems: "center", gap: 4, padding: "5px 6px", margin: "-5px -6px" }}>
                 <QuestionCircleOutlined /> {t("userGuide")}
               </Link>
             )}
@@ -116,19 +136,31 @@ const ToolPage = ({ icon, toolKey, description, guideUrl, withPrivacyNotice = tr
           }}
         />
         {/* antd 只有在 children 是纯字符串时才会走 JS 量测、渲染「展开」链接;
-            混入 ReactNode 就退化成 CSS 截断 —— 3 行以外的内容直接消失且无从展开
-            (窄屏上几乎每个工具的描述都会被截掉)。所以这里拼成一个字符串,
-            显式空格避免空格分词语种渲染成 "…timelines.Your API key…"。 */}
+            混入 ReactNode 就退化成 CSS 截断 —— 3 行以外的内容直接消失且无从展开。
+            所以调用方传字符串描述时走上面那支,ReactNode 描述走下面的降级支。 */}
         {descriptionText && (
-          <Paragraph type="secondary" ellipsis={{ rows: 3, expandable: true, symbol: t("expand") }} style={{ marginBottom: 0 }}>
+          <Paragraph type="secondary" ellipsis={{ rows: 3, expandable: true, symbol: t("expand") }} style={{ marginBottom: 0, maxWidth: MEASURE }}>
             {descriptionText}
           </Paragraph>
         )}
         {!descriptionText && description && (
-          <Paragraph type="secondary" ellipsis={{ rows: 3 }} style={{ marginBottom: 0 }}>
+          <Paragraph type="secondary" ellipsis={{ rows: 3 }} style={{ marginBottom: 0, maxWidth: MEASURE }}>
             {description}
-            {withPrivacyNotice && <> {t("privacyNotice")}</>}
           </Paragraph>
+        )}
+        {privacyNotice && (
+          <p
+            style={{
+              margin: `${token.marginXS}px 0 0`,
+              // 字号小一号，行宽就要等比收窄 —— 否则同样 640px 下它每行的
+              // 字数反而比上面的描述多。两段的“每行几个字”对齐，读起来才是同一个节奏。
+              maxWidth: Math.round((MEASURE * token.fontSizeSM) / token.fontSize),
+              fontSize: token.fontSizeSM,
+              lineHeight: 1.6,
+              color: token.colorTextTertiary,
+            }}>
+            {privacyNotice}
+          </p>
         )}
       </header>
       {children}

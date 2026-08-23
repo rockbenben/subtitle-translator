@@ -95,9 +95,12 @@ function AntdConfigProvider({ children }: { children: ReactNode }) {
   const locale = useLocale();
   const direction = getLangDir(locale);
 
-  // next-themes 的 resolvedTheme 在 SSR + 首次 client render 都是 undefined,
-  // 等 mount 后才确定。SSR 直接 isDark=true 跟 defaultTheme="dark" 对齐 (避
-  // 免 hydration mismatch),mount 后才相信 resolvedTheme。
+  // SSR 直接 isDark=true 跟 defaultTheme="dark" 对齐,mount 后才相信 resolvedTheme。
+  // ⚠ 注释曾写「resolvedTheme 在 SSR + 首次 client render 都是 undefined」——
+  // 那个前提在 next-themes 0.4.6 上【已不成立】(库源码是
+  // `useState(() => getTheme(storageKey, defaultTheme))`,初始化函数在首次客户端
+  // 渲染就跑,那时它已经是 "light" 了;探针实测确认)。真正兜住 SSR 一致性的是下面
+  // 这个 mounted 闸,不是 resolvedTheme 恰好为空。
   // useSyncExternalStore 而非 useState+useEffect: 后者会被 react-hooks 规则
   // (set-state-in-effect) 报错, 且 Navigation.tsx 已用同样写法做 SSR-safe
   // mounted 检测。
@@ -107,6 +110,32 @@ function AntdConfigProvider({ children }: { children: ReactNode }) {
     () => false,
   );
   const isDark = mounted ? resolvedTheme !== "light" : true;
+
+  // ⚠ 已知且【有意接受】的 hydration 警告，别再重查一遍(2026-08 已完整定位):
+  //   现象:偶发 "A tree hydrated but some attributes... didn't match",diff 里
+  //   一侧是暗色值、另一侧是亮色值,出现在各组件 inline style 的 antd token 颜色上。
+  //   成因:上面这道 mounted 闸【本身是好的】—— 探针实测 hydration 那一拍确实是
+  //   暗色。失配来自「翻转」与「深层子树 hydration」之间的【竞态】:mount 后翻成
+  //   亮色的那次渲染,可能插进子树尚未 hydrate 完的中间。所以它只在较慢的加载路径
+  //   (dev 的 HMR 重连)上偶发,普通加载复现不出。
+  //   影响:dev 控制台噪音 + 生产上极短的一次闪色(翻转后立即被正常 re-render 修正,
+  //   不会长期停在错色)。
+  //
+  // 两条【已试过并否决】的修法:
+  //   1. antd `cssVar` 模式 —— 无效。`useToken().token` 按设计永远返回字面色值
+  //      (公开 API 与内部返回值是错位解构的,var 版在 `.cssVar` 字段上);而那套
+  //      var 定义在 antd 自己组件带的作用域 class 上,普通 div/span 解析不到,
+  //      实测会【静默】变透明(强调条直接消失),比原问题更危险。
+  //      另注:antd 6 的 cssVar 不再接受 `true`,只收对象。
+  //   2. 全面改用 globals.css 的 CSS 变量 —— 机制成立(ToolPage 上验证过:失配
+  //      结构上消失、明暗两色正确、连闪色一并没了),但要覆盖全部首屏组件就得把
+  //      antd 的 success/warning/error 整套语义色板在 CSS 里再抄一份明暗两版,
+  //      等于给颜色开出第二个真相源 —— 与本文件「single source of truth」的定位
+  //      冲突,维护成本大于收益,已撤销。
+  //
+  // 真正的结构性解法是让服务端就知道主题(cookie),但生产是 `output: "export"`
+  // 静态导出(next.config.ts),构建期定死 HTML,没有服务器可读 cookie —— 这条路
+  // 对本项目关闭。要重新评估的时机:改成 standalone/SSR 部署时。
   const algorithms = isDark ? [theme.darkAlgorithm] : [theme.defaultAlgorithm];
   const tokens = isDark ? darkTokens : lightTokens;
 
