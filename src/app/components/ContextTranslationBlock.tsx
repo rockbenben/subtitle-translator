@@ -32,7 +32,7 @@ const ContextTranslationBlock = ({ enabled, onEnabledChange, disabled = false }:
         padding: token.paddingSM,
         marginBottom: token.marginSM,
       }}>
-      <Flex justify="space-between" align="center">
+      <Flex component="label" className="cursor-pointer" justify="space-between" align="center">
         <Space size="small">
           <BranchesOutlined />
           <Typography.Text strong>{t("contextAwareTranslation")}</Typography.Text>

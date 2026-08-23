@@ -157,7 +157,7 @@ const ApiStatusBlock = ({ disabled = false }: ApiStatusBlockProps) => {
       </Flex>
 
       {/* Mobile: stack Select on top, apiKey input below — 145px-each compact
-          row truncates "Custom (OpenAI-compatible)" / "Tencent Hunyuan (混元)"
+          row truncates "Custom (OpenAI-compatible)" / "TokenHub (Tencent)"
           beyond recognition. Desktop keeps the dense single-row layout. */}
       {isMobile ? (
         <Flex vertical gap={token.marginXS}>

@@ -327,7 +327,9 @@ const LanguageSelector = ({ sourceLanguage, targetLanguage, targetLanguages, mul
 
       <Flex justify="end" style={{ marginTop: token.marginXS }}>
         <Tooltip title={t("multiLanguageModeTooltip")} placement="bottom">
-          <label className="inline-flex items-center gap-1.5 cursor-pointer">
+          {/* 整个 label 可点（点文字就能切），但它只有 22px 高 —— 差 2px
+              到 WCAG 2.2 SC 2.5.8 的 24px 下限。py-1 擑高、-my-1 抵消，版式不变。 */}
+          <label className="inline-flex items-center gap-1.5 cursor-pointer py-1 -my-1">
             <Switch
               size="small"
               checked={multiLanguageMode}

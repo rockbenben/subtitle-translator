@@ -61,14 +61,14 @@ const AdvancedTranslationSettings: React.FC<AdvancedTranslationSettingsProps> = 
         <Flex vertical gap="small">
           {children}
           {setSingleFileMode && (
-            <Flex justify="space-between" align="center">
+            <Flex component="label" className="cursor-pointer" justify="space-between" align="center">
               <Tooltip title={t("singleFileModeTooltip")}>
                 <Text>{t("singleFileMode")}</Text>
               </Tooltip>
               <Switch size="small" checked={singleFileMode} onChange={setSingleFileMode} aria-label={t("singleFileMode")} />
             </Flex>
           )}
-          <Flex justify="space-between" align="center">
+          <Flex component="label" className="cursor-pointer" justify="space-between" align="center">
             <Tooltip title={t("useCacheTooltip")}>
               <Text>{t("useCache")}</Text>
             </Tooltip>
