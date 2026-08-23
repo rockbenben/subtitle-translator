@@ -1,4 +1,65 @@
+use std::path::{Path, PathBuf};
 use tauri::Manager;
+
+// ============================================================================
+// 自定义导出目录（issue #52）
+//
+// 【为什么整块逻辑都在 Rust 里】前端 src/** 有 92% 的文件与上游仓库
+// web-tools-by-ai 逐字节一致（downloadFile 所在的 utils/fileUtils.ts 正是其中
+// 之一），改一行就等于给每次上游同步埋一个永久冲突点。而 saveAs() 在 webview 里
+// 触发的是一次真实下载，on_download 能直接改写落盘路径 —— 于是这个功能可以做到
+// 前端零改动，并且顺带覆盖所有导出口（字幕、术语表 TSV、设置 JSON）。
+//
+// 代价：设置入口只能放在托盘菜单里（页面设置区 TranslationSettings.tsx 同属
+// 上游镜像文件，碰不得）。
+// ============================================================================
+
+fn export_dir_file(app: &tauri::AppHandle) -> Option<PathBuf> {
+    Some(app.path().app_config_dir().ok()?.join("export-dir.txt"))
+}
+
+/// 用户设定的导出目录；未设置、或目录已被删除/改名时返回 None —— 调用方据此
+/// 保持系统默认下载目录，而不是把文件写进一个不存在的路径后静默失败。
+fn load_export_dir(app: &tauri::AppHandle) -> Option<PathBuf> {
+    let raw = std::fs::read_to_string(export_dir_file(app)?).ok()?;
+    let dir = PathBuf::from(raw.trim());
+    dir.is_dir().then_some(dir)
+}
+
+fn save_export_dir(app: &tauri::AppHandle, dir: &Path) {
+    let Some(file) = export_dir_file(app) else {
+        return;
+    };
+    if let Some(parent) = file.parent() {
+        let _ = std::fs::create_dir_all(parent);
+    }
+    let _ = std::fs::write(file, dir.to_string_lossy().as_ref());
+}
+
+/// 当前导出目录，给导航栏按钮显示用。None = 系统默认下载目录。
+#[tauri::command]
+fn get_export_dir(app: tauri::AppHandle) -> Option<String> {
+    load_export_dir(&app).map(|dir| dir.display().to_string())
+}
+
+/// 打开原生目录选择器并记住选择，返回新目录；用户取消返回 None（什么都不改）。
+///
+/// 【必须是 async】rfd 的 blocking_* 系列在主线程调用会死锁，而 async command
+/// 跑在 tauri 的异步运行时线程池上，不是主线程 —— 这正是 tauri 文档给 blocking
+/// 对话框 API 推荐的形态。托盘菜单事件在主线程，所以那边用 spawn 转过来调它。
+#[tauri::command]
+async fn choose_export_dir(app: tauri::AppHandle) -> Option<String> {
+    use tauri_plugin_dialog::DialogExt;
+
+    let mut dialog = app.dialog().file();
+    // 从当前目录起步 —— 顺带让用户看见「现在导到哪」。
+    if let Some(start) = load_export_dir(&app).or_else(|| app.path().download_dir().ok()) {
+        dialog = dialog.set_directory(start);
+    }
+    let dir = dialog.blocking_pick_folder()?.into_path().ok()?;
+    save_export_dir(&app, &dir);
+    Some(dir.display().to_string())
+}
 
 #[cfg(desktop)]
 fn focus_main_window(app: &tauri::AppHandle) {
@@ -97,6 +158,8 @@ pub fn run() {
         .plugin(tauri_plugin_window_state::Builder::default().build())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_dialog::init())
+        .invoke_handler(tauri::generate_handler![get_export_dir, choose_export_dir])
         .setup(|app| {
             if cfg!(debug_assertions) {
                 app.handle().plugin(
@@ -111,9 +174,41 @@ pub fn run() {
                 use tauri::menu::{MenuBuilder, MenuItemBuilder};
                 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
 
+                // 窗口在 tauri.conf.json 里是 "create": false —— on_download 只挂得上
+                // WebviewWindowBuilder，所以必须自己建。from_config 原样继承 title /
+                // 尺寸 / url / dragDrop 等全部配置，且晚于 window-state 插件注册，
+                // 位置恢复照常生效。
+                let window_config = app
+                    .config()
+                    .app
+                    .windows
+                    .iter()
+                    .find(|w| w.label == "main")
+                    .cloned()
+                    .expect("tauri.conf.json must define the \"main\" window");
+
+                tauri::webview::WebviewWindowBuilder::from_config(app.handle(), &window_config)?
+                    .on_download(|webview, event| {
+                        if let tauri::webview::DownloadEvent::Requested { destination, .. } = event {
+                            // 每次下载现读配置文件：下载本就不频繁，省掉一份托管状态
+                            // 和它的同步问题。目录不存在时 load_export_dir 返回 None，
+                            // destination 保持 webview 给的系统默认路径。
+                            if let Some(dir) = load_export_dir(webview.app_handle()) {
+                                if let Some(name) = destination.file_name() {
+                                    *destination = dir.join(name);
+                                }
+                            }
+                        }
+                        true
+                    })
+                    .build()?;
+
+                // 标签保持静态：当前目录由导航栏按钮的 tooltip 显示。若两处都显示，
+                // 从导航栏改完还得回头刷托盘文字，等于两份状态要对齐 —— 不值当。
                 let show = MenuItemBuilder::with_id("show", "Show").build(app)?;
+                let export = MenuItemBuilder::with_id("export-dir", "Export folder\u{2026}").build(app)?;
                 let quit = MenuItemBuilder::with_id("quit", "Quit").build(app)?;
-                let menu = MenuBuilder::new(app).items(&[&show, &quit]).build()?;
+                let menu = MenuBuilder::new(app).items(&[&show, &export, &quit]).build()?;
 
                 TrayIconBuilder::with_id("main-tray")
                     .icon(app.default_window_icon().unwrap().clone())
@@ -122,6 +217,14 @@ pub fn run() {
                     .show_menu_on_left_click(false)
                     .on_menu_event(|app, event| match event.id().as_ref() {
                         "show" => focus_main_window(app),
+                        "export-dir" => {
+                            // 菜单事件在主线程；choose_export_dir 里的 blocking 对话框
+                            // 在主线程会死锁，所以转到异步运行时上跑。
+                            let app = app.clone();
+                            tauri::async_runtime::spawn(async move {
+                                choose_export_dir(app).await;
+                            });
+                        }
                         "quit" => app.exit(0),
                         _ => {}
                     })

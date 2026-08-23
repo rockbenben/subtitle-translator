@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@ant-design/nextjs-registry": "^1.3.0",
+    "@tauri-apps/api": "2.11.1",
     "@tauri-apps/plugin-opener": "2.5.4",
     "@tauri-apps/plugin-updater": "2.10.1",
     "antd": "^6",

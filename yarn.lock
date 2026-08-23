@@ -1515,7 +1515,7 @@
     postcss "^8.5.16"
     tailwindcss "4.3.3"
 
-"@tauri-apps/api@^2.10.1", "@tauri-apps/api@^2.11.0":
+"@tauri-apps/api@2.11.1", "@tauri-apps/api@^2.10.1", "@tauri-apps/api@^2.11.0":
   version "2.11.1"
   resolved "https://registry.npmmirror.com/@tauri-apps/api/-/api-2.11.1.tgz#cd6b13fc26403ca095a02e39ecdbec8048d2872d"
   integrity sha512-M2FPuYND2m+wh5hfW9ZpSdxMPdEJovPBWwoHJmwUpysTYNHaOkVFN419m/K0LIgjb/7KU2vBgsUepJWugQCvAA==

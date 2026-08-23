@@ -14,6 +14,7 @@
     "windows": [
       {
         "label": "main",
+        "create": false,
         "title": "Subtitle Translator",
         "url": "/en/",
         "dragDropEnabled": false,

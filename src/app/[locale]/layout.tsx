@@ -9,7 +9,7 @@ import { routing } from "@/i18n/routing";
 import { AntdRegistry } from "@ant-design/nextjs-registry";
 import ThemesProvider from "@/app/ThemesProvider";
 import BackTop from "@/app/components/BackTop";
-import TauriIntegration from "@/app/components/TauriIntegration";
+import TauriIntegration from "@/app/desktop/TauriIntegration";
 import { SITE_URL } from "@/app/lib/seo";
 import { Schibsted_Grotesk, Fragment_Mono } from "next/font/google";
 

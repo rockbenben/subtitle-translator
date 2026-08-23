@@ -48,7 +48,7 @@ const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
   {
-    files: ["src/app/components/**/*.{ts,tsx}", "src/app/hooks/**/*.{ts,tsx}"],
+    files: ["src/app/components/**/*.{ts,tsx}", "src/app/hooks/**/*.{ts,tsx}", "src/app/desktop/**/*.{ts,tsx}"],
     plugins: { "local-rsc": { rules: { "require-use-client": requireUseClient } } },
     rules: { "local-rsc/require-use-client": "error" },
   },
@@ -59,6 +59,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Rust build output — cargo drops generated .js in here.
+    "src-tauri/target/**",
   ]),
 ]);
 

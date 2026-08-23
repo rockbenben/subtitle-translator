@@ -1,8 +1,8 @@
 "use client";
 import { useEffect, useRef, useCallback } from "react";
 import { App } from "antd";
-import { checkForUpdates, UpdateCheckResult } from "@/app/utils/updater";
-import { isTauri } from "@/app/utils/externalLink";
+import { checkForUpdates, UpdateCheckResult } from "./updater";
+import { isTauri } from "./externalLink";
 
 const SKIPPED_KEY = "subtitle_translator_skipped_version";
 
