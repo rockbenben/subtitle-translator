@@ -43,7 +43,7 @@
     "ignoredLangCodes": "Đã bỏ qua các mã ngôn ngữ không nhận dạng được: {codes}",
     "partialExportFailed": "Xuất một số ngôn ngữ thất bại: {items}",
     "userGuide": "Hướng Dẫn Sử Dụng",
-    "privacyNotice": "Khóa API và dữ liệu của bạn chỉ được lưu trữ cục bộ trên trình duyệt để đảm bảo quyền riêng tư. Nếu có thắc mắc hoặc góp ý, vui lòng liên hệ qua cộng đồng hoặc trang phản hồi.",
+    "apiKeyPrivacy": "Chỉ được lưu trong trình duyệt này, không bao giờ đồng bộ lên máy chủ.",
     "dragAndDropText": "Nhấp hoặc kéo tệp vào đây để tải lên",
     "supportedFormats": "Định dạng hỗ trợ:",
     "configuration": "Cấu hình",

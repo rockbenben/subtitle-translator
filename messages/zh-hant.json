@@ -43,7 +43,7 @@
     "ignoredLangCodes": "已忽略無法識別的語言代碼：{codes}",
     "partialExportFailed": "部分語言匯出失敗：{items}",
     "userGuide": "使用說明",
-    "privacyNotice": "您的 API 金鑰及資料僅存儲在本地瀏覽器，確保隱私安全。如有問題或建議，歡迎通過社群或反饋頁面聯繫我們。",
+    "apiKeyPrivacy": "只儲存在此瀏覽器，不會同步到伺服器。",
     "dragAndDropText": "點擊或將檔案拖拽至此上傳",
     "supportedFormats": "支援的格式：",
     "configuration": "配置選項",

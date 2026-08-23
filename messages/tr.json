@@ -43,7 +43,7 @@
     "ignoredLangCodes": "Tanınmayan dil kodları yoksayıldı: {codes}",
     "partialExportFailed": "Bazı diller dışa aktarılamadı: {items}",
     "userGuide": "Kullanıcı Rehberi",
-    "privacyNotice": "API anahtarınız ve verileriniz gizliliğinizi sağlamak için yalnızca yerel tarayıcınızda saklanır. Sorularınız veya önerileriniz varsa, topluluk veya geri bildirim sayfası aracılığıyla bizimle iletişime geçin.",
+    "apiKeyPrivacy": "Yalnızca bu tarayıcıda saklanır, hiçbir sunucuyla eşitlenmez.",
     "dragAndDropText": "Yüklemek için buraya tıklayın veya dosyayı sürükleyin",
     "supportedFormats": "Desteklenen formatlar:",
     "configuration": "Yapılandırma",

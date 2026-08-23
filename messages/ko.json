@@ -43,7 +43,7 @@
     "ignoredLangCodes": "인식할 수 없는 언어 코드를 무시했습니다: {codes}",
     "partialExportFailed": "일부 언어 내보내기에 실패했습니다: {items}",
     "userGuide": "사용 가이드",
-    "privacyNotice": "API 키와 데이터는 로컬 브라우저에만 저장되어 개인정보가 보호됩니다. 질문이나 제안 사항이 있으시면 커뮤니티나 피드백 페이지를 통해 문의해 주세요.",
+    "apiKeyPrivacy": "이 브라우저에만 저장되며 서버로 동기화되지 않습니다.",
     "dragAndDropText": "클릭하거나 파일을 여기로 드래그하여 업로드",
     "supportedFormats": "지원 형식:",
     "configuration": "설정",

@@ -43,7 +43,7 @@
     "ignoredLangCodes": "Códigos de idioma não reconhecidos ignorados: {codes}",
     "partialExportFailed": "Falha ao exportar alguns idiomas: {items}",
     "userGuide": "Guia do Usuário",
-    "privacyNotice": "Sua chave API e dados são armazenados apenas localmente no seu navegador para garantir a privacidade. Se tiver dúvidas ou sugestões, entre em contato através da comunidade ou da página de feedback.",
+    "apiKeyPrivacy": "Salva apenas neste navegador; nunca sincronizada com um servidor.",
     "dragAndDropText": "Clique ou arraste um arquivo aqui para enviar",
     "supportedFormats": "Formatos suportados:",
     "configuration": "Configuração",

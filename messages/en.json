@@ -43,7 +43,7 @@
     "ignoredLangCodes": "Ignored unrecognized language codes: {codes}",
     "partialExportFailed": "Failed to export some languages: {items}",
     "userGuide": "User guide",
-    "privacyNotice": "Your API key and data are stored locally in your browser to ensure privacy. If you have any questions or suggestions, please contact us via the community or feedback page.",
+    "apiKeyPrivacy": "Saved in this browser only — never synced to a server.",
     "dragAndDropText": "Click or drag file here to upload",
     "supportedFormats": "Supported formats:",
     "configuration": "Configuration",

@@ -43,7 +43,7 @@
     "ignoredLangCodes": "Nicht erkannte Sprachcodes ignoriert: {codes}",
     "partialExportFailed": "Export einiger Sprachen fehlgeschlagen: {items}",
     "userGuide": "Benutzerhandbuch",
-    "privacyNotice": "Ihr API-Schlüssel und Ihre Daten werden nur lokal im Browser gespeichert, um Ihre Privatsphäre zu schützen. Bei Fragen oder Vorschlägen kontaktieren Sie uns bitte über die Community oder die Feedback-Seite.",
+    "apiKeyPrivacy": "Wird nur in diesem Browser gespeichert und nie mit einem Server synchronisiert.",
     "dragAndDropText": "Klicken oder Datei hierher ziehen zum Hochladen",
     "supportedFormats": "Unterstützte Formate:",
     "configuration": "Konfiguration",
