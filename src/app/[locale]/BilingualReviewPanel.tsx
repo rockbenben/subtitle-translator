@@ -79,8 +79,9 @@ const BilingualReviewPanel = ({ sourceText, sourceFormat, translatedText, transl
     {
       title: t("reviewColSource"),
       dataIndex: "src",
+      // dir=auto 在 div 上只是 isolate(整块一个方向);多行 cue 要逐行判定得显式 plaintext
       render: (s: string) => (
-        <div style={{ whiteSpace: "pre-wrap" }}>
+        <div dir="auto" style={{ whiteSpace: "pre-wrap", unicodeBidi: "plaintext" }}>
           <Text type="secondary">{s}</Text>
         </div>
       ),
@@ -89,7 +90,7 @@ const BilingualReviewPanel = ({ sourceText, sourceFormat, translatedText, transl
       title: t("reviewColTarget"),
       dataIndex: "trg",
       render: (_: string, p: Pair) => (
-        <TextArea value={valueOf(p)} onChange={(e) => setEdit(p.index, e.target.value)} disabled={!p.editable} autoSize={{ minRows: 1, maxRows: 4 }} aria-label={`${t("reviewColTarget")} #${p.index}`} />
+        <TextArea value={valueOf(p)} onChange={(e) => setEdit(p.index, e.target.value)} disabled={!p.editable} dir="auto" autoSize={{ minRows: 1, maxRows: 4 }} aria-label={`${t("reviewColTarget")} #${p.index}`} />
       ),
     },
   ];

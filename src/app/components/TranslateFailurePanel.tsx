@@ -276,7 +276,7 @@ export default function TranslateFailurePanel({
                   {item.lang}
                 </Tag>
               )}
-              {item.text}
+              <span dir="auto">{item.text}</span>
             </List.Item>
           )}
         />

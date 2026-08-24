@@ -131,6 +131,7 @@ const GlossaryDrawer = ({ open, onClose }: { open: boolean; onClose: () => void 
       render: (_: string, term: (typeof visibleTerms)[number]) => (
         <Input
           value={term.source}
+          dir="auto"
           placeholder={t("sourcePlaceholder")}
           aria-label={t("sourcePlaceholder")}
           status={duplicateSources.has(term.source.trim()) ? "warning" : undefined}
@@ -145,6 +146,7 @@ const GlossaryDrawer = ({ open, onClose }: { open: boolean; onClose: () => void 
       render: (_: string, term: (typeof visibleTerms)[number]) => (
         <Input
           value={term.target}
+          dir="auto"
           placeholder={t("targetPlaceholder")}
           aria-label={t("targetPlaceholder")}
           // 半成品行(有原文无译法)引擎会跳过 —— 标出来,免得用户疑惑词条不生效。
@@ -185,7 +187,7 @@ const GlossaryDrawer = ({ open, onClose }: { open: boolean; onClose: () => void 
         </Space.Compact>
       </Space>
       <Space style={{ width: "100%", marginBottom: 12, justifyContent: "space-between" }} wrap>
-        <Input allowClear prefix={<SearchOutlined />} style={{ width: 220 }} placeholder={t("searchPlaceholder")} aria-label={t("searchPlaceholder")} value={search} onChange={(e) => setSearch(e.target.value)} />
+        <Input allowClear dir="auto" prefix={<SearchOutlined />} style={{ width: 220 }} placeholder={t("searchPlaceholder")} aria-label={t("searchPlaceholder")} value={search} onChange={(e) => setSearch(e.target.value)} />
         <Typography.Text type="secondary">{t("termCount", { count: completeCount })}</Typography.Text>
       </Space>
       {/* 终端用户反馈:习惯把术语表写进系统提示词的用户不知道这里该填什么 ——

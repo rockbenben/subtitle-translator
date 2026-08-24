@@ -622,6 +622,7 @@ const SubtitleTranslator = () => {
 
             {uploadMode === "single" && (
               <SourceArea
+                textDirection="auto"
                 locked={isTranslating}
                 sourceText={sourceText}
                 setSourceText={setSourceText}
@@ -891,6 +892,7 @@ const SubtitleTranslator = () => {
             {translatedText && !(multiLanguageMode && targetLanguages.length > 1) && (
               <Col xs={24} lg={extractedText ? 12 : 24}>
                 <ResultCard
+                  textDirection="auto"
                   title={t("translationResult")}
                   content={resultStats.displayText}
                   charCount={resultStats.charCount}
@@ -916,7 +918,7 @@ const SubtitleTranslator = () => {
                       {t("copy")}
                     </Button>
                   }>
-                  <TextArea value={extractedText} rows={10} readOnly aria-label={t("extractedText")} />
+                  <TextArea value={extractedText} rows={10} readOnly dir="auto" aria-label={t("extractedText")} />
                 </Card>
               </Col>
             )}

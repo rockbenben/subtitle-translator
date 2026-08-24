@@ -41,12 +41,12 @@ const LiveRow = memo(({ line, notTranslatedLabel }: { line: LiveLine; notTransla
           </Text>
         )}
       </div>
-      <Text type="secondary" style={{ fontSize: 12, whiteSpace: "pre-wrap" }}>
+      <Text type="secondary" dir="auto" style={{ fontSize: 12, whiteSpace: "pre-wrap", unicodeBidi: "plaintext" }}>
         {line.original}
       </Text>
       {/* 失败行【不】再渲染一行译文:那一行只能是原文的副本(软填约定),
           上下两行一模一样看起来像渲染坏了。琥珀的「未译出」已经说清了。 */}
-      {!line.failed && <Text style={{ fontSize: 13, whiteSpace: "pre-wrap" }}>{line.translation}</Text>}
+      {!line.failed && <Text dir="auto" style={{ fontSize: 13, whiteSpace: "pre-wrap", unicodeBidi: "plaintext" }}>{line.translation}</Text>}
     </div>
   );
 });

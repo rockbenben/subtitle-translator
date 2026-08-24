@@ -31,6 +31,8 @@ interface SourceAreaProps {
    * 但用户此时正需要照着源文看进度,所以留下可读可选可滚,只关掉写入。
    */
   locked?: boolean;
+  /** 书写方向,语义与 ResultCard.textDirection 一致(默认 "ltr",自由文本传 "auto")。 */
+  textDirection?: "ltr" | "rtl" | "auto";
 }
 
 /**
@@ -39,7 +41,7 @@ interface SourceAreaProps {
  * 只读模式 hint alongside the char/line counters — same affordance the user
  * already sees on the result side.
  */
-const SourceArea = ({ sourceText, setSourceText, stats, placeholder, ariaLabel, rows = 8, className, locked = false }: SourceAreaProps) => {
+const SourceArea = ({ sourceText, setSourceText, stats, placeholder, ariaLabel, rows = 8, className, locked = false, textDirection = "ltr" }: SourceAreaProps) => {
   const editable = stats.isEditable && !locked;
   return (
     <>
@@ -51,6 +53,7 @@ const SourceArea = ({ sourceText, setSourceText, stats, placeholder, ariaLabel, 
         // allowClear 的 ✕ 走的也是 onChange —— 锁上时一并撤掉,免得留一个看着能点的清空入口
         allowClear={editable}
         readOnly={!editable}
+        dir={textDirection}
         aria-label={ariaLabel}
         className={className}
       />
