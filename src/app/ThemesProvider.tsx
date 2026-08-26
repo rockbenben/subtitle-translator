@@ -2,7 +2,7 @@
 
 import { ThemeProvider as NextThemesProvider, useTheme } from "next-themes";
 import { ConfigProvider, App, theme, Layout } from "antd";
-import { ReactNode, useSyncExternalStore } from "react";
+import { ReactNode, useEffect, useSyncExternalStore } from "react";
 import { useLocale } from "next-intl";
 import { getLangDir } from "rtl-detect";
 
@@ -20,7 +20,9 @@ export default function ThemesProvider({ children }: { children: ReactNode }) {
    rules, mono meta. Light is the canonical "paper" face; dark is
    the inverted "ink plate" with a periwinkle-shifted accent
    (pure Klein blue is illegible on near-black).
-   Single source of truth here, mirrored as CSS vars in globals.css.
+   本文件是色板的单一来源。globals.css 的 --accent 只是 hydration 前的兜底，
+   真值由文件末尾的 AccentSync 在运行时从 antd 渲染出的 colorPrimary 写回
+   （seed 会被暗色算法压暗，两边手写必然分叉——理由写在那个组件上）。
    ───────────────────────────────────────────────────────────── */
 const BLUE_LIGHT = "#1D35F5"; // Klein blue — light-mode accent
 const BLUE_DARK = "#7A8CFF"; // periwinkle — dark-mode accent (AA on ink)
@@ -29,8 +31,44 @@ const PAPER = "#F4F2EC";
 
 // Rational state palette — kept slightly desaturated so the single blue
 // accent stays the loudest voice. Error is warm red, clearly apart from blue.
-const stateLight = { colorSuccess: "#1E8A5A", colorWarning: "#B07D10", colorError: "#D02B1F" };
-const stateDark = { colorSuccess: "#4CC38A", colorWarning: "#D9A514", colorError: "#F2604F" };
+//
+// ⚠ 这五个(以及 colorPrimary / colorLink / colorTextBase / colorBgBase)是
+// antd 的【seed token】,不是最终值:`theme/util/alias.js` 里有一句
+// `Object.keys(seedToken).forEach(t => delete overrideTokens[t])` —— 你写进
+// `theme.token` 的 seed 只喂给算法,算法派生出的那个才是界面上真正渲染的颜色。
+// 暗色下派生会【压暗】:#F2604F → 实测渲染 #d15546。所以要动这几个颜色的对比度,
+// 得挪 seed 再实测,不能"再声明一遍"。非 seed 的 map/alias token(下面那组文字
+// 分级)则是覆盖生效的。
+// 亮色的 success/warning 从 #1E8A5A / #B07D10 压深:那两个值在纸面上只有
+// 3.88:1 与 3.24:1,而它们渲染的是「已连接」「需配置」这类【状态文字】,
+// 12–14px,4.5 的门槛适用。error #D02B1F 本来就够(4.63)。
+const stateLight = { colorSuccess: "#197A4F", colorWarning: "#8C6209", colorError: "#D02B1F" };
+// colorError 从 #F2604F 上调:那个 seed 在暗色下派生成 #d15546,对 #191815 只有
+// 4.31:1 —— 而它渲染的是「清空」这类【可点的破坏性动作】文字,不是禁用态,
+// 4.5 的门槛适用。
+const stateDark = { colorSuccess: "#4CC38A", colorWarning: "#D9A514", colorError: "#FF7A69" };
+
+/* ─────────────────────────────────────────────────────────────
+   文字分级 —— 从 antd 默认值上调,为的是 WCAG AA。
+   antd 出厂的 tertiary/description 是 0.45 alpha、placeholder 是 0.25。
+   在本色板上实测:0.45 → 暗色 4.01:1、亮色 2.94:1;placeholder 0.25 → 2.11:1。
+   三个都低于 AA 的 4.5,而这一级承载的是【真内容】:首页卡片描述、表单标签、
+   上传格式提示、开关说明、空态引导。
+   「更暗 = 更次要」这条路在这套纸/墨色板上走不通(亮色下 0.45 只有 2.94),
+   所以次要层的区分交给【字体处理】—— 11px mono、字距、全大写 —— 而不是靠淡。
+   这本来也是这套 Swiss 系统该用的手法。
+   ⚠ 这些是 map/alias token,覆盖会生效(与上面的 seed 相反)。
+   ───────────────────────────────────────────────────────────── */
+const textTiersLight = {
+  colorTextTertiary: "rgba(20, 19, 16, 0.62)", // 4.99:1 on paper
+  colorTextDescription: "rgba(20, 19, 16, 0.62)", // Typography type="secondary" 走这个
+  colorTextPlaceholder: "rgba(20, 19, 16, 0.60)", // 4.68:1 on paper
+};
+const textTiersDark = {
+  colorTextTertiary: "rgba(240, 237, 228, 0.60)", // 6.14:1 on container
+  colorTextDescription: "rgba(240, 237, 228, 0.60)",
+  colorTextPlaceholder: "rgba(240, 237, 228, 0.55)", // 5.36:1 on container
+};
 
 const sharedTokens = {
   fontFamily: 'var(--font-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif',
@@ -58,6 +96,7 @@ const sharedTokens = {
 const lightTokens = {
   ...sharedTokens,
   ...stateLight,
+  ...textTiersLight,
   colorPrimary: BLUE_LIGHT,
   colorInfo: BLUE_LIGHT,
   colorBgBase: PAPER,
@@ -75,6 +114,7 @@ const lightTokens = {
 const darkTokens = {
   ...sharedTokens,
   ...stateDark,
+  ...textTiersDark,
   colorPrimary: BLUE_DARK,
   colorInfo: BLUE_DARK,
   colorBgBase: "#121110",
@@ -88,6 +128,11 @@ const darkTokens = {
   colorPrimaryBg: "rgba(122, 140, 255, 0.10)",
   colorPrimaryBgHover: "rgba(122, 140, 255, 0.18)",
   boxShadowSecondary: "0 6px 24px rgba(0, 0, 0, 0.45)",
+  // 实心强调块上的字色。antd 默认是白,而暗色下这四个状态色本身就亮:
+  // 白字压在 accent #6b7adc 上只有 3.86:1(error 3.33 / success 2.92 / warning 2.98),
+  // 换成墨色全部 4.89–6.46。影响的是选中的 CheckableTag、Switch 的
+  // checkedChildren、Badge 这类实心块。亮色那边相反(白字 5.19–7.29),保持默认。
+  colorTextLightSolid: "#121110",
 };
 
 function AntdConfigProvider({ children }: { children: ReactNode }) {
@@ -142,6 +187,11 @@ function AntdConfigProvider({ children }: { children: ReactNode }) {
   return (
     <ConfigProvider
       direction={direction}
+      // antd 默认给「恰好两个汉字、且无图标」的按钮加 0.34em 字距（Popconfirm 的
+      // 取消 / 删除 / 清空 正是这个形态），旁边带图标的按钮不加，同一排两种字距。
+      // 全局关掉；TranslationProgressStrip 里那层局部 ConfigProvider 保留 —— 它的
+      // 单元测试脱离本 Provider 单独渲染。
+      button={{ autoInsertSpace: false }}
       theme={{
         hashed: false,
         algorithm: algorithms,
@@ -194,9 +244,36 @@ function AntdConfigProvider({ children }: { children: ReactNode }) {
           },
         },
       }}>
-      <App>
+      {/* message 默认 top=8，正好压在 48px 高的表头上 —— 一条「分割完成」把
+          导航里的两三项遮掉三秒。下移到表头之下；页面滚动后表头是 static 的，
+          不会再有遮挡问题。 */}
+      <App message={{ top: 56 }}>
+        <AccentSync />
         <Layout style={{ minHeight: "100vh", background: "transparent" }}>{children}</Layout>
       </App>
     </ConfigProvider>
   );
+}
+
+/* ─────────────────────────────────────────────────────────────
+   把 antd 真正渲染出来的 colorPrimary 写回 globals.css 的 --accent。
+
+   为什么需要:`colorPrimary` 是 antd 的 seed token,喂给算法后【派生值才是
+   界面上的颜色】。暗色算法会压暗 —— 实测 seed #7A8CFF 渲染成 #6b7adc。
+   于是同一个「唯一强调色」有了两副面孔:antd 那侧(链接/按钮/Segmented/Tag)
+   是 #6b7adc,CSS 那侧(focus ring、卡片 hover 的边与强调条、skip-link 底色)
+   是 #7a8cff。差得不多,但这套系统的立身之本就是「只有一个蓝」。
+
+   两个都试过的替代方案都不成立:在 `theme.token` 里再声明一遍 colorPrimary
+   无效(seed 会被 alias.js 从 override 集合里删掉);反过来把 --accent 手写成
+   #6b7adc 又等于把派生结果硬编码进另一个文件,antd 一升级就再次分叉。
+   在运行时同步是唯一「不可能再漂」的写法:CSS 里那个值退化成 hydration 前的
+   兜底,hydration 之后由 antd 说了算。
+   ───────────────────────────────────────────────────────────── */
+function AccentSync() {
+  const { token } = theme.useToken();
+  useEffect(() => {
+    document.documentElement.style.setProperty("--accent", token.colorPrimary);
+  }, [token.colorPrimary]);
+  return null;
 }

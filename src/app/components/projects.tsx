@@ -91,7 +91,7 @@ const externalTools: ExternalTool[] = [
   { title: "LearnData 开源笔记", key: "learndata", icon: <BookOutlined />, chineseOnly: true },
 ];
 
-const getExternalHref = (key: string, locale: string, isChinese: boolean): string => {
+const getExternalHref = (key: string, locale: string): string => {
   switch (key) {
     case "aishort":
       if (locale === "zh") return "https://www.aishort.top/";
@@ -137,7 +137,7 @@ export const useAppMenu = () => {
     if (tool.chineseOnly && !isChinese) return null;
     return {
       label: (
-        <a href={getExternalHref(tool.key, locale, isChinese)} target="_blank" rel="noopener noreferrer">
+        <a href={getExternalHref(tool.key, locale)} target="_blank" rel="noopener noreferrer">
           {tool.title}
         </a>
       ),
@@ -154,6 +154,10 @@ export const useAppMenu = () => {
     {
       label: <Link href={`/${locale}`}>{currentToolKey ? t(`tools.${currentToolKey}.title`) : t("navigation.home")}</Link>,
       key: "home",
+      // 首位是品牌/首页位（主仓那格放 `tools.` 词标），带图标与纯文字的分组项分层。
+      // ⚠ 别改成纯图标：省下的宽度不够让最长的俄文菜单不折叠，却丢掉单工具站
+      //   唯一说明「这是什么站」的地方。
+      icon: currentToolKey ? TOOL_ICONS[currentToolKey] : undefined,
     },
     {
       label: t("navigation.translate"),

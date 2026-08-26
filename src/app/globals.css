@@ -4,16 +4,15 @@
    Interlingua — design tokens
    Paper, ink, one Klein-blue accent. Swiss-international system:
    visible graph grid, hairline rules, square corners, mono meta.
-   Single-source-of-truth here, mirrored in ThemesProvider's antd
-   token overrides.
+   --accent 在这里的值是【hydration 前的兜底】，真值由 ThemesProvider 的
+   AccentSync 在运行时写回（antd 的 colorPrimary 是 seed，暗色算法会把它压暗，
+   两边手写必然分叉——细节见那个组件的注释）。其余色板（容器/边框/状态色）
+   只存在于 ThemesProvider。
    ───────────────────────────────────────────────────────────── */
 :root {
   --bg-dark: #121110;
   --bg-light: #f4f2ec;
-  --ink-dark: #f0ede4;
-  --ink-light: #141310;
   --accent: #1d35f5; /* Klein blue (light mode) */
-  --accent-soft: rgba(29, 53, 245, 0.08);
   --rule-dark: rgba(240, 237, 228, 0.1);
   --rule-light: rgba(20, 19, 16, 0.12);
 }
@@ -22,7 +21,6 @@ html.dark {
   color-scheme: dark;
   /* Periwinkle shift — pure Klein blue is illegible on ink. */
   --accent: #7a8cff;
-  --accent-soft: rgba(122, 140, 255, 0.12);
 }
 html.light {
   color-scheme: light;
@@ -94,6 +92,111 @@ html.light body::before {
   min-height: 44px;
 }
 
+/* CheckableTag 当按钮用（正则预设、语言芯片…）出厂只有 22px 高，差 2px 够不到
+   WCAG 2.2 SC 2.5.8 的 24×24，而芯片之间只隔 8px，间距豁免也用不上。
+   inline-flex 让 min-height 生效，字号与内边距不动。 */
+.ant-tag-checkable {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+}
+
+/* allowClear 的 ✕ 实测 12×12（antd 出厂尺寸），是页面上最难点中的东西之一。
+   用一个透明的伪元素把命中区撑到 24×24（WCAG 2.2 SC 2.5.8），图标视觉不动，
+   也不动布局 —— 加内边距会把输入框的 suffix 撑宽。 */
+.ant-input-clear-icon,
+.ant-select-clear,
+.ant-picker-clear {
+  position: relative;
+}
+.ant-input-clear-icon::after,
+.ant-select-clear::after,
+.ant-picker-clear::after {
+  content: "";
+  position: absolute;
+  inset: -6px;
+}
+
+/* ≤343px（iPhone SE 一代的 320、部分折叠机外屏）：表头右侧四个图标按钮各自
+   min-width 44px（上面那条 WCAG 触控区规则），加上汉堡与 logo，合计比视口宽
+   3px —— 每一页都因此长出一条横向滚动条。实测 344px 起就够用，所以只在这个
+   区间把两侧留白从 16 收到 10。inline style 只有 !important 压得住。 */
+@media (max-width: 343px) {
+  .ant-layout-header > .ant-flex {
+    padding-inline: 10px !important;
+  }
+}
+
+/* 设置抽屉宽 min(1400px, 90vw)（那个宽度是为了让主翻译界面留在身后可见，
+   不是因为表单需要）。表单里的控件出厂一律 w-full，于是「5000」「200」这类
+   数值躺在 1172px 的框里，标签在左、值在左、右边一千像素空着。
+   短控件封顶；textarea（提示词）与术语表仍吃满宽度，它们是真需要。 */
+.ant-drawer .ant-form-vertical .ant-select,
+.ant-drawer .ant-form-vertical .ant-input-affix-wrapper,
+.ant-drawer .ant-form-vertical input.ant-input {
+  max-width: 640px;
+}
+/* 数值再窄一档：分块大小 / 并发行数 / 延迟时间 / maxTokens 都是 3–6 位数。 */
+.ant-drawer .ant-form-vertical .ant-input-number {
+  max-width: 320px;
+}
+
+/* 导航：汉堡 / 横排的取舍走 CSS 媒体查询，不走 JS 断点 —— antd 的
+   Grid.useBreakpoint() 在 SSR 返回 {}，而生产是 `output: "export"`、全站只有
+   一份预渲染 HTML，任何 JS 判据都必然有一侧首屏是错的（两侧都实测过：出移动
+   分支则禁 JS 时桌面只剩一个打不开抽屉的汉堡；出桌面分支则 390 视口首屏横向
+   溢出 399px）。
+   ⚠ 992 = antd 的 lg 断点，Navigation.tsx 里没有第二个判据，改断点只改这里。
+   ⚠ `.nav-burger` 必须提权：`.ant-btn` 由 CSS-in-JS 注入在本文件之后、权重
+     同为 (0,1,0)，平写 display:none 会被盖掉（同 `.font-mono` 那个坑）。 */
+.nav-left {
+  gap: 8px;
+}
+.nav-primary {
+  display: none;
+  /* 装不下时【菜单自己横向滚动】，不要把整页顶出横向滚动条。
+     ⚠ 不能写 overflow:hidden：antd 的横排菜单项 flex:none 不可压缩，装不下全靠
+       rc-overflow 收进「⋯」，而折叠依赖 ResizeObserver —— RO 只在页面可见时投递，
+       首屏未 hydrate 与后台标签页两种情形下它不发生，hidden 会把尾部菜单项无声
+       裁掉（看不到也点不到，比滚动条更坏）。
+     ⚠ 也不能让菜单项可压缩：`.ant-menu-title-content` 是 inline 盒子，
+       text-overflow 不生效，压缩后文字直接压到邻居身上。
+     子菜单弹层 portal 到 body，不受这里的 overflow 影响。 */
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+}
+.nav-primary::-webkit-scrollbar {
+  display: none;
+}
+@media (min-width: 992px) {
+  .nav-left {
+    gap: 24px;
+  }
+  .ant-btn.nav-burger {
+    display: none;
+  }
+  .nav-primary {
+    display: flex;
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+/* 语言名的显隐走 CSS，不走 Grid.useBreakpoint()：后者在 SSR 返回 {}，静态 HTML
+   永远出移动分支（只有图标），hydrate 后桌面才补上语言名，头部每次加载抖一下。
+   768 = antd 的 md 断点，与 LanguageSelector 里 `!screens.md` 的语义对齐。
+   ⚠ `:not(.ant-btn-icon)` 只藏文字那一层；不必补 gap，antd 6 的 Button 是
+     inline-flex + gap，文字 span 一旦 display:none 就不再是 flex 项。 */
+.lang-btn > span:not(.ant-btn-icon) {
+  display: none;
+}
+@media (min-width: 768px) {
+  .lang-btn > span:not(.ant-btn-icon) {
+    display: inline;
+  }
+}
+
 /* Focus ring — the accent, not OS Highlight. Square, like everything else. */
 :focus-visible {
   outline: 2px solid var(--accent);
@@ -109,10 +212,15 @@ html.light body::before {
   z-index: 1000;
   padding: 8px 16px;
   background: var(--accent);
+  /* 亮色的 accent 是 Klein blue,白字 7.29:1;暗色是 periwinkle,白字只有
+     2.99:1 —— 所以暗色下改用墨色字(6.31:1),而不是两边都写白。 */
   color: #fff;
   font-weight: 600;
   text-decoration: none;
   transition: top 0.18s ease;
+}
+html.dark .skip-link {
+  color: var(--bg-dark);
 }
 .skip-link:focus,
 .skip-link:focus-visible {
@@ -125,13 +233,18 @@ html.light body::before {
 }
 
 /* Card hover — flat Swiss: no lift, no shadow. The accent rule draws in
-   along the bottom edge and the border sharpens. Color is the motion. */
-.ant-card.ant-card-hoverable {
+   along the bottom edge and the border sharpens. Color is the motion.
+   `.related-card` is the plain <a> in RelatedTools (a server component, so no
+   antd Card available) — it rides these same rules instead of owning a
+   second, drifting copy of the hover language. */
+.ant-card.ant-card-hoverable,
+.related-card {
   position: relative;
   transition: border-color 0.22s ease;
   overflow: hidden;
 }
-.ant-card.ant-card-hoverable::after {
+.ant-card.ant-card-hoverable::after,
+.related-card::after {
   content: "";
   position: absolute;
   left: 0;
@@ -143,11 +256,96 @@ html.light body::before {
   transform-origin: left;
   transition: transform 0.3s cubic-bezier(0.65, 0, 0.35, 1);
 }
-.ant-card.ant-card-hoverable:hover {
+.ant-card.ant-card-hoverable:hover,
+.related-card:hover {
   border-color: var(--accent) !important;
 }
-.ant-card.ant-card-hoverable:hover::after {
+.ant-card.ant-card-hoverable:hover::after,
+.related-card:hover::after {
   transform: scaleX(1);
+}
+
+/* antd 给 <code>/<kbd> 写死了 3px 圆角(borderRadius token 管不到它),
+   而这套系统是直角。 */
+.ant-typography code,
+.ant-typography kbd,
+code.ant-typography,
+kbd.ant-typography {
+  /* !important：antd 的 Typography 样式由 CSS-in-JS 在运行时注入 <head>，
+     排在本文件之后，同权重对拼拼不过。 */
+  border-radius: 0 !important;
+}
+
+/* 同一个成因,另一处受害者:antd 注入的 `.ant-typography { font-family: … }`
+   与上面的 `.font-mono` 同权重 (0,1,0) 且排在后面 —— 于是
+   `<Text className="font-mono">` 会【静默】回落到正文 grotesk。工具页那条
+   「01 / 19 — 翻译工具」刊头序号就是这么丢掉等宽的:类名挂着、字距也调了,
+   渲染出来却不是 mono。多带一个类名把权重抬到 (0,2,0) 即可,不必 !important。 */
+.font-mono.ant-typography {
+  font-family: var(--font-mono), ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Waline（反馈页）—— 把第三方评论区接进本站的色板与直角语言。
+
+   它自带一整套绿色主题（#27ae60 / #2ecc71）和 4–12px 圆角，落在「只有一个
+   蓝、四角是直的」的系统里，整页读起来像另一个网站。配色它开在 CSS 变量上，
+   直接接到 antd 的 token 变量即可（Waline 容器在 antd Layout 里，css-var 作用域
+   解析得到——同 RelatedTools / ToolPage 的用法）；圆角与虚线边框是写死的，
+   只能按选择器压平。
+   ⚠ --waline-white 是主按钮在强调色底上的字色，不是「白」：暗色下白字压在
+   periwinkle 上只有 3.2:1，所以接页面底色（墨/纸），两个主题都够。
+   ───────────────────────────────────────────────────────────── */
+[data-waline] {
+  --waline-theme-color: var(--accent);
+  --waline-active-color: var(--accent);
+  --waline-white: var(--ant-color-bg-base);
+  --waline-color: var(--ant-color-text);
+  --waline-bg-color: var(--ant-color-bg-container);
+  --waline-bg-color-light: var(--ant-color-fill-quaternary);
+  --waline-bg-color-hover: var(--ant-color-fill-tertiary);
+  --waline-border-color: var(--ant-color-border-secondary);
+  --waline-dark-grey: var(--ant-color-text-secondary);
+  --waline-light-grey: var(--ant-color-text-tertiary);
+  --waline-info-color: var(--ant-color-text-tertiary);
+  --waline-info-bg-color: var(--ant-color-fill-quaternary);
+  --waline-disable-bg-color: var(--ant-color-fill-quaternary);
+  --waline-disable-color: var(--ant-color-text-disabled);
+  --waline-bq-color: var(--ant-color-border-secondary);
+  --waline-code-bg-color: var(--ant-color-fill-quaternary);
+  --waline-avatar-radius: 0;
+  --waline-box-shadow: none;
+}
+/* 长链接。Waline 把评论里的 <a> 设成 inline-block —— intrinsic 宽度不肯收缩,
+   一条 GitHub 链接就能把 390px 的手机页撑出横向滚动(实测 scrollWidth 425)。 */
+[data-waline] a {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+/* 直角。Waline 的圆角写死在它自己的规则里（.wl-panel .75em、.wl-btn .5em、
+   badge/meta 4px…），而它的样式表由组件 import、排在本文件之后，选择器权重
+   对拼没有意义 —— 一条 !important 覆盖全部，也覆盖它以后新增的。
+   头像另走 --waline-avatar-radius。 */
+[data-waline] * {
+  border-radius: 0 !important;
+}
+/* 分隔线：虚线 → 发丝线。Waline 把 2px dashed 和一个硬编码的浅灰写死在
+   自己的规则里，权重与本文件持平且排在后面，同样只能 !important。 */
+[data-waline] .wl-header,
+[data-waline] .wl-header-item,
+[data-waline] .wl-card,
+[data-waline] .wl-quote {
+  border-color: var(--waline-border-color) !important;
+  border-style: solid !important;
+  border-width: 0 !important;
+}
+[data-waline] .wl-header,
+[data-waline] .wl-header-item:not(:last-child),
+[data-waline] .wl-card {
+  border-bottom-width: 1px !important;
+}
+[data-waline] .wl-quote {
+  border-inline-start-width: 1px !important;
 }
 
 /* Square scrollbars — drafting-table hardware, not pill thumbs. */
@@ -230,7 +428,8 @@ html.light body::before {
     animation: none;
     transform: none;
   }
-  .ant-card.ant-card-hoverable {
+  .ant-card.ant-card-hoverable,
+  .related-card {
     transition: none;
   }
   [style*="loading-pulse"],

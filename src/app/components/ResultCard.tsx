@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Space, Input, Tooltip, theme } from "antd";
+import { Button, Space, Input, Tooltip } from "antd";
 import { CopyOutlined, DownloadOutlined, SwapOutlined, ClearOutlined } from "@ant-design/icons";
 import { useTranslations } from "next-intl";
 import PageCard from "@/app/components/styled/PageCard";
@@ -70,7 +70,7 @@ interface ResultCardProps {
 
 /**
  * Output-side surface. Distinguished from the input side by a 2px accent
- * (`token.colorPrimary`) top strip — continuation of the ToolPage brand mark;
+ * (`var(--accent)`) top strip — continuation of the ToolPage brand mark;
  * signals "this is the output region" at a glance.
  *
  * Callers always guard with `{result && (<ResultCard ...>)}`, so this component
@@ -100,7 +100,6 @@ const ResultCard = ({
   className = "",
 }: ResultCardProps) => {
   const t = useTranslations("common");
-  const { token } = theme.useToken();
 
   const displayTitle = title || t("result");
 
@@ -114,7 +113,7 @@ const ResultCard = ({
     <PageCard
       title={displayTitle}
       className={`h-full ${className}`}
-      style={{ borderTop: `2px solid ${token.colorPrimary}` }}
+      style={{ borderTop: "2px solid var(--accent)" }}
       extra={
         <Space>
           {onFormat && (
