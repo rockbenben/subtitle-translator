@@ -20,7 +20,8 @@ const nextConfig: NextConfig = {
   },
   reactCompiler: true,
   experimental: {
-    optimizePackageImports: ["antd", "@ant-design/icons", "jsonpath-plus", "compromise"],
+    // antd / @ant-design/icons 不用写 —— Next 16 的默认列表已含（node_modules/next/dist/server/config.js）
+    optimizePackageImports: ["jsonpath-plus", "compromise"],
   },
 };
 

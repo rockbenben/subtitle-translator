@@ -59,6 +59,13 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // 桌面分支的构建产物：Electron 打包出的 win-unpacked 里带着一整份 out/，
+    // Tauri 的 target/ 里是 Rust 构建生成的 JS 与二进制资产。不忽略的话
+    // `yarn lint` 会去 lint 它们（实测 text-diff 报 5091 条、subtitle-translator
+    // 50 条 Parsing error），源码里真正的问题被淹掉，这道闸等于失效。
+    // 两个目录都已被 .gitignore 覆盖，这里只是让 eslint 也别看。
+    "dist-electron/**",
+    "src-tauri/**",
   ]),
 ]);
 

@@ -152,7 +152,7 @@
     "copyAllFailed": "Salin semua",
     "closeFailedLinesModal": "Tutup",
     "failedLanguagesTitle": "{count} bahasa target gagal",
-    "failedLanguagesDesc": "Semua batch untuk bahasa-bahasa ini gagal — biasanya karena masalah LLM lokal, batas tingkat API, atau penolakan model terhadap bahasa tertentu. Salin kode dan jalankan ulang hanya untuk mereka (tempelkan di Entri Cepat melalui Kode Bahasa); yang lain akan dilewati dari cache.",
+    "failedLanguagesDesc": "Semua batch untuk bahasa-bahasa ini gagal — biasanya karena masalah LLM lokal, batas tingkat API, atau penolakan model terhadap bahasa tertentu. Salin kode dan jalankan ulang hanya untuk mereka (tempelkan di 'Pengaturan Multi-Bahasa'); yang lain akan dilewati dari cache.",
     "copyAllFailedLanguages": "Salin kode bahasa",
     "apiStatusFreeApi": "Free API",
     "apiStatusNeedsConfig": "Perlu konfig.",
@@ -229,7 +229,7 @@
     "noSourceText": "Silakan unggah file atau tempel teks.",
     "noExtractedText": "Tidak ada konten yang diekstrak, periksa format file.",
     "textExtracted": "Teks subtitle diekstrak, ",
-    "bilingualError": "Tag gaya kompleks terdeteksi. Mode dwibahasa dapat menyebabkan kesalahan format. Disarankan untuk mematikan 'Subtitle Dwibahasa'.",
+    "bilingualError": "Tag gaya kompleks terdeteksi. Mode dwibahasa dapat menyebabkan kesalahan format. Disarankan untuk mematikan 'Dwibahasa'.",
     "reviewTitle": "Tinjauan Dwibahasa",
     "reviewColSource": "Sumber",
     "reviewColTarget": "Terjemahan",
@@ -408,7 +408,7 @@
     },
     "jsonTranslate": {
       "title": "Penerjemah JSON i18n",
-      "description": "Alat terjemahan JSON multi-bahasa yang efisien"
+      "description": "Terjemahan file bahasa i18n batch, dengan pencocokan JSONPath dan pemetaan kunci"
     },
     "mdTranslator": {
       "title": "Penerjemah Markdown",

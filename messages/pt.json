@@ -152,7 +152,7 @@
     "copyAllFailed": "Copiar tudo",
     "closeFailedLinesModal": "Fechar",
     "failedLanguagesTitle": "Falha em {count} idioma(s) de destino",
-    "failedLanguagesDesc": "Todos os lotes para estes idiomas falharam — geralmente devido a problemas LLM locais, limites de taxa de API ou recusa do modelo a um idioma específico. Copie os códigos e execute novamente apenas com eles (cole em Entrada Rápida por Códigos de Idioma); os outros usarão o cache e serão ignorados.",
+    "failedLanguagesDesc": "Todos os lotes para estes idiomas falharam — geralmente devido a problemas LLM locais, limites de taxa de API ou recusa do modelo a um idioma específico. Copie os códigos e execute novamente apenas com eles (cole em 'Configurações multilíngue'); os outros usarão o cache e serão ignorados.",
     "copyAllFailedLanguages": "Copiar códigos de idioma",
     "apiStatusFreeApi": "Free API",
     "apiStatusNeedsConfig": "Requer config.",
@@ -229,7 +229,7 @@
     "noSourceText": "Por favor, envie arquivo ou cole texto.",
     "noExtractedText": "Nenhum conteúdo extraído, verifique o formato do arquivo.",
     "textExtracted": "Texto de legenda extraído, ",
-    "bilingualError": "Tags de estilo complexas detectadas. Modo bilíngue pode causar erros de formatação. Recomendado desativar 'Legendas Bilíngues'.",
+    "bilingualError": "Tags de estilo complexas detectadas. Modo bilíngue pode causar erros de formatação. Recomendado desativar 'Bilíngue'.",
     "reviewTitle": "Revisão bilíngue",
     "reviewColSource": "Original",
     "reviewColTarget": "Tradução",
@@ -408,7 +408,7 @@
     },
     "jsonTranslate": {
       "title": "Tradutor JSON i18n",
-      "description": "Ferramenta eficiente de tradução JSON multilíngue"
+      "description": "Tradução em lote de arquivos de idioma i18n, com correspondência JSONPath e mapeamento de chaves"
     },
     "mdTranslator": {
       "title": "Tradutor Markdown",

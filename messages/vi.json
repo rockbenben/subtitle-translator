@@ -152,7 +152,7 @@
     "copyAllFailed": "Sao chép tất cả",
     "closeFailedLinesModal": "Đóng",
     "failedLanguagesTitle": "{count} ngôn ngữ đích thất bại",
-    "failedLanguagesDesc": "Tất cả các lô cho các ngôn ngữ này đã thất bại — thường do trục trặc LLM cục bộ, giới hạn tốc độ API hoặc mô hình từ chối ngôn ngữ cụ thể. Sao chép mã và chạy lại chỉ cho chúng (dán vào Nhập nhanh bằng mã ngôn ngữ); những ngôn ngữ khác sẽ được bỏ qua từ bộ nhớ đệm.",
+    "failedLanguagesDesc": "Tất cả các lô cho các ngôn ngữ này đã thất bại — thường do trục trặc LLM cục bộ, giới hạn tốc độ API hoặc mô hình từ chối ngôn ngữ cụ thể. Sao chép mã và chạy lại chỉ cho chúng (dán vào 'Cài đặt đa ngôn ngữ'); những ngôn ngữ khác sẽ được bỏ qua từ bộ nhớ đệm.",
     "copyAllFailedLanguages": "Sao chép mã ngôn ngữ",
     "apiStatusFreeApi": "Free API",
     "apiStatusNeedsConfig": "Cần cấu hình",
@@ -229,7 +229,7 @@
     "noSourceText": "Vui lòng tải tệp hoặc dán văn bản.",
     "noExtractedText": "Không trích xuất được nội dung, kiểm tra định dạng tệp.",
     "textExtracted": "Đã trích xuất văn bản phụ đề, ",
-    "bilingualError": "Phát hiện thẻ kiểu phức tạp. Chế độ song ngữ có thể gây lỗi định dạng. Khuyên dùng tắt 'Phụ đề song ngữ'.",
+    "bilingualError": "Phát hiện thẻ kiểu phức tạp. Chế độ song ngữ có thể gây lỗi định dạng. Khuyên dùng tắt 'Song ngữ'.",
     "reviewTitle": "Soát hai ngôn ngữ",
     "reviewColSource": "Nguồn",
     "reviewColTarget": "Bản dịch",
@@ -408,7 +408,7 @@
     },
     "jsonTranslate": {
       "title": "Dịch giả JSON i18n",
-      "description": "Công cụ dịch JSON đa ngôn ngữ hiệu quả"
+      "description": "Dịch tệp ngôn ngữ i18n hàng loạt, với đối sánh JSONPath và ánh xạ khóa"
     },
     "mdTranslator": {
       "title": "Dịch giả Markdown",

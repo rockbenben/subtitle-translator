@@ -152,7 +152,7 @@
     "copyAllFailed": "Tümünü kopyala",
     "closeFailedLinesModal": "Kapat",
     "failedLanguagesTitle": "{count} hedef dil başarısız oldu",
-    "failedLanguagesDesc": "Bu diller için tüm yığınlar başarısız oldu — genellikle yerel LLM aksaklıkları, API hız sınırları veya modelin belirli bir dili reddetmesi nedeniyle. Kodları kopyalayın ve yalnızca onlar için yeniden çalıştırın (Dil Kodları ile Hızlı Giriş alanına yapıştırın); diğerleri önbellekten atlanacak.",
+    "failedLanguagesDesc": "Bu diller için tüm yığınlar başarısız oldu — genellikle yerel LLM aksaklıkları, API hız sınırları veya modelin belirli bir dili reddetmesi nedeniyle. Kodları kopyalayın ve yalnızca onlar için yeniden çalıştırın ('Çok Dilli Ayarlar' bölümüne yapıştırın); diğerleri önbellekten atlanacak.",
     "copyAllFailedLanguages": "Dil kodlarını kopyala",
     "apiStatusFreeApi": "Free API",
     "apiStatusNeedsConfig": "Yapılandırma gerekli",
@@ -229,7 +229,7 @@
     "noSourceText": "Lütfen dosya yükleyin veya metin yapıştırın.",
     "noExtractedText": "İçerik çıkarılamadı, dosya formatını kontrol edin.",
     "textExtracted": "Altyazı metni çıkarıldı, ",
-    "bilingualError": "Karmaşık stil etiketleri algılandı. İki dilli mod format hatalarına neden olabilir. 'İki Dilli Altyazı'yı kapatmanız önerilir.",
+    "bilingualError": "Karmaşık stil etiketleri algılandı. İki dilli mod format hatalarına neden olabilir. 'İki Dilli'yi kapatmanız önerilir.",
     "reviewTitle": "İki dilli inceleme",
     "reviewColSource": "Kaynak",
     "reviewColTarget": "Çeviri",
@@ -408,7 +408,7 @@
     },
     "jsonTranslate": {
       "title": "i18n JSON Çevirici",
-      "description": "Verimli çok dilli JSON çeviri aracı"
+      "description": "Toplu i18n dil dosyası çevirisi, JSONPath eşleştirme ve anahtar eşleme ile"
     },
     "mdTranslator": {
       "title": "Markdown Çevirici",

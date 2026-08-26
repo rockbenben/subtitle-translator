@@ -158,7 +158,7 @@
     "copyAllFailed": "複製全部",
     "closeFailedLinesModal": "關閉",
     "failedLanguagesTitle": "翻譯失敗 {count} 種語言",
-    "failedLanguagesDesc": "這幾種語言的所有批次都翻掛了——常見於本地 LLM 抽風、API 限流或模型拒譯特定語種。可點「複製語言代碼」拿到清單,下次只對它們重跑(在「快速輸入語言代碼」裡貼上即可),其它語言走快取不重翻。",
+    "failedLanguagesDesc": "這幾種語言的所有批次都翻掛了——常見於本地 LLM 抽風、API 限流或模型拒譯特定語種。可點「複製語言代碼」拿到清單，下次只對它們重跑（在「多語言設定」裡貼上即可），其它語言走快取不重翻。",
     "copyAllFailedLanguages": "複製語言代碼",
     "apiStatusFreeApi": "Free API",
     "apiStatusNeedsConfig": "需配置",
@@ -221,7 +221,7 @@
     "bilingual": "雙語",
     "exportBoth": "兩者皆要",
     "bilingualTooltip": "同時生成僅譯文與雙語對照兩份檔案",
-    "bilingualFormatTooltip": "ASS:原文與譯文可分別設定字體/顏色樣式。SRT:純文字,原文與譯文疊在同一時間段。",
+    "bilingualFormatTooltip": "ASS：原文與譯文可分別設定字體/顏色樣式。SRT：純文字，原文與譯文疊在同一時間段。",
     "translationFirst": "譯文在上",
     "originalFirst": "譯文在下",
     "unsupportedSub": "無法識別字幕格式，請確保檔案為 SRT、ASS、VTT、SBV 或 LRC 格式。",
@@ -229,7 +229,7 @@
     "noSourceText": "請上傳字幕檔案或粘貼文本。",
     "noExtractedText": "未提取到字幕內容，請檢查檔案格式。",
     "textExtracted": "已提取字幕文本，",
-    "bilingualError": "檢測到複雜樣式標籤，雙語模式可能導致格式錯亂，建議關閉「雙語字幕」。",
+    "bilingualError": "檢測到複雜樣式標籤，雙語模式可能導致格式錯亂，建議關閉「雙語」。",
     "reviewTitle": "對照校對",
     "reviewColSource": "原文",
     "reviewColTarget": "譯文",
@@ -239,7 +239,7 @@
     "assStyleTooltip": "自訂雙語 ASS 字幕的字體、字號、顏色與位置",
     "assNativeModeSource": "沿用原樣式",
     "assNativeModeRebuild": "重新排版",
-    "assNativeModeTooltip": "原生 ASS 雙語:沿用來源檔案樣式,或放棄來源樣式、用「ASS 樣式」重新排版(僅適合對白型字幕)",
+    "assNativeModeTooltip": "原生 ASS 雙語：沿用來源檔案樣式，或放棄來源樣式、用「ASS 樣式」重新排版（僅適合對白型字幕）",
     "assStyleTitle": "ASS 樣式設定",
     "assPresetLabel": "預設",
     "assPresetDefault": "預設值",
@@ -315,7 +315,7 @@
     "contextBatchSize": "上下文並發數",
     "contextBatchSizeExtra": "上下文模式的並發批次數。先調「上下文行數」加速更穩，本項易限流",
     "maxTokens": "最大輸出 tokens",
-    "maxTokensExtra": "限制模型單次回應的 token 數。0 = 不限制(用廠商預設)。本地模型(Ollama/llama.cpp)建議設 2048-4096,避免死迴圈占用太久。觸頂會顯式失敗(不會寫半截譯文),正常翻譯被截則調大此值。",
+    "maxTokensExtra": "限制模型單次回應的 token 數。0 = 不限制（用廠商預設）。本地模型（Ollama/llama.cpp）建議設 2048-4096，避免死迴圈占用太久。觸頂會顯式失敗（不會寫半截譯文），正常翻譯被截則調大此值。",
     "contextWindow": "上下文行數",
     "contextWindowExtra": "每批包含的行數。值越大請求越少、加速越明顯，但可能超 token 上限",
     "delayTime": "延遲時間",
@@ -342,7 +342,7 @@
     "presetEmptyHint": "暫無預設，編輯後點儲存",
     "presetDefault": "預設提示詞",
     "presetDefaultReadonly": "預設提示詞為內建項，不可修改或刪除；如需自訂請「另存為新預設」",
-    "qwenMtDomains": "領域提示詞 (僅支援英文)",
+    "qwenMtDomains": "領域提示詞（僅支援英文）",
     "sendSystemPrompt": "發送 system 提示詞",
     "sendSystemPromptExtra": "僅當 chat template 拒絕 system 角色時關閉，典型報錯 \"Conversations must start with a user prompt\"（如 Gemma 系列）",
     "selectService": "選擇翻譯服務",
@@ -408,7 +408,7 @@
     },
     "jsonTranslate": {
       "title": "JSON 多語言翻譯",
-      "description": "高效的多語言 JSON 翻譯工具"
+      "description": "批次翻譯 i18n 語言包，支援 JSONPath 匹配和鍵名映射"
     },
     "mdTranslator": {
       "title": "Markdown 翻譯",
@@ -598,7 +598,7 @@
     "my": "緬甸語",
     "km": "高棉語",
     "ms": "馬來語",
-    "fil": "菲律賓語(塔加拉語)",
+    "fil": "菲律賓語（塔加拉語）",
     "jv": "爪哇語",
     "su": "巽他語",
     "ace": "亞齊語",
@@ -645,7 +645,7 @@
   },
   "AppError": {
     "title": "頁面載入出錯",
-    "description": "頁面載入失敗,可能是網站剛更新到新版本,請重新載入。",
+    "description": "頁面載入失敗，可能是網站剛更新到新版本，請重新載入。",
     "reload": "重新載入"
   },
   "NotFound": {
