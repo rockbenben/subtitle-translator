@@ -84,6 +84,8 @@
     "directExport": "自动导出",
     "useCache": "使用翻译缓存",
     "useCacheTooltip": "复用之前的翻译缓存，加快处理速度",
+    "cacheOff": "缓存已关",
+    "cacheOffTooltip": "翻译缓存已关闭：每行都会重新请求，中断后也无法从断点继续。点击重新开启。",
     "contextAwareTranslation": "上下文关联翻译",
     "contextAwareTranslationTooltip": "结合上下文语境进行翻译，提升连贯性和准确度（仅 AI 模型支持）",
     "multiLanguageMode": "多语言模式",

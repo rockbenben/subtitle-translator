@@ -84,6 +84,8 @@
     "directExport": "自動エクスポート",
     "useCache": "翻訳キャッシュを使用",
     "useCacheTooltip": "以前の翻訳キャッシュを再利用し、処理速度を向上させます",
+    "cacheOff": "キャッシュ無効",
+    "cacheOffTooltip": "翻訳キャッシュが無効です：毎行を再リクエストし、中断後に途中から再開することもできません。クリックで有効に戻します。",
     "contextAwareTranslation": "文脈考慮翻訳",
     "contextAwareTranslationTooltip": "文脈を考慮して翻訳し、一貫性と正確性を向上させます（AIモデルのみ対応）",
     "multiLanguageMode": "多言語モード",

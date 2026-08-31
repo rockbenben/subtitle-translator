@@ -84,6 +84,8 @@
     "directExport": "自動匯出",
     "useCache": "使用翻譯快取",
     "useCacheTooltip": "複用之前的翻譯快取，加快處理速度",
+    "cacheOff": "快取已關",
+    "cacheOffTooltip": "翻譯快取已關閉：每行都會重新請求，中斷後也無法從斷點繼續。點擊重新開啟。",
     "contextAwareTranslation": "上下文關聯翻譯",
     "contextAwareTranslationTooltip": "結合上下文語境進行翻譯，提升連貫性和準確度（僅 AI 模型支援）",
     "multiLanguageMode": "多語言模式",

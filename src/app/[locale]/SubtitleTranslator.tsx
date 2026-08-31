@@ -78,7 +78,7 @@ const SubtitleTranslator = () => {
     handleUploadRemove,
     handleUploadChange,
     resetUpload,
-  } = useFileUpload();
+  } = useFileUpload("subtitle-translator");
   // ... useTranslationContext destructuring ...
   const {
     exportSettings,

@@ -84,6 +84,8 @@
     "directExport": "Export auto",
     "useCache": "Utiliser le cache",
     "useCacheTooltip": "Réutiliser le cache de traduction précédent pour accélérer le traitement",
+    "cacheOff": "Cache désactivé",
+    "cacheOffTooltip": "Le cache de traduction est désactivé : chaque ligne est redemandée et une exécution interrompue ne peut pas reprendre. Cliquez pour le réactiver.",
     "contextAwareTranslation": "Traduction contextuelle",
     "contextAwareTranslationTooltip": "Traduire avec le contexte pour une meilleure cohérence et précision (modèles IA uniquement)",
     "multiLanguageMode": "Mode multilingue",

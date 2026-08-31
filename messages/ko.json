@@ -84,6 +84,8 @@
     "directExport": "자동 내보내기",
     "useCache": "번역 캐시 사용",
     "useCacheTooltip": "이전 번역 캐시를 재사용하여 처리 속도 향상",
+    "cacheOff": "캐시 꺼짐",
+    "cacheOffTooltip": "번역 캐시가 꺼져 있습니다: 모든 줄을 다시 요청하며, 중단된 작업을 이어서 진행할 수 없습니다. 클릭하면 다시 켜집니다.",
     "contextAwareTranslation": "문맥 인식 번역",
     "contextAwareTranslationTooltip": "문맥을 고려하여 번역, 일관성과 정확성 향상 (AI 모델 전용)",
     "multiLanguageMode": "다국어 모드",

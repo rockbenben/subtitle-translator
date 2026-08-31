@@ -84,6 +84,8 @@
     "directExport": "Otomatik Dışa Aktar",
     "useCache": "Önbellek Kullan",
     "useCacheTooltip": "İşlemi hızlandırmak için önceki çeviri önbelleğini yeniden kullan",
+    "cacheOff": "Önbellek kapalı",
+    "cacheOffTooltip": "Çeviri önbelleği kapalı: her satır yeniden istenir ve yarıda kesilen bir çalışma kaldığı yerden devam edemez. Yeniden açmak için tıklayın.",
     "contextAwareTranslation": "Bağlamsal Çeviri",
     "contextAwareTranslationTooltip": "Daha iyi tutarlılık ve doğruluk için bağlamla çeviri (yalnızca AI modelleri)",
     "multiLanguageMode": "Çoklu Dil Modu",

@@ -84,6 +84,8 @@
     "directExport": "Ekspor Otomatis",
     "useCache": "Gunakan Cache",
     "useCacheTooltip": "Gunakan kembali cache terjemahan sebelumnya untuk mempercepat pemrosesan",
+    "cacheOff": "Cache nonaktif",
+    "cacheOffTooltip": "Cache terjemahan nonaktif: setiap baris diminta ulang dan proses yang terhenti tidak dapat dilanjutkan. Klik untuk mengaktifkan kembali.",
     "contextAwareTranslation": "Terjemahan Kontekstual",
     "contextAwareTranslationTooltip": "Terjemahkan dengan konteks untuk koherensi dan akurasi yang lebih baik (hanya model AI)",
     "multiLanguageMode": "Mode Multi-Bahasa",

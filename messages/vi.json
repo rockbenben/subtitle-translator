@@ -84,6 +84,8 @@
     "directExport": "Xuất tự động",
     "useCache": "Sử dụng bộ nhớ đệm",
     "useCacheTooltip": "Sử dụng lại bộ nhớ đệm dịch trước đó để tăng tốc xử lý",
+    "cacheOff": "Đã tắt bộ nhớ đệm",
+    "cacheOffTooltip": "Bộ nhớ đệm dịch đang tắt: mỗi dòng sẽ được yêu cầu lại và lần chạy bị gián đoạn không thể tiếp tục. Nhấp để bật lại.",
     "contextAwareTranslation": "Dịch theo ngữ cảnh",
     "contextAwareTranslationTooltip": "Dịch với ngữ cảnh để có sự mạch lạc và chính xác tốt hơn (chỉ mô hình AI)",
     "multiLanguageMode": "Chế độ đa ngôn ngữ",

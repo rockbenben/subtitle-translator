@@ -26,7 +26,11 @@ export interface TranslationSettings {
   glossaryPresets?: GlossaryPreset[];
   activeGlossaryPresetId?: string;
   glossaryEnabled?: boolean;
-  // 翻译行为调优项,跨设备同步时这些数值也要带上；默认使用缓存，不记忆
+  // 翻译行为调优项,跨设备同步时这些数值也要带上。
+  // ⚠ useCache 【故意】不在这份文件里 —— 它已经落盘(translation-useCache),但那是
+  // 本机的计费行为开关,不是"怎么连到服务商"。导入别人分享的设置文件时把对方的
+  // 「关缓存」静默带过来,等于替用户改了计费方式,而导入成功的提示里一个字都不会提。
+  // (这行注释曾写着"默认使用缓存，不记忆" —— 落盘之后那句就成了假话。)
   retryCount?: number;
   requestTimeoutSec?: number;
   /** User's own relay origin; empty = built-in. Sanitized hard — see below. */
