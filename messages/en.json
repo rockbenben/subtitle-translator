@@ -35,6 +35,12 @@
     "nameRequired": "Glossary name required"
   },
   "common": {
+    "exportFolder": "Export folder",
+    "exportFolderDefault": "Exports go to your browser's download folder. Chrome won't accept the Desktop, Documents, Downloads or user folder itself — pick a subfolder or any other folder.",
+    "exportFolderDownloads": "Browser download folder",
+    "exportFolderCurrent": "Exports go to {dir}",
+    "exportFolderReset": "Back to the download folder",
+    "exportFolderFailed": "Could not set the export folder.",
     "supportEscapeChars": "Supports escape chars: \\n (newline), \\r (return), \\t (tab), \\s (space), \\\\ (backslash)",
     "skipToContent": "Skip to main content",
     "fileProcessFailed": "Failed to process the file — check its encoding or try another",
@@ -95,6 +101,8 @@
     "exportAllFile": "Export all",
     "exportedFile": "Exported",
     "fileExported": "File exported: {fileName}",
+    "exportFailed": "Could not export the file: {fileName}",
+    "exportedToFolder": "Saved to {dir}: {fileName}",
     "batchDownloaded": "Processing complete, file downloaded automatically",
     "extractedText": "Extracted text",
     "translating": "Translating",

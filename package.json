@@ -19,6 +19,7 @@
     "deepl-node": "^1",
     "file-saver": "^2.0.5",
     "idb": "^8.0.3",
+    "idb-keyval": "^6.3.0",
     "jschardet": "^3.1.4",
     "next": "16.3.2",
     "next-intl": "^4",

@@ -3034,6 +3034,11 @@ icu-minify@^4.13.7:
   dependencies:
     "@formatjs/icu-messageformat-parser" "^3.4.0"
 
+idb-keyval@^6.3.0:
+  version "6.3.0"
+  resolved "https://registry.npmmirror.com/idb-keyval/-/idb-keyval-6.3.0.tgz#3fa4c062fcaddd7e577c51b51f69924bccfb58e6"
+  integrity sha512-um+2dgAWmYsu615EXpWVwSmapJhON0G43t3Ka/EVaohzPQXSMqKEqeDK/oIW3Ow+BXaF2PvSc+oBTFp793A5Ow==
+
 idb@^8.0.3:
   version "8.0.3"
   resolved "https://registry.npmmirror.com/idb/-/idb-8.0.3.tgz#c91e558f15a8d53f1d7f53a094d226fc3ad71fd9"

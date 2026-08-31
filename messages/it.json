@@ -35,6 +35,12 @@
     "nameRequired": "Nome del glossario obbligatorio"
   },
   "common": {
+    "exportFolder": "Cartella di esportazione",
+    "exportFolderDefault": "Le esportazioni finiscono nella cartella dei download del browser. Chrome non accetta Desktop, Documenti, Download e la cartella utente stessa: scegli una sottocartella o un'altra cartella.",
+    "exportFolderDownloads": "Cartella dei download del browser",
+    "exportFolderCurrent": "Le esportazioni finiscono in {dir}",
+    "exportFolderReset": "Torna alla cartella dei download",
+    "exportFolderFailed": "Impossibile impostare la cartella di esportazione.",
     "supportEscapeChars": "Supporta caratteri escape: \\n (nuova riga), \\r (ritorno), \\t (tab), \\s (spazio), \\\\ (barra rovesciata)",
     "skipToContent": "Vai al contenuto principale",
     "fileProcessFailed": "Elaborazione del file non riuscita — controlla la codifica o prova un altro file",
@@ -171,6 +177,8 @@
     "readOnlyModeTooltip": "Testo troppo lungo: l'editor è temporaneamente di sola lettura e mostra solo un'anteprima parziale. Il contenuto completo non è interessato: elaborazione ed esportazione usano comunque l'intero testo.",
     "clearInputTooltip": "Cancella contenuto di input e file caricati",
     "fileExported": "File esportato: {fileName}",
+    "exportFailed": "Impossibile esportare il file: {fileName}",
+    "exportedToFolder": "Salvato in {dir}: {fileName}",
     "batchDownloaded": "Elaborazione completata, file scaricati automaticamente",
     "sourceTextPlaceholder": "Inserisci o incolla il testo da elaborare...",
     "smartLineBreak": "A capo automatico intelligente",

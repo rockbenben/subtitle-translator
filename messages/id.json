@@ -35,6 +35,12 @@
     "nameRequired": "Nama glosarium wajib diisi"
   },
   "common": {
+    "exportFolder": "Folder ekspor",
+    "exportFolderDefault": "Hasil ekspor masuk ke folder unduhan browser. Chrome tidak menerima Desktop, Documents, Downloads, dan folder pengguna itu sendiri — pilih subfolder atau folder lain.",
+    "exportFolderDownloads": "Folder unduhan browser",
+    "exportFolderCurrent": "Hasil ekspor masuk ke {dir}",
+    "exportFolderReset": "Kembali ke folder unduhan",
+    "exportFolderFailed": "Tidak dapat menetapkan folder ekspor.",
     "supportEscapeChars": "Mendukung karakter escape: \\n (baris baru), \\r (kembali), \\t (tab), \\s (spasi), \\\\ (garis miring terbalik)",
     "skipToContent": "Lewati ke konten utama",
     "fileProcessFailed": "Gagal memproses file — periksa encoding-nya atau coba file lain",
@@ -171,6 +177,8 @@
     "readOnlyModeTooltip": "Teks terlalu panjang: editor sementara hanya-baca dan hanya menampilkan pratinjau sebagian. Konten lengkap Anda tidak terpengaruh — pemrosesan dan ekspor tetap menggunakan seluruh teks.",
     "clearInputTooltip": "Bersihkan konten input dan file yang diunggah",
     "fileExported": "File diekspor: {fileName}",
+    "exportFailed": "Gagal mengekspor file: {fileName}",
+    "exportedToFolder": "Disimpan ke {dir}: {fileName}",
     "batchDownloaded": "Pemrosesan selesai, file diunduh otomatis",
     "sourceTextPlaceholder": "Masukkan atau tempel teks yang akan diproses...",
     "smartLineBreak": "Jeda Baris Cerdas",

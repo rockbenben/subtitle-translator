@@ -35,6 +35,12 @@
     "nameRequired": "Glossarname erforderlich"
   },
   "common": {
+    "exportFolder": "Exportordner",
+    "exportFolderDefault": "Exporte landen im Download-Ordner des Browsers. Chrome akzeptiert Desktop, Dokumente, Downloads und den Benutzerordner selbst nicht — wähle einen Unterordner oder einen anderen Ordner.",
+    "exportFolderDownloads": "Download-Ordner des Browsers",
+    "exportFolderCurrent": "Exporte landen in {dir}",
+    "exportFolderReset": "Zurück zum Download-Ordner",
+    "exportFolderFailed": "Der Exportordner konnte nicht festgelegt werden.",
     "supportEscapeChars": "Unterstützt Escape-Zeichen: \\n (Zeilenumbruch), \\r (Wagenrücklauf), \\t (Tab), \\s (Leerzeichen), \\\\ (Backslash)",
     "skipToContent": "Zum Hauptinhalt springen",
     "fileProcessFailed": "Datei konnte nicht verarbeitet werden – prüfen Sie die Kodierung oder versuchen Sie eine andere",
@@ -95,6 +101,8 @@
     "exportAllFile": "Alle exportieren",
     "exportedFile": "Exportiert",
     "fileExported": "Datei exportiert: {fileName}",
+    "exportFailed": "Datei konnte nicht exportiert werden: {fileName}",
+    "exportedToFolder": "In {dir} gespeichert: {fileName}",
     "batchDownloaded": "Verarbeitung abgeschlossen, Datei wurde automatisch heruntergeladen",
     "extractedText": "Extrahierter Text",
     "translating": "Übersetze...",

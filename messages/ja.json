@@ -35,6 +35,12 @@
     "nameRequired": "用語集の名前を入力してください"
   },
   "common": {
+    "exportFolder": "エクスポート先フォルダー",
+    "exportFolderDefault": "エクスポートはブラウザーのダウンロードフォルダーに保存されます。Chrome はデスクトップ・ドキュメント・ダウンロード・ユーザーフォルダー自体を選べません。サブフォルダーか別のフォルダーを選んでください。",
+    "exportFolderDownloads": "ブラウザーのダウンロードフォルダー",
+    "exportFolderCurrent": "エクスポート先: {dir}",
+    "exportFolderReset": "ダウンロードフォルダーに戻す",
+    "exportFolderFailed": "エクスポート先フォルダーを設定できませんでした。",
     "supportEscapeChars": "エスケープ文字対応：\\n (改行)、\\r (復帰)、\\t (タブ)、\\s (スペース)、\\\\ (バックスラッシュ)",
     "skipToContent": "メインコンテンツにスキップ",
     "fileProcessFailed": "ファイルの処理に失敗しました。エンコードを確認するか、別のファイルをお試しください",
@@ -171,6 +177,8 @@
     "readOnlyModeTooltip": "テキストが長すぎるため、エディターは一時的に読み取り専用となり、一部のみをプレビュー表示しています。完全な内容は影響を受けず、処理と書き出しは全文に対して行われます。",
     "clearInputTooltip": "入力内容とアップロードされたファイルをクリア",
     "fileExported": "ファイルをエクスポートしました：{fileName}",
+    "exportFailed": "ファイルをエクスポートできませんでした：{fileName}",
+    "exportedToFolder": "{dir} に保存しました：{fileName}",
     "batchDownloaded": "処理完了、ファイルを自動ダウンロードしました",
     "sourceTextPlaceholder": "処理するテキストを入力または貼り付けてください...",
     "smartLineBreak": "スマート改行",

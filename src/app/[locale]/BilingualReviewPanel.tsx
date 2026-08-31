@@ -1,11 +1,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { App, Button, Card, Input, Table, Typography, theme } from "antd";
+import { Button, Card, Input, Table, Typography, theme } from "antd";
 import { DownloadOutlined } from "@ant-design/icons";
 import { useTranslations } from "next-intl";
-import { downloadFile } from "@/app/utils";
 import { parseReviewTexts, replaceReviewText } from "./subtitleCues";
+import { useFileExport } from "@/app/hooks/useFileExport";
 
 const { Text } = Typography;
 const { TextArea } = Input;
@@ -37,7 +37,7 @@ interface Pair {
 const BilingualReviewPanel = ({ sourceText, sourceFormat, translatedText, translatedFormat }: Props) => {
   const t = useTranslations("SubtitleTranslator");
   const { token } = theme.useToken();
-  const { message } = App.useApp();
+  const exportFile = useFileExport();
   const [edits, setEdits] = useState<Map<number, string>>(new Map());
 
   // 译文变化(重新翻译)时清空编辑,避免旧编辑残留误导
@@ -70,8 +70,7 @@ const BilingualReviewPanel = ({ sourceText, sourceFormat, translatedText, transl
   const handleApplyDownload = () => {
     const fmt = translatedFormat ?? "srt";
     const out = replaceReviewText(translatedText, fmt, edits);
-    void downloadFile(out, `subtitle_reviewed.${fmt}`);
-    message.success(t("reviewDownloaded"));
+    void exportFile(out, `subtitle_reviewed.${fmt}`, undefined, t("reviewDownloaded"));
   };
 
   const columns = [

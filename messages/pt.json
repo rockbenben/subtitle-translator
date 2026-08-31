@@ -35,6 +35,12 @@
     "nameRequired": "Nome do glossário obrigatório"
   },
   "common": {
+    "exportFolder": "Pasta de exportação",
+    "exportFolderDefault": "As exportações vão para a pasta de downloads do navegador. O Chrome não aceita a Área de Trabalho, Documentos, Downloads nem a pasta do usuário em si — escolha uma subpasta ou outra pasta.",
+    "exportFolderDownloads": "Pasta de downloads do navegador",
+    "exportFolderCurrent": "As exportações vão para {dir}",
+    "exportFolderReset": "Voltar para a pasta de downloads",
+    "exportFolderFailed": "Não foi possível definir a pasta de exportação.",
     "supportEscapeChars": "Suporta caracteres escape: \\n (nova linha), \\r (retorno), \\t (tab), \\s (espaço), \\\\ (barra invertida)",
     "skipToContent": "Pular para o conteúdo principal",
     "fileProcessFailed": "Falha ao processar o arquivo — verifique a codificação ou tente outro",
@@ -171,6 +177,8 @@
     "readOnlyModeTooltip": "Texto muito longo: o editor está temporariamente somente leitura e mostra apenas uma prévia parcial. Seu conteúdo completo não é afetado — o processamento e a exportação ainda usam o texto inteiro.",
     "clearInputTooltip": "Limpar conteúdo de entrada e arquivos enviados",
     "fileExported": "Arquivo exportado: {fileName}",
+    "exportFailed": "Não foi possível exportar o arquivo: {fileName}",
+    "exportedToFolder": "Salvo em {dir}: {fileName}",
     "batchDownloaded": "Processamento concluído, arquivos baixados automaticamente",
     "sourceTextPlaceholder": "Digite ou cole o texto a ser processado...",
     "smartLineBreak": "Quebra de linha inteligente",

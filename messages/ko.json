@@ -35,6 +35,12 @@
     "nameRequired": "용어집 이름을 입력하세요"
   },
   "common": {
+    "exportFolder": "내보내기 폴더",
+    "exportFolderDefault": "내보낸 파일은 브라우저 다운로드 폴더에 저장됩니다. Chrome은 바탕 화면·문서·다운로드·사용자 폴더 자체를 허용하지 않으니 하위 폴더나 다른 폴더를 선택하세요.",
+    "exportFolderDownloads": "브라우저 다운로드 폴더",
+    "exportFolderCurrent": "내보내기 위치: {dir}",
+    "exportFolderReset": "다운로드 폴더로 되돌리기",
+    "exportFolderFailed": "내보내기 폴더를 설정하지 못했습니다.",
     "supportEscapeChars": "이스케이프 문자 지원: \\n (줄바꿈), \\r (복귀), \\t (탭), \\s (공백), \\\\ (백슬래시)",
     "skipToContent": "본문으로 건너뛰기",
     "fileProcessFailed": "파일 처리에 실패했습니다. 인코딩을 확인하거나 다른 파일을 사용해 보세요",
@@ -171,6 +177,8 @@
     "readOnlyModeTooltip": "텍스트가 너무 길어 편집기가 일시적으로 읽기 전용이 되며 일부만 미리 보기로 표시됩니다. 전체 내용은 영향받지 않으며 처리와 내보내기는 전체 텍스트로 수행됩니다.",
     "clearInputTooltip": "입력 내용 및 업로드된 파일 지우기",
     "fileExported": "파일이 내보내졌습니다: {fileName}",
+    "exportFailed": "파일을 내보내지 못했습니다: {fileName}",
+    "exportedToFolder": "{dir}에 저장되었습니다: {fileName}",
     "batchDownloaded": "처리 완료, 파일이 자동으로 다운로드되었습니다",
     "sourceTextPlaceholder": "처리할 텍스트를 입력하거나 붙여넣으세요...",
     "smartLineBreak": "스마트 줄바꿈",

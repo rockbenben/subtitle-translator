@@ -35,6 +35,12 @@
     "nameRequired": "Sözlük adı gerekli"
   },
   "common": {
+    "exportFolder": "Dışa aktarma klasörü",
+    "exportFolderDefault": "Dışa aktarılanlar tarayıcının indirilenler klasörüne gider. Chrome, Masaüstü, Belgeler, İndirilenler ve kullanıcı klasörünün kendisini kabul etmez — bir alt klasör ya da başka bir klasör seçin.",
+    "exportFolderDownloads": "Tarayıcının indirilenler klasörü",
+    "exportFolderCurrent": "Dışa aktarılanlar {dir} klasörüne gider",
+    "exportFolderReset": "İndirilenler klasörüne dön",
+    "exportFolderFailed": "Dışa aktarma klasörü ayarlanamadı.",
     "supportEscapeChars": "Kaçış karakterlerini destekler: \\n (yeni satır), \\r (dönüş), \\t (sekme), \\s (boşluk), \\\\ (ters eğik çizgi)",
     "skipToContent": "Ana içeriğe geç",
     "fileProcessFailed": "Dosya işlenemedi — kodlamasını kontrol edin veya başka bir dosya deneyin",
@@ -171,6 +177,8 @@
     "readOnlyModeTooltip": "Metin çok uzun: düzenleyici geçici olarak salt okunur ve yalnızca kısmi bir önizleme gösteriyor. Tüm içeriğiniz etkilenmez; işleme ve dışa aktarma hâlâ metnin tamamını kullanır.",
     "clearInputTooltip": "Giriş içeriğini ve yüklenen dosyaları temizle",
     "fileExported": "Dışa aktarılan dosya: {fileName}",
+    "exportFailed": "Dosya dışa aktarılamadı: {fileName}",
+    "exportedToFolder": "{dir} klasörüne kaydedildi: {fileName}",
     "batchDownloaded": "İşlem tamamlandı, dosyalar otomatik olarak indirildi",
     "sourceTextPlaceholder": "İşlenecek metni girin veya yapıştırın...",
     "smartLineBreak": "Akıllı satır sonu",

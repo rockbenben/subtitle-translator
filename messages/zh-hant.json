@@ -35,6 +35,12 @@
     "nameRequired": "請填寫術語表名稱"
   },
   "common": {
+    "exportFolder": "匯出目錄",
+    "exportFolderDefault": "匯出會儲存到瀏覽器下載資料夾。Chrome 不允許選「桌面 / 文件 / 下載 / 使用者資料夾」本身，請選子資料夾或任意其他資料夾。",
+    "exportFolderDownloads": "瀏覽器下載資料夾",
+    "exportFolderCurrent": "匯出會儲存到 {dir}",
+    "exportFolderReset": "恢復為下載資料夾",
+    "exportFolderFailed": "無法設定匯出目錄。",
     "supportEscapeChars": "支援轉義字元：\\n (換行)、\\r (回車)、\\t (製表符)、\\s (空格)、\\\\ (反斜槓)",
     "skipToContent": "跳至主要內容",
     "fileProcessFailed": "檔案處理失敗，請檢查檔案編碼或換一個檔案",
@@ -171,6 +177,8 @@
     "moreProviderSettings": "更多 Provider 設定",
     "clearInputTooltip": "清空輸入內容和上傳的檔案",
     "fileExported": "已匯出檔案：{fileName}",
+    "exportFailed": "匯出檔案失敗：{fileName}",
+    "exportedToFolder": "已儲存到 {dir}：{fileName}",
     "batchDownloaded": "處理完成，檔案已自動下載",
     "sourceTextPlaceholder": "請輸入或貼上待處理文字...",
     "smartLineBreak": "智慧換行",

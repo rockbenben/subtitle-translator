@@ -35,6 +35,12 @@
     "nameRequired": "请填写术语表名称"
   },
   "common": {
+    "exportFolder": "导出目录",
+    "exportFolderDefault": "导出会保存到浏览器下载目录。Chrome 不允许选「桌面 / 文档 / 下载 / 用户目录」本身，请选子文件夹或任意其他文件夹。",
+    "exportFolderDownloads": "浏览器下载目录",
+    "exportFolderCurrent": "导出会保存到 {dir}",
+    "exportFolderReset": "恢复为下载目录",
+    "exportFolderFailed": "无法设置导出目录。",
     "supportEscapeChars": "支持转义字符：\\n (换行)、\\r (回车)、\\t (制表符)、\\s (空格)、\\\\ (反斜杠)",
     "skipToContent": "跳到主要内容",
     "fileProcessFailed": "文件处理失败，请检查文件编码或换一个文件",
@@ -171,6 +177,8 @@
     "moreProviderSettings": "更多 Provider 设置",
     "clearInputTooltip": "清空输入内容和上传的文件",
     "fileExported": "已导出文件：{fileName}",
+    "exportFailed": "导出文件失败：{fileName}",
+    "exportedToFolder": "已保存到 {dir}：{fileName}",
     "batchDownloaded": "处理完成，文件已自动下载",
     "sourceTextPlaceholder": "请输入或粘贴待处理文本...",
     "smartLineBreak": "智能换行",

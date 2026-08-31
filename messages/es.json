@@ -35,6 +35,12 @@
     "nameRequired": "El nombre del glosario es obligatorio"
   },
   "common": {
+    "exportFolder": "Carpeta de exportación",
+    "exportFolderDefault": "Las exportaciones van a la carpeta de descargas del navegador. Chrome no acepta el Escritorio, Documentos, Descargas ni la carpeta de usuario en sí: elige una subcarpeta u otra carpeta.",
+    "exportFolderDownloads": "Carpeta de descargas del navegador",
+    "exportFolderCurrent": "Las exportaciones van a {dir}",
+    "exportFolderReset": "Volver a la carpeta de descargas",
+    "exportFolderFailed": "No se pudo establecer la carpeta de exportación.",
     "supportEscapeChars": "Soporta caracteres escape: \\n (nueva línea), \\r (retorno), \\t (tab), \\s (espacio), \\\\ (barra invertida)",
     "skipToContent": "Saltar al contenido principal",
     "fileProcessFailed": "No se pudo procesar el archivo: comprueba su codificación o prueba con otro",
@@ -95,6 +101,8 @@
     "exportAllFile": "Exportar Todo",
     "exportedFile": "Exportado",
     "fileExported": "Archivo exportado: {fileName}",
+    "exportFailed": "No se pudo exportar el archivo: {fileName}",
+    "exportedToFolder": "Guardado en {dir}: {fileName}",
     "batchDownloaded": "Procesamiento completo, el archivo se descargó automáticamente",
     "extractedText": "Texto Extraído",
     "translating": "Traduciendo...",

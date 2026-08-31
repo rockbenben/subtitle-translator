@@ -1,5 +1,6 @@
 export * from "./encoding";
 export * from "./errorUtils";
+export * from "./exportDir";
 export * from "./fileTypes";
 export * from "./fileUtils";
 export * from "./localeUtils";

@@ -35,6 +35,12 @@
     "nameRequired": "Vui lòng nhập tên bảng thuật ngữ"
   },
   "common": {
+    "exportFolder": "Thư mục xuất",
+    "exportFolderDefault": "Tệp xuất ra nằm trong thư mục tải xuống của trình duyệt. Chrome không cho chọn chính Desktop, Documents, Downloads và thư mục người dùng — hãy chọn thư mục con hoặc thư mục khác.",
+    "exportFolderDownloads": "Thư mục tải xuống của trình duyệt",
+    "exportFolderCurrent": "Tệp xuất ra sẽ nằm trong {dir}",
+    "exportFolderReset": "Quay lại thư mục tải xuống",
+    "exportFolderFailed": "Không thể đặt thư mục xuất.",
     "supportEscapeChars": "Hỗ trợ ký tự thoát: \\n (dòng mới), \\r (xuống dòng), \\t (tab), \\s (dấu cách), \\\\ (dấu gạch chéo ngược)",
     "skipToContent": "Chuyển đến nội dung chính",
     "fileProcessFailed": "Xử lý tệp thất bại — kiểm tra mã hóa hoặc thử tệp khác",
@@ -171,6 +177,8 @@
     "readOnlyModeTooltip": "Văn bản quá dài: trình soạn thảo tạm thời ở chế độ chỉ đọc và chỉ hiển thị bản xem trước một phần. Toàn bộ nội dung của bạn không bị ảnh hưởng — xử lý và xuất vẫn dùng toàn bộ văn bản.",
     "clearInputTooltip": "Xóa nội dung đã nhập và tệp đã tải lên",
     "fileExported": "Đã xuất tệp: {fileName}",
+    "exportFailed": "Không thể xuất tệp: {fileName}",
+    "exportedToFolder": "Đã lưu vào {dir}: {fileName}",
     "batchDownloaded": "Xử lý hoàn tất, tệp đã được tải xuống tự động",
     "sourceTextPlaceholder": "Nhập hoặc dán văn bản cần xử lý...",
     "smartLineBreak": "Xuống dòng thông minh",
