@@ -35,6 +35,12 @@
     "nameRequired": "용어집 이름을 입력하세요"
   },
   "common": {
+    "exportFolder": "내보내기 폴더",
+    "exportFolderDefault": "내보낸 파일은 브라우저 다운로드 폴더에 저장됩니다. Chrome은 바탕 화면·문서·다운로드·사용자 폴더 자체를 허용하지 않으니 하위 폴더나 다른 폴더를 선택하세요.",
+    "exportFolderDownloads": "브라우저 다운로드 폴더",
+    "exportFolderCurrent": "내보내기 위치: {dir}",
+    "exportFolderReset": "다운로드 폴더로 되돌리기",
+    "exportFolderFailed": "내보내기 폴더를 설정하지 못했습니다.",
     "supportEscapeChars": "이스케이프 문자 지원: \\n (줄바꿈), \\r (복귀), \\t (탭), \\s (공백), \\\\ (백슬래시)",
     "skipToContent": "본문으로 건너뛰기",
     "fileProcessFailed": "파일 처리에 실패했습니다. 인코딩을 확인하거나 다른 파일을 사용해 보세요",
@@ -78,6 +84,8 @@
     "directExport": "자동 내보내기",
     "useCache": "번역 캐시 사용",
     "useCacheTooltip": "이전 번역 캐시를 재사용하여 처리 속도 향상",
+    "cacheOff": "캐시 꺼짐",
+    "cacheOffTooltip": "번역 캐시가 꺼져 있습니다: 모든 줄을 다시 요청하며, 중단된 작업을 이어서 진행할 수 없습니다. 클릭하면 다시 켜집니다.",
     "contextAwareTranslation": "문맥 인식 번역",
     "contextAwareTranslationTooltip": "문맥을 고려하여 번역, 일관성과 정확성 향상 (AI 모델 전용)",
     "multiLanguageMode": "다국어 모드",
@@ -152,7 +160,7 @@
     "copyAllFailed": "모두 복사",
     "closeFailedLinesModal": "닫기",
     "failedLanguagesTitle": "{count}개 언어 번역 실패",
-    "failedLanguagesDesc": "이 언어들의 모든 배치가 실패했습니다 — 일반적으로 로컬 LLM 결함, API 속도 제한 또는 모델의 특정 언어 거부 때문입니다. 코드를 복사하여 해당 언어만 다시 실행할 수 있습니다(언어 코드 빠른 입력에 붙여넣기). 다른 언어는 캐시에서 건너뜁니다.",
+    "failedLanguagesDesc": "이 언어들의 모든 배치가 실패했습니다 — 일반적으로 로컬 LLM 결함, API 속도 제한 또는 모델의 특정 언어 거부 때문입니다. 코드를 복사하여 해당 언어만 다시 실행할 수 있습니다('다국어 설정'에 붙여넣기). 다른 언어는 캐시에서 건너뜁니다.",
     "copyAllFailedLanguages": "언어 코드 복사",
     "apiStatusFreeApi": "Free API",
     "apiStatusNeedsConfig": "설정 필요",
@@ -171,6 +179,8 @@
     "readOnlyModeTooltip": "텍스트가 너무 길어 편집기가 일시적으로 읽기 전용이 되며 일부만 미리 보기로 표시됩니다. 전체 내용은 영향받지 않으며 처리와 내보내기는 전체 텍스트로 수행됩니다.",
     "clearInputTooltip": "입력 내용 및 업로드된 파일 지우기",
     "fileExported": "파일이 내보내졌습니다: {fileName}",
+    "exportFailed": "파일을 내보내지 못했습니다: {fileName}",
+    "exportedToFolder": "{dir}에 저장되었습니다: {fileName}",
     "batchDownloaded": "처리 완료, 파일이 자동으로 다운로드되었습니다",
     "sourceTextPlaceholder": "처리할 텍스트를 입력하거나 붙여넣으세요...",
     "smartLineBreak": "스마트 줄바꿈",
@@ -229,7 +239,7 @@
     "noSourceText": "자막 파일을 업로드하거나 텍스트를 붙여넣으세요.",
     "noExtractedText": "자막 내용이 추출되지 않았습니다. 파일 형식을 확인하세요.",
     "textExtracted": "자막 텍스트 추출됨, ",
-    "bilingualError": "복잡한 스타일 태그가 감지되었습니다. 이중 언어 모드에서는 서식이 깨질 수 있으므로 '이중 언어 자막'을 끄는 것을 권장합니다.",
+    "bilingualError": "복잡한 스타일 태그가 감지되었습니다. 이중 언어 모드에서는 서식이 깨질 수 있으므로 '이중 언어'를 끄는 것을 권장합니다.",
     "reviewTitle": "대역 검토",
     "reviewColSource": "원문",
     "reviewColTarget": "번역",
@@ -408,7 +418,7 @@
     },
     "jsonTranslate": {
       "title": "i18n JSON 번역",
-      "description": "효율적인 다국어 JSON 번역 도구"
+      "description": "i18n 언어 파일 일괄 번역, JSONPath 매칭 및 키 이름 매핑 지원"
     },
     "mdTranslator": {
       "title": "Markdown 번역",

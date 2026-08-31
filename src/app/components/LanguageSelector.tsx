@@ -245,8 +245,11 @@ const LanguageSelector = ({ sourceLanguage, targetLanguage, targetLanguages, mul
         border: `1px solid ${token.colorBorderSecondary}`,
         borderRadius: token.borderRadiusLG,
       }}>
-      <Row gutter={8} align="bottom" wrap={false}>
-        <Col flex="1" style={{ minWidth: 0 }}>
+      {/* <768px(antd md 以下)源/目标改为上下两行。并排时每个 Select 只分到
+          约 115px,「英语 (English)」「阿拉伯语 (العربية)」一律截成
+          「英语 (Engl…」—— 截掉的正是这个工具的主控件正在显示的值。 */}
+      <Row gutter={[8, 8]} align="bottom" wrap={isMobile}>
+        <Col flex={isMobile ? "1 1 100%" : "1"} style={{ minWidth: 0 }}>
           <Form.Item label={t("sourceLanguage")} className="!mb-0">
             <Select
               value={sourceLanguage}
@@ -262,8 +265,11 @@ const LanguageSelector = ({ sourceLanguage, targetLanguage, targetLanguages, mul
             />
           </Form.Item>
         </Col>
+        {/* 折行后交换按钮自成一行、居中 —— 上下两个选择器之间,与 Google
+            翻译 / DeepL 的手机版同形。让它跟目标语言挤在同一行会把「目标
+            语言」这个标签顶出一段无缘由的缩进。 */}
         {handleSwapLanguages && (
-          <Col flex="none" style={{ paddingBottom: 1 }}>
+          <Col flex={isMobile ? "1 1 100%" : "none"} style={{ paddingBottom: 1, textAlign: isMobile ? "center" : undefined }}>
             <Tooltip title={`${t("sourceLanguage")} ⇄ ${t("targetLanguage")}`} placement="top">
               <Button
                 type="text"

@@ -46,6 +46,9 @@ import MultiLanguageSettingsModal from "@/app/components/MultiLanguageSettingsMo
 import SourceArea from "@/app/components/SourceArea";
 
 import dynamic from "next/dynamic";
+import { useFileExport } from "@/app/hooks/useFileExport";
+import { useLockExportFolder } from "@/app/components/ExportFolder";
+import { describeExport } from "@/app/hooks/useFileExport";
 const AssStyleDrawer = dynamic(() => import("./AssStyleDrawer"), { ssr: false });
 
 const { TextArea } = Input;
@@ -75,7 +78,7 @@ const SubtitleTranslator = () => {
     handleUploadRemove,
     handleUploadChange,
     resetUpload,
-  } = useFileUpload();
+  } = useFileUpload("subtitle-translator");
   // ... useTranslationContext destructuring ...
   const {
     exportSettings,
@@ -127,9 +130,15 @@ const SubtitleTranslator = () => {
     requestTimeoutSec,
     setRequestTimeoutSec,
   } = useTranslationContext();
+
+  // 运行中锁住页面级「导出目录」入口:写入是每个文件现读句柄,跑到一半改目录
+  // 会把同一批产物劈进两个文件夹。控件在 ToolPage 里,prop 传不上去,故用环境锁。
+  useLockExportFolder(isTranslating);
   const { message } = App.useApp();
+  const exportFile = useFileExport();
   const { token } = theme.useToken();
   const cardStyle: React.CSSProperties = { boxShadow: token.boxShadowTertiary };
+
 
   const sourceStats = useTextStats(sourceText);
   const resultStats = useTextStats(translatedText);
@@ -350,13 +359,15 @@ const SubtitleTranslator = () => {
           // (ASS/LRC 源、SRT+format=srt 三种场景下两个 ext 相同,不区分会被浏览器覆盖下载)
           const bilingualFileName = appendBilingualSuffix(generateFileName(fileName, langLabel, bilingualExt, multiLanguageMode));
 
-          await downloadFile(translatedOnlySubtitle, translatedOnlyFileName);
-          await downloadFile(bilingualSubtitle, bilingualFileName);
+          // 记下实际写入名:导出目录下重跑会让路成 `x (1).srt`,toast 必须照实报
+          const writtenOnly = await downloadFile(translatedOnlySubtitle, translatedOnlyFileName);
+          const writtenBilingual = await downloadFile(bilingualSubtitle, bilingualFileName);
 
           // Show success message for single file mode — 行级软失败时降级,
           // 不跟失败面板唱反调
           if (!multiLanguageMode && multipleFiles.length <= 1 && !hadRunFailures()) {
-            message.success(t("fileExported", { fileName: `${translatedOnlyFileName}, ${bilingualFileName}` }));
+            // 两个文件同一目录,合成一条:报的是实际写入名(可能带让路后缀)
+            message.success(describeExport(t, { fileName: `${writtenOnly.fileName}, ${writtenBilingual.fileName}`, dir: writtenOnly.dir }));
           }
 
           // 多语言模式下只把 previewLang(常规跑 = 第一个语言)写入 translatedText
@@ -527,8 +538,7 @@ const SubtitleTranslator = () => {
     if (needsBilingualSuffix) {
       fileName = appendBilingualSuffix(fileName);
     }
-    void downloadFile(translatedText, fileName);
-    message.success(t("fileExported", { fileName }));
+    void exportFile(translatedText, fileName);
   };
 
   const handleExtractText = () => {
@@ -622,6 +632,7 @@ const SubtitleTranslator = () => {
 
             {uploadMode === "single" && (
               <SourceArea
+                textDirection="auto"
                 locked={isTranslating}
                 sourceText={sourceText}
                 setSourceText={setSourceText}
@@ -891,6 +902,7 @@ const SubtitleTranslator = () => {
             {translatedText && !(multiLanguageMode && targetLanguages.length > 1) && (
               <Col xs={24} lg={extractedText ? 12 : 24}>
                 <ResultCard
+                  textDirection="auto"
                   title={t("translationResult")}
                   content={resultStats.displayText}
                   charCount={resultStats.charCount}
@@ -916,7 +928,7 @@ const SubtitleTranslator = () => {
                       {t("copy")}
                     </Button>
                   }>
-                  <TextArea value={extractedText} rows={10} readOnly aria-label={t("extractedText")} />
+                  <TextArea value={extractedText} rows={10} readOnly dir="auto" aria-label={t("extractedText")} />
                 </Card>
               </Col>
             )}

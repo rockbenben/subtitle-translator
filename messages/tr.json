@@ -35,6 +35,12 @@
     "nameRequired": "Sözlük adı gerekli"
   },
   "common": {
+    "exportFolder": "Dışa aktarma klasörü",
+    "exportFolderDefault": "Dışa aktarılanlar tarayıcının indirilenler klasörüne gider. Chrome, Masaüstü, Belgeler, İndirilenler ve kullanıcı klasörünün kendisini kabul etmez — bir alt klasör ya da başka bir klasör seçin.",
+    "exportFolderDownloads": "Tarayıcının indirilenler klasörü",
+    "exportFolderCurrent": "Dışa aktarılanlar {dir} klasörüne gider",
+    "exportFolderReset": "İndirilenler klasörüne dön",
+    "exportFolderFailed": "Dışa aktarma klasörü ayarlanamadı.",
     "supportEscapeChars": "Kaçış karakterlerini destekler: \\n (yeni satır), \\r (dönüş), \\t (sekme), \\s (boşluk), \\\\ (ters eğik çizgi)",
     "skipToContent": "Ana içeriğe geç",
     "fileProcessFailed": "Dosya işlenemedi — kodlamasını kontrol edin veya başka bir dosya deneyin",
@@ -78,6 +84,8 @@
     "directExport": "Otomatik Dışa Aktar",
     "useCache": "Önbellek Kullan",
     "useCacheTooltip": "İşlemi hızlandırmak için önceki çeviri önbelleğini yeniden kullan",
+    "cacheOff": "Önbellek kapalı",
+    "cacheOffTooltip": "Çeviri önbelleği kapalı: her satır yeniden istenir ve yarıda kesilen bir çalışma kaldığı yerden devam edemez. Yeniden açmak için tıklayın.",
     "contextAwareTranslation": "Bağlamsal Çeviri",
     "contextAwareTranslationTooltip": "Daha iyi tutarlılık ve doğruluk için bağlamla çeviri (yalnızca AI modelleri)",
     "multiLanguageMode": "Çoklu Dil Modu",
@@ -152,7 +160,7 @@
     "copyAllFailed": "Tümünü kopyala",
     "closeFailedLinesModal": "Kapat",
     "failedLanguagesTitle": "{count} hedef dil başarısız oldu",
-    "failedLanguagesDesc": "Bu diller için tüm yığınlar başarısız oldu — genellikle yerel LLM aksaklıkları, API hız sınırları veya modelin belirli bir dili reddetmesi nedeniyle. Kodları kopyalayın ve yalnızca onlar için yeniden çalıştırın (Dil Kodları ile Hızlı Giriş alanına yapıştırın); diğerleri önbellekten atlanacak.",
+    "failedLanguagesDesc": "Bu diller için tüm yığınlar başarısız oldu — genellikle yerel LLM aksaklıkları, API hız sınırları veya modelin belirli bir dili reddetmesi nedeniyle. Kodları kopyalayın ve yalnızca onlar için yeniden çalıştırın ('Çok Dilli Ayarlar' bölümüne yapıştırın); diğerleri önbellekten atlanacak.",
     "copyAllFailedLanguages": "Dil kodlarını kopyala",
     "apiStatusFreeApi": "Free API",
     "apiStatusNeedsConfig": "Yapılandırma gerekli",
@@ -171,6 +179,8 @@
     "readOnlyModeTooltip": "Metin çok uzun: düzenleyici geçici olarak salt okunur ve yalnızca kısmi bir önizleme gösteriyor. Tüm içeriğiniz etkilenmez; işleme ve dışa aktarma hâlâ metnin tamamını kullanır.",
     "clearInputTooltip": "Giriş içeriğini ve yüklenen dosyaları temizle",
     "fileExported": "Dışa aktarılan dosya: {fileName}",
+    "exportFailed": "Dosya dışa aktarılamadı: {fileName}",
+    "exportedToFolder": "{dir} klasörüne kaydedildi: {fileName}",
     "batchDownloaded": "İşlem tamamlandı, dosyalar otomatik olarak indirildi",
     "sourceTextPlaceholder": "İşlenecek metni girin veya yapıştırın...",
     "smartLineBreak": "Akıllı satır sonu",
@@ -229,7 +239,7 @@
     "noSourceText": "Lütfen dosya yükleyin veya metin yapıştırın.",
     "noExtractedText": "İçerik çıkarılamadı, dosya formatını kontrol edin.",
     "textExtracted": "Altyazı metni çıkarıldı, ",
-    "bilingualError": "Karmaşık stil etiketleri algılandı. İki dilli mod format hatalarına neden olabilir. 'İki Dilli Altyazı'yı kapatmanız önerilir.",
+    "bilingualError": "Karmaşık stil etiketleri algılandı. İki dilli mod format hatalarına neden olabilir. 'İki Dilli'yi kapatmanız önerilir.",
     "reviewTitle": "İki dilli inceleme",
     "reviewColSource": "Kaynak",
     "reviewColTarget": "Çeviri",
@@ -408,7 +418,7 @@
     },
     "jsonTranslate": {
       "title": "i18n JSON Çevirici",
-      "description": "Verimli çok dilli JSON çeviri aracı"
+      "description": "Toplu i18n dil dosyası çevirisi, JSONPath eşleştirme ve anahtar eşleme ile"
     },
     "mdTranslator": {
       "title": "Markdown Çevirici",

@@ -60,7 +60,13 @@ const useTranslationState = () => {
   const { readFile } = useFileUpload();
 
   // State
-  const [useCache, setUseCache] = useState<boolean>(true);
+  // 落盘,不是会话态:Advanced 面板里其余设置(retryCount / removeChars / …)全都
+  // 落盘,只有它和 singleFileMode 重启回默认 —— 夹在一排持久设置中间,用户只会
+  // 当成 bug(已被报)。关掉是【显式选择】,就该被记住。
+  // 「关了忘了开」的解药【不是】自动开回来(自动改状态与"运行跑在点击那刻的快照"
+  // 这条承诺打架,且与用户自己关掉不可区分),而是 ApiStatusBlock 里那个只在关闭
+  // 时出现的「缓存已关」标签:一眼看得见,一下点得回来。
+  const [useCache, setUseCache] = useLocalStorage<boolean>("translation-useCache", true);
   // Drawer for the full provider/model/prompt config surface. Replaces the
   // previous "Advanced" Tab; sits per-translator inside TranslationProvider.
   const [apiSettingsOpen, setApiSettingsOpen] = useState<boolean>(false);

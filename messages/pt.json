@@ -35,6 +35,12 @@
     "nameRequired": "Nome do glossário obrigatório"
   },
   "common": {
+    "exportFolder": "Pasta de exportação",
+    "exportFolderDefault": "As exportações vão para a pasta de downloads do navegador. O Chrome não aceita a Área de Trabalho, Documentos, Downloads nem a pasta do usuário em si — escolha uma subpasta ou outra pasta.",
+    "exportFolderDownloads": "Pasta de downloads do navegador",
+    "exportFolderCurrent": "As exportações vão para {dir}",
+    "exportFolderReset": "Voltar para a pasta de downloads",
+    "exportFolderFailed": "Não foi possível definir a pasta de exportação.",
     "supportEscapeChars": "Suporta caracteres escape: \\n (nova linha), \\r (retorno), \\t (tab), \\s (espaço), \\\\ (barra invertida)",
     "skipToContent": "Pular para o conteúdo principal",
     "fileProcessFailed": "Falha ao processar o arquivo — verifique a codificação ou tente outro",
@@ -78,6 +84,8 @@
     "directExport": "Exportação Automática",
     "useCache": "Usar Cache",
     "useCacheTooltip": "Reutilizar cache de tradução anterior para acelerar o processamento",
+    "cacheOff": "Cache desativado",
+    "cacheOffTooltip": "O cache de tradução está desativado: cada linha é solicitada novamente e uma execução interrompida não pode continuar. Clique para reativar.",
     "contextAwareTranslation": "Tradução Contextual",
     "contextAwareTranslationTooltip": "Traduzir com contexto para maior coerência e precisão (apenas modelos de IA)",
     "multiLanguageMode": "Modo Multilíngue",
@@ -152,7 +160,7 @@
     "copyAllFailed": "Copiar tudo",
     "closeFailedLinesModal": "Fechar",
     "failedLanguagesTitle": "Falha em {count} idioma(s) de destino",
-    "failedLanguagesDesc": "Todos os lotes para estes idiomas falharam — geralmente devido a problemas LLM locais, limites de taxa de API ou recusa do modelo a um idioma específico. Copie os códigos e execute novamente apenas com eles (cole em Entrada Rápida por Códigos de Idioma); os outros usarão o cache e serão ignorados.",
+    "failedLanguagesDesc": "Todos os lotes para estes idiomas falharam — geralmente devido a problemas LLM locais, limites de taxa de API ou recusa do modelo a um idioma específico. Copie os códigos e execute novamente apenas com eles (cole em 'Configurações multilíngue'); os outros usarão o cache e serão ignorados.",
     "copyAllFailedLanguages": "Copiar códigos de idioma",
     "apiStatusFreeApi": "Free API",
     "apiStatusNeedsConfig": "Requer config.",
@@ -171,6 +179,8 @@
     "readOnlyModeTooltip": "Texto muito longo: o editor está temporariamente somente leitura e mostra apenas uma prévia parcial. Seu conteúdo completo não é afetado — o processamento e a exportação ainda usam o texto inteiro.",
     "clearInputTooltip": "Limpar conteúdo de entrada e arquivos enviados",
     "fileExported": "Arquivo exportado: {fileName}",
+    "exportFailed": "Não foi possível exportar o arquivo: {fileName}",
+    "exportedToFolder": "Salvo em {dir}: {fileName}",
     "batchDownloaded": "Processamento concluído, arquivos baixados automaticamente",
     "sourceTextPlaceholder": "Digite ou cole o texto a ser processado...",
     "smartLineBreak": "Quebra de linha inteligente",
@@ -229,7 +239,7 @@
     "noSourceText": "Por favor, envie arquivo ou cole texto.",
     "noExtractedText": "Nenhum conteúdo extraído, verifique o formato do arquivo.",
     "textExtracted": "Texto de legenda extraído, ",
-    "bilingualError": "Tags de estilo complexas detectadas. Modo bilíngue pode causar erros de formatação. Recomendado desativar 'Legendas Bilíngues'.",
+    "bilingualError": "Tags de estilo complexas detectadas. Modo bilíngue pode causar erros de formatação. Recomendado desativar 'Bilíngue'.",
     "reviewTitle": "Revisão bilíngue",
     "reviewColSource": "Original",
     "reviewColTarget": "Tradução",
@@ -408,7 +418,7 @@
     },
     "jsonTranslate": {
       "title": "Tradutor JSON i18n",
-      "description": "Ferramenta eficiente de tradução JSON multilíngue"
+      "description": "Tradução em lote de arquivos de idioma i18n, com correspondência JSONPath e mapeamento de chaves"
     },
     "mdTranslator": {
       "title": "Tradutor Markdown",

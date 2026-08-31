@@ -2,20 +2,8 @@
 
 import React from "react";
 import { useTranslations } from "next-intl";
-import { resolveBilingualFonts, scriptOf, type AssStyleConfig, type AssLineStyle } from "@/app/lib/translation/formats/subtitle";
+import { resolveBilingualFonts, sampleForLang, type AssStyleConfig, type AssLineStyle } from "@/app/lib/translation/formats/subtitle";
 
-// 预览示例文字:按文字系统取,使预览真正展示该语言字体的渲染(而非用拉丁文字撑中文字体)。
-const SAMPLE_BY_SCRIPT: Record<string, string> = {
-  latin: "The quick brown fox",
-  hans: "敏捷的棕色狐狸",
-  hant: "敏捷的棕色狐狸",
-  jp: "すばやい茶色の狐",
-  kr: "빠른 갈색 여우",
-  arabic: "الثعلب البني السريع",
-  devanagari: "तेज़ भूरी लोमड़ी",
-  thai: "สุนัขจิ้งจอกสีน้ำตาล",
-};
-const sampleForLang = (lang: string): string => SAMPLE_BY_SCRIPT[scriptOf(lang)] ?? SAMPLE_BY_SCRIPT.latin;
 
 // 预览画布按此高度等比缩放 ASS 字号(ASS 基于 PlayResY=1080)。
 const PREVIEW_HEIGHT = 180;

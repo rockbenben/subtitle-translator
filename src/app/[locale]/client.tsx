@@ -16,7 +16,7 @@ const ClientPage = () => {
 
   return (
     <TranslationProvider>
-      <ToolPage icon={<VideoCameraOutlined />} toolKey="subtitleTranslator" description={tSubtitle("clientDescription")} guideUrl={userGuideUrl}>
+      <ToolPage showExportFolder icon={<VideoCameraOutlined />} toolKey="subtitleTranslator" description={tSubtitle("clientDescription")} guideUrl={userGuideUrl}>
         <SubtitleTranslator />
       </ToolPage>
       <ApiSettingsDrawer />

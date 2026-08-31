@@ -35,6 +35,12 @@
     "nameRequired": "Vui lòng nhập tên bảng thuật ngữ"
   },
   "common": {
+    "exportFolder": "Thư mục xuất",
+    "exportFolderDefault": "Tệp xuất ra nằm trong thư mục tải xuống của trình duyệt. Chrome không cho chọn chính Desktop, Documents, Downloads và thư mục người dùng — hãy chọn thư mục con hoặc thư mục khác.",
+    "exportFolderDownloads": "Thư mục tải xuống của trình duyệt",
+    "exportFolderCurrent": "Tệp xuất ra sẽ nằm trong {dir}",
+    "exportFolderReset": "Quay lại thư mục tải xuống",
+    "exportFolderFailed": "Không thể đặt thư mục xuất.",
     "supportEscapeChars": "Hỗ trợ ký tự thoát: \\n (dòng mới), \\r (xuống dòng), \\t (tab), \\s (dấu cách), \\\\ (dấu gạch chéo ngược)",
     "skipToContent": "Chuyển đến nội dung chính",
     "fileProcessFailed": "Xử lý tệp thất bại — kiểm tra mã hóa hoặc thử tệp khác",
@@ -78,6 +84,8 @@
     "directExport": "Xuất tự động",
     "useCache": "Sử dụng bộ nhớ đệm",
     "useCacheTooltip": "Sử dụng lại bộ nhớ đệm dịch trước đó để tăng tốc xử lý",
+    "cacheOff": "Đã tắt bộ nhớ đệm",
+    "cacheOffTooltip": "Bộ nhớ đệm dịch đang tắt: mỗi dòng sẽ được yêu cầu lại và lần chạy bị gián đoạn không thể tiếp tục. Nhấp để bật lại.",
     "contextAwareTranslation": "Dịch theo ngữ cảnh",
     "contextAwareTranslationTooltip": "Dịch với ngữ cảnh để có sự mạch lạc và chính xác tốt hơn (chỉ mô hình AI)",
     "multiLanguageMode": "Chế độ đa ngôn ngữ",
@@ -152,7 +160,7 @@
     "copyAllFailed": "Sao chép tất cả",
     "closeFailedLinesModal": "Đóng",
     "failedLanguagesTitle": "{count} ngôn ngữ đích thất bại",
-    "failedLanguagesDesc": "Tất cả các lô cho các ngôn ngữ này đã thất bại — thường do trục trặc LLM cục bộ, giới hạn tốc độ API hoặc mô hình từ chối ngôn ngữ cụ thể. Sao chép mã và chạy lại chỉ cho chúng (dán vào Nhập nhanh bằng mã ngôn ngữ); những ngôn ngữ khác sẽ được bỏ qua từ bộ nhớ đệm.",
+    "failedLanguagesDesc": "Tất cả các lô cho các ngôn ngữ này đã thất bại — thường do trục trặc LLM cục bộ, giới hạn tốc độ API hoặc mô hình từ chối ngôn ngữ cụ thể. Sao chép mã và chạy lại chỉ cho chúng (dán vào 'Cài đặt đa ngôn ngữ'); những ngôn ngữ khác sẽ được bỏ qua từ bộ nhớ đệm.",
     "copyAllFailedLanguages": "Sao chép mã ngôn ngữ",
     "apiStatusFreeApi": "Free API",
     "apiStatusNeedsConfig": "Cần cấu hình",
@@ -171,6 +179,8 @@
     "readOnlyModeTooltip": "Văn bản quá dài: trình soạn thảo tạm thời ở chế độ chỉ đọc và chỉ hiển thị bản xem trước một phần. Toàn bộ nội dung của bạn không bị ảnh hưởng — xử lý và xuất vẫn dùng toàn bộ văn bản.",
     "clearInputTooltip": "Xóa nội dung đã nhập và tệp đã tải lên",
     "fileExported": "Đã xuất tệp: {fileName}",
+    "exportFailed": "Không thể xuất tệp: {fileName}",
+    "exportedToFolder": "Đã lưu vào {dir}: {fileName}",
     "batchDownloaded": "Xử lý hoàn tất, tệp đã được tải xuống tự động",
     "sourceTextPlaceholder": "Nhập hoặc dán văn bản cần xử lý...",
     "smartLineBreak": "Xuống dòng thông minh",
@@ -229,7 +239,7 @@
     "noSourceText": "Vui lòng tải tệp hoặc dán văn bản.",
     "noExtractedText": "Không trích xuất được nội dung, kiểm tra định dạng tệp.",
     "textExtracted": "Đã trích xuất văn bản phụ đề, ",
-    "bilingualError": "Phát hiện thẻ kiểu phức tạp. Chế độ song ngữ có thể gây lỗi định dạng. Khuyên dùng tắt 'Phụ đề song ngữ'.",
+    "bilingualError": "Phát hiện thẻ kiểu phức tạp. Chế độ song ngữ có thể gây lỗi định dạng. Khuyên dùng tắt 'Song ngữ'.",
     "reviewTitle": "Soát hai ngôn ngữ",
     "reviewColSource": "Nguồn",
     "reviewColTarget": "Bản dịch",
@@ -408,7 +418,7 @@
     },
     "jsonTranslate": {
       "title": "Dịch giả JSON i18n",
-      "description": "Công cụ dịch JSON đa ngôn ngữ hiệu quả"
+      "description": "Dịch tệp ngôn ngữ i18n hàng loạt, với đối sánh JSONPath và ánh xạ khóa"
     },
     "mdTranslator": {
       "title": "Dịch giả Markdown",

@@ -6,8 +6,9 @@ import { PlusOutlined, DeleteOutlined, UploadOutlined, DownloadOutlined, SearchO
 import { useTranslations } from "next-intl";
 import { useTranslationContext } from "@/app/components/TranslationContext";
 import { languages } from "@/app/lib/translation/languages-data";
-import { downloadFile, decodeFileBytes, getErrorMessage } from "@/app/utils";
+import { decodeFileBytes, getErrorMessage } from "@/app/utils";
 import { mergeImportedTerms, parseGlossaryTsv, type GlossaryTerm } from "@/app/lib/translation/glossary";
+import { useFileExport } from "@/app/hooks/useFileExport";
 
 const LANG_OPTIONS = languages.filter((l) => l.value !== "auto").map((l) => ({ label: `${l.name} (${l.nativelabel})`, value: l.value }));
 const LANG_VALUES: ReadonlySet<string> = new Set(LANG_OPTIONS.map((l) => l.value));
@@ -19,6 +20,7 @@ const GlossaryDrawer = ({ open, onClose }: { open: boolean; onClose: () => void 
   const t = useTranslations("TranslationGlossary");
   const tCommon = useTranslations("common");
   const { message } = App.useApp();
+  const exportFile = useFileExport();
   const { activeGlossaryPreset, updateGlossaryPreset, targetLanguage } = useTranslationContext();
   const [selectedLang, setSelectedLang] = useState<string>(targetLanguage || "zh");
   const [search, setSearch] = useState("");
@@ -80,13 +82,13 @@ const GlossaryDrawer = ({ open, onClose }: { open: boolean; onClose: () => void 
       return;
     }
     const tsv = visibleTerms.map((term) => `${cleanCell(term.source)}\t${cleanCell(term.target)}`).join("\n");
-    downloadFile(tsv, `glossary-${selectedLang}.tsv`, "text/tab-separated-values");
+    void exportFile(tsv, `glossary-${selectedLang}.tsv`, "text/tab-separated-values");
   };
   // 3 列变体(source⇥target⇥targetLang):整个预设一个文件,跨设备/分享用。
   // 借鉴 DeepL 的多语言对上传格式 —— 我们只绑目标语言,三列即可。
   const exportAllTsv = () => {
     const tsv = allTerms.map((term) => `${cleanCell(term.source)}\t${cleanCell(term.target)}\t${term.targetLang}`).join("\n");
-    downloadFile(tsv, "glossary-all.tsv", "text/tab-separated-values");
+    void exportFile(tsv, "glossary-all.tsv", "text/tab-separated-values");
   };
 
   // 固定 TSV 单一格式:制表符在术语文本里几乎不会出现,无需 CSV 的引号/
@@ -131,6 +133,7 @@ const GlossaryDrawer = ({ open, onClose }: { open: boolean; onClose: () => void 
       render: (_: string, term: (typeof visibleTerms)[number]) => (
         <Input
           value={term.source}
+          dir="auto"
           placeholder={t("sourcePlaceholder")}
           aria-label={t("sourcePlaceholder")}
           status={duplicateSources.has(term.source.trim()) ? "warning" : undefined}
@@ -145,6 +148,7 @@ const GlossaryDrawer = ({ open, onClose }: { open: boolean; onClose: () => void 
       render: (_: string, term: (typeof visibleTerms)[number]) => (
         <Input
           value={term.target}
+          dir="auto"
           placeholder={t("targetPlaceholder")}
           aria-label={t("targetPlaceholder")}
           // 半成品行(有原文无译法)引擎会跳过 —— 标出来,免得用户疑惑词条不生效。
@@ -185,7 +189,7 @@ const GlossaryDrawer = ({ open, onClose }: { open: boolean; onClose: () => void 
         </Space.Compact>
       </Space>
       <Space style={{ width: "100%", marginBottom: 12, justifyContent: "space-between" }} wrap>
-        <Input allowClear prefix={<SearchOutlined />} style={{ width: 220 }} placeholder={t("searchPlaceholder")} aria-label={t("searchPlaceholder")} value={search} onChange={(e) => setSearch(e.target.value)} />
+        <Input allowClear dir="auto" prefix={<SearchOutlined />} style={{ width: 220 }} placeholder={t("searchPlaceholder")} aria-label={t("searchPlaceholder")} value={search} onChange={(e) => setSearch(e.target.value)} />
         <Typography.Text type="secondary">{t("termCount", { count: completeCount })}</Typography.Text>
       </Space>
       {/* 终端用户反馈:习惯把术语表写进系统提示词的用户不知道这里该填什么 ——

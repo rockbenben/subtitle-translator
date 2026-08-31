@@ -35,6 +35,12 @@
     "nameRequired": "Glossary name required"
   },
   "common": {
+    "exportFolder": "Export folder",
+    "exportFolderDefault": "Exports go to your browser's download folder. Chrome won't accept the Desktop, Documents, Downloads or user folder itself — pick a subfolder or any other folder.",
+    "exportFolderDownloads": "Browser download folder",
+    "exportFolderCurrent": "Exports go to {dir}",
+    "exportFolderReset": "Back to the download folder",
+    "exportFolderFailed": "Could not set the export folder.",
     "supportEscapeChars": "Supports escape chars: \\n (newline), \\r (return), \\t (tab), \\s (space), \\\\ (backslash)",
     "skipToContent": "Skip to main content",
     "fileProcessFailed": "Failed to process the file — check its encoding or try another",
@@ -78,6 +84,8 @@
     "directExport": "Auto export",
     "useCache": "Use translation cache",
     "useCacheTooltip": "Reuse previous translation cache to speed up processing",
+    "cacheOff": "Cache off",
+    "cacheOffTooltip": "Translation cache is off: every line is re-requested, and an interrupted run can't resume. Click to turn it back on.",
     "contextAwareTranslation": "Context-aware translation",
     "contextAwareTranslationTooltip": "Translate with context for better coherence and accuracy (AI models only)",
     "multiLanguageMode": "Multi-language mode",
@@ -95,6 +103,8 @@
     "exportAllFile": "Export all",
     "exportedFile": "Exported",
     "fileExported": "File exported: {fileName}",
+    "exportFailed": "Could not export the file: {fileName}",
+    "exportedToFolder": "Saved to {dir}: {fileName}",
     "batchDownloaded": "Processing complete, file downloaded automatically",
     "extractedText": "Extracted text",
     "translating": "Translating",
@@ -165,7 +175,7 @@
     "copyAllFailed": "Copy all",
     "closeFailedLinesModal": "Close",
     "failedLanguagesTitle": "{count} target language(s) failed",
-    "failedLanguagesDesc": "Every batch for these languages errored out — usually local LLM glitches, API rate limits, or the model refusing a specific language. Copy the codes and re-run targeting only them (paste into Quick Entry via Language Codes); the others will hit cache and skip.",
+    "failedLanguagesDesc": "Every batch for these languages errored out — usually local LLM glitches, API rate limits, or the model refusing a specific language. Copy the codes and re-run targeting only them (paste into 'Multi-language settings'); the others will hit cache and skip.",
     "copyAllFailedLanguages": "Copy language codes",
     "apiStatusFreeApi": "Free API",
     "apiStatusNeedsConfig": "Needs config",
@@ -408,7 +418,7 @@
     },
     "jsonTranslate": {
       "title": "JSON Multi-Language Translator",
-      "description": "Efficient multi-language JSON translation tool"
+      "description": "Batch translate i18n language files with JSONPath matching and key mapping"
     },
     "mdTranslator": {
       "title": "Markdown Translator",

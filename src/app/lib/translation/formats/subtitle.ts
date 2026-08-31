@@ -812,17 +812,23 @@ export const assColorToHex = (ass: string): string => {
   return `#${rr}${gg}${bb}`.toUpperCase();
 };
 
-// 每个文字系统:默认字体 + 它能覆盖的文字系统集合(含自身)。CJK/复杂文字字体普遍含拉丁字母。
-export const SCRIPT_INFO: Record<string, { font: string; covers: string[] }> = {
-  latin: { font: "Arial", covers: ["latin"] },
-  hans: { font: "Microsoft YaHei", covers: ["hans", "latin"] },
-  hant: { font: "Microsoft JhengHei", covers: ["hant", "latin"] },
-  jp: { font: "Yu Gothic", covers: ["jp", "latin"] },
-  kr: { font: "Malgun Gothic", covers: ["kr", "latin"] },
-  arabic: { font: "Arial", covers: ["arabic", "latin"] },
-  devanagari: { font: "Nirmala UI", covers: ["devanagari", "latin"] },
-  thai: { font: "Leelawadee UI", covers: ["thai", "latin"] },
+// 每个文字系统:默认字体 + 它能覆盖的文字系统集合(含自身) + 样式预览的示例句。
+// CJK/复杂文字字体普遍含拉丁字母。
+// ⚠ sample 与 font 必须同表:它俩都按 script 索引,分开放就会漂 —— 已经漂过一次
+// (he 曾并进 arabic 桶,字体没事,预览却给希伯来语用户显示一句阿拉伯语)。
+// 类型是必填字段,新增 script 时编译器会问你要示例句,不会再静默回落到拉丁句。
+export const SCRIPT_INFO: Record<string, { font: string; covers: string[]; sample: string }> = {
+  latin: { font: "Arial", covers: ["latin"], sample: "The quick brown fox" },
+  hans: { font: "Microsoft YaHei", covers: ["hans", "latin"], sample: "敏捷的棕色狐狸" },
+  hant: { font: "Microsoft JhengHei", covers: ["hant", "latin"], sample: "敏捷的棕色狐狸" },
+  jp: { font: "Yu Gothic", covers: ["jp", "latin"], sample: "すばやい茶色の狐" },
+  kr: { font: "Malgun Gothic", covers: ["kr", "latin"], sample: "빠른 갈색 여우" },
+  arabic: { font: "Arial", covers: ["arabic", "latin"], sample: "الثعلب البني السريع" },
+  hebrew: { font: "Arial", covers: ["hebrew", "latin"], sample: "השועל החום הזריז" },
+  devanagari: { font: "Nirmala UI", covers: ["devanagari", "latin"], sample: "तेज़ भूरी लोमड़ी" },
+  thai: { font: "Leelawadee UI", covers: ["thai", "latin"], sample: "สุนัขจิ้งจอกสีน้ำตาล" },
 };
+
 
 // 语言码 → 文字系统;未列出(en/fr/ru/…)与 "auto" 一律 latin。
 export const LANG_SCRIPT: Record<string, string> = {
@@ -832,13 +838,28 @@ export const LANG_SCRIPT: Record<string, string> = {
   ja: "jp",
   ko: "kr",
   ar: "arabic",
-  he: "arabic",
-  yi: "arabic",
+  // 波斯语系/乌尔都语/普什图语/达里语/索拉尼库尔德语/维吾尔语都写阿拉伯字母。
+  // 漏登记会落到 latin,跟中文配对时 resolveBilingualFonts 判定 YaHei 覆盖 latin
+  // → 整条阿拉伯字母的字幕被指派 Microsoft YaHei(无阿拉伯字形)→ 导出即豆腐块。
+  // kmr(库尔曼吉库尔德语)与 tr 写拉丁字母,不在此列。
+  fa: "arabic",
+  ur: "arabic",
+  ps: "arabic",
+  prs: "arabic",
+  ckb: "arabic",
+  ug: "arabic",
+  // 希伯来文自成一系(意第绪语也写希伯来文)。字体两边都落在 Arial,
+  // 但预览示例文字按 script 取 —— 混进 arabic 会让希伯来语用户看到阿拉伯语示例。
+  he: "hebrew",
+  yi: "hebrew",
   hi: "devanagari",
   th: "thai",
 };
 
 export const scriptOf = (lang: string): string => LANG_SCRIPT[lang] ?? "latin";
+/** 样式预览用的示例句:按语言的文字系统取,让预览真正展示该字体的渲染。 */
+export const sampleForLang = (lang: string): string => SCRIPT_INFO[scriptOf(lang)].sample;
+
 
 // 双语字体解析(按角色):返回译文/原文各自字体。位置无关。
 //  1) 用户填了具体字体 → 两者都用它

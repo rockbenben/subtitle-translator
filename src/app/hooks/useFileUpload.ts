@@ -3,19 +3,30 @@ import { useState, useRef } from "react";
 import { App } from "antd";
 import { useTranslations } from "next-intl";
 import { normalizeNewlines, decodeFileBytes, getErrorMessage } from "@/app/utils";
+import { useLocalStorage } from "@/app/hooks/useLocalStorage";
 import type { UploadFile, UploadProps } from "antd";
 
 // Shared dedup predicate: match by name + size
 const isDuplicateFile = (a: { name: string; size?: number }, b: { name: string; size?: number }): boolean => a.name === b.name && a.size === b.size;
 
-const useFileUpload = () => {
+// toolKey = 调用方的工具 slug,只用来给 singleFileMode 分键(同 useExportFilename)。
+// 18 个调用方里只有 4 个渲染那个开关,其余传不传都一样。
+const useFileUpload = (toolKey?: string) => {
   const { message } = App.useApp();
   const t = useTranslations("common");
   const [sourceText, setSourceText] = useState<string>("");
   const [multipleFiles, setMultipleFiles] = useState<File[]>([]);
   const [uploadMode, setUploadMode] = useState<"single" | "multiple">("single");
   const [fileList, setFileList] = useState<UploadFile[]>([]);
-  const [singleFileMode, setSingleFileMode] = useState(false);
+  // 落盘,且【按工具分键】:这是用户的工作习惯("这个工具我一次只处理一个文件"),
+  // 重启回默认没道理 —— 但它不是全站偏好。渲染这个开关的四个工具(字幕翻译 /
+  // Markdown 翻译 / 小说处理 / 简繁转换)互不相干:共享一个键的话,在简繁转换里开过
+  // 单文件模式,之后到字幕翻译拖 5 个文件只有 1 个进得去,而那一刻界面上没有任何
+  // 东西提示这是别处的设置在起作用(开关本身在折叠面板里)。键名与 useExportFilename
+  // 同一套:工具 slug + camelCase 字段。
+  // 不传 toolKey 的调用方都不渲染这个开关(useTranslationState 只取 readFile),
+  // 落在共用兜底键上无人读写。
+  const [singleFileMode, setSingleFileMode] = useLocalStorage<boolean>(`${toolKey ?? "upload"}-singleFileMode`, false);
   const [isFileProcessing, setIsFileProcessing] = useState<boolean>(false);
   // 读取序号守卫:FileReader.onload / decodeFileBytes 都是异步,一次读取尚未完成时
   // 又发起新读取(连续换文件)或清空(resetUpload),旧读的回调若晚到会用旧内容

@@ -35,6 +35,12 @@
     "nameRequired": "Nama glosarium wajib diisi"
   },
   "common": {
+    "exportFolder": "Folder ekspor",
+    "exportFolderDefault": "Hasil ekspor masuk ke folder unduhan browser. Chrome tidak menerima Desktop, Documents, Downloads, dan folder pengguna itu sendiri — pilih subfolder atau folder lain.",
+    "exportFolderDownloads": "Folder unduhan browser",
+    "exportFolderCurrent": "Hasil ekspor masuk ke {dir}",
+    "exportFolderReset": "Kembali ke folder unduhan",
+    "exportFolderFailed": "Tidak dapat menetapkan folder ekspor.",
     "supportEscapeChars": "Mendukung karakter escape: \\n (baris baru), \\r (kembali), \\t (tab), \\s (spasi), \\\\ (garis miring terbalik)",
     "skipToContent": "Lewati ke konten utama",
     "fileProcessFailed": "Gagal memproses file — periksa encoding-nya atau coba file lain",
@@ -78,6 +84,8 @@
     "directExport": "Ekspor Otomatis",
     "useCache": "Gunakan Cache",
     "useCacheTooltip": "Gunakan kembali cache terjemahan sebelumnya untuk mempercepat pemrosesan",
+    "cacheOff": "Cache nonaktif",
+    "cacheOffTooltip": "Cache terjemahan nonaktif: setiap baris diminta ulang dan proses yang terhenti tidak dapat dilanjutkan. Klik untuk mengaktifkan kembali.",
     "contextAwareTranslation": "Terjemahan Kontekstual",
     "contextAwareTranslationTooltip": "Terjemahkan dengan konteks untuk koherensi dan akurasi yang lebih baik (hanya model AI)",
     "multiLanguageMode": "Mode Multi-Bahasa",
@@ -152,7 +160,7 @@
     "copyAllFailed": "Salin semua",
     "closeFailedLinesModal": "Tutup",
     "failedLanguagesTitle": "{count} bahasa target gagal",
-    "failedLanguagesDesc": "Semua batch untuk bahasa-bahasa ini gagal — biasanya karena masalah LLM lokal, batas tingkat API, atau penolakan model terhadap bahasa tertentu. Salin kode dan jalankan ulang hanya untuk mereka (tempelkan di Entri Cepat melalui Kode Bahasa); yang lain akan dilewati dari cache.",
+    "failedLanguagesDesc": "Semua batch untuk bahasa-bahasa ini gagal — biasanya karena masalah LLM lokal, batas tingkat API, atau penolakan model terhadap bahasa tertentu. Salin kode dan jalankan ulang hanya untuk mereka (tempelkan di 'Pengaturan Multi-Bahasa'); yang lain akan dilewati dari cache.",
     "copyAllFailedLanguages": "Salin kode bahasa",
     "apiStatusFreeApi": "Free API",
     "apiStatusNeedsConfig": "Perlu konfig.",
@@ -171,6 +179,8 @@
     "readOnlyModeTooltip": "Teks terlalu panjang: editor sementara hanya-baca dan hanya menampilkan pratinjau sebagian. Konten lengkap Anda tidak terpengaruh — pemrosesan dan ekspor tetap menggunakan seluruh teks.",
     "clearInputTooltip": "Bersihkan konten input dan file yang diunggah",
     "fileExported": "File diekspor: {fileName}",
+    "exportFailed": "Gagal mengekspor file: {fileName}",
+    "exportedToFolder": "Disimpan ke {dir}: {fileName}",
     "batchDownloaded": "Pemrosesan selesai, file diunduh otomatis",
     "sourceTextPlaceholder": "Masukkan atau tempel teks yang akan diproses...",
     "smartLineBreak": "Jeda Baris Cerdas",
@@ -229,7 +239,7 @@
     "noSourceText": "Silakan unggah file atau tempel teks.",
     "noExtractedText": "Tidak ada konten yang diekstrak, periksa format file.",
     "textExtracted": "Teks subtitle diekstrak, ",
-    "bilingualError": "Tag gaya kompleks terdeteksi. Mode dwibahasa dapat menyebabkan kesalahan format. Disarankan untuk mematikan 'Subtitle Dwibahasa'.",
+    "bilingualError": "Tag gaya kompleks terdeteksi. Mode dwibahasa dapat menyebabkan kesalahan format. Disarankan untuk mematikan 'Dwibahasa'.",
     "reviewTitle": "Tinjauan Dwibahasa",
     "reviewColSource": "Sumber",
     "reviewColTarget": "Terjemahan",
@@ -408,7 +418,7 @@
     },
     "jsonTranslate": {
       "title": "Penerjemah JSON i18n",
-      "description": "Alat terjemahan JSON multi-bahasa yang efisien"
+      "description": "Terjemahan file bahasa i18n batch, dengan pencocokan JSONPath dan pemetaan kunci"
     },
     "mdTranslator": {
       "title": "Penerjemah Markdown",

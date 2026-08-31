@@ -15,6 +15,7 @@
     "update-version": "node src-tauri/update-version.js"
   },
   "dependencies": {
+    "@ant-design/icons": "^6",
     "@ant-design/nextjs-registry": "^1.3.0",
     "@tauri-apps/api": "2.11.1",
     "@tauri-apps/plugin-opener": "2.5.4",
@@ -24,6 +25,7 @@
     "deepl-node": "^1",
     "file-saver": "^2.0.5",
     "idb": "^8.0.3",
+    "idb-keyval": "^6.3.0",
     "jschardet": "^3.1.4",
     "next": "16.3.2",
     "next-intl": "^4",

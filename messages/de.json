@@ -35,6 +35,12 @@
     "nameRequired": "Glossarname erforderlich"
   },
   "common": {
+    "exportFolder": "Exportordner",
+    "exportFolderDefault": "Exporte landen im Download-Ordner des Browsers. Chrome akzeptiert Desktop, Dokumente, Downloads und den Benutzerordner selbst nicht — wähle einen Unterordner oder einen anderen Ordner.",
+    "exportFolderDownloads": "Download-Ordner des Browsers",
+    "exportFolderCurrent": "Exporte landen in {dir}",
+    "exportFolderReset": "Zurück zum Download-Ordner",
+    "exportFolderFailed": "Der Exportordner konnte nicht festgelegt werden.",
     "supportEscapeChars": "Unterstützt Escape-Zeichen: \\n (Zeilenumbruch), \\r (Wagenrücklauf), \\t (Tab), \\s (Leerzeichen), \\\\ (Backslash)",
     "skipToContent": "Zum Hauptinhalt springen",
     "fileProcessFailed": "Datei konnte nicht verarbeitet werden – prüfen Sie die Kodierung oder versuchen Sie eine andere",
@@ -78,6 +84,8 @@
     "directExport": "Auto-Export",
     "useCache": "Übersetzungscache verwenden",
     "useCacheTooltip": "Vorherigen Übersetzungscache wiederverwenden, um die Verarbeitung zu beschleunigen",
+    "cacheOff": "Cache aus",
+    "cacheOffTooltip": "Der Übersetzungscache ist aus: Jede Zeile wird neu angefragt und ein unterbrochener Lauf kann nicht fortgesetzt werden. Zum Wiedereinschalten klicken.",
     "contextAwareTranslation": "Kontextbezogene Übersetzung",
     "contextAwareTranslationTooltip": "Übersetzung unter Berücksichtigung des Kontexts für bessere Kohärenz und Genauigkeit (nur KI-Modelle)",
     "multiLanguageMode": "Mehrsprachen-Modus",
@@ -95,6 +103,8 @@
     "exportAllFile": "Alle exportieren",
     "exportedFile": "Exportiert",
     "fileExported": "Datei exportiert: {fileName}",
+    "exportFailed": "Datei konnte nicht exportiert werden: {fileName}",
+    "exportedToFolder": "In {dir} gespeichert: {fileName}",
     "batchDownloaded": "Verarbeitung abgeschlossen, Datei wurde automatisch heruntergeladen",
     "extractedText": "Extrahierter Text",
     "translating": "Übersetze...",
@@ -165,7 +175,7 @@
     "copyAllFailed": "Alle kopieren",
     "closeFailedLinesModal": "Schließen",
     "failedLanguagesTitle": "{count} Zielsprache(n) fehlgeschlagen",
-    "failedLanguagesDesc": "Alle Batches für diese Sprachen sind fehlgeschlagen — meist durch lokale LLM-Störungen, API-Ratenbegrenzungen oder Modellverweigerung einer bestimmten Sprache. Codes kopieren und nur damit erneut ausführen (in Schnelleingabe via Sprachcodes einfügen); die anderen werden aus dem Cache übersprungen.",
+    "failedLanguagesDesc": "Alle Batches für diese Sprachen sind fehlgeschlagen — meist durch lokale LLM-Störungen, API-Ratenbegrenzungen oder Modellverweigerung einer bestimmten Sprache. Codes kopieren und nur damit erneut ausführen (in 'Mehrsprachige Einstellungen' einfügen); die anderen werden aus dem Cache übersprungen.",
     "copyAllFailedLanguages": "Sprachcodes kopieren",
     "apiStatusFreeApi": "Free API",
     "apiStatusNeedsConfig": "Konfig. erforderlich",
@@ -229,7 +239,7 @@
     "noSourceText": "Bitte Untertiteldatei hochladen oder Text einfügen.",
     "noExtractedText": "Kein Untertitelinhalt extrahiert, bitte Dateiformat prüfen.",
     "textExtracted": "Untertiteltext extrahiert, ",
-    "bilingualError": "Komplexe Stil-Tags erkannt. Zweisprachiger Modus kann zu Formatierungsfehlern führen. Empfohlen: 'Zweisprachige Untertitel' deaktivieren.",
+    "bilingualError": "Komplexe Stil-Tags erkannt. Zweisprachiger Modus kann zu Formatierungsfehlern führen. Empfohlen: 'Zweisprachig' deaktivieren.",
     "reviewTitle": "Zweisprachige Prüfung",
     "reviewColSource": "Original",
     "reviewColTarget": "Übersetzung",
@@ -408,7 +418,7 @@
     },
     "jsonTranslate": {
       "title": "i18n JSON-Übersetzer",
-      "description": "Effizientes mehrsprachiges JSON-Übersetzungstool"
+      "description": "i18n-Sprachdateien im Batch übersetzen, mit JSONPath-Abgleich und Schlüssel-Mapping"
     },
     "mdTranslator": {
       "title": "Markdown-Übersetzer",

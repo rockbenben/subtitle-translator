@@ -35,6 +35,12 @@
     "nameRequired": "El nombre del glosario es obligatorio"
   },
   "common": {
+    "exportFolder": "Carpeta de exportación",
+    "exportFolderDefault": "Las exportaciones van a la carpeta de descargas del navegador. Chrome no acepta el Escritorio, Documentos, Descargas ni la carpeta de usuario en sí: elige una subcarpeta u otra carpeta.",
+    "exportFolderDownloads": "Carpeta de descargas del navegador",
+    "exportFolderCurrent": "Las exportaciones van a {dir}",
+    "exportFolderReset": "Volver a la carpeta de descargas",
+    "exportFolderFailed": "No se pudo establecer la carpeta de exportación.",
     "supportEscapeChars": "Soporta caracteres escape: \\n (nueva línea), \\r (retorno), \\t (tab), \\s (espacio), \\\\ (barra invertida)",
     "skipToContent": "Saltar al contenido principal",
     "fileProcessFailed": "No se pudo procesar el archivo: comprueba su codificación o prueba con otro",
@@ -78,6 +84,8 @@
     "directExport": "Auto Exportar",
     "useCache": "Usar Caché",
     "useCacheTooltip": "Reutilizar caché de traducción anterior para acelerar el proceso",
+    "cacheOff": "Caché desactivada",
+    "cacheOffTooltip": "La caché de traducción está desactivada: cada línea se vuelve a solicitar y una ejecución interrumpida no puede reanudarse. Haz clic para reactivarla.",
     "contextAwareTranslation": "Traducción Contextual",
     "contextAwareTranslationTooltip": "Traducir con contexto para mayor coherencia y precisión (solo modelos IA)",
     "multiLanguageMode": "Modo Multilenguaje",
@@ -95,6 +103,8 @@
     "exportAllFile": "Exportar Todo",
     "exportedFile": "Exportado",
     "fileExported": "Archivo exportado: {fileName}",
+    "exportFailed": "No se pudo exportar el archivo: {fileName}",
+    "exportedToFolder": "Guardado en {dir}: {fileName}",
     "batchDownloaded": "Procesamiento completo, el archivo se descargó automáticamente",
     "extractedText": "Texto Extraído",
     "translating": "Traduciendo...",
@@ -165,7 +175,7 @@
     "copyAllFailed": "Copiar todo",
     "closeFailedLinesModal": "Cerrar",
     "failedLanguagesTitle": "{count} idioma(s) de destino fallaron",
-    "failedLanguagesDesc": "Todos los lotes de estos idiomas fallaron — generalmente por fallos de LLM local, límites de tasa de API o rechazo del modelo a un idioma específico. Copie los códigos y vuelva a ejecutar solo con ellos (pegue en Entrada rápida por códigos de idioma); los demás usarán caché y se omitirán.",
+    "failedLanguagesDesc": "Todos los lotes de estos idiomas fallaron — generalmente por fallos de LLM local, límites de tasa de API o rechazo del modelo a un idioma específico. Copie los códigos y vuelva a ejecutar solo con ellos (pegue en 'Configuración multilingüe'); los demás usarán caché y se omitirán.",
     "copyAllFailedLanguages": "Copiar códigos de idioma",
     "apiStatusFreeApi": "Free API",
     "apiStatusNeedsConfig": "Requiere config.",
@@ -229,7 +239,7 @@
     "noSourceText": "Por favor sube archivo o pega texto.",
     "noExtractedText": "No se extrajo contenido, verifica formato de archivo.",
     "textExtracted": "Texto de subtítulos extraído, ",
-    "bilingualError": "Etiquetas de estilo complejas detectadas. Modo bilingüe puede causar errores de formato. Recomendado desactivar 'Subtítulos Bilingües'.",
+    "bilingualError": "Etiquetas de estilo complejas detectadas. Modo bilingüe puede causar errores de formato. Recomendado desactivar 'Bilingüe'.",
     "reviewTitle": "Revisión bilingüe",
     "reviewColSource": "Original",
     "reviewColTarget": "Traducción",
@@ -408,7 +418,7 @@
     },
     "jsonTranslate": {
       "title": "Traductor JSON i18n",
-      "description": "Herramienta eficiente de traducción JSON multilingüe"
+      "description": "Traducción por lote de archivos de idioma i18n, con coincidencia JSONPath y mapeo de claves"
     },
     "mdTranslator": {
       "title": "Traductor Markdown",
