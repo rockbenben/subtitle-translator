@@ -5,7 +5,8 @@ import { createStore, get, set, del } from "idb-keyval";
  *
  * 【能力边界】只有 Chromium 桌面（Chrome / Edge / Opera 86+）有 File System
  * Access API。Firefox、Safari、全部移动端 supportsExportDir() 为 false，
- * downloadFile 原样走 file-saver。
+ * downloadFile 原样走 file-saver。桌面外壳（Tauri / Electron）不走这条路 ——
+ * 它们注入自己的原生实现，见 setNativeExportDir。
  *
  * 【存储走 idb-keyval】目录句柄只能结构化克隆，存不进 localStorage，躲不开
  * IndexedDB；而这里要的只是一个库、一个 store、一个 key 的 get/set/del —— 正是
@@ -45,6 +46,44 @@ export const setExportDirTool = (toolKey: string | null) => {
   currentTool = toolKey;
 };
 
+/**
+ * 【桌面外壳的原生实现注入口】Tauri / Electron 里没有 File System Access
+ * （WKWebView、WebKitGTK 根本没有，WebView2 有没有不该由这里赌），但外壳本来就有
+ * 原生目录选择器、也有自己的落盘钩子。注入之后本模块的四个出口全部改走原生实现，
+ * 下面那套 File System Access + IndexedDB 一行都不会执行。
+ *
+ * 【为什么是运行时注入，而不是让桌面分支各自改这个文件】本文件与
+ * components/ExportFolder.tsx、components/styled/ToolPage.tsx 都由
+ * scripts/project_sync.py 铺给全部子项目（后者还是 overwrite 模式）。桌面分支直接改
+ * 这三个文件的话，每次同步都被覆盖一遍 —— 那正是各子项目 src/app/desktop/ 这个目录
+ * 存在的理由：分歧只许待在同步范围之外。所以这里只留一个口子，实现放在桌面分支
+ * 自己的目录里，两边谁也不用改对方。
+ *
+ * 【没有 write：落盘归外壳】外壳拦的是浏览器下载本身（Tauri 挂 webview 的
+ * on_download），saveAs() 触发的那一次就已经落进用户选的目录了。所以注入之后
+ * writeToExportDir 一律返回 null，让 downloadFile 老实走 saveAs()。
+ * 代价：那条路径拿不到落点，导出提示只报文件名、不报目录（Rust 侧改写路径这件事
+ * JS 无从得知）。要改得让外壳把落点回传，等有人真的需要再说。
+ */
+export interface NativeExportDir {
+  /** 打开原生目录选择器并记住选择，返回目录名；用户取消返回 null。 */
+  pick: (toolKey: string) => Promise<string | null>;
+  /** 该工具当前生效的目录（外壳可以给完整路径）。没设过返回 null。 */
+  current: (toolKey: string) => Promise<string | null>;
+  /** 忘掉该工具的目录，导出回到系统下载目录。 */
+  clear: (toolKey: string) => Promise<void>;
+}
+
+let nativeExportDir: NativeExportDir | null = null;
+
+/**
+ * 外壳在【模块作用域】调一次（supportsExportDir() 在渲染期就被读，放进 effect 太晚，
+ * 按钮会先闪一下）。传 null 摘掉，给测试用。
+ */
+export const setNativeExportDir = (impl: NativeExportDir | null): void => {
+  nativeExportDir = impl;
+};
+
 // showDirectoryPicker 与 FileSystemHandle 的权限扩展都不在 TS 的 lib.dom 里，
 // 就地声明最小面，省一个 @types 依赖。
 type FsPermissionDescriptor = { mode?: "read" | "readwrite" };
@@ -68,8 +107,8 @@ const exportStore = createStore(DB_NAME, STORE);
 
 const readStoredHandle = (toolKey: string): Promise<ExportDirHandle | undefined> => get<ExportDirHandle>(keyFor(toolKey), exportStore);
 
-/** 当前浏览器是否支持选导出目录。false 时 UI 不该出现「导出目录」入口。 */
-export const supportsExportDir = (): boolean => typeof window !== "undefined" && typeof window.showDirectoryPicker === "function";
+/** 当前环境是否支持选导出目录。false 时 UI 不该出现「导出目录」入口。 */
+export const supportsExportDir = (): boolean => nativeExportDir !== null || (typeof window !== "undefined" && typeof window.showDirectoryPicker === "function");
 
 /**
  * 「这个句柄现在能不能写」——权限判据【只此一份】。queryPermission 是 Chromium 扩展、
@@ -100,7 +139,12 @@ const readGrantedHandle = async (toolKey: string): Promise<ExportDirHandle | nul
 };
 
 /** 该工具当前生效的导出目录名（浏览器只给文件夹名，不给完整路径）。没有则 null。 */
-export const getExportDirName = async (toolKey: string): Promise<string | null> => (await readGrantedHandle(toolKey))?.name ?? null;
+export const getExportDirName = async (toolKey: string): Promise<string | null> => {
+  // 【这条路不许抛】调用方是 ExportFolder 挂载时的 `void refreshDir().then()`，抛出去
+  // 就是一条没人接的 unhandled rejection。下面 FSA 那条同样吞掉所有异常。
+  if (nativeExportDir) return nativeExportDir.current(toolKey).catch(() => null);
+  return (await readGrantedHandle(toolKey))?.name ?? null;
+};
 
 // 存过句柄但权限掉了（浏览器重启）：点击本身就是用户手势，直接补授权即可，
 // 不必再让用户走一遍选择器。已授权时返回 null —— 那说明这次点击是想【换】目录。
@@ -133,6 +177,7 @@ const regrantStoredDir = async (toolKey: string): Promise<string | null> => {
  * 见 ExportFolder.tsx 的 choose()。
  */
 export const pickExportDir = async (toolKey: string): Promise<string | null> => {
+  if (nativeExportDir) return nativeExportDir.pick(toolKey);
   if (!supportsExportDir()) return null;
   const regranted = await regrantStoredDir(toolKey);
   if (regranted) return regranted;
@@ -161,6 +206,8 @@ export const pickExportDir = async (toolKey: string): Promise<string | null> => 
  * 文件头禁止的两种撒谎里的另一种。删不掉时让调用方重读真实状态。
  */
 export const clearExportDir = async (toolKey: string): Promise<void> => {
+  // 原生实现同样【如实抛出】失败，理由见上：界面说的目录必须等于字节去的地方。
+  if (nativeExportDir) return nativeExportDir.clear(toolKey);
   await del(keyFor(toolKey), exportStore);
 };
 
@@ -199,6 +246,8 @@ const uniqueFileName = async (dir: ExportDirHandle, fileName: string): Promise<s
  * toast 是唯一的反馈。报错名字等于让用户去找一个不存在的文件。
  */
 export const writeToExportDir = async (blob: Blob, fileName: string): Promise<{ fileName: string; dir: string } | null> => {
+  // 外壳自己在下载钩子里改路径（见 setNativeExportDir），这里让路给 saveAs()
+  if (nativeExportDir) return null;
   // 落哪个目录由【当前页面的工具】决定，见 setExportDirTool
   if (!currentTool) return null;
   const dir = await readGrantedHandle(currentTool);
