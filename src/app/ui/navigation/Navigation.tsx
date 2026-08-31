@@ -10,10 +10,6 @@ import { useAppMenu } from "@/app/components/projects";
 import { isChineseLocale } from "@/app/utils";
 import { SOCIAL_LINKS } from "./config";
 import { LanguageSelector } from "./LanguageSelector";
-// 仅桌面版渲染，web 构建里返回 null。放在 Navigation.tsx 而不是 LanguageSelector
-// 等文件里：本文件被上游 sync_config.yaml 显式排除（每个子项目自维护），改它
-// 不会在下次同步时被还原。
-import ExportFolderButton from "@/app/desktop/ExportFolderButton";
 
 const { Header } = Layout;
 
@@ -103,7 +99,6 @@ export function Navigation() {
         </Drawer>
         <Space size="middle">
           <LanguageSelector />
-          <ExportFolderButton iconStyle={iconStyle} />
 
           <Dropdown
             trigger={["click"]}

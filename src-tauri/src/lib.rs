@@ -10,8 +10,9 @@ use tauri::Manager;
 // 触发的是一次真实下载，on_download 能直接改写落盘路径 —— 于是这个功能可以做到
 // 前端零改动，并且顺带覆盖所有导出口（字幕、术语表 TSV、设置 JSON）。
 //
-// 代价：设置入口只能放在托盘菜单里（页面设置区 TranslationSettings.tsx 同属
-// 上游镜像文件，碰不得）。
+// 入口在工具页标题行那个按工具的导出目录按钮上（上游 components/ExportFolder.tsx），
+// 桌面端通过 src/app/desktop/exportDirNative.ts 把下面三个 command 注入上游留的口子 ——
+// 于是 Web 与桌面共用同一套 UI，而那些镜像文件一个字都不用改。
 // ============================================================================
 
 fn export_dir_file(app: &tauri::AppHandle) -> Option<PathBuf> {
@@ -36,7 +37,7 @@ fn save_export_dir(app: &tauri::AppHandle, dir: &Path) {
     let _ = std::fs::write(file, dir.to_string_lossy().as_ref());
 }
 
-/// 当前导出目录，给导航栏按钮显示用。None = 系统默认下载目录。
+/// 当前导出目录，给工具页那个按钮显示用。None = 系统默认下载目录。
 #[tauri::command]
 fn get_export_dir(app: tauri::AppHandle) -> Option<String> {
     load_export_dir(&app).map(|dir| dir.display().to_string())
@@ -59,6 +60,23 @@ async fn choose_export_dir(app: tauri::AppHandle) -> Option<String> {
     let dir = dialog.blocking_pick_folder()?.into_path().ok()?;
     save_export_dir(&app, &dir);
     Some(dir.display().to_string())
+}
+
+/// 忘掉已选目录，导出回到系统下载目录（工具页那个 ↺ 按钮）。
+///
+/// 【失败要如实报错】上游 clearExportDir 的注释写得明白：吞掉异常而界面改说
+/// 「下载目录」，之后每个文件照旧落进老目录，就是反方向的撒谎。文件本来就不在
+/// （NotFound）不算失败 —— 那正是「已经没有目录了」。
+#[tauri::command]
+fn clear_export_dir(app: tauri::AppHandle) -> Result<(), String> {
+    let Some(file) = export_dir_file(&app) else {
+        return Err("no app config dir".into());
+    };
+    match std::fs::remove_file(&file) {
+        Ok(()) => Ok(()),
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(()),
+        Err(e) => Err(e.to_string()),
+    }
 }
 
 #[cfg(desktop)]
@@ -159,7 +177,7 @@ pub fn run() {
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
-        .invoke_handler(tauri::generate_handler![get_export_dir, choose_export_dir])
+        .invoke_handler(tauri::generate_handler![get_export_dir, choose_export_dir, clear_export_dir])
         .setup(|app| {
             if cfg!(debug_assertions) {
                 app.handle().plugin(
@@ -203,12 +221,12 @@ pub fn run() {
                     })
                     .build()?;
 
-                // 标签保持静态：当前目录由导航栏按钮的 tooltip 显示。若两处都显示，
-                // 从导航栏改完还得回头刷托盘文字，等于两份状态要对齐 —— 不值当。
+                // 【托盘里不再有「Export folder…」】入口已经在工具页标题行上，而页面
+                // 那个按钮的目录名是自己缓存的（上游 ExportFolder 的模块级 store）——
+                // 从托盘改完页面不会跟着刷，等于同一个设置两份状态各说各话。
                 let show = MenuItemBuilder::with_id("show", "Show").build(app)?;
-                let export = MenuItemBuilder::with_id("export-dir", "Export folder\u{2026}").build(app)?;
                 let quit = MenuItemBuilder::with_id("quit", "Quit").build(app)?;
-                let menu = MenuBuilder::new(app).items(&[&show, &export, &quit]).build()?;
+                let menu = MenuBuilder::new(app).items(&[&show, &quit]).build()?;
 
                 TrayIconBuilder::with_id("main-tray")
                     .icon(app.default_window_icon().unwrap().clone())
@@ -217,14 +235,6 @@ pub fn run() {
                     .show_menu_on_left_click(false)
                     .on_menu_event(|app, event| match event.id().as_ref() {
                         "show" => focus_main_window(app),
-                        "export-dir" => {
-                            // 菜单事件在主线程；choose_export_dir 里的 blocking 对话框
-                            // 在主线程会死锁，所以转到异步运行时上跑。
-                            let app = app.clone();
-                            tauri::async_runtime::spawn(async move {
-                                choose_export_dir(app).await;
-                            });
-                        }
                         "quit" => app.exit(0),
                         _ => {}
                     })
