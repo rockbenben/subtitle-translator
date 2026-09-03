@@ -8,7 +8,7 @@ import { useTranslations } from "next-intl";
 import { useLanguageOptions, filterLanguageOption } from "@/app/components/languages";
 import { LANGUAGE_GROUPS, LANGUAGE_PRESETS } from "@/app/lib/translation";
 import { useIsMobile } from "@/app/hooks/useIsMobile";
-import { useRecentLanguages } from "@/app/hooks/useRecentLanguages";
+import { useLocalStorage } from "@/app/hooks/useLocalStorage";
 
 const { Text } = Typography;
 
@@ -47,7 +47,12 @@ const LanguageSelector = ({ sourceLanguage, targetLanguage, targetLanguages, mul
   const { sourceOptions, targetOptions } = useLanguageOptions();
   const isMobile = useIsMobile();
   const { token } = theme.useToken();
-  const { recentLanguages, pushRecentLanguage } = useRecentLanguages();
+  // 最近 5 个选过的语言置顶(122 条里免得翻找);auto 不算语言。重选视为"最新":去重后前插。
+  const [recentLanguages, setRecentLanguages] = useLocalStorage<string[]>("translation-recentLanguages", []);
+  const pushRecentLanguage = (code: string) => {
+    if (!code || code === "auto") return;
+    setRecentLanguages((prev) => [code, ...prev.filter((c) => c !== code)].slice(0, 5));
+  };
   const [searchValue, setSearchValue] = useState("");
 
   // Wrap the prop callback so single-select picks land in the recent list.

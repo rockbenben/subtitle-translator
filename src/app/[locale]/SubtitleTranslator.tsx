@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState, useMemo, useRef } from "react";
-import { Flex, Card, Button, Typography, Input, Upload, Form, Space, App, Tooltip, Segmented, Spin, Row, Col, Divider, Collapse, Alert, theme } from "antd";
-import { SettingOutlined, CopyOutlined, InboxOutlined, FileTextOutlined, ClearOutlined, FormatPainterOutlined, GlobalOutlined, ImportOutlined, SaveOutlined, ControlOutlined } from "@ant-design/icons";
+import React, { useState, useMemo } from "react";
+import { Flex, Card, Button, Typography, Form, Space, App, Tooltip, Segmented, Spin, Row, Col, Divider, Collapse, Alert, theme } from "antd";
+import { SettingOutlined, FileTextOutlined, FormatPainterOutlined, GlobalOutlined, ImportOutlined, SaveOutlined, ControlOutlined } from "@ant-design/icons";
 import { useTranslations } from "next-intl";
 import { useCopyToClipboard } from "@/app/hooks/useCopyToClipboard";
 import useFileUpload from "@/app/hooks/useFileUpload";
@@ -11,7 +11,7 @@ import { useLocalStorage } from "@/app/hooks/useLocalStorage";
 import { useTextStats } from "@/app/hooks/useTextStats";
 import { useExportFilename } from "@/app/hooks/useExportFilename";
 
-import { splitTextIntoLines, downloadFile, applyRemoveCharsToLines, describeError, isAbortError, isCascadedAbort, isNetworkError, getFileTypePresetConfig } from "@/app/utils";
+import { splitTextIntoLines, downloadFile, applyRemoveCharsToLines, describeError, getFileTypePresetConfig } from "@/app/utils";
 import {
   detectSubtitleFormat,
   getOutputFileExtension,
@@ -30,7 +30,6 @@ import {
 import { LLM_MODELS } from "@/app/lib/translation";
 import { transformSkippingSoftFilled } from "@/app/lib/translation/softFill";
 import { delay } from "@/app/lib/translation/retry";
-import { useLanguageOptions } from "@/app/components/languages";
 import LanguageSelector from "@/app/components/LanguageSelector";
 import ApiStatusBlock from "@/app/components/ApiStatusBlock";
 import ContextTranslationBlock from "@/app/components/ContextTranslationBlock";
@@ -38,21 +37,19 @@ import TranslationProgressStrip from "@/app/components/TranslationProgressStrip"
 import LiveTranslationResults from "./LiveTranslationResults";
 import { useTranslationContext } from "@/app/components/TranslationContext";
 import ResultCard from "@/app/components/ResultCard";
+import Section from "@/app/components/styled/Section";
 import BilingualReviewPanel from "./BilingualReviewPanel";
 import AdvancedTranslationSettings from "@/app/components/AdvancedTranslationSettings";
 import TranslateFailurePanel from "@/app/components/TranslateFailurePanel";
 
 import MultiLanguageSettingsModal from "@/app/components/MultiLanguageSettingsModal";
-import SourceArea from "@/app/components/SourceArea";
+import UploadSourceCard from "@/app/components/UploadSourceCard";
 
 import dynamic from "next/dynamic";
-import { useFileExport } from "@/app/hooks/useFileExport";
+import { useFileExport, describeExport } from "@/app/hooks/useFileExport";
 import { useLockExportFolder } from "@/app/components/ExportFolder";
-import { describeExport } from "@/app/hooks/useFileExport";
 const AssStyleDrawer = dynamic(() => import("./AssStyleDrawer"), { ssr: false });
 
-const { TextArea } = Input;
-const { Dragger } = Upload;
 const { Text } = Typography;
 
 const uploadFileTypes = getFileTypePresetConfig("subtitle");
@@ -61,24 +58,18 @@ const SubtitleTranslator = () => {
   const tSubtitle = useTranslations("SubtitleTranslator");
   const t = useTranslations("common");
 
-  const { sourceOptions } = useLanguageOptions();
   const { copyToClipboard } = useCopyToClipboard();
   // ... useFileUpload destructuring ...
+  const upload = useFileUpload("subtitle-translator");
   const {
     isFileProcessing,
-    fileList,
     multipleFiles,
     readFile,
     sourceText,
-    setSourceText,
     uploadMode,
     singleFileMode,
     setSingleFileMode,
-    handleFileUpload,
-    handleUploadRemove,
-    handleUploadChange,
-    resetUpload,
-  } = useFileUpload("subtitle-translator");
+  } = upload;
   // ... useTranslationContext destructuring ...
   const {
     exportSettings,
@@ -101,10 +92,8 @@ const SubtitleTranslator = () => {
     failedCount,
     failedLines,
     failedLangs,
-    setFailedLangs,
     failedReason,
     clearFailures,
-    markRunHadFailures,
     hadRunFailures,
     runHadFailures,
     runRetry,
@@ -112,23 +101,23 @@ const SubtitleTranslator = () => {
     getActiveTargetLangs,
     isDisposed,
     isTranslating,
-    setIsTranslating,
     resetProgress,
     liveLinesStore,
     clearLiveLines,
     recordLiveLine,
     progressPercent,
-    setProgressPercent,
     progressInfo,
     handleLanguageChange,
     handleSwapLanguages,
-    validate,
     requestCancel,
     isCancelRequested,
     retryCount,
     setRetryCount,
     requestTimeoutSec,
     setRequestTimeoutSec,
+    runBatchTranslation,
+    reportLangFailure,
+    noteFileFailure,
   } = useTranslationContext();
 
   // 运行中锁住页面级「导出目录」入口:写入是每个文件现读句柄,跑到一半改目录
@@ -137,8 +126,6 @@ const SubtitleTranslator = () => {
   const { message } = App.useApp();
   const exportFile = useFileExport();
   const { token } = theme.useToken();
-  const cardStyle: React.CSSProperties = { boxShadow: token.boxShadowTertiary };
-
 
   const sourceStats = useTextStats(sourceText);
   const resultStats = useTextStats(translatedText);
@@ -202,17 +189,6 @@ const SubtitleTranslator = () => {
   // 提取出的纯文本预览 — 只在 SubtitleTranslator 和 MDTranslator 用,
   // 不应该污染 TranslationProvider 的共享 state。
   const [extractedText, setExtractedText] = useState("");
-  // 批量翻译时统计失败文件数;handleMultipleTranslate 开始时重置,结束时读取以决定汇总消息。
-  // 单文件模式(runTranslation 路径)下也会被写,但不会被读,无副作用。
-  const failedFilesRef = useRef(0);
-  // 【记一次文件级失败,只走这一个入口】。此前是两套并行记账:failedFilesRef
-  // 只喂末尾的汇总 toast,markRunHadFailures 才是进度条能看见的信号 —— 结果
-  // 批量里第一个文件格式不支持时只 bump 了 ref,进度条照样打绿色「翻译完成
-  // 100%」,正压在「已导出 (4/5)」上面。合成一个函数,漏不掉。
-  const noteFileFailure = () => {
-    failedFilesRef.current++;
-    markRunHadFailures();
-  };
   // 记录最近一次写入 translatedText 时使用的扩展名,导出按钮按它生成文件名;
   // 避免用户翻译后改 exportMode/bilingualFormat,再点导出时扩展名跟内容错位
   const [translatedTextExt, setTranslatedTextExt] = useState<string | null>(null);
@@ -404,30 +380,8 @@ const SubtitleTranslator = () => {
           await delay(500);
         }
       } catch (error: unknown) {
-        console.error(error);
-
-        // Cascaded abort = peer auth error already aborted the controller;
-        // the real auth error surfaces via the matching peer rejection. Skip
-        // the noisy secondary toast.
-        if (isCascadedAbort(error)) continue;
-
-        hasFailedLang = true;
-        // De-duped: multi-file batch can fire catch for the same lang per file.
-        setFailedLangs((prev) => (prev.includes(currentTargetLang) ? prev : [...prev, currentTargetLang]));
-        const friendly = isNetworkError(error) ? t("networkUnavailable") : isAbortError(error) ? t("translationTimeout") : null;
-        const langLabel = sourceOptions.find((o) => o.value === currentTargetLang)?.label || currentTargetLang;
-        // Friendly messages already convey "translation failed" — drop the
-        // redundant `${t("translationError")}` suffix, keep langLabel in
-        // parentheses for multi-language context.
-        const content = friendly
-          ? `${friendly} (${langLabel})`
-          : needsBilingual
-            ? `${describeError(error, t)} ${tSubtitle("bilingualError")}`
-            : `${describeError(error, t)} ${langLabel} ${t("translationError")}`;
-
-        // Shared key: failed languages roll into one toast instead of stacking N high
-        // — the TranslateFailurePanel keeps the full per-lang list.
-        message.error({ content, key: "translate-lang-fail", duration: 10 });
+        // 双语产物失败时正文换成双语提示;级联中止不算失败(reportLangFailure 返回 false)。
+        if (reportLangFailure(error, currentTargetLang, needsBilingual ? `${describeError(error, t)} ${tSubtitle("bilingualError")}` : undefined)) hasFailedLang = true;
       }
     }
 
@@ -443,85 +397,6 @@ const SubtitleTranslator = () => {
     if (multiLanguageMode && multipleFiles.length <= 1 && !hasFailedLang && !isDisposed() && !isCancelRequested()) {
       const fileCount = exportMode === "both" ? targetLangs.length * 2 : targetLangs.length;
       message.success(`${t("translationExported")} (${fileCount} ${t("exportedFile")})`);
-    }
-  };
-
-  const handleMultipleTranslate = async () => {
-    if (multipleFiles.length === 0) {
-      message.error(tSubtitle("noFileUploaded"));
-      return;
-    }
-
-    // validate 不再自管 isTranslating, 这里用 try/finally 兜底,
-    // 让 progress modal 在 test ping → 文件循环之间保持连续可见。
-    setIsTranslating(true);
-    // resetProgress 而非裸 setProgressPercent(0):progressInfo 的
-    // {current,total,latest} 不清,投影弹窗会在新一轮首行返回前(LLM 批次
-    // 可达 20-60s)一直放映【上一轮】的最终计数和最后一句译文。
-    resetProgress();
-    // 批量路径:整批文件开跑前清掉实时行(单文件路径由 runTranslation →
-    // performTranslation 的 clearLiveLines 清)。
-    clearLiveLines();
-    failedFilesRef.current = 0;
-    // Batch path doesn't go through the hook's runTranslation — reset ALL failure
-    // state (not just langs) so counts don't accumulate across runs and the failure
-    // warning re-fires on a fresh batch.
-    clearFailures();
-
-    try {
-      const isValid = await validate();
-      if (!isValid) return;
-
-      for (let i = 0; i < multipleFiles.length; i++) {
-        const currentFile = multipleFiles[i];
-        await new Promise<void>((resolve) => {
-          readFile(
-            currentFile,
-            async (text) => {
-              await performTranslation(text, currentFile.name, i, multipleFiles.length);
-              await delay(1500);
-              resolve();
-            },
-            // Decode/read failure: mark this file failed (so succeeded=total-failed is
-            // accurate) and unblock the loop.
-            () => {
-              noteFileFailure();
-              resolve();
-            }
-          );
-        });
-        // 中途导航离开:后续文件只会逐个快速级联失败,汇总 toast 也会弹在
-        // 用户切去的页面上 —— 直接收工。取消同理:requestCancel 已弹过提示,
-        // 「已导出 (n/m)」的汇总只会把一次主动喊停说成一次半失败。
-        if (isDisposed() || isCancelRequested()) return;
-      }
-
-      // 非取消结束时把进度钉到 100%,与 JSONTranslator 一致。
-      // 不钉的话:批量里有文件被跳过(格式不支持 / 解码失败)时,makeUpdateProgress
-      // 只走到 (成功文件数/总数)*100 —— 进度条据 percent<100 判为 stopped,对着一次
-      // 用户【没有】取消的运行打「已停止」,并且把 failed / lineFailures 两个信号
-      // 整个丢掉(doneWithFailures 以 done 为前提)。那正是 noteFileFailure 与
-      // translateDoneIncomplete 要覆盖的场景。
-      // 取消的 run 不钉:钉上去等于替一次主动喊停亮绿灯(DONE 态派生自 percent>=100)。
-      // `p > 0 ? 100 : p` 与 runTranslation 的单文件钉【同一条规则】:批量里
-      // 每个文件都在发请求前就失败时(格式不支持 / 解码失败),makeUpdateProgress
-      // 从未跑过、percent 恒为 0,无条件钉会显示 100% 的琥珀色「INCOMPLETE」——
-      // 声称有行保留了原文,而失败面板是空的。进度动过才钉。
-      if (!isCancelRequested()) setProgressPercent((p) => (p > 0 ? 100 : p));
-      // 部分/全失败时不报"已导出"(per-file error toast 已经告知细节),只在有成功时显示汇总。
-      // hadRunFailures() 覆盖行级软失败:provider 整体故障时文件"导出成功"但内容
-      // 是原文副本 —— 绿色成功 toast 会跟失败面板自相矛盾,降级为 warning。
-      const total = multipleFiles.length;
-      const failed = failedFilesRef.current;
-      const succeeded = total - failed;
-      if (failed === 0 && !hadRunFailures()) {
-        message.success(t("translationExported"), 10);
-      } else if (succeeded > 0) {
-        message.warning(`${t("translationExported")} (${succeeded}/${total})`, 10);
-      }
-      // 全失败:per-file error toast 已显示,无需再叠加 message
-    } finally {
-      setIsTranslating(false);
     }
   };
 
@@ -581,67 +456,7 @@ const SubtitleTranslator = () => {
       <Row gutter={[24, 24]}>
         {/* Left Column: Upload and Main Actions */}
         <Col xs={24} lg={14} xl={15}>
-          <Card
-            title={
-              <Space>
-                <InboxOutlined /> {t("sourceArea")}
-              </Space>
-            }
-            extra={
-              <Tooltip title={t("resetUploadTooltip")}>
-                <Button
-                  type="text"
-                  danger
-                  disabled={isTranslating}
-                  onClick={() => {
-                    resetUpload();
-                    clearResults();
-                    message.success(t("resetUploadSuccess"));
-                  }}
-                  icon={<ClearOutlined />}
-                  aria-label={t("clearAll")}>
-                  {t("clearAll")}
-                </Button>
-              </Tooltip>
-            }
-            style={cardStyle}>
-            <Dragger
-              disabled={isTranslating}
-              customRequest={({ file }) => {
-                clearResults();
-                handleFileUpload(file as File);
-              }}
-              accept={uploadFileTypes.accept}
-              multiple={!singleFileMode}
-              showUploadList
-              beforeUpload={singleFileMode ? resetUpload : undefined}
-              onRemove={(file) => {
-                clearResults();
-                return handleUploadRemove(file);
-              }}
-              onChange={handleUploadChange}
-              fileList={fileList}>
-              <p className="ant-upload-drag-icon">
-                <InboxOutlined />
-              </p>
-              <p className="ant-upload-text">{t("dragAndDropText")}</p>
-              <p className="ant-upload-hint">
-                {t("supportedFormats")} {uploadFileTypes.label}
-              </p>
-            </Dragger>
-
-            {uploadMode === "single" && (
-              <SourceArea
-                textDirection="auto"
-                locked={isTranslating}
-                sourceText={sourceText}
-                setSourceText={setSourceText}
-                stats={sourceStats}
-                placeholder={t("pasteUploadContent")}
-                ariaLabel={t("sourceArea")}
-                className="mt-1"
-              />
-            )}
+          <UploadSourceCard upload={upload} stats={sourceStats} fileTypes={uploadFileTypes} multiFile textDirection="auto" locked={isTranslating} onClear={clearResults} onSourceChange={clearResults}>
 
             <Divider />
 
@@ -651,7 +466,7 @@ const SubtitleTranslator = () => {
                 size="large"
                 icon={<GlobalOutlined spin={isTranslating} />}
                 className="flex-1"
-                onClick={() => (uploadMode === "single" ? runTranslation(performTranslation, sourceText, contextAware ? "subtitle" : undefined) : handleMultipleTranslate())}
+                onClick={() => (uploadMode === "single" ? runTranslation(performTranslation, sourceText, contextAware ? "subtitle" : undefined) : runBatchTranslation(performTranslation, multipleFiles, readFile, tSubtitle("noFileUploaded")))}
                 disabled={isTranslating}
                 loading={isTranslating}>
                 {multiLanguageMode ? `${t("translate")} (${targetLanguages.length})` : t("translate")}
@@ -685,14 +500,13 @@ const SubtitleTranslator = () => {
                 凭据(停在第几行、还能不能续),所以那条自己管自己的 ✕。
                 失败行以琥珀「未译出」标记,细节归下方失败面板。 */}
             {isTranslating && <LiveTranslationResults store={liveLinesStore} processedCount={progressInfo.current} />}
-          </Card>
+          </UploadSourceCard>
         </Col>
 
         {/* Right Column: Settings and Configuration */}
         <Col xs={24} lg={10} xl={9}>
           <Card
             title={<Space><SettingOutlined /> {t("configuration")}</Space>}
-            style={cardStyle}
             extra={
               <Space>
                 <Tooltip title={t("exportSettingTooltip")}>
@@ -763,16 +577,7 @@ const SubtitleTranslator = () => {
                     </Space>
                   ),
                   children: (
-                    <div
-                      style={{
-                        padding: token.paddingSM,
-                        background: "transparent",
-                        border: `1px solid ${token.colorBorderSecondary}`,
-                        borderRadius: token.borderRadiusLG,
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: token.marginXS,
-                      }}>
+                    <Section noGap style={{ display: "flex", flexDirection: "column", gap: token.marginXS }}>
                       {sourceText.trim() && sourceFileType === "error" && (
                         <Alert type="warning" showIcon title={tSubtitle("unsupportedSub")} />
                       )}
@@ -850,7 +655,7 @@ const SubtitleTranslator = () => {
                           </Button>
                         </Tooltip>
                       )}
-                    </div>
+                    </Section>
                   ),
                 },
                 {
@@ -892,7 +697,7 @@ const SubtitleTranslator = () => {
         failedLangs={failedLangs}
         reason={failedReason}
         disabled={isTranslating}
-        onRetry={() => runRetry(() => (uploadMode === "single" ? runTranslation(performTranslation, sourceText, contextAware ? "subtitle" : undefined) : handleMultipleTranslate()))}
+        onRetry={() => runRetry(() => (uploadMode === "single" ? runTranslation(performTranslation, sourceText, contextAware ? "subtitle" : undefined) : runBatchTranslation(performTranslation, multipleFiles, readFile, tSubtitle("noFileUploaded"))))}
       />
 
       {/* Results Section */}
@@ -904,9 +709,8 @@ const SubtitleTranslator = () => {
                 <ResultCard
                   textDirection="auto"
                   title={t("translationResult")}
-                  content={resultStats.displayText}
-                  charCount={resultStats.charCount}
-                  lineCount={resultStats.lineCount}
+                  content={translatedText}
+                  stats={resultStats}
                   onCopy={() => copyToClipboard(translatedText)}
                   onExport={handleExportFile}
                 />
@@ -915,21 +719,7 @@ const SubtitleTranslator = () => {
 
             {extractedText && (
               <Col xs={24} lg={translatedText ? 12 : 24}>
-                <Card
-                  title={
-                    <Space>
-                      <FileTextOutlined /> {t("extractedText")}
-                    </Space>
-                  }
-                  className="h-full"
-                  style={{ boxShadow: token.boxShadowTertiary }}
-                  extra={
-                    <Button type="text" icon={<CopyOutlined />} onClick={() => copyToClipboard(extractedText)}>
-                      {t("copy")}
-                    </Button>
-                  }>
-                  <TextArea value={extractedText} rows={10} readOnly dir="auto" aria-label={t("extractedText")} />
-                </Card>
+                <ResultCard title={t("extractedText")} content={extractedText} textDirection="auto" showStats={false} onCopy={() => copyToClipboard(extractedText)} />
               </Col>
             )}
           </Row>

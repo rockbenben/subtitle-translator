@@ -12,7 +12,7 @@
 
 // Use local API for: dev mode OR Docker (USE_LOCAL_API=true)
 // Use remote API for: static export (production without USE_LOCAL_API)
-export const useLocalApi = process.env.NODE_ENV === "development" || process.env.NEXT_PUBLIC_USE_LOCAL_API === "true";
+const useLocalApi = process.env.NODE_ENV === "development" || process.env.NEXT_PUBLIC_USE_LOCAL_API === "true";
 
 // Cloudflare Worker that proxies all OpenAI-compatible providers + Claude,
 // strips CORS, forwards Authorization/x-api-key/anthropic-version headers, and

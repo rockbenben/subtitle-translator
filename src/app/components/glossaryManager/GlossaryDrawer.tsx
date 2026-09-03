@@ -6,7 +6,7 @@ import { PlusOutlined, DeleteOutlined, UploadOutlined, DownloadOutlined, SearchO
 import { useTranslations } from "next-intl";
 import { useTranslationContext } from "@/app/components/TranslationContext";
 import { languages } from "@/app/lib/translation/languages-data";
-import { decodeFileBytes, getErrorMessage } from "@/app/utils";
+import { readTextFile, getErrorMessage } from "@/app/utils";
 import { mergeImportedTerms, parseGlossaryTsv, type GlossaryTerm } from "@/app/lib/translation/glossary";
 import { useFileExport } from "@/app/hooks/useFileExport";
 
@@ -96,14 +96,11 @@ const GlossaryDrawer = ({ open, onClose }: { open: boolean; onClose: () => void 
   // 语义(可选第 3 列语言码、merge-don't-wipe、大小写敏感 overlay)在
   // glossary.ts 的纯函数里,带单测。
   const importTsv = (file: File) => {
-    const reader = new FileReader();
-    // readAsArrayBuffer + decodeFileBytes 而非 readAsText:readAsText 只按
-    // UTF-8 解,中文 Windows 上 Excel 导出的 ANSI/GBK TSV 会被解成 U+FFFD
-    // 乱码,parse 后仍通过 source/target 非空过滤 —— 损坏的词条被【静默
-    // 持久化】还报导入成功,翻译时术语永远匹配不上。
-    reader.onload = async () => {
-      try {
-        const text = await decodeFileBytes(reader.result as ArrayBuffer);
+    // readTextFile(decodeFileBytes)而非 readAsText:readAsText 只按 UTF-8 解,中文
+    // Windows 上 Excel 导出的 ANSI/GBK TSV 会被解成 U+FFFD 乱码,parse 后仍通过
+    // source/target 非空过滤 —— 损坏的词条被【静默持久化】还报导入成功,翻译时术语永远匹配不上。
+    readTextFile(file)
+      .then((text) => {
         const parsed = parseGlossaryTsv(text, selectedLang, LANG_VALUES);
         if (saveTerms(mergeImportedTerms(allTerms, parsed))) {
           message.success(t("importDone", { count: parsed.length }));
@@ -111,18 +108,15 @@ const GlossaryDrawer = ({ open, onClose }: { open: boolean; onClose: () => void 
           // 活动预设已不存在(被另一标签页删除)——什么都没保存,不能报成功
           message.error(t("presetEmptyHint"));
         }
-      } catch (error) {
+      })
+      .catch((error: unknown) => {
         console.error("Glossary import failed:", error);
         // 【带上原始消息】,同 useFileUpload 的理由:decodeFileBytes 判不出编码时
         // 抛的是一句可操作的指引("re-save the file as UTF-8"),裸 fileReadFailed
         // 把它整个吞掉。这里比翻译工具更需要它 —— 中文 Windows 上 Excel 导出的
         // GBK TSV 正是这个功能存在的场景,而本抽屉连编码回退都没有。
         message.error(`${tCommon("fileReadFailed")}: ${getErrorMessage(error)}`);
-      }
-    };
-    // Don't swallow a failed read (locked file, odd encoding) silently.
-    reader.onerror = () => message.error(tCommon("fileReadFailed"));
-    reader.readAsArrayBuffer(file);
+      });
     return false;
   };
 

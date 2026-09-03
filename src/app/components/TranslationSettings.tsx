@@ -356,7 +356,7 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
 
       {/* ========== Credentials group ========== */}
       {(config?.url !== undefined || config?.apiKey !== undefined || config?.region !== undefined || config?.folderId !== undefined || config?.apiVersion !== undefined || config?.useRelay !== undefined) && (
-        <Section variant="neutral" style={{ marginTop: 16 }} noGap>
+        <Section style={{ marginTop: 16 }} noGap>
           <Text strong style={{ display: "block", marginBottom: 8 }}>
             {t("credentialsGroup")}
           </Text>
@@ -596,7 +596,7 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
 
       {/* ========== Model group ========== */}
       {(config?.model !== undefined || config?.temperature !== undefined || (isLLMModel && config?.maxTokens !== undefined) || showThinkingControl || config?.domains !== undefined || config?.sendSystemPrompt !== undefined) && (
-        <Section variant="neutral" style={{ marginTop: 16 }} noGap>
+        <Section style={{ marginTop: 16 }} noGap>
           <Text strong style={{ display: "block", marginBottom: 8 }}>
             {t("modelGroup")}
           </Text>
@@ -768,7 +768,7 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
         (isLLMModel && config?.contextWindow !== undefined) ||
         (isLLMModel && config?.contextBatchSize !== undefined) ||
         config?.delayTime !== undefined) && (
-        <Section variant="neutral" style={{ marginTop: 16 }} noGap>
+        <Section style={{ marginTop: 16 }} noGap>
           <Text strong style={{ display: "block", marginBottom: 8 }}>
             {t("callParamsGroup")}
           </Text>

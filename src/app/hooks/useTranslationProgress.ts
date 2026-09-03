@@ -216,7 +216,6 @@ export const useTranslationProgress = () => {
     progressPercent,
     setProgressPercent,
     progressInfo,
-    setProgressInfo,
     abortControllerRef,
     disposedRef,
     makeUpdateProgress,

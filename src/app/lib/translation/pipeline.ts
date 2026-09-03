@@ -27,7 +27,7 @@ import { generateCacheKey, generateCacheSuffix } from "./cache";
 import { cleanTranslatedText, splitTextIntoChunks } from "./utils";
 import { DEFAULT_SYSTEM_PROMPT, DEFAULT_USER_PROMPT } from "./config";
 import { applyGlossaryToText, buildGlossaryPromptBlock, buildStrictGlossaryPromptBlock, filterTermsMatchingText, findGlossaryViolations, type GlossaryTerm } from "./glossary";
-import { getRetryConfig, rateLimitGate, abortableSleep, isAuthError, isRetryableError, DEFAULT_BATCH_SIZE, DEFAULT_RETRY_COUNT, DEFAULT_RETRY_TIMEOUT, type UserRetryConfig } from "./retry";
+import { getRetryConfig, rateLimitGate, abortableSleep, isAuthError, isRetryableError, DEFAULT_BATCH_SIZE, DEFAULT_RETRY_COUNT, DEFAULT_RETRY_TIMEOUT } from "./retry";
 // 自托管的那几家（llm / translategemma / milmmt）跑在本地运行时上，超时的主导
 // 原因不是网络/云服务，而是请求在单槽服务器上排队、或模型卡在复读循环，
 // 所以给专门的提示而不是通用的“服务慢，换一个”。
@@ -80,13 +80,6 @@ export interface PipelineDeps {
   onProgress?: (current: number, total: number) => void;
   /** One notice per 429 cooldown burst (rateLimitGate.trip returned true). */
   onRateLimit?: () => void;
-  /**
-   * Single-line standalone calls only: an auth error must ALSO abort the
-   * caller's shared run controller so peer lines in a tool-driven loop die too
-   * (inside translateLines the run controller is pipeline-internal and this is
-   * not needed).
-   */
-  onAuthAbort?: () => void;
   /** Run-scoped glossary snapshot (see the hook's glossarySnapshotRef). Absent = no glossary. */
   getGlossaryTerms?: (targetLang: string) => GlossaryTerm[];
   /**
@@ -306,7 +299,6 @@ type RunCtx = {
   shouldStop: () => boolean;
   onProgress?: (current: number, total: number) => void;
   onRateLimit?: () => void;
-  onAuthAbort?: () => void;
   getGlossaryTerms: (targetLang: string) => GlossaryTerm[];
   /** Live per-line stream (batch-level, from TranslateBatchMeta.onLineTranslated). */
   emitLine?: (result: LineTranslatedEvent) => void;
@@ -334,7 +326,7 @@ const HAS_TRANSLATABLE_CONTENT = /[a-zA-Z\p{L}]/u;
 
 // Services whose responses HTML-encode characters (Google NMT backends) —
 // the only ones whose output should be entity-unescaped. See translateCore.
-const HTML_ENCODING_METHODS: ReadonlySet<string> = new Set(["gtxFreeAPI", "google", "webgoogletranslate"]);
+const HTML_ENCODING_METHODS: ReadonlySet<string> = new Set(["gtxFreeAPI", "google"]);
 
 /**
  * Translate text using the specified method. Throws on error to allow retry
@@ -408,8 +400,7 @@ const translateSingle = async (text: string, cacheSuffix: string, config: Pipeli
 
   const retryCount = config.retryCount ?? DEFAULT_RETRY_COUNT;
   const requestTimeoutSec = config.requestTimeoutSec ?? DEFAULT_RETRY_TIMEOUT;
-  const userRetryConfig: UserRetryConfig = { retryCount, requestTimeoutSec };
-  const retryConfig = getRetryConfig(config.translationMethod, userRetryConfig);
+  const retryConfig = getRetryConfig(config.translationMethod, { retryCount });
   const timeoutMs = requestTimeoutSec * 1000;
 
   // Create per-request abort controller with timeout
@@ -434,7 +425,8 @@ const translateSingle = async (text: string, cacheSuffix: string, config: Pipeli
   // Build translate params - pick defined optional fields from config.
   // reasoningEffort is derived per-call from the thinkingEffort record
   // (presence of entry for current model = effort, absence = thinking off).
-  const optionalFields = ["useCache", "apiKey", "region", "url", "model", "apiVersion", "folderId", "temperature", "maxTokens", "systemPrompt", "userPrompt", "sendSystemPrompt", "useRelay", "relayBase", "domains"] as const;
+  // satisfies:每个名字必须真是 TranslateTextParams 的键,改名/删字段时这里编译失败,不再是第三份手抄清单。
+  const optionalFields = ["useCache", "apiKey", "region", "url", "model", "apiVersion", "folderId", "temperature", "maxTokens", "systemPrompt", "userPrompt", "sendSystemPrompt", "useRelay", "relayBase", "domains"] as const satisfies readonly (keyof TranslateTextParams)[];
   const extras: Record<string, unknown> = {};
   const configRecord = config as unknown as Record<string, unknown>;
   for (const key of optionalFields) {
@@ -529,13 +521,8 @@ const translateSingle = async (text: string, cacheSuffix: string, config: Pipeli
 
           // Auth error → abort all concurrent requests OF THIS RUN. Aborting
           // a live ref instead would let a ghost task from a dead run kill
-          // a healthy successor run. onAuthAbort additionally trips the
-          // caller's SHARED controller on standalone single-line calls
-          // (tool-driven loops) — inside translateLines it is not set.
-          if (isAuthError(error)) {
-            run?.abort();
-            ctx.onAuthAbort?.();
-          }
+          // a healthy successor run.
+          if (isAuthError(error)) run?.abort();
           // 429 → 触发该服务的全局冷却(尊重服务器 Retry-After,否则
           // 1s→2s→…→60s 升级)。trip 仅在【开启】一轮冷却时返回 true
           // (同一波并发 429 只第一个生效),据此通知一次降速(onRateLimit)——
@@ -759,7 +746,7 @@ const translateWithContext = async (
         {
           ...runtimeConfig,
           // The built prompt retains the literal ${content} placeholder — the
-          // marker block (params.text) is inserted LAST by getAIModelPrompt's
+          // marker block (params.text) is inserted LAST by getAIModelPromptParts's
           // function-form replacement, after all template variables resolved.
           userPrompt: buildContextPrompt(runtimeConfig.userPrompt ?? DEFAULT_USER_PROMPT, batchEnd - batchStart, documentType),
         },
@@ -1090,7 +1077,7 @@ const translateWithContext = async (
       // line = real 1-based source position (meta.lineNumbers maps slot i back to
       // the physical line when contentLines is filtered/derived, else ordinal);
       // lang lets the panel tag which target this line failed under in batch runs.
-      if (original && original.trim()) failedLinesList.push({ text: original, line: meta?.lineNumbers?.[i] ?? i + 1, index: i, lang: runtimeConfig.targetLanguage, file: meta?.fileName });
+      if (original && original.trim()) failedLinesList.push({ text: original, line: failureLine(runtimeConfig, meta, i), index: i, lang: runtimeConfig.targetLanguage, file: meta?.fileName });
     }
   }
 
@@ -1157,8 +1144,6 @@ const runTranslateLines = async (
     shouldStop: deps.shouldStop ?? (() => false),
     onProgress: deps.onProgress,
     onRateLimit: deps.onRateLimit,
-    // NOT deps.onAuthAbort: inside translateLines the run controller is
-    // pipeline-internal; aborting it already tears down every peer of THIS run.
     // 实时流的【唯一接缝】—— 两件横切的事都在这里做一遍,不在四个发射点各写
     // 一遍(发射点还会增加:现在是行路径 / 上下文批 / 上下文缓存补发 / chunk
     // 块,漏一个的症状都只在特定文件上才看得见):
@@ -1475,7 +1460,7 @@ const runTranslateLines = async (
     // non-blank line by construction, so no blank ever shows up in the panel.
     for (const k of failedK) {
       const i = sourceIdx[k];
-      failedChunkLines.push({ text: contentLines[i], line: meta?.lineNumbers?.[i] ?? i + 1, index: i, lang: config.targetLanguage, file: meta?.fileName });
+      failedChunkLines.push({ text: contentLines[i], line: failureLine(config, meta, i), index: i, lang: config.targetLanguage, file: meta?.fileName });
     }
     failures.push(...failedChunkLines);
 
@@ -1523,7 +1508,7 @@ const runTranslateLines = async (
  * Core reachability probe: runs one real "Hello, world!" translation and THROWS
  * on failure, so callers can classify the error (transient vs definitive). Used
  * by the translator's smart pre-flight gate (web validate(), CLI pre-flight);
- * testTranslation wraps it for the boolean API the "Test Connection" buttons use.
+ * testTranslationWithTimeout wraps it for the "Test Connection" buttons.
  * 住在 pipeline(而非 barrel)是为了 Node 可用:barrel 带 "use client" 与
  * IndexedDB,CLI 导不进来。
  */

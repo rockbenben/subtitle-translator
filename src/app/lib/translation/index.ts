@@ -1,4 +1,4 @@
-// Translation barrel: re-exports submodules + top-level testTranslation /
+// Translation barrel: re-exports submodules + top-level testTranslationWithTimeout /
 // translateText / useTranslation orchestration.
 
 "use client";
@@ -19,41 +19,15 @@ export * from "./pipeline";
 export { translationServices } from "./services";
 export { completeOpenAICompatUrl, RELAY_HINT_MARKER, LLM_RELAY_BASE, isValidRelayBase, usesBuiltinRelay } from "./services/shared";
 
-/**
- * Test translation with a given method and config for the manual "Test Connection"
- * UI. Returns `null` on success, or the caught ERROR OBJECT \u2014 callers render it
- * via describeError(error, t), which keeps the raw reason ("[403] \u2026", "Failed to
- * fetch") AND appends the status-mapped localized hint (common.errorHint*). \u8fd4\u56de
- * \u5bf9\u8c61\u800c\u975e message \u5b57\u7b26\u4e32,\u662f\u4e3a\u4e86\u628a .status \u5e26\u5230\u5c55\u793a\u5c42 \u2014\u2014 i18n \u63d0\u793a\u6309\u5b83\u67e5\u952e\u3002
- */
-export const testTranslation = async (translationMethod: TranslationMethod, config: Partial<TranslateTextParams>, systemPrompt?: string, userPrompt?: string, signal?: AbortSignal): Promise<unknown | null> => {
-  try {
-    const result = await runReachabilityProbe(translationMethod, config, systemPrompt, userPrompt, signal);
-    // Probe target is zh, so result should contain Chinese \u2014 warn (not fail) if not.
-    if (!/[\u4e00-\u9fa5]/.test(result)) {
-      console.warn("Translation result does not contain Chinese characters, may not have actually translated:", result);
-    }
-    // Warn if result is identical to source (possible translation failure)
-    if (result === "Hello, world!") {
-      console.warn("Translation returned original text unchanged, may indicate translation service issue");
-    }
-    return null;
-  } catch (error) {
-    console.error("Translation Test failed", error);
-    return error ?? new Error("Unknown test failure");
-  }
-};
 
 /**
- * 两个「测试连接」按钮(ApiStatusBlock / TranslationSettings)的共用入口:
- * testTranslation + 超时控制 + thinking 参数派生,一处实现。
+ * 两个「测试连接」按钮(ApiStatusBlock / TranslationSettings)的共用入口:可达性探测 + 超时控制 +
+ * thinking 参数派生,一处实现。返回 { error, timedOut }:error 为原始错误【对象】而非 message ——
+ * 展示层经 describeError 渲染,保留 .status 让 i18n 提示按它查键;timedOut 让调用方把中止归类为
+ * "测试超时"而不是裸 abort 文案。
  *
- * 超时取调用方传入的 requestTimeoutSec —— 与正式翻译同源。原则(同
- * retry.ts 的 preflight gate):Test 不得比它守护的翻译更严格;30s 硬编码
- * 曾让"慢速本地思考模型"(思考半分钟才出首字)测试假阴性、翻译却能跑。
- *
- * 返回 { error, timedOut }:timedOut 让调用方把中止归类为"测试超时",
- * 而不是裸 abort 文案;error 为原始错误对象(展示层经 describeError 渲染)。
+ * 超时取调用方传入的 requestTimeoutSec —— 与正式翻译同源。原则(同 retry.ts 的 preflight gate):
+ * Test 不得比它守护的翻译更严格;30s 硬编码曾让"慢速本地思考模型"(思考半分钟才出首字)测试假阴性、翻译却能跑。
  */
 export const testTranslationWithTimeout = async (
   translationMethod: TranslationMethod,
@@ -77,8 +51,11 @@ export const testTranslationWithTimeout = async (
     controller.abort();
   }, timeoutSec * 1000);
   try {
-    const error = await testTranslation(translationMethod, testParams, systemPrompt, userPrompt, controller.signal);
-    return { error, timedOut };
+    await runReachabilityProbe(translationMethod, testParams, systemPrompt, userPrompt, controller.signal);
+    return { error: null, timedOut };
+  } catch (error) {
+    console.error("Translation Test failed", error);
+    return { error: error ?? new Error("Unknown test failure"), timedOut };
   } finally {
     clearTimeout(timeout);
   }

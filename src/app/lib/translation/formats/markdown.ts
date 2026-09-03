@@ -42,9 +42,9 @@ const placeholderPattern =
  * 预编译的正则表达式（基于 placeholderPattern 创建，模块加载时初始化一次）
  */
 /** 分割文本与占位符（保留分隔符） */
-export const PLACEHOLDER_SPLIT_REGEX = new RegExp(`(<<<(?:${placeholderPattern})>>>)`);
+const PLACEHOLDER_SPLIT_REGEX = new RegExp(`(<<<(?:${placeholderPattern})>>>)`);
 /** 完全匹配占位符 */
-export const PLACEHOLDER_TEST_REGEX = new RegExp(`^<<<(?:${placeholderPattern})>>>$`);
+const PLACEHOLDER_TEST_REGEX = new RegExp(`^<<<(?:${placeholderPattern})>>>$`);
 /** 全局替换占位符 */
 export const PLACEHOLDER_REPLACE_REGEX = new RegExp(`<<<(?:${placeholderPattern})>>>`, "g");
 /**
@@ -205,15 +205,14 @@ export const filterMarkdownLines = (lines: string[], mdOptions: MarkdownOptions)
     counterSeed = Math.max(counterSeed, Number(m[1]) + 1);
   }
 
-  let frontmatterCounter = counterSeed;
-  let codeCounter = counterSeed;
-  let linkCounter = counterSeed;
-  let headingCounter = counterSeed;
-  let listCounter = counterSeed;
-  let blockquoteCounter = counterSeed;
-  let latexBlockCounter = counterSeed;
-  let latexInlineCounter = counterSeed;
-  let htmlCounter = counterSeed;
+  // 序号按【家族】共享:CODE 与 MULTILINE_CODE、LINK 与 LINK_PRE/LINK_SUF 各用同一个序号池。
+  const counters = { frontmatter: counterSeed, code: counterSeed, link: counterSeed, heading: counterSeed, list: counterSeed, blockquote: counterSeed, latexBlock: counterSeed, latexInline: counterSeed, html: counterSeed };
+  // 分配一个占位符并登记它替换掉的原文,返回占位符(曾经在 14 处各手写四行)。
+  const store = (map: Record<string, string>, kind: string, family: keyof typeof counters, value: string): string => {
+    const placeholder = `<<<${kind}_${counters[family]++}>>>`;
+    map[placeholder] = value;
+    return placeholder;
+  };
 
   // 合并所有行，处理多行 frontmatter 和代码块
   let fullText = lines.join("\n");
@@ -228,10 +227,7 @@ export const filterMarkdownLines = (lines: string[], mdOptions: MarkdownOptions)
       // YAML 注释行(#…)开头的 frontmatter 也合法 —— 只认 key: 会把整块
       // frontmatter 误判成正文送翻译(YAML 键被翻译、# 注释被改写)。
       if (!/^["'\w-]+\s*:|^#/.test(firstLine)) return match;
-      const placeholder = `<<<FRONTMATTER_${frontmatterCounter}>>>`;
-      frontmatterPlaceholders[placeholder] = match;
-      frontmatterCounter++;
-      return placeholder;
+      return store(frontmatterPlaceholders, "FRONTMATTER", "frontmatter", match);
     });
   }
 
@@ -242,10 +238,7 @@ export const filterMarkdownLines = (lines: string[], mdOptions: MarkdownOptions)
   // 行首会让所有列表内代码块完全失去保护)。
   if (!mdOptions.translateMultilineCode) {
     const storeFence = (match: string) => {
-      const placeholder = `<<<MULTILINE_CODE_${codeCounter}>>>`;
-      codePlaceholders[placeholder] = match;
-      codeCounter++;
-      return placeholder;
+      return store(codePlaceholders, "MULTILINE_CODE", "code", match);
     };
     // 单趟行扫描按【文档顺序】配对围栏(CommonMark 语义):
     //   - 开栏 = ≥3 个同种字符;反引号栏的 info string 不得含反引号(规范
@@ -315,10 +308,7 @@ export const filterMarkdownLines = (lines: string[], mdOptions: MarkdownOptions)
   // 跨占位符配对,中间散文整段被吞 —— 输出与源文逐字节相同却报成功
   // (LaTeX 块同款守卫,见下)。
   fullText = protectHtmlComments(fullText, (match) => {
-    const placeholder = `<<<HTML_${htmlCounter}>>>`;
-    htmlPlaceholders[placeholder] = match;
-    htmlCounter++;
-    return placeholder;
+    return store(htmlPlaceholders, "HTML", "html", match);
   });
 
   // latex 公式块。三道 guard,皆因真实公式不会包含这些:
@@ -331,10 +321,7 @@ export const filterMarkdownLines = (lines: string[], mdOptions: MarkdownOptions)
   //    + "A closing $$")曾跨围栏配对,两段散文连同围栏被吞进假公式。
   if (!mdOptions.translateLatex) {
     fullText = fullText.replace(LATEX_BLOCK_RE, (match) => {
-      const placeholder = `<<<LATEX_BLOCK_${latexBlockCounter}>>>`;
-      latexBlockPlaceholders[placeholder] = match;
-      latexBlockCounter++;
-      return placeholder;
+      return store(latexBlockPlaceholders, "LATEX_BLOCK", "latexBlock", match);
     });
   }
 
@@ -346,10 +333,7 @@ export const filterMarkdownLines = (lines: string[], mdOptions: MarkdownOptions)
 
     // 内联代码(线性扫描,见 protectInlineCode 注释 —— 不能用嵌套量词正则)
     modifiedLine = protectInlineCode(modifiedLine, (span) => {
-      const placeholder = `<<<CODE_${codeCounter}>>>`;
-      codePlaceholders[placeholder] = span;
-      codeCounter++;
-      return placeholder;
+      return store(codePlaceholders, "CODE", "code", span);
     });
 
     // 处理内联 LaTeX 公式，但避免识别货币符号
@@ -364,10 +348,7 @@ export const filterMarkdownLines = (lines: string[], mdOptions: MarkdownOptions)
         if (/^[\s\d,.]+$/.test(content) && !content.includes("\\")) {
           return match; // 保持货币符号不变
         }
-        const placeholder = `<<<LATEX_INLINE_${latexInlineCounter}>>>`;
-        latexInlinePlaceholders[placeholder] = match;
-        latexInlineCounter++;
-        return placeholder;
+        return store(latexInlinePlaceholders, "LATEX_INLINE", "latexInline", match);
       });
     }
 
@@ -381,17 +362,11 @@ export const filterMarkdownLines = (lines: string[], mdOptions: MarkdownOptions)
     // \{ 在属性起始集里:JSX/MDX 的展开属性 <Component {...props}/> 在守卫
     // 加固前是受保护的,不放行会把它当散文送翻。
     modifiedLine = modifiedLine.replace(HTML_SELF_CLOSING_RE, (match) => {
-      const placeholder = `<<<HTML_${htmlCounter}>>>`;
-      htmlPlaceholders[placeholder] = match;
-      htmlCounter++;
-      return placeholder;
+      return store(htmlPlaceholders, "HTML", "html", match);
     });
     // 匹配结束标签 </tag>
     modifiedLine = modifiedLine.replace(/<\/([a-zA-Z][a-zA-Z0-9-]*)>/g, (match) => {
-      const placeholder = `<<<HTML_${htmlCounter}>>>`;
-      htmlPlaceholders[placeholder] = match;
-      htmlCounter++;
-      return placeholder;
+      return store(htmlPlaceholders, "HTML", "html", match);
     });
     // 匹配开始标签 <tag ...> 或 <tag>。属性段必须以合法属性名字符
     // ([a-zA-Z_:],外加 @/# 容纳 Vue 的 @click / #slot 速记)或自闭合 /
@@ -403,10 +378,7 @@ export const filterMarkdownLines = (lines: string[], mdOptions: MarkdownOptions)
     // 损坏的属性(CommonMark 明文允许引号值内出现 >)。未闭合引号按规范
     // 不是标签,整段保持可译散文。
     modifiedLine = modifiedLine.replace(HTML_OPEN_TAG_RE, (match) => {
-      const placeholder = `<<<HTML_${htmlCounter}>>>`;
-      htmlPlaceholders[placeholder] = match;
-      htmlCounter++;
-      return placeholder;
+      return store(htmlPlaceholders, "HTML", "html", match);
     });
 
     // 图片 - 始终翻译 alt 文本。URL 段允许一层嵌套括号(维基百科式
@@ -415,17 +387,14 @@ export const filterMarkdownLines = (lines: string[], mdOptions: MarkdownOptions)
     modifiedLine = modifiedLine.replace(/(!\[)(.*?)(\]\((?:[^()\n]|\([^()\n]*\))*\))/g, (match, prefix, content, suffix) => {
       // 如果 alt 为空，整个替换为占位符
       if (!content.trim()) {
-        const placeholder = `<<<LINK_${linkCounter}>>>`;
-        linkPlaceholders[placeholder] = match;
-        linkCounter++;
-        return placeholder;
+        return store(linkPlaceholders, "LINK", "link", match);
       }
 
-      const prefixPlaceholder = `<<<LINK_PRE_${linkCounter}>>>`;
-      const suffixPlaceholder = `<<<LINK_SUF_${linkCounter}>>>`;
+      const prefixPlaceholder = `<<<LINK_PRE_${counters.link}>>>`;
+      const suffixPlaceholder = `<<<LINK_SUF_${counters.link}>>>`;
       linkPlaceholders[prefixPlaceholder] = prefix;
       linkPlaceholders[suffixPlaceholder] = suffix;
-      linkCounter++;
+      counters.link++;
 
       return `${prefixPlaceholder}${content}${suffixPlaceholder}`;
     });
@@ -433,43 +402,31 @@ export const filterMarkdownLines = (lines: string[], mdOptions: MarkdownOptions)
     // 链接（非图片）- 根据选项决定是否翻译链接文本(URL 嵌套括号同上)
     modifiedLine = modifiedLine.replace(/(\[)(.*?)(\]\((?:[^()\n]|\([^()\n]*\))*\))/g, (match, prefix, content, suffix) => {
       if (mdOptions.translateLinkText) {
-        const prefixPlaceholder = `<<<LINK_PRE_${linkCounter}>>>`;
-        const suffixPlaceholder = `<<<LINK_SUF_${linkCounter}>>>`;
+        const prefixPlaceholder = `<<<LINK_PRE_${counters.link}>>>`;
+        const suffixPlaceholder = `<<<LINK_SUF_${counters.link}>>>`;
         linkPlaceholders[prefixPlaceholder] = prefix;
         linkPlaceholders[suffixPlaceholder] = suffix;
-        linkCounter++;
+        counters.link++;
 
         return `${prefixPlaceholder}${content}${suffixPlaceholder}`;
       }
 
-      const placeholder = `<<<LINK_${linkCounter}>>>`;
-      linkPlaceholders[placeholder] = match;
-      linkCounter++;
-      return placeholder;
+      return store(linkPlaceholders, "LINK", "link", match);
     });
 
     // 标题（保留标题内容，仅将前缀替换成占位符）
     modifiedLine = modifiedLine.replace(/^(#{1,6}\s)(.*)/, (_, prefix, content) => {
-      const placeholder = `<<<HEADING_${headingCounter}>>>`;
-      headingPlaceholders[placeholder] = prefix;
-      headingCounter++;
-      return `${placeholder}${content}`;
+      return `${store(headingPlaceholders, "HEADING", "heading", prefix)}${content}`;
     });
 
     // 列表
     modifiedLine = modifiedLine.replace(/^(\s*(?:[-*]|\d+\.)\s+)(.*)/, (_, prefix, content) => {
-      const placeholder = `<<<LIST_${listCounter}>>>`;
-      listPlaceholders[placeholder] = prefix;
-      listCounter++;
-      return `${placeholder}${content}`;
+      return `${store(listPlaceholders, "LIST", "list", prefix)}${content}`;
     });
 
     // 引用
     modifiedLine = modifiedLine.replace(/^(>\s)(.*)/, (_, prefix, content) => {
-      const placeholder = `<<<BLOCKQUOTE_${blockquoteCounter}>>>`;
-      blockquotePlaceholders[placeholder] = prefix;
-      blockquoteCounter++;
-      return `${placeholder}${content}`;
+      return `${store(blockquotePlaceholders, "BLOCKQUOTE", "blockquote", prefix)}${content}`;
     });
 
     // 加粗文本不需要保护：** 不会被翻译模型当作可翻译内容剥离，

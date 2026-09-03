@@ -2,7 +2,8 @@
 
 import { ThemeProvider as NextThemesProvider, useTheme } from "next-themes";
 import { ConfigProvider, App, theme, Layout } from "antd";
-import { ReactNode, useEffect, useSyncExternalStore } from "react";
+import { ReactNode, useEffect } from "react";
+import { useMounted } from "@/app/hooks/useMounted";
 import { useLocale } from "next-intl";
 import { getLangDir } from "rtl-detect";
 
@@ -149,11 +150,7 @@ function AntdConfigProvider({ children }: { children: ReactNode }) {
   // useSyncExternalStore 而非 useState+useEffect: 后者会被 react-hooks 规则
   // (set-state-in-effect) 报错, 且 Navigation.tsx 已用同样写法做 SSR-safe
   // mounted 检测。
-  const mounted = useSyncExternalStore(
-    () => () => {},
-    () => true,
-    () => false,
-  );
+  const mounted = useMounted();
   const isDark = mounted ? resolvedTheme !== "light" : true;
 
   // ⚠ 已知且【有意接受】的 hydration 警告，别再重查一遍(2026-08 已完整定位):

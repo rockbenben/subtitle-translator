@@ -351,24 +351,6 @@ export const deepseek: TranslationService = async (params) => {
   }
 };
 
-// Direct exports — every provider in OPENAI_COMPAT_KEYS gets one for
-// backwards-compatible imports elsewhere. Generated from the factory map so
-// adding a provider needs no edit here.
-export const openai = openAICompatServicesBase.openai;
-export const moonshot = openAICompatServicesBase.moonshot;
-export const openrouter = openAICompatServicesBase.openrouter;
-export const groq = openAICompatServicesBase.groq;
-export const grok = openAICompatServicesBase.grok;
-export const siliconflow = openAICompatServicesBase.siliconflow;
-export const qwen = openAICompatServicesBase.qwen;
-export const doubao = openAICompatServicesBase.doubao;
-export const zhipu = openAICompatServicesBase.zhipu;
-export const minimax = openAICompatServicesBase.minimax;
-export const tokenhub = openAICompatServicesBase.tokenhub;
-export const mistral = openAICompatServicesBase.mistral;
-export const cohere = openAICompatServicesBase.cohere;
-export const qianfan = openAICompatServicesBase.qianfan;
-
 // Dispatch map — base services + deepseek override (with CORS error rewrite).
 export const openAICompatServices: Record<OpenAICompatProviderKey, TranslationService> = {
   ...openAICompatServicesBase,

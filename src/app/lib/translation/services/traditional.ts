@@ -372,28 +372,6 @@ export const azure: TranslationService = async (params) => {
   return translatedText;
 };
 
-export const webgoogletranslate: TranslationService = async (params) => {
-  const { text, targetLanguage, sourceLanguage } = params;
-  const requestBody = {
-    q: text,
-    target: targetLanguage,
-    ...(sourceLanguage !== "auto" && { source: sourceLanguage }),
-  };
-
-  const data = (await fetchJSON("api/webgoogletranslate", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(requestBody),
-    signal: params.signal,
-  })) as { translatedText?: string } | null;
-
-  const translatedText = data?.translatedText;
-  if (typeof translatedText !== "string") {
-    throw new Error("Invalid response format from webgoogletranslate");
-  }
-  return translatedText;
-};
-
 export const qwenMt: TranslationService = async (params) => {
   const { text, targetLanguage, sourceLanguage, apiKey, url, model, domains, glossaryTerms } = params;
 

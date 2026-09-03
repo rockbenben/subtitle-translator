@@ -1,11 +1,10 @@
 "use client";
 
 import React from "react";
-import { ConfigProvider, Flex, Input, InputNumber, Row, Col, Tooltip, Switch, Form, Typography } from "antd";
+import { ConfigProvider, Flex, Input, InputNumber, Row, Col, Switch, Form } from "antd";
 import { useTranslations } from "next-intl";
 import Section from "@/app/components/styled/Section";
-
-const { Text } = Typography;
+import ToggleRow from "@/app/components/styled/ToggleRow";
 
 interface AdvancedTranslationSettingsProps {
   // Export filename
@@ -57,28 +56,22 @@ const AdvancedTranslationSettings: React.FC<AdvancedTranslationSettingsProps> = 
     <ConfigProvider componentDisabled={disabled}>
     <Flex vertical gap="middle">
       {/* 1. General Switches */}
-      <Section variant="neutral" noGap>
+      <Section noGap>
         <Flex vertical gap="small">
           {children}
           {setSingleFileMode && (
-            <Flex component="label" className="cursor-pointer" justify="space-between" align="center">
-              <Tooltip title={t("singleFileModeTooltip")}>
-                <Text>{t("singleFileMode")}</Text>
-              </Tooltip>
+            <ToggleRow label={t("singleFileMode")} tooltip={t("singleFileModeTooltip")}>
               <Switch size="small" checked={singleFileMode} onChange={setSingleFileMode} aria-label={t("singleFileMode")} />
-            </Flex>
+            </ToggleRow>
           )}
-          <Flex component="label" className="cursor-pointer" justify="space-between" align="center">
-            <Tooltip title={t("useCacheTooltip")}>
-              <Text>{t("useCache")}</Text>
-            </Tooltip>
+          <ToggleRow label={t("useCache")} tooltip={t("useCacheTooltip")}>
             <Switch size="small" checked={useCache} onChange={setUseCache} aria-label={t("useCache")} />
-          </Flex>
+          </ToggleRow>
         </Flex>
       </Section>
 
       {/* 2. Network / Resilience */}
-      <Section variant="neutral" noGap>
+      <Section noGap>
         <Form layout="vertical" component="div">
           <Row gutter={16}>
             <Col span={12}>
@@ -96,7 +89,7 @@ const AdvancedTranslationSettings: React.FC<AdvancedTranslationSettingsProps> = 
       </Section>
 
       {/* 3. Output Formatting */}
-      <Section variant="neutral" noGap>
+      <Section noGap>
         <Form layout="vertical">
           <Form.Item label={t("removeCharsAfterTranslation")} tooltip={t("removeCharsAfterTranslationTooltip")} className="!mb-3">
             <Input placeholder={`${t("example")}: ♪ <i> </i>`} value={removeChars} onChange={(e) => setRemoveChars(e.target.value)} allowClear aria-label={t("removeCharsAfterTranslation")} spellCheck={false} />

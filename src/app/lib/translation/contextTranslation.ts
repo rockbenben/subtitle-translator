@@ -10,7 +10,7 @@ const MARKER_CLEANUP_RE = /\[\/?(TRANSLATE(_\d+)?|TRANSLTranslate_\d+|CONTEXT)\]
 /**
  * Clean translation content by removing markers
  */
-export const cleanTranslatedContent = (content: string): string => {
+const cleanTranslatedContent = (content: string): string => {
   return content.replace(MARKER_CLEANUP_RE, "").trim();
 };
 
@@ -245,7 +245,7 @@ export const extractTranslatedLinesWithNumbers = (response: string, expectedCoun
 /**
  * Build context-aware translation prompt — wraps the batch instructions around
  * the user's template WITHOUT consuming the ${content} placeholder: the marker
- * block (user-controlled text) is inserted LAST by getAIModelPrompt's
+ * block (user-controlled text) is inserted LAST by getAIModelPromptParts's
  * function-form replacement at the service layer. Embedding it here would (a)
  * run it through String.replace's GetSubstitution ($$ → $, LaTeX corruption)
  * and (b) expose it to the service layer's template-variable pass (a literal
@@ -310,8 +310,8 @@ export const buildContextPrompt = (baseUserPrompt: string, batchSize: number, do
   const ctx = CONTEXT_DESCRIPTIONS[documentType];
 
   // Function-form replacement + the trailing literal ${content}: the actual
-  // marker block is substituted by getAIModelPrompt LAST, after every template
-  // variable has already been resolved (see utils.ts getAIModelPrompt).
+  // marker block is substituted by getAIModelPromptParts LAST, after every template
+  // variable has already been resolved (see utils.ts getAIModelPromptParts).
   //
   // The format example below uses the literal X placeholder, NOT a concrete
   // digit. A digit (e.g. `[TRANSLATE_0]translation[/TRANSLATE_0]`) is parseable by

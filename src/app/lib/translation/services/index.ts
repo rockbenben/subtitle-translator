@@ -52,7 +52,6 @@ const rawServices: Record<TranslationMethod, TranslationService> = {
   deepl: traditional.deepl,
   deeplx: traditional.deeplx,
   azure: traditional.azure,
-  webgoogletranslate: traditional.webgoogletranslate,
   qwenMt: traditional.qwenMt,
   translategemma: traditional.translategemma,
   milmmt: traditional.milmmt,

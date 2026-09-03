@@ -1,5 +1,6 @@
 "use client";
-import React, { useCallback, useEffect, useSyncExternalStore } from "react";
+import React, { useCallback, useEffect, useState, useSyncExternalStore } from "react";
+import { useMounted } from "@/app/hooks/useMounted";
 import { App, Button, Space, Tooltip } from "antd";
 import { FolderOpenOutlined, UndoOutlined } from "@ant-design/icons";
 import { useTranslations } from "next-intl";
@@ -18,35 +19,6 @@ import { supportsExportDir, isNativeExportDir, getExportDirName, pickExportDir, 
  * 【为什么不放导航栏】那是全站级容器，而 `Navigation.tsx` 被 sync 排除、各子项目
  * 自维护，挂在那里每次 merge 都要救一遍（见 #52 / #65）。ToolPage 是同步件。
  */
-let currentDir: string | null = null;
-const dirListeners = new Set<() => void>();
-
-const publishDir = (dir: string | null) => {
-  // 同值不通知：一页里设置控件与（未来可能的）其它读取方各读一次，读回来的是同一个值
-  if (dir === currentDir) return;
-  currentDir = dir;
-  dirListeners.forEach((notify) => notify());
-};
-const subscribeDir = (notify: () => void) => {
-  dirListeners.add(notify);
-  return () => void dirListeners.delete(notify);
-};
-
-// 同一帧里多个实例挂载 = 多次完全相同的 IndexedDB 读，合并成一次。
-// 读本身仍保留（不是纯缓存）：权限可能在别处被撤，每次挂载重新确认一遍。
-let inFlightRead: { toolKey: string; promise: Promise<string | null> } | null = null;
-const refreshDir = (toolKey: string): Promise<string | null> => {
-  if (inFlightRead?.toolKey !== toolKey) {
-    inFlightRead = {
-      toolKey,
-      promise: getExportDirName(toolKey).finally(() => {
-        inFlightRead = null;
-      }),
-    };
-  }
-  return inFlightRead.promise;
-};
-
 let runLocked = false;
 const lockListeners = new Set<() => void>();
 const setRunLocked = (locked: boolean) => {
@@ -89,19 +61,11 @@ export const ExportFolderButton = ({ toolKey }: { toolKey: string }) => {
   const t = useTranslations("common");
   const { message } = App.useApp();
 
-  // 【首屏必须与 SSR 一致】静态导出的 HTML 在 Node 里预渲染，那里没有 window，直接
-  // 判定就会 hydration 不匹配。用 useSyncExternalStore 而不是「effect 里 setState」
-  // 拿挂载态 —— 后者会被 react-hooks/set-state-in-effect 拦下（级联渲染）。
-  const mounted = useSyncExternalStore(
-    () => () => {},
-    () => true,
-    () => false,
-  );
-  const dir = useSyncExternalStore(
-    subscribeDir,
-    () => currentDir,
-    () => null,
-  );
+  // 【首屏必须与 SSR 一致】静态导出的 HTML 在 Node 里预渲染，那里没有 window。
+  const mounted = useMounted();
+  // 本页唯一的入口(ToolPage 每页渲染一次),目录名就是局部状态;每次挂载重读 ——
+  // 权限可能在别处被撤,不是纯缓存。
+  const [dir, setDir] = useState<string | null>(null);
   const locked = useSyncExternalStore(
     subscribeLock,
     () => runLocked,
@@ -112,7 +76,7 @@ export const ExportFolderButton = ({ toolKey }: { toolKey: string }) => {
   // 权限不跨浏览器会话：重启后这里读回 null，界面与落盘位置一起退回下载目录，
   // 点一下即可原地补授权（不会再弹选择器）。见 exportDir.ts 文件头。
   useEffect(() => {
-    if (available) void refreshDir(toolKey).then(publishDir);
+    if (available) void getExportDirName(toolKey).then(setDir);
   }, [available, toolKey]);
 
   const choose = useCallback(async () => {
@@ -126,16 +90,16 @@ export const ExportFolderButton = ({ toolKey }: { toolKey: string }) => {
         // 补救说明；放进每次 hover 的 tooltip 就是提前上课，tooltip 只回答一件事：现在导出落在哪。
         // 而那个黑名单是 File System Access 这条路独有的：外壳注入原生选择器后根本没这回事，
         // 那里「没选成」只可能是取消 —— 再提一句就是在桌面版里说假话。
-        if (currentDir === null) message.info(isNativeExportDir() ? t("exportFolderDefault") : `${t("exportFolderDefault")} ${t("exportFolderBlocked")}`);
+        if (dir === null) message.info(isNativeExportDir() ? t("exportFolderDefault") : `${t("exportFolderDefault")} ${t("exportFolderBlocked")}`);
         return;
       }
-      publishDir(picked);
+      setDir(picked);
       message.success(t("exportFolderCurrent", { dir: picked }));
     } catch (error) {
       console.error("Choosing the export folder failed:", error);
       message.error(t("exportFolderFailed"));
     }
-  }, [message, t, toolKey]);
+  }, [dir, message, t, toolKey]);
 
   // Chrome 不允许选「下载」目录本身，所以设过之后没法靠再选一次选回去 ——
   // 不给重置就真的出不来了。
@@ -148,7 +112,7 @@ export const ExportFolderButton = ({ toolKey }: { toolKey: string }) => {
     }
     // 【重读真实状态】而不是径直 publishDir(null):删除失败时句柄还在、权限还在，
     // 之后每个文件照旧写进老目录 —— 界面这时说"下载目录"就是反方向的撒谎。
-    publishDir(await getExportDirName(toolKey));
+    setDir(await getExportDirName(toolKey));
   }, [message, t, toolKey]);
 
   if (!available) return null;

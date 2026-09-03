@@ -30,7 +30,6 @@ export interface RetryConfig {
 
 export interface UserRetryConfig {
   retryCount?: number;
-  requestTimeoutSec?: number; // per-request timeout, in seconds
 }
 
 // Extract status and message from error once, reuse across checks
@@ -225,23 +224,6 @@ const ESCALATION_WINDOW_MS = 30_000;
 // 的同款动机,作用在共享闸的出口侧)。冷却期外到达的请求不付此开销。
 export const RATE_LIMIT_RESUME_JITTER_MS = 1_000;
 
-// Same rejection message as the run-abort path ("Translation aborted") so the
-// existing classification chain (isCascadedAbort → silent, non-retryable)
-// handles a mid-wait cancel without new plumbing.
-const abortableDelay = (ms: number, signal?: AbortSignal): Promise<void> =>
-  new Promise((resolve, reject) => {
-    if (signal?.aborted) return reject(new Error("Translation aborted"));
-    const onAbort = () => {
-      clearTimeout(timer);
-      reject(new Error("Translation aborted"));
-    };
-    const timer = setTimeout(() => {
-      signal?.removeEventListener("abort", onAbort);
-      resolve();
-    }, ms);
-    signal?.addEventListener("abort", onAbort, { once: true });
-  });
-
 export const rateLimitGate = {
   /**
    * Block until the method's active cooldown (if any) has passed. Loops after
@@ -253,7 +235,10 @@ export const rateLimitGate = {
     for (;;) {
       const remaining = (gateStates.get(method)?.until ?? 0) - Date.now();
       if (remaining <= 0) return;
-      await abortableDelay(remaining + Math.random() * RATE_LIMIT_RESUME_JITTER_MS, signal);
+      await abortableSleep(remaining + Math.random() * RATE_LIMIT_RESUME_JITTER_MS, signal);
+      // Same rejection message as the run-abort path so the existing classification
+      // chain (isCascadedAbort → silent, non-retryable) handles a mid-wait cancel.
+      if (signal?.aborted) throw new Error("Translation aborted");
     }
   },
 
