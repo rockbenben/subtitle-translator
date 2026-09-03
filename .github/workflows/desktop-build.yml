@@ -3,11 +3,41 @@
 #
 # Secrets required for auto-update: TAURI_SIGNING_PRIVATE_KEY (+ _PASSWORD if the key
 # has one — ours has none). GITHUB_TOKEN is built in. The release is a DRAFT —
-# un-draft it to actually roll the update out (releases/latest ignores drafts, gotcha #6).
+# un-draft it to actually roll the update out (releases/latest ignores drafts).
 #
 # The pushed tag MUST equal package.json version (v3.0.0 <-> "version": "3.0.0"):
 # tauri-action expands __VERSION__ from the app version and the portable-exe step
 # uploads to v${APP_VERSION}; a mismatch silently breaks the portable upload.
+#
+# ---- tauri-action v1 (was v0) — what changed for THIS pipeline -----------------------
+#  * A draft run will not adopt a published release. With releaseDraft: true the action
+#    scans the release list for a DRAFT carrying this tag; on finding a published one it
+#    warns and falls through to CREATING a release for the same tag, which GitHub then
+#    rejects. Two consequences: re-running a tag you have already un-drafted needs the
+#    release deleted first, and the manual path below must not pass a tagName at all.
+#  * It rewrites an existing release's name and body only when that release is already
+#    PUBLISHED (updating a draft would move its tag and duplicate it). In the normal draft
+#    flow the first matrix job creates the draft and the other three only upload into it,
+#    so the generated notes are written once, not four times.
+#  * macOS `.app.tar.gz` assets now carry the version, like every other bundle.
+#  * latest.json download URLs now use the github.com URL instead of the browser one.
+#
+# Asset names change with this release (releaseAssetNamePattern below):
+#   Subtitle.Translator_3.1.1_x64-setup.exe -> SubtitleTranslator_3.1.1_x64_setup.exe
+#   Subtitle.Translator_3.1.1_x64_en-US.msi -> SubtitleTranslator_3.1.1_x64.msi
+#   Subtitle.Translator_aarch64.app.tar.gz  -> SubtitleTranslator_3.1.1_aarch64.app.tar.gz
+#   SubtitleTranslator_3.1.1_portable.exe   -> SubtitleTranslator_3.1.1_x64_portable.exe
+# Already-published releases keep their old names and URLs; only new ones change.
+#
+# NOT enabled, deliberately:
+#  * uploadPlainBinary — upstream says to pair it with `--no-bundle` only, and this build
+#    has to emit the installers and updater artifacts too. The three manual steps at the
+#    bottom stay.
+#  * updaterJsonPreferNsis — latest.json's `windows-x86_64` key currently resolves to the
+#    .msi. Flipping it to the NSIS setup.exe is the direction Tauri v2 is heading (the
+#    default is false "for legacy reasons"), but it changes the installer that already
+#    shipped users receive on their next update, so it is a deliberate call to make on its
+#    own, not a side effect of the v1 bump.
 name: Build Desktop App
 
 on:
@@ -33,7 +63,7 @@ jobs:
             args: ""
     runs-on: ${{ matrix.platform }}
     steps:
-      - uses: actions/checkout@v6.0.3
+      - uses: actions/checkout@v7.0.1
 
       - name: Install Linux dependencies
         if: matrix.platform == 'ubuntu-22.04'
@@ -42,7 +72,7 @@ jobs:
           sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf libgtk-3-dev wget file
 
       - name: Setup Node
-        uses: actions/setup-node@v6.4.0
+        uses: actions/setup-node@v7.0.0
         with:
           node-version: lts/*
           cache: yarn
@@ -53,7 +83,7 @@ jobs:
           targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
 
       - name: Cache Rust build
-        uses: Swatinem/rust-cache@v2.9.1
+        uses: Swatinem/rust-cache@v2.9.2
         with:
           workspaces: "./src-tauri -> target"
 
@@ -62,40 +92,90 @@ jobs:
           yarn update-version
           yarn install --frozen-lockfile
 
-      - uses: tauri-apps/tauri-action@v0
+      - uses: tauri-apps/tauri-action@v1
+        id: tauri
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
-          tagName: v__VERSION__
-          releaseName: "Subtitle Translator v__VERSION__"
+          # Tag push -> create or fill the draft release. Manual run -> build only:
+          # with no tagName the action skips every upload (its README's "just build"
+          # mode), so testing the pipeline cannot touch a real release.
+          tagName: ${{ github.event_name == 'push' && 'v__VERSION__' || '' }}
+          releaseName: ${{ github.event_name == 'push' && 'Subtitle Translator v__VERSION__' || '' }}
+          # Prepended to GitHub's generated changelog (releaseName still wins for the title).
           releaseBody: "See the assets to download and install."
+          generateReleaseNotes: true
           releaseDraft: true
           prerelease: false
+          # A manual run uploads to no release, so the bundles are only reachable as
+          # workflow artifacts. On a tag push the release already carries them.
+          uploadWorkflowArtifacts: ${{ github.event_name != 'push' }}
+          # Four platforms uploading a dozen assets each; a single flaky upload used to
+          # cost a full re-run, which under v1's draft-matching rule is no longer free.
+          retryAttempts: 2
+          # One naming scheme for every asset. Without this Tauri's own names win, and a
+          # productName containing a space comes out dotted (Subtitle Translator ->
+          # Subtitle.Translator_3.1.1_x64-setup.exe) while the portable exe below, named
+          # from mainBinaryName, does not — three spellings of one app on one page.
+          # [ext] is multi-part aware (.app.tar.gz, .msi.sig), and latest.json resolves its
+          # download URLs through this same pattern, so the updater follows automatically.
+          # [_setup] is what separates the NSIS installer from the portable exe: both .exe.
+          # Drop this line to go back to the Tauri CLI's names.
+          releaseAssetNamePattern: "[mainBinaryName]_[version]_[arch][_setup][ext]"
           args: ${{ matrix.args }}
 
       # Portable "green" exe (Windows only): the raw self-contained binary tauri
       # builds anyway. No installer; needs the WebView2 runtime; does NOT self-update.
+      #
+      # The version comes from the action's appVersion output, which is the version tauri
+      # actually built with (tauri.conf.json, written by `yarn update-version`). Reading
+      # package.json again here would name the file and pick the upload tag from a
+      # different source, so any drift between the two would land the asset on the wrong
+      # release instead of failing.
       - name: Stage portable Windows exe
         if: matrix.platform == 'windows-latest'
         shell: bash
+        env:
+          APP_VERSION: ${{ steps.tauri.outputs.appVersion }}
         run: |
-          VERSION=$(node -p "require('./package.json').version")
-          cp "src-tauri/target/release/SubtitleTranslator.exe" "SubtitleTranslator_${VERSION}_portable.exe"
-          echo "APP_VERSION=$VERSION" >> "$GITHUB_ENV"
+          test -n "$APP_VERSION"
+          cp "src-tauri/target/release/SubtitleTranslator.exe" "SubtitleTranslator_${APP_VERSION}_x64_portable.exe"
+          echo "APP_VERSION=$APP_VERSION" >> "$GITHUB_ENV"
 
       - name: Upload portable exe as workflow artifact
         if: matrix.platform == 'windows-latest'
         uses: actions/upload-artifact@v7.0.1
         with:
           name: portable-windows
-          path: SubtitleTranslator_${{ env.APP_VERSION }}_portable.exe
+          path: SubtitleTranslator_${{ env.APP_VERSION }}_x64_portable.exe
           if-no-files-found: error
 
       - name: Attach portable exe to the release
-        if: matrix.platform == 'windows-latest'
+        if: matrix.platform == 'windows-latest' && github.event_name == 'push'
         shell: bash
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release upload "v${APP_VERSION}" "SubtitleTranslator_${APP_VERSION}_portable.exe" --clobber
+        run: gh release upload "v${APP_VERSION}" "SubtitleTranslator_${APP_VERSION}_x64_portable.exe" --clobber
+
+      # The pipeline ends in a manual step: the release is a DRAFT and the updater
+      # resolves `releases/latest`, which ignores drafts — so nothing reaches users until
+      # someone publishes it. Putting the link and that reminder in the run summary beats
+      # a note in a file nobody opens at the moment it matters. Skipped on manual runs,
+      # which create no release (the output is empty there).
+      - name: Link the draft release in the run summary
+        if: github.event_name == 'push' && steps.tauri.outputs.releaseHtmlUrl != ''
+        shell: bash
+        env:
+          RELEASE_URL: ${{ steps.tauri.outputs.releaseHtmlUrl }}
+          APP_VERSION: ${{ steps.tauri.outputs.appVersion }}
+        run: |
+          {
+            echo "### Draft release v${APP_VERSION}"
+            echo
+            echo "[Open the draft release]($RELEASE_URL)"
+            echo
+            echo 'This release is a **draft**. The updater resolves `releases/latest`, which'
+            echo 'ignores drafts — publish it or no client will ever be offered this version.'
+          } >> "$GITHUB_STEP_SUMMARY"
