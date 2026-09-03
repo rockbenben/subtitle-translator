@@ -21,7 +21,6 @@
     "@tauri-apps/plugin-opener": "2.5.4",
     "@tauri-apps/plugin-updater": "2.10.1",
     "antd": "^6",
-    "compromise": "^14",
     "deepl-node": "^1",
     "file-saver": "^2.0.5",
     "idb": "^8.0.3",
@@ -52,7 +51,6 @@
     "eslint-config-next": "16.3.2",
     "tailwindcss": "^4",
     "tsx": "^4.23.1",
-    "type-fest": "^5",
     "typescript": "^5"
   },
   "engines": {

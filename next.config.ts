@@ -26,10 +26,6 @@ const nextConfig: NextConfig = {
     unoptimized: true,
   },
   reactCompiler: true,
-  experimental: {
-    // antd / @ant-design/icons 不用写 —— Next 16 的默认列表已含（node_modules/next/dist/server/config.js）
-    optimizePackageImports: ["jsonpath-plus", "compromise"],
-  },
 };
 
 export default withNextIntl(nextConfig);
