@@ -193,8 +193,8 @@ pub fn run() {
                 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
 
                 // 窗口在 tauri.conf.json 里是 "create": false —— on_download 只挂得上
-                // WebviewWindowBuilder，所以必须自己建。from_config 原样继承 title /
-                // 尺寸 / url / dragDrop 等全部配置，且晚于 window-state 插件注册，
+                // WebviewWindowBuilder，所以必须自己建。from_config 原样继承
+                // 尺寸 / url / dragDrop 等全部配置（title 在下面覆盖），且晚于 window-state 插件注册，
                 // 位置恢复照常生效。
                 let window_config = app
                     .config()
@@ -205,7 +205,19 @@ pub fn run() {
                     .cloned()
                     .expect("tauri.conf.json must define the \"main\" window");
 
+                // 【带版本号的标识】桌面版此前没有任何地方显示版本，用户只能去「设置 → 应用」
+                // 或右键 exe 看属性 —— 报 bug 时说不清自己装的是哪一版（#52 的回帖就因此
+                // 对不上）。版本取 package_info()，它来自 tauri.conf.json 的 version
+                // （由 update-version.js 从 package.json 同步），不是 Cargo.toml 那个 0.1.0。
+                //
+                // 标题栏和托盘 tooltip 共用这一个串。两处都是用户报 bug 时会看到、会截进图里
+                // 的地方，各写各的迟早漂成两个值；而托盘那行原本是硬编码的应用名，改标题时
+                // 漏掉过一次。
+                let titled = format!("{} {}", window_config.title, app.package_info().version);
+
+                // 覆盖 from_config 继承来的 title，其余配置照旧。
                 tauri::webview::WebviewWindowBuilder::from_config(app.handle(), &window_config)?
+                    .title(titled.as_str())
                     .on_download(|webview, event| {
                         if let tauri::webview::DownloadEvent::Requested { destination, .. } = event {
                             // 每次下载现读配置文件：下载本就不频繁，省掉一份托管状态
@@ -230,7 +242,7 @@ pub fn run() {
 
                 TrayIconBuilder::with_id("main-tray")
                     .icon(app.default_window_icon().unwrap().clone())
-                    .tooltip("Subtitle Translator")
+                    .tooltip(&titled)
                     .menu(&menu)
                     .show_menu_on_left_click(false)
                     .on_menu_event(|app, event| match event.id().as_ref() {
