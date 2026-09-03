@@ -1,9 +1,8 @@
 "use client";
 
-import { Button, Space, Input, Tooltip } from "antd";
+import { Button, Space, Input, Tooltip, Card } from "antd";
 import { CopyOutlined, DownloadOutlined, SwapOutlined, ClearOutlined } from "@ant-design/icons";
 import { useTranslations } from "next-intl";
-import PageCard from "@/app/components/styled/PageCard";
 import StatsFooter from "@/app/components/StatsFooter";
 
 const { TextArea } = Input;
@@ -25,12 +24,10 @@ interface ResultCardProps {
   onChange?: (value: string) => void;
   /**
    * Optional useTextStats result. When supplied, ResultCard auto-handles isTooLong
-   * (switches to displayText + read-only + shows "只读模式" hint) and pulls
-   * charCount/lineCount from it. charCount/lineCount props are ignored if stats is set.
+   * (switches to displayText + read-only + shows "只读模式" hint) and renders the
+   * char/line footer from it. Without it there is no footer.
    */
   stats?: TextStats;
-  charCount?: string;
-  lineCount?: string;
   /** Whether to show stats footer - defaults to true */
   showStats?: boolean;
   /** Copy button callback */
@@ -86,8 +83,6 @@ const ResultCard = ({
   content,
   onChange,
   stats,
-  charCount,
-  lineCount,
   showStats = true,
   onCopy,
   onCopyNode,
@@ -106,11 +101,9 @@ const ResultCard = ({
   const displayContent = stats?.isTooLong ? stats.displayText : content;
   const effectiveOnChange = stats && !stats.isEditable ? undefined : onChange;
   const forcedReadOnly = Boolean(onChange && stats?.isTooLong);
-  const effectiveCharCount = stats?.charCount ?? charCount;
-  const effectiveLineCount = stats?.lineCount ?? lineCount;
 
   return (
-    <PageCard
+    <Card
       title={displayTitle}
       className={`h-full ${className}`}
       style={{ borderTop: "2px solid var(--accent)" }}
@@ -153,10 +146,8 @@ const ResultCard = ({
         readOnly={!effectiveOnChange}
         aria-label={typeof title === "string" ? title : t("translationResult")}
       />
-      {showStats && (forcedReadOnly || (effectiveCharCount && effectiveLineCount)) && effectiveCharCount && effectiveLineCount && (
-        <StatsFooter charCount={effectiveCharCount} lineCount={effectiveLineCount} isReadOnly={forcedReadOnly} />
-      )}
-    </PageCard>
+      {showStats && stats && <StatsFooter charCount={stats.charCount} lineCount={stats.lineCount} isReadOnly={forcedReadOnly} />}
+    </Card>
   );
 };
 

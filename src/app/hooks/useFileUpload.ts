@@ -2,7 +2,7 @@
 import { useState, useRef } from "react";
 import { App } from "antd";
 import { useTranslations } from "next-intl";
-import { normalizeNewlines, decodeFileBytes, getErrorMessage } from "@/app/utils";
+import { normalizeNewlines, readTextFile, getErrorMessage } from "@/app/utils";
 import { useLocalStorage } from "@/app/hooks/useLocalStorage";
 import type { UploadFile, UploadProps } from "antd";
 
@@ -43,18 +43,11 @@ const useFileUpload = (toolKey?: string) => {
   // single bad file hangs the whole batch loop forever.
   const readFile = (file: File, callback: (text: string) => void, onError?: () => void) => {
     setIsFileProcessing(true);
-    const reader = new FileReader();
-
-    reader.onload = async (e) => {
-      try {
-        const buffer = e.target?.result as ArrayBuffer;
-        // 编码自适应解码(UTF-8 fatal 试解 → jschardet 检测)抽到共享的
-        // decodeFileBytes —— 词汇表/保护规则导入同此管线,策略说明见 fileUtils。
-        const text = await decodeFileBytes(buffer);
-        callback(normalizeNewlines(text));
-      } catch (error) {
-        // jschardet 加载失败 / 解码异常等：别让 onload 静默 reject（否则下方 finally 之外
-        // 的 setIsFileProcessing(false) 永远不执行，处理中遮罩会一直转）。
+    // 编码自适应解码(UTF-8 fatal 试解 → jschardet 检测)在共享的 readTextFile /
+    // decodeFileBytes 里 —— 词汇表/保护规则导入同此管线,策略说明见 encoding.ts。
+    readTextFile(file)
+      .then((text) => callback(normalizeNewlines(text)))
+      .catch((error: unknown) => {
         console.error("处理文件出错：", error);
         // 【带上原始消息】。decodeFileBytes 在判不出编码时抛的是一句可操作的
         // 指引("unrecognized text encoding — re-save the file as UTF-8"),
@@ -65,18 +58,8 @@ const useFileUpload = (toolKey?: string) => {
         // 对象)返回空串,又退回成裸的「文件处理失败」—— 正是这段改动要消除的。
         message.warning(`${t("fileProcessFailed")}: ${getErrorMessage(error)}`);
         onError?.();
-      } finally {
-        setIsFileProcessing(false);
-      }
-    };
-
-    reader.onerror = (error) => {
-      console.error("读取文件出错：", error);
-      message.error(t("fileReadFailed"));
-      onError?.();
-      setIsFileProcessing(false);
-    };
-    reader.readAsArrayBuffer(file);
+      })
+      .finally(() => setIsFileProcessing(false));
   };
 
   // 把「写入共享 sourceText」的回调用当前读取序号封一层:换文件 / 清空会自增序号,

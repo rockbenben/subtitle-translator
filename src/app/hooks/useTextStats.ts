@@ -62,8 +62,6 @@ export const useTextStats = (text: string, maxChars: number = MAX_CHAR_LENGTH) =
     ...stats,
     isTooLong,
     displayText,
-    // Return deferred text as 'deferredText' for consumers who want the stabilized value
-    deferredText,
     isEditable: !isTooLong,
   };
 };

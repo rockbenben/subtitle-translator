@@ -5,7 +5,7 @@ import type { GlossaryTerm } from "./glossary";
 import type { TranslationConfig } from "./types";
 import { normalizePrompt } from "./services/shared";
 
-export const CACHE_PREFIX = "t_";
+const CACHE_PREFIX = "t_";
 
 export type CacheSuffixInput = {
   sourceLanguage: string;

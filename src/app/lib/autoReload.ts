@@ -71,7 +71,7 @@ export function tryAutoReload(): boolean {
 }
 
 /**
- * 点击时才拉的 chunk 用这个包一层(compromise 350KB / jszip 172KB / jschardet…)。
+ * 点击时才拉的 chunk 用这个包一层(jszip 172KB / jschardet…)。
  *
  * 与在 catch 里调 tryAutoReload() 的区别是**精确**:只有 import 本身失败才自愈,
  * 后续业务逻辑抛错(OOM、格式不对)照原样冒泡,不会白搭一次重载丢掉用户成果。

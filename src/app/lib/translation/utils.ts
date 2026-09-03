@@ -130,11 +130,6 @@ export const getAIModelPromptParts = (content: string, userPrompt: string, targe
   return { prefix: render(prompt.slice(0, at)), suffix: render(prompt.slice(at)) };
 };
 
-export const getAIModelPrompt = (content: string, userPrompt: string, targetLanguage: string, sourceLanguage: string, fullText?: string): string => {
-  const { prefix, suffix } = getAIModelPromptParts(content, userPrompt, targetLanguage, sourceLanguage, fullText);
-  return prefix + suffix;
-};
-
 /**
  * Clean HTML entities from translated text (single-pass replacement)
  */

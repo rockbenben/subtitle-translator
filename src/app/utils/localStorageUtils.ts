@@ -16,17 +16,6 @@ export const readLocalStorageRaw = (key: string): string | null => {
   }
 };
 
-export const loadFromLocalStorage = (key: string) => {
-  const storedValue = readLocalStorageRaw(key);
-  if (storedValue === null) return null;
-
-  try {
-    return JSON.parse(storedValue);
-  } catch {
-    return null; // 避免返回无法解析的原始字符串
-  }
-};
-
 // 仅在首次遇到存储配额/隐私模式写入失败时提示一次,避免逐字符写入时反复刷屏
 let persistWarned = false;
 

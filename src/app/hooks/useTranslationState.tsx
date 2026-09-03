@@ -3,7 +3,6 @@
 import { useState, useRef } from "react";
 import { App } from "antd";
 import { useLocalStorage } from "@/app/hooks/useLocalStorage";
-import useFileUpload from "@/app/hooks/useFileUpload";
 import { useLlmPresets } from "@/app/hooks/useLlmPresets";
 import { usePromptPresets } from "@/app/hooks/usePromptPresets";
 import { useGlossaryPresets } from "@/app/hooks/useGlossaryPresets";
@@ -29,11 +28,13 @@ import {
 import { type GlossaryTerm } from "@/app/lib/translation/glossary";
 import { translationCache } from "@/app/lib/storage/indexedDBStorage";
 // 浏览器专属的那几个(文件下载 / <input type=file> / 依赖 UI 文案的校验)
-import { exportTranslationSettings, createSettingsFileInput, validateTranslationInputs, pingSignature } from "@/app/hooks/translation";
+import { exportTranslationSettings, createSettingsFileInput } from "@/app/hooks/translation/settings";
+import { validateTranslationInputs, pingSignature } from "@/app/hooks/translation/validation";
 // 引擎侧:平台无关,与 CLI 共用同一份,一律从 lib/translation 取
-import { DEFAULT_RETRY_COUNT, DEFAULT_RETRY_TIMEOUT, isRetryableError, isDefiniteAuthFailure } from "@/app/lib/translation/retry";
+import { DEFAULT_RETRY_COUNT, DEFAULT_RETRY_TIMEOUT, delay, isRetryableError, isDefiniteAuthFailure } from "@/app/lib/translation/retry";
 import { type TranslationSettings } from "@/app/lib/translation/settingsSchema";
-import { describeError, isNetworkError } from "@/app/utils/errorUtils";
+import { describeError, isAbortError, isCascadedAbort, isNetworkError } from "@/app/utils/errorUtils";
+import { useLanguageOptions } from "@/app/components/languages";
 import { useTranslations } from "next-intl";
 
 const DEFAULT_API = "gtxFreeAPI";
@@ -53,11 +54,11 @@ const useTranslationState = () => {
   const { message } = App.useApp();
   const tLanguages = useTranslations("languages");
   const t = useTranslations("common");
+  const { sourceOptions } = useLanguageOptions();
   // The network seam: every wire request the pipeline makes goes through this,
   // so hook tests can swap the whole transport with one vi.mock of
   // "@/app/lib/translation". Passed down as PipelineDeps.translate.
   const { translate } = useTranslation();
-  const { readFile } = useFileUpload();
 
   // State
   // 落盘,不是会话态:Advanced 面板里其余设置(retryCount / removeChars / …)全都
@@ -187,8 +188,7 @@ const useTranslationState = () => {
   const cancelRequestedRef = useRef(false);
   // 【凭据失败快停】—— 与 cancelRequestedRef 同构,理由也同构:一把坏 key 会让
   // 之后【每一个】语言/文件以同样方式死掉,而每轮 translateBatch 新建 controller,
-  // pipeline 内部的 auth abort 只掐得断本轮(runTranslateLines 有意不接
-  // deps.onAuthAbort),拦不住下一轮 —— 入口守卫同样需要一个跨 controller 的旗标。
+  // pipeline 内部的 auth abort 只掐得断本轮,拦不住下一轮 —— 入口守卫同样需要一个跨 controller 的旗标。
   //
   // 没有它:过期 key + 5 个目标语言 = 5 轮注定失败的满并发请求,用户看着进度条把
   // 同一个错误重演五遍。CLI 早就有这条(cli.ts「凭据失败快停」),网页端三个工具
@@ -301,7 +301,7 @@ const useTranslationState = () => {
       if (settings.relayBase !== undefined) setRelayBase(settings.relayBase);
       if (settings.removeChars !== undefined) setRemoveChars(settings.removeChars);
       message.success(t("importSettingSuccess"));
-    }, readFile).catch((error) => {
+    }).catch((error) => {
       console.error("Import settings error:", error);
       message.error(t("importSettingError"));
     });
@@ -694,6 +694,36 @@ const useTranslationState = () => {
     setRunHadFailures(true);
   };
 
+  // 文件级失败计数:runBatchTranslation 开始时重置、结束时读取以决定汇总 toast;单文件
+  // 路径也会写,但不读,无副作用。【记一次文件级失败,只走这一个入口】—— 此前工具页里是
+  // 两套并行记账:failedFilesRef 只喂末尾的汇总 toast,markRunHadFailures 才是进度条能看见
+  // 的信号,结果批量里第一个文件格式不支持时只 bump 了 ref,进度条照样打绿色「翻译完成
+  // 100%」,正压在「已导出 (4/5)」上面。合成一个函数,漏不掉。
+  const failedFilesRef = useRef(0);
+  const noteFileFailure = () => {
+    failedFilesRef.current++;
+    markRunHadFailures();
+  };
+
+  /**
+   * 一个目标语言整体失败(硬失败)的统一记账:去重记入 failedLangs、标记本轮有失败、一条按
+   * key 合并的 toast(N 个语言失败只占一条,失败面板里有完整列表)。级联中止(同伴的 auth
+   * 错误已掐断 controller,真正的错误由那个同伴抛出)不算失败,返回 false。
+   * `detail` 覆盖默认正文「<错误> <语言> 翻译失败」(字幕双语产物用它换成双语提示);
+   * 网络/超时这两种友好文案已经表达了"失败",不再拼后缀。
+   */
+  const reportLangFailure = (error: unknown, lang: string, detail?: string): boolean => {
+    console.error(`Error translating to ${lang}:`, error);
+    if (isCascadedAbort(error)) return false;
+    markRunHadFailures();
+    setFailedLangs((prev) => (prev.includes(lang) ? prev : [...prev, lang]));
+    const friendly = isNetworkError(error) ? t("networkUnavailable") : isAbortError(error) ? t("translationTimeout") : null;
+    const langLabel = sourceOptions.find((o) => o.value === lang)?.label || lang;
+    const content = friendly ? `${friendly} (${langLabel})` : (detail ?? `${describeError(error, t)} ${langLabel} ${t("translationError")}`);
+    message.error({ content, key: "translate-lang-fail", duration: 10 });
+    return true;
+  };
+
   // Synchronous read of the run's failure flag. Tools that drive their OWN translation
   // loop (e.g. JSONTranslator) can't use runTranslation's boolean return, so they read
   // this directly after the loop to gate their success toast against the failure panel.
@@ -837,6 +867,64 @@ const useTranslationState = () => {
     }
   };
 
+  /**
+   * 多文件批量路径(字幕 / Markdown):逐文件读 → performTranslation → 节流 1.5s,末尾汇总 toast。
+   * 不经 runTranslation,但复位 / 记账 / 进度钉是同一套规则。曾在两个翻译器里各写一份。
+   */
+  const runBatchTranslation = async (performTranslation: PerformTranslation, files: File[], readFile: (file: File, onLoad: (text: string) => void, onError?: () => void) => void, noFileMessage: string): Promise<void> => {
+    if (files.length === 0) {
+      message.error(noFileMessage);
+      return;
+    }
+    // validate 不自管 isTranslating,这里 try/finally 兜底,进度条在 test ping → 文件循环之间保持连续可见。
+    setIsTranslating(true);
+    // resetProgress 而非裸 setProgressPercent(0):progressInfo 的 {current,total} 不清,投影弹窗会在
+    // 新一轮首行返回前(LLM 批次可达 20-60s)一直放映上一轮的最终计数和最后一句译文。
+    resetProgress();
+    // 整批开跑前清掉实时行(单文件路径由 runTranslation 清),两个入口必须对称。
+    clearLiveLines();
+    failedFilesRef.current = 0;
+    // 不走 runTranslation —— 失败状态在这里全清(不只 langs),计数才不会跨轮累加。
+    clearFailures();
+    try {
+      if (!(await validate())) return;
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        await new Promise<void>((resolve) => {
+          readFile(
+            file,
+            async (text) => {
+              await performTranslation(text, file.name, i, files.length);
+              await delay(1500);
+              resolve();
+            },
+            // 解码/读取失败:记一次文件失败(succeeded = total - failed 才准)并放行循环。
+            () => {
+              noteFileFailure();
+              resolve();
+            },
+          );
+        });
+        // 中途导航离开:后续文件只会逐个快速级联失败,汇总 toast 也会弹在用户切去的页面上 ——
+        // 直接收工。取消同理:requestCancel 已弹过提示,「已导出 (n/m)」只会把主动喊停说成半失败。
+        if (disposedRef.current || cancelRequestedRef.current) return;
+      }
+      // 非取消结束时把进度钉到 100%,与 runTranslation 的单文件钉【同一条规则】:批量里有文件在
+      // 发请求前就失败(格式不支持 / 解码失败)时进度只走到 (成功/总数)*100,进度条会据
+      // percent<100 判成「已停止」并丢掉 failed / lineFailures 两个信号。「进度动过才钉」:每个
+      // 文件都没发过请求时 percent 恒为 0,无条件钉会显示 100% 的琥珀色 INCOMPLETE 而失败面板是空的。
+      if (!cancelRequestedRef.current) setProgressPercent((p) => (p > 0 ? 100 : p));
+      // 只在有成功时汇总;行级软失败也算(provider 故障时文件是原文副本,绿色成功会跟失败面板对冲)。
+      // 全失败:per-file 的错误 toast 已显示,不再叠加。
+      const failed = failedFilesRef.current;
+      const succeeded = files.length - failed;
+      if (failed === 0 && !runHadFailuresRef.current) message.success(t("translationExported"), 10);
+      else if (succeeded > 0) message.warning(`${t("translationExported")} (${succeeded}/${files.length})`, 10);
+    } finally {
+      setIsTranslating(false);
+    }
+  };
+
   return {
     exportSettings,
     importSettings,
@@ -856,6 +944,7 @@ const useTranslationState = () => {
     setRemoveChars,
     translateBatch,
     runTranslation,
+    runBatchTranslation,
     sourceLanguage,
     targetLanguage,
     targetLanguages,
@@ -871,6 +960,8 @@ const useTranslationState = () => {
     failedReason,
     clearFailures,
     markRunHadFailures,
+    noteFileFailure,
+    reportLangFailure,
     runHadFailures,
     requestCancel,
     isCancelRequested,
@@ -909,9 +1000,7 @@ const useTranslationState = () => {
     renameLlmPreset,
     updateLlmPreset,
     promptPresets,
-    setPromptPresets,
     activePromptPresetId,
-    setActivePromptPresetId,
     savePromptPreset,
     loadPromptPreset,
     deletePromptPreset,
@@ -920,7 +1009,6 @@ const useTranslationState = () => {
     glossaryEnabled,
     setGlossaryEnabled,
     glossaryPresets,
-    setGlossaryPresets,
     activeGlossaryPresetId,
     setActiveGlossaryPresetId,
     activeGlossaryPreset,

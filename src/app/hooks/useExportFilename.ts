@@ -105,5 +105,3 @@ export const useExportFilename = (toolKey: string = "default"): ExportFilenameCo
     generateFileName,
   };
 };
-
-export default useExportFilename;

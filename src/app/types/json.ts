@@ -1,7 +1,8 @@
-import type { JsonArray, JsonObject, JsonPrimitive, JsonValue } from "type-fest";
-
-// Re-export JSON-safe types from type-fest for consistent usage across the app.
-export type { JsonArray, JsonObject, JsonPrimitive, JsonValue };
+// JSON-safe value types (the four aliases type-fest used to supply).
+export type JsonPrimitive = string | number | boolean | null;
+export type JsonValue = JsonPrimitive | JsonObject | JsonArray;
+export type JsonObject = { [key: string]: JsonValue };
+export type JsonArray = JsonValue[];
 
 // JSONPath node shape used when `resultType: "all"` is requested.
 export type JsonPathNode = {

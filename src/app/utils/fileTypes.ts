@@ -60,27 +60,14 @@ export type FileTypePreset = keyof typeof fileTypePresets;
 type FileTypeLabelOptions = {
   maxVisible?: number;
   separator?: string;
-  overflowText?: string;
-  useAllExtensions?: boolean;
 };
 
-const defaultSeparator = ", ";
+const formatExtensions = (extensions: string[], { maxVisible, separator = ", " }: FileTypeLabelOptions = {}) =>
+  !maxVisible || extensions.length <= maxVisible ? extensions.join(separator) : `${extensions.slice(0, maxVisible).join(separator)}...`;
 
-const normalizeExtension = (extension: string) => (extension.startsWith(".") ? extension.toLowerCase() : `.${extension.toLowerCase()}`);
-
-const formatExtensions = (extensions: string[], options: FileTypeLabelOptions = {}) => {
-  const { maxVisible, separator = defaultSeparator, overflowText = "..." } = options;
-
-  if (!maxVisible || extensions.length <= maxVisible) {
-    return extensions.join(separator);
-  }
-
-  return `${extensions.slice(0, maxVisible).join(separator)}${overflowText}`;
-};
-
-export const getFileTypeConfig = (...categories: FileTypeCategory[]) => {
-  const extensions: string[] = Array.from(new Set(categories.flatMap((category) => fileTypes[category].extensions)));
-  const displayExtensions: string[] = Array.from(
+const getFileTypeConfig = (...categories: FileTypeCategory[]) => {
+  const extensions = Array.from(new Set(categories.flatMap((category) => fileTypes[category].extensions)));
+  const displayExtensions = Array.from(
     new Set(
       categories.flatMap((category) => {
         const definition: FileTypeDefinition = fileTypes[category];
@@ -88,19 +75,12 @@ export const getFileTypeConfig = (...categories: FileTypeCategory[]) => {
       }),
     ),
   );
-
   return {
-    categories,
-    extensions,
-    displayExtensions,
     accept: extensions.join(","),
     label: formatExtensions(displayExtensions),
     fullLabel: formatExtensions(extensions),
-    formatLabel: (options?: FileTypeLabelOptions) => formatExtensions(options?.useAllExtensions ? extensions : displayExtensions, options),
-    hasExtension: (extension: string) => extensions.includes(normalizeExtension(extension)),
+    formatLabel: (options?: FileTypeLabelOptions) => formatExtensions(displayExtensions, options),
   };
 };
 
 export const getFileTypePresetConfig = (preset: FileTypePreset) => getFileTypeConfig(...fileTypePresets[preset]);
-
-export { fileTypePresets, fileTypes };

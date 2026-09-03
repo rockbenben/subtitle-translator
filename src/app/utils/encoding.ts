@@ -158,3 +158,6 @@ export const decodeFileBytes = async (buffer: ArrayBuffer): Promise<string> => {
     }
   }
 };
+
+/** 浏览器 File → 文本,走同一条编码自适应解码(decodeFileBytes)。 */
+export const readTextFile = async (file: File): Promise<string> => decodeFileBytes(await file.arrayBuffer());

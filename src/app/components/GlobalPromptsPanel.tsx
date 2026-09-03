@@ -1,9 +1,8 @@
 "use client";
 
-import { Form, Input, Typography } from "antd";
+import { Form, Input, Typography, Card } from "antd";
 import { useTranslations } from "next-intl";
 import { useTranslationContext } from "@/app/components/TranslationContext";
-import PageCard from "@/app/components/styled/PageCard";
 import PromptPresetPicker from "@/app/components/PromptPresetPicker";
 import { useIsMobile } from "@/app/hooks/useIsMobile";
 
@@ -28,7 +27,7 @@ const GlobalPromptsPanel = () => {
   const hint = <Text type="secondary">{t("globalPromptsExtra")}</Text>;
 
   return (
-    <PageCard
+    <Card
       title={t("globalPrompts")}
       extra={isMobile ? null : hint}
       styles={isMobile ? { body: { padding: 12 } } : undefined}>
@@ -45,7 +44,7 @@ const GlobalPromptsPanel = () => {
           <TextArea value={userPrompt} onChange={(e) => setUserPrompt(e.target.value)} autoSize={{ minRows: 3, maxRows: 16 }} aria-label={t("userPrompt")} />
         </Form.Item>
       </Form>
-    </PageCard>
+    </Card>
   );
 };
 

@@ -1,5 +1,3 @@
-import { lazyImport } from "@/app/lib/autoReload";
-
 // 统一换行符为 \n（将 Windows 的 \r\n 和旧 Mac 的 \r 规范为 \n），对已为 \n 的内容不做多余替换
 export const normalizeNewlines = (text: string): string => (text.includes("\r") ? text.replace(/\r\n?/g, "\n") : text);
 
@@ -54,11 +52,11 @@ const splitCNParagraph = (text: string) => {
   return text.replace(paragraphCNSplitRegex, "$1\n");
 };
 
-// 智能英文段落分割
-const splitEnglishParagraph = async (text: string): Promise<string> => {
-  const nlp = (await lazyImport(() => import("compromise"))).default;
-  return nlp(text).sentences().out("array").join("\n");
-};
+// 英文按句切分:Intl.Segmenter 的 sentence 粒度(曾经为这一句拉 350KB 的 compromise)
+const splitEnglishParagraph = async (text: string): Promise<string> =>
+  Array.from(new Intl.Segmenter("en", { granularity: "sentence" }).segment(text), (s) => s.segment.trim())
+    .filter(Boolean)
+    .join("\n");
 
 type ParagraphSplitMethod = "cn" | "en";
 export const splitParagraph = async (text: string, method: ParagraphSplitMethod = "cn"): Promise<string> => {
