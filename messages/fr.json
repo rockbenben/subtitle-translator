@@ -36,8 +36,8 @@
   },
   "common": {
     "exportFolder": "Dossier d'export",
-    "exportFolderDefault": "Les exports vont dans le dossier de téléchargement du navigateur. Chrome refuse le Bureau, Documents, Téléchargements et le dossier utilisateur eux-mêmes : choisissez un sous-dossier ou un autre dossier.",
-    "exportFolderDownloads": "Dossier de téléchargement du navigateur",
+    "exportFolderDefault": "Les exports vont dans le dossier de téléchargement par défaut.",
+    "exportFolderBlocked": "Le navigateur refuse le Bureau, Documents, Téléchargements et le dossier utilisateur eux-mêmes : choisissez un sous-dossier ou un autre dossier.",
     "exportFolderCurrent": "Les exports vont dans {dir}",
     "exportFolderReset": "Revenir au dossier de téléchargement",
     "exportFolderFailed": "Impossible de définir le dossier d'export.",

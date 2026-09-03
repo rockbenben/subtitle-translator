@@ -36,8 +36,8 @@
   },
   "common": {
     "exportFolder": "Export folder",
-    "exportFolderDefault": "Exports go to your browser's download folder. Chrome won't accept the Desktop, Documents, Downloads or user folder itself — pick a subfolder or any other folder.",
-    "exportFolderDownloads": "Browser download folder",
+    "exportFolderDefault": "Exports go to your default download folder.",
+    "exportFolderBlocked": "The browser won't accept the Desktop, Documents, Downloads or user folder itself — pick a subfolder or any other folder.",
     "exportFolderCurrent": "Exports go to {dir}",
     "exportFolderReset": "Back to the download folder",
     "exportFolderFailed": "Could not set the export folder.",

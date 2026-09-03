@@ -36,8 +36,8 @@
   },
   "common": {
     "exportFolder": "Cartella di esportazione",
-    "exportFolderDefault": "Le esportazioni finiscono nella cartella dei download del browser. Chrome non accetta Desktop, Documenti, Download e la cartella utente stessa: scegli una sottocartella o un'altra cartella.",
-    "exportFolderDownloads": "Cartella dei download del browser",
+    "exportFolderDefault": "Le esportazioni finiscono nella cartella dei download predefinita.",
+    "exportFolderBlocked": "Il browser non accetta Desktop, Documenti, Download e la cartella utente stessa: scegli una sottocartella o un'altra cartella.",
     "exportFolderCurrent": "Le esportazioni finiscono in {dir}",
     "exportFolderReset": "Torna alla cartella dei download",
     "exportFolderFailed": "Impossibile impostare la cartella di esportazione.",

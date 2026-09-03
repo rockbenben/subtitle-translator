@@ -36,8 +36,8 @@
   },
   "common": {
     "exportFolder": "匯出目錄",
-    "exportFolderDefault": "匯出會儲存到瀏覽器下載資料夾。Chrome 不允許選「桌面 / 文件 / 下載 / 使用者資料夾」本身，請選子資料夾或任意其他資料夾。",
-    "exportFolderDownloads": "瀏覽器下載資料夾",
+    "exportFolderDefault": "匯出會儲存到預設下載資料夾。",
+    "exportFolderBlocked": "瀏覽器不允許選「桌面 / 文件 / 下載 / 使用者資料夾」本身，請選子資料夾或任意其他資料夾。",
     "exportFolderCurrent": "匯出會儲存到 {dir}",
     "exportFolderReset": "恢復為下載資料夾",
     "exportFolderFailed": "無法設定匯出目錄。",

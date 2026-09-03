@@ -36,8 +36,8 @@
   },
   "common": {
     "exportFolder": "Folder ekspor",
-    "exportFolderDefault": "Hasil ekspor masuk ke folder unduhan browser. Chrome tidak menerima Desktop, Documents, Downloads, dan folder pengguna itu sendiri — pilih subfolder atau folder lain.",
-    "exportFolderDownloads": "Folder unduhan browser",
+    "exportFolderDefault": "Hasil ekspor masuk ke folder unduhan bawaan.",
+    "exportFolderBlocked": "Browser tidak menerima Desktop, Documents, Downloads, dan folder pengguna itu sendiri — pilih subfolder atau folder lain.",
     "exportFolderCurrent": "Hasil ekspor masuk ke {dir}",
     "exportFolderReset": "Kembali ke folder unduhan",
     "exportFolderFailed": "Tidak dapat menetapkan folder ekspor.",

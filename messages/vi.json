@@ -36,8 +36,8 @@
   },
   "common": {
     "exportFolder": "Thư mục xuất",
-    "exportFolderDefault": "Tệp xuất ra nằm trong thư mục tải xuống của trình duyệt. Chrome không cho chọn chính Desktop, Documents, Downloads và thư mục người dùng — hãy chọn thư mục con hoặc thư mục khác.",
-    "exportFolderDownloads": "Thư mục tải xuống của trình duyệt",
+    "exportFolderDefault": "Tệp xuất ra nằm trong thư mục tải xuống mặc định.",
+    "exportFolderBlocked": "Trình duyệt không cho chọn chính Desktop, Documents, Downloads và thư mục người dùng — hãy chọn thư mục con hoặc thư mục khác.",
     "exportFolderCurrent": "Tệp xuất ra sẽ nằm trong {dir}",
     "exportFolderReset": "Quay lại thư mục tải xuống",
     "exportFolderFailed": "Không thể đặt thư mục xuất.",

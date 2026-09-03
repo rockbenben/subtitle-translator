@@ -36,8 +36,8 @@
   },
   "common": {
     "exportFolder": "Pasta de exportação",
-    "exportFolderDefault": "As exportações vão para a pasta de downloads do navegador. O Chrome não aceita a Área de Trabalho, Documentos, Downloads nem a pasta do usuário em si — escolha uma subpasta ou outra pasta.",
-    "exportFolderDownloads": "Pasta de downloads do navegador",
+    "exportFolderDefault": "As exportações vão para a pasta de downloads padrão.",
+    "exportFolderBlocked": "O navegador não aceita a Área de Trabalho, Documentos, Downloads nem a pasta do usuário em si — escolha uma subpasta ou outra pasta.",
     "exportFolderCurrent": "As exportações vão para {dir}",
     "exportFolderReset": "Voltar para a pasta de downloads",
     "exportFolderFailed": "Não foi possível definir a pasta de exportação.",

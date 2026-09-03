@@ -36,8 +36,8 @@
   },
   "common": {
     "exportFolder": "Carpeta de exportación",
-    "exportFolderDefault": "Las exportaciones van a la carpeta de descargas del navegador. Chrome no acepta el Escritorio, Documentos, Descargas ni la carpeta de usuario en sí: elige una subcarpeta u otra carpeta.",
-    "exportFolderDownloads": "Carpeta de descargas del navegador",
+    "exportFolderDefault": "Las exportaciones van a la carpeta de descargas predeterminada.",
+    "exportFolderBlocked": "El navegador no acepta el Escritorio, Documentos, Descargas ni la carpeta de usuario en sí: elige una subcarpeta u otra carpeta.",
     "exportFolderCurrent": "Las exportaciones van a {dir}",
     "exportFolderReset": "Volver a la carpeta de descargas",
     "exportFolderFailed": "No se pudo establecer la carpeta de exportación.",

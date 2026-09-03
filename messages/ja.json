@@ -36,8 +36,8 @@
   },
   "common": {
     "exportFolder": "エクスポート先フォルダー",
-    "exportFolderDefault": "エクスポートはブラウザーのダウンロードフォルダーに保存されます。Chrome はデスクトップ・ドキュメント・ダウンロード・ユーザーフォルダー自体を選べません。サブフォルダーか別のフォルダーを選んでください。",
-    "exportFolderDownloads": "ブラウザーのダウンロードフォルダー",
+    "exportFolderDefault": "エクスポートは既定のダウンロードフォルダーに保存されます。",
+    "exportFolderBlocked": "ブラウザーはデスクトップ・ドキュメント・ダウンロード・ユーザーフォルダー自体を選べません。サブフォルダーか別のフォルダーを選んでください。",
     "exportFolderCurrent": "エクスポート先: {dir}",
     "exportFolderReset": "ダウンロードフォルダーに戻す",
     "exportFolderFailed": "エクスポート先フォルダーを設定できませんでした。",
