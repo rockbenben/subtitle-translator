@@ -40,9 +40,9 @@ export const getErrorHintKey = (error: unknown): string | null => {
 // ("Failed to fetch"/"Load failed"/"The operation was aborted")是各浏览器
 // 各语言的黑话,对用户零信息量 —— 只显示提示。HTTP 错误的原文携带服务器
 // 返回的真实诊断("[429] quota exceeded for model X"),保留 + 追加提示。
-// relay 两键:原文是服务层的英文兜底句,诊断信息(CORS/403)已含在提示
+// relay/cors 几键:原文是服务层的英文兜底句,诊断信息(CORS/403)已含在提示
 // 文案里,原文无增量 —— 同样只显示提示。
-const HINT_REPLACES_MESSAGE = new Set(["networkUnavailable", "translationTimeout", "translationTimeoutLocal", "errorHintRelay", "errorHintRelay403", "errorHintGeminiKey"]);
+const HINT_REPLACES_MESSAGE = new Set(["networkUnavailable", "translationTimeout", "translationTimeoutLocal", "errorHintRelay", "errorHintRelay403", "errorHintCors", "errorHintGeminiKey"]);
 
 /**
  * 面向用户的错误描述:原始 message + 本地化的可行动提示(HTTP status 映射),
