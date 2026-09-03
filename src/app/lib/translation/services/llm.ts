@@ -691,6 +691,16 @@ export const CLAUDE_DIRECT_ENDPOINT = getProviderEndpoints("claude")![0].url;
  * disable 路径的杀伤力:enable 至少要用户主动选,disable 是所有人的默认态。
  */
 export const buildGeminiThinkingConfig = (model: string, directive: ThinkingDirective | undefined): Record<string, unknown> => {
+  // thinkingLevel 是 Gemini 3.x 起才有的字段,打到 2.x/1.x 上是 400
+  // "Thinking level is not supported for this model."(2026-09-01 实测 gemini-2.5-flash)。
+  // ⚠ 别照 docs/thinking 那张档位表判 —— 它把 2.5 列成支持 low/medium/high,但那页写的是
+  // Interactions API(/v1beta/interactions,扁平 generation_config.thinking_level,服务端
+  // 替你映射成 budget);本仓走 generateContent,那里的字段参考写的是 "Use with earlier
+  // models results in an error"。两页都是官方且同期更新,取哪页看打的是哪个端点。
+  // 旧世代已从 models[] 移除,只可能是用户手填 —— 一律不发思考参数、跟服务端默认走,
+  // 不做 budget mapping(那正是当初移除 2.5 时刻意避开的复杂度)。
+  // 代价:界面那个档位下拉对 2.x 是空操作(手填 SKU 本来就是"自己负责"那一档)。
+  if (/^gemini-[12]\./.test(model)) return {};
   const out: Record<string, unknown> = {};
   const level = (want?: ReasoningEffort) => pickThinkingLevel("gemini", model, want);
   if (isThinkingModel("gemini", model)) {
