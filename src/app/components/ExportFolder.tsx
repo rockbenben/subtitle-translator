@@ -154,8 +154,16 @@ export const ExportFolderButton = ({ toolKey }: { toolKey: string }) => {
       <Tooltip title={dir ? t("exportFolderCurrent", { dir }) : t("exportFolderDefault")}>
         {/* || undefined:显式 false 会顶掉外层 ConfigProvider 的锁 */}
         <Button type="text" size="small" icon={<FolderOpenOutlined />} onClick={choose} disabled={locked || undefined} aria-label={t("exportFolder")}>
-          {/* 目录名直接写在按钮上:这个设置决定几十个文件落在哪,藏进 tooltip 太轻 */}
-          {dir ?? t("exportFolder")}
+          {/* 目录直接写在按钮上：这个设置决定几十个文件落在哪，藏进 tooltip 太轻。
+              浏览器只给文件夹名，桌面壳给的是完整路径（`C:\Users\…\subs`）—— 后者可以很长，
+              而标题行是 flex：实测一条 100 字符的路径在 640px 可用宽（桌面窗口最小 720）下
+              会直接溢出整行。所以给个上限 + 省略号 —— 截断无损，tooltip（exportFolderCurrent）
+              拿的是同一个 `dir`，完整路径在那里。
+              ⚠ 不能写成 `min(100%, 34ch)`：百分比会让按钮仍按 max-content 定宽（实测 span 被
+              截到 297px，按钮还是 718px，照样溢出）。就写字符宽。 */}
+          <span style={{ display: "inline-block", maxWidth: "34ch", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", verticalAlign: "bottom" }}>
+            {dir ?? t("exportFolder")}
+          </span>
         </Button>
       </Tooltip>
       {dir !== null && (
