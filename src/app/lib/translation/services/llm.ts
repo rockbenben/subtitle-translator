@@ -10,7 +10,7 @@ import {
   isThinkingModel,
   isApiKeyOptional,
   pickThinkingLevel,
-  relayWouldServe,
+  relayHintWouldHelp,
   resolveWireEndpoint,
   OPENAI_COMPAT_KEYS,
   OPENAI_COMPAT_PROVIDERS,
@@ -22,7 +22,7 @@ import {
 import { getAIModelPrompt } from "../utils";
 import { isNetworkError } from "@/app/utils/errorUtils";
 
-import { fetchJSON, normalizeNumber, normalizePrompt, requireApiKey, requireUrl, completeOpenAICompatUrl, PROXY_ENDPOINTS, getOpenAICompatContent, getClaudeContent, RELAY_HINT_MARKER, RELAY_HINT_MESSAGE } from "./shared";
+import { fetchJSON, normalizeNumber, normalizePrompt, requireApiKey, requireUrl, completeOpenAICompatUrl, PROXY_ENDPOINTS, getOpenAICompatContent, getClaudeContent, RELAY_HINT_MARKER } from "./shared";
 
 // Prepare prompts common to all LLM services
 const preparePrompts = (params: { text: string; targetLanguage: string; sourceLanguage: string; systemPrompt?: string; userPrompt?: string; fullText?: string }) => {
@@ -298,42 +298,12 @@ const THINKING_BUILDERS: Partial<Record<OpenAICompatProviderKey, ExtraBodyBuilde
 // disable payload). Returns {} for providers with no builder.
 export const buildThinkingExtraBody = (service: OpenAICompatProviderKey, params: TranslateTextParams): Record<string, unknown> => THINKING_BUILDERS[service]?.(params) ?? {};
 
-// Wrap a relay-capable provider's service so a browser network/CORS TypeError
-// with relay OFF is rewritten into the actionable relay hint. Applied generically
-// to every relay-capable provider — not just DeepSeek — so they all get the hint
-// (and the non-retryable classification) instead of a raw doomed retry.
-// isNetworkError covers all three engines' wording (Chrome "Failed to fetch",
-// Firefox "NetworkError when attempting…", Safari "Load failed") — matching only
-// Chrome's left FF/Safari users burning 3 retries on a doomed CORS error and
-// then seeing a generic "service unreachable" instead of the relay remediation.
-// 「建议打开中转」的两个前置:中转还没开,而且开了确实有用(registry.relayWouldServe
-// —— 与端点解析、界面文案同一个判据,bare host / 官方变体 / 自建中转的取舍
-// 不在这里重算)。指人去开一个开了也没用的开关,比不提示更糟。
-// ⚠ 别退回成 `&& !params.url`:那是旧的「自定义 endpoint 压过开关」优先级留下的,
-// 会连"填的就是官方地址"和"自己有中转"这两种真能获益的情况一起吃掉。
-const relayHintWouldHelp = (params: TranslateTextParams, providerKey: string): boolean =>
-  !params.useRelay && relayWouldServe(providerKey, { url: params.url, relayBase: params.relayBase });
-
-const withRelayHint = (service: TranslationService, providerKey: string): TranslationService => async (params) => {
-  try {
-    return await service(params);
-  } catch (error) {
-    if (relayHintWouldHelp(params, providerKey) && isNetworkError(error)) {
-      // errorHintKey → describeError renders the localized common.errorHintRelay
-      // text; the English message stays as the console/log fallback and carries
-      // RELAY_HINT_MARKER for retry.ts's non-retryable classification.
-      throw Object.assign(new Error(RELAY_HINT_MESSAGE), { errorHintKey: "errorHintRelay" });
-    }
-    throw error;
-  }
-};
-
 // Factory: generate a TranslationService from a provider spec key, optionally
-// wiring in a thinking extra-body builder. Relay-capable providers are wrapped
-// with the shared CORS → relay-hint rewriter.
+// wiring in a thinking extra-body builder. 网络错误 → 可行动提示的改写不在
+// 这里 —— 它对每个服务都一样,统一在 withNetworkHint(services/index.ts)。
 const makeOpenAICompat = (key: OpenAICompatProviderKey, extraBodyBuilder?: ExtraBodyBuilder): TranslationService => {
   const spec = OPENAI_COMPAT_PROVIDERS[key] as OpenAICompatProviderSpec;
-  const base: TranslationService = async (params) =>
+  return async (params) =>
     openAICompatRequest({
       params,
       serviceName: spec.label,
@@ -343,10 +313,6 @@ const makeOpenAICompat = (key: OpenAICompatProviderKey, extraBodyBuilder?: Extra
       extraHeaders: spec.extraHeaders,
       extraBody: extraBodyBuilder?.(params),
     });
-  // Every relay-capable provider gets the hint wrap: a CORS failure with the
-  // toggle off (incl. a default-on provider the user switched to direct) is
-  // remediated by turning the relay (back) on.
-  return spec.defaultUseRelay !== undefined ? withRelayHint(base, key) : base;
 };
 
 // Auto-generate every OpenAI-compat service: each provider gets a base service,
@@ -354,8 +320,9 @@ const makeOpenAICompat = (key: OpenAICompatProviderKey, extraBodyBuilder?: Extra
 const openAICompatServicesBase = Object.fromEntries(OPENAI_COMPAT_KEYS.map((k) => [k, makeOpenAICompat(k, THINKING_BUILDERS[k])])) as Record<OpenAICompatProviderKey, TranslationService>;
 
 // DeepSeek extra wrap: the generic relay-hint (CORS → "API Relay") already comes
-// from the factory; DeepSeek additionally rewrites a 403 (its direct endpoint
-// blocks some browser origins outright) into the same relay remediation hint.
+// from withNetworkHint (services/index.ts); DeepSeek additionally rewrites a 403
+// (its direct endpoint blocks some browser origins outright) into the same relay
+// remediation hint — a 403 is NOT a network error, so that wrapper never sees it.
 export const deepseek: TranslationService = async (params) => {
   try {
     return await openAICompatServicesBase.deepseek(params);
@@ -365,7 +332,7 @@ export const deepseek: TranslationService = async (params) => {
     // 字面匹配漏掉的恰是最常见的浏览器源被拦场景。fetchJSON 已 Object.assign
     // 附 status。
     const status = (error as { status?: number } | null)?.status;
-    if (relayHintWouldHelp(params, "deepseek") && (status === 403 || (error instanceof Error && error.message.includes("[403]")))) {
+    if (relayHintWouldHelp("deepseek", params) && (status === 403 || (error instanceof Error && error.message.includes("[403]")))) {
       // ⚠ 【status 必须带上】。这里换了一个新 Error,原来的 status 就丢了 ——
       // 而整轮凭据快停(isDefiniteAuthFailure)只认数值 401/403,不认消息文本
       // (消息里一个 "Forbidden" 就掐掉整批太危险,见 retry.ts 那段注释)。
@@ -555,7 +522,7 @@ export const buildYandexModelUri = (model: string | undefined, folderId: string 
 // 使用。这里派生而不是再抄一遍字面量,三处就不可能漂移。
 export const YANDEX_DIRECT_ENDPOINT = getProviderEndpoints("yandex")![0].url;
 
-export const yandex: TranslationService = withRelayHint(async (params) => {
+export const yandex: TranslationService = async (params) => {
   const model = buildYandexModelUri(params.model, params.folderId);
   return openAICompatRequest({
     params: { ...params, model },
@@ -564,7 +531,7 @@ export const yandex: TranslationService = withRelayHint(async (params) => {
     defaultModel: model,
     defaultTemperature: defaultConfigs.yandex.temperature as number,
   });
-}, "yandex");
+};
 
 // NVIDIA NIM wraps thinking params in `chat_template_kwargs` (vs native APIs
 // which use top-level `reasoning_effort` / `thinking`). Orchestrator-level gate
@@ -757,7 +724,7 @@ export const buildClaudeThinkingBody = (model: string, directive: ThinkingDirect
   return { maxTokens: mayThink ? 16384 : 8096, body };
 };
 
-export const claude: TranslationService = withRelayHint(async (params) => {
+export const claude: TranslationService = async (params) => {
   const { apiKey, model, reasoningEffort, useRelay } = params;
   const { effectiveSystemPrompt, prompt } = preparePrompts(params);
 
@@ -800,4 +767,4 @@ export const claude: TranslationService = withRelayHint(async (params) => {
     signal: params.signal,
   });
   return getClaudeContent(data);
-}, "claude");
+};

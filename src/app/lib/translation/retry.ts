@@ -4,7 +4,7 @@
 // this file must stay importable from Node (CLI/server) — the barrels carry
 // "use client" / browser-only modules (file-saver) that a Node entry must not pull.
 import { LLM_MODELS } from "./registry";
-import { RELAY_HINT_MARKER, RELAY_BASE_INVALID_MARKER } from "./services/shared";
+import { RELAY_HINT_MARKER, RELAY_BASE_INVALID_MARKER, CORS_HINT_MARKER } from "./services/shared";
 import { isAbortError, isCascadedAbort } from "@/app/utils/errorUtils";
 
 // MT-categorized services that actually delegate to an LLM runtime under the
@@ -73,18 +73,20 @@ export const isDefiniteAuthFailure = (error: unknown): boolean => {
  * Errors that retrying won't fix — bail out immediately so the user isn't stuck
  * at 0% for 30-60s of doomed retries. These are thrown by service layers when the
  * next attempt will fail the same way — notably the shared CORS → "enable API
- * Relay" rewrite (withRelayHint in services/llm.ts), which fires for EVERY
+ * Relay" rewrite (withNetworkHint in services/index.ts), which fires for EVERY
  * relay-capable provider (not just DeepSeek) on a network/CORS TypeError with
- * relay off. The relay entry derives from RELAY_HINT_MARKER (services/shared.ts)
- * — the same constant embedded in every relay-remediation message — so rewording
- * a message can't silently break this classification. The Chinese entry is a
- * redundant second net over the same messages' zh half.
+ * relay off. CORS_HINT_MARKER is that same wrapper's OTHER remediation: a
+ * user-supplied endpoint the relay can't serve (no CORS headers, or plain
+ * unreachable) — neither self-heals inside a retry window either.
+ * Both derive from a constant (services/shared.ts) embedded in every such
+ * message — so rewording a message can't silently break this classification.
+ * The Chinese entry is a redundant second net over the same messages' zh half.
  *
  * "max_tokens reached" is the marker getOpenAICompatContent throws when a
  * response has finish_reason==="length" — same input + same max_tokens
  * truncates at the same boundary every time, so retries are pure waste.
  */
-const NON_RETRYABLE_MESSAGES = [RELAY_HINT_MARKER.toLowerCase(), "请在 api 设置中开启", "max_tokens reached", RELAY_BASE_INVALID_MARKER.toLowerCase()];
+const NON_RETRYABLE_MESSAGES = [RELAY_HINT_MARKER.toLowerCase(), "请在 api 设置中开启", "max_tokens reached", RELAY_BASE_INVALID_MARKER.toLowerCase(), CORS_HINT_MARKER.toLowerCase()];
 
 /**
  * Check if error is retryable (server errors or rate limits).

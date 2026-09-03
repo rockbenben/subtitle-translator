@@ -182,19 +182,33 @@ export const PROXY_ENDPOINTS = {
  * those users know what they're doing.
  */
 // Claude-flavored URL completion (Anthropic Messages protocol — the
-// chat/completions normalizer would rewrite to the wrong path): a bare host
-// (self-hosted relay) gets /v1/messages appended; any URL that already has a
-// path is trusted verbatim. 放在 shared:与 completeOpenAICompatUrl 同为
-// 纯 URL 工具,且 registry.classifyEndpointUrl 也要用它(见那边注释)。
+// chat/completions normalizer would rewrite to the wrong path)。放在 shared:
+// 与 completeOpenAICompatUrl 同为纯 URL 工具,且 registry.classifyEndpointUrl
+// 也要用它(见那边注释)。
+//
+// 只补【三种公认的 base 形态】,其余带路径的一律原样信任:
+//   https://host              裸主机(自建中转)           → + /v1/messages
+//   https://host/…/v1        版本段结尾(同 OpenAI 侧的 /v\d+$)  → + /messages
+//   https://host/anthropic    「这棵子树说 Anthropic 协议」       → + /v1/messages
+// 第三条不是某一家的写法:Cloudflare AI Gateway(…/{gw}/anthropic)、LiteLLM 的
+// /anthropic/{path} 透传、第三方网关(subtitle-translator#66 的 syncera)三家独立
+// 采用的同一个约定 —— 而 Messages 端点【按协议】必以 /messages 结尾(上面已放行),
+// 所以这三种后缀都不可能是端点本身。ANTHROPIC_BASE_URL 给的就是 base,
+// 官方 SDK 自己拼 /v1/messages —— 用户粘过来的必然是那个形态。
+// ⚠ 别放宽成「任何路径都当 base」:llm-proxy-worker 自部署后的
+// https://你的.workers.dev/api/claude 是【路径即端点】的重写型代理(worker 的路由
+// 正则是 ^/api/{provider}$),补上去必然 400。
 export const completeClaudeUrl = (url: string): string => {
   const cleaned = url.trim().replace(/\/+$/, "");
   if (!cleaned || cleaned.endsWith("/messages")) return cleaned;
   try {
     const parsed = new URL(cleaned);
+    const path = parsed.pathname.replace(/\/+$/, "");
+    const suffix = !path ? "/v1/messages" : /\/v\d+$/.test(path) ? "/messages" : /\/anthropic$/i.test(path) ? "/v1/messages" : undefined;
     // 路径插在 search 之前:`https://gw.com?key=x` 若裸拼成 `…?key=x/v1/messages`,
     // 路径整个落进查询串、fetch 打到网关根路径 —— 而带查询串的网关地址正是
     // 消毒层明确保留的形态(「查询串是自建网关地址的一部分」)。
-    if (parsed.pathname === "" || parsed.pathname === "/") return `${parsed.protocol}//${parsed.host}/v1/messages${parsed.search}`;
+    if (suffix) return `${parsed.protocol}//${parsed.host}${path}${suffix}${parsed.search}`;
   } catch {
     // Invalid URL — leave alone, fetch will throw a clearer error
   }
@@ -257,7 +271,7 @@ export const usesBuiltinRelay = (base?: string): boolean => {
 };
 
 // ============================================================================
-// Relay-hint error markers
+// Network-error hint markers
 // ============================================================================
 
 /**
@@ -270,11 +284,22 @@ export const usesBuiltinRelay = (base?: string): boolean => {
 export const RELAY_HINT_MARKER = "enable 'API Relay'";
 
 // Browser-direct calls to a relay-capable provider hit the CORS wall as a raw
-// `TypeError` (no status). withRelayHint (llm.ts) rewrites it into this message
-// AND attaches `errorHintKey: "errorHintRelay"` — the display layer
+// `TypeError` (no status). withNetworkHint (services/index.ts) rewrites it into
+// this message AND attaches `errorHintKey: "errorHintRelay"` — the display layer
 // (describeError) swaps the message for the localized common.errorHintRelay
 // text, so this English form only reaches console logs / non-UI consumers.
 export const RELAY_HINT_MESSAGE = `Network error (possibly CORS). Please ${RELAY_HINT_MARKER} in API Settings.`;
+
+/**
+ * 同 RELAY_HINT_MARKER,但指向另一种补救:地址是【用户自己的】(自建网关 /
+ * 本地运行时),中转帮不上忙 —— 内置中转只转发它声明过的官方端点。
+ * 同样必须【不可重试】:无 status 的 TypeError 在自填地址上只有两种成因 ——
+ * 没回 CORS 头、或地址/服务不可达 —— 两种都不会在几秒内自愈,重试只是把
+ * 一个改一行配置就能解决的问题拖成几十秒的 0%。
+ */
+export const CORS_HINT_MARKER = "endpoint unreachable or CORS-blocked";
+
+export const CORS_HINT_MESSAGE = `Network error — ${CORS_HINT_MARKER}. Check the address, and that the service sends CORS headers.`;
 
 // ============================================================================
 // Config value normalization & required-field validation

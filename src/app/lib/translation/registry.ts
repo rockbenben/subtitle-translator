@@ -2073,6 +2073,43 @@ export const relayWouldServe = (service: string, opts: { url?: string; relayBase
   !usesBuiltinRelay(opts.relayBase) || classifyEndpointUrl(service, opts.url).kind !== "custom";
 
 /**
+ * 这个 provider 界面上有没有中转开关。withNetworkHint(services/index.ts)用它决定
+ * 该不该提「请开启中转」—— 指人去拨一个他那个 provider 根本没有的开关,
+ * 比不提示更糟。
+ *
+ * ⚠ 判据是【默认配置里有没有 useRelay 字段】,不是 `spec.defaultUseRelay`:
+ * 后者只是 openai-compat 工厂的输入(buildOpenAICompatDefault 据此填字段),
+ * 而手写 kind 的 claude / yandex 直接把 useRelay 写在自己的 defaults 里 ——
+ * 按 defaultUseRelay 判会把这两家当成「没有中转」。这里与 TranslationSettings
+ * 决定该不该渲染那个 Switch 的判据(config?.useRelay !== undefined)同源。
+ */
+const isRelayCapable = (service: string): boolean => getDefaultConfig(service)?.useRelay !== undefined;
+
+/**
+ * 「指他去开中转」这句话到底有没有用 —— withNetworkHint(services/index.ts)的
+ * CORS 改写与 deepseek 的 403 改写(services/llm.ts)共用这一个判据。
+ * 三个前置缺一不可:有那个开关、现在没开、开了真会路由到位（relayWouldServe
+ * —— 与端点解析、界面文案同一个判据,bare host / 官方变体 / 自建中转的取舍
+ * 不在这里重算）。
+ *
+ * ⚠ 别退回成 `&& !opts.url`:那是旧的「自定义 endpoint 压过开关」优先级留下的,
+ * 会连"填的就是官方地址"和"自己有中转"这两种真能获益的情况一起吃掉。
+ */
+export const relayHintWouldHelp = (service: string, opts: { useRelay?: boolean; url?: string; relayBase?: string }): boolean =>
+  isRelayCapable(service) && !opts.useRelay && relayWouldServe(service, opts);
+
+/**
+ * 「这个地址是用户自己的」—— withNetworkHint(services/index.ts)据此把网络错误改写成
+ * CORS 提示(中转帮不上,补救在对面服务器上)。两种形态缺一不可:
+ * URL_IS_PRIMARY_CRED 那几家根本没有官方默认端点(填什么都是他的);其余家
+ * 则看他是不是填了个非官方地址。
+ * ⚠ 单靠 kind==="custom" 会漏掉最常撞 CORS 的那批:LM Studio / Ollama 等
+ * 本地运行时地址在 llm 的 endpoints[] 里有芯片,会被判成 "variant"。
+ */
+export const isUserSuppliedEndpoint = (service: string, url: string | undefined): boolean =>
+  URL_IS_PRIMARY_CRED.has(service) || classifyEndpointUrl(service, url).kind === "custom";
+
+/**
  * THE wire-endpoint resolution —— 所有走中转开关的服务(openai-compat 工厂 +
  * claude/yandex)唯一的出口地址计算。两轴正交:`url` 决定打哪个地址(空 =
  * 官方默认),`useRelay` 决定走不走中转;唯一的组合限制见 relayWouldServe。
