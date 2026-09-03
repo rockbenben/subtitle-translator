@@ -22,13 +22,22 @@ const invokeCmd = async <T>(cmd: string): Promise<T> => {
 };
 
 /**
- * Rust 给的是完整路径，按钮上显示的却是【它自己的文字】（ExportFolder 里
- * `{dir ?? t("exportFolder")}`）—— 一整条 C:\Users\...\subs 会把工具页标题行撑变形。
- * 所以只取最后一段，跟 Web 版对齐（浏览器本来也只给文件夹名）。
- * 代价：两个同名文件夹在界面上分不出来。真需要完整路径的话得让上游把「按钮文字」
- * 与「tooltip」拆成两个值，那是上游的事。
+ * 【直接给完整路径】Rust 手里有 `C:\Users\…\subs`，就把它原样交给 UI。
+ *
+ * 曾经只取最后一段（跟 Web 版对齐，浏览器本来也只给文件夹名），理由是怕长路径把
+ * 工具页标题行撑变形。两个问题：一是桌面壳本来就知道完整路径，丢掉是白丢；
+ * 二是两个同名文件夹（`…\a\out` 与 `…\b\out`）在界面上根本分不出来，
+ * 而这个按钮决定的是几十个文件落在哪。
+ *
+ * “撑变形”那个顾虑已经在上游 components/ExportFolder.tsx 里解决（按钮文字加了
+ * 宽度上限 + 省略号，tooltip 拿完整路径）—— 实测只有「最小窗口 + 百字符路径」
+ * 那一格会溢出，不值得为它把信息全扇掉。
+ *
+ * ⚠ 旧实现里的 `path.split(/[\/]/)` 还是错的：那个字符类只把斜杠转义了一遍，
+ * 里面根本没有反斜杠 —— Windows 路径一段都切不开，3.1.1 上实际显示的本来就是
+ * 整条路径（只是没人发现）。现在这是明确行为，不再是巧合。
  */
-const baseName = (path: string | null): string | null => path?.split(/[\/]/).filter(Boolean).pop() ?? null;
+const asDir = (path: string | null): string | null => path || null;
 
 /**
  * 【必须在模块作用域调用】supportsExportDir() 在渲染期就被读，放进 effect 就晚了
@@ -40,8 +49,8 @@ export const installNativeExportDir = (): void => {
     // 【toolKey 一律忽略：桌面端一个目录管全站】on_download 在 Rust 侧，拿不到是
     // 哪个工具触发的这次下载，要按工具分还得让前端把「当前工具」同步给 Rust。
     // 本仓只有字幕翻译一个工具会显示这个入口，先不付那份复杂度。
-    pick: async () => baseName(await invokeCmd<string | null>("choose_export_dir")),
-    current: async () => baseName(await invokeCmd<string | null>("get_export_dir")),
+    pick: async () => asDir(await invokeCmd<string | null>("choose_export_dir")),
+    current: async () => asDir(await invokeCmd<string | null>("get_export_dir")),
     clear: () => invokeCmd<void>("clear_export_dir"),
   });
 };
