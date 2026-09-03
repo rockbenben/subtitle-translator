@@ -52,9 +52,15 @@ export interface TranslateTextParams {
   domains?: string; // Optional: domains setting for Qwen-MT
   // Active glossary terms in the provider's native wire shape. Currently only
   // Qwen-MT consumes them (translation_options.terms — in-model terminology
-  // intervention); LLM services get the glossary via the systemPrompt block
-  // instead, composed by the orchestrator before the params are built.
+  // intervention); LLM services get the glossary via `glossaryBlock` instead.
   glossaryTerms?: Array<{ source: string; target: string }>;
+  // Per-request glossary prompt fragment (only the terms this text contains),
+  // composed by the orchestrator. LLM services place it on the DYNAMIC side of
+  // the user message — after the static prefix, before the content. It must
+  // never be folded into systemPrompt: system heads the provider cache prefix,
+  // and a per-request block there defeats prefix caching for every provider
+  // (subtitle-translator#53).
+  glossaryBlock?: string;
   fullText?: string; // Optional: complete text for ${fullText} variable
   signal?: AbortSignal; // Optional: for request cancellation
 }

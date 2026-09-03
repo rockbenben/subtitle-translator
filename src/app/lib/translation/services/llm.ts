@@ -19,17 +19,22 @@ import {
   type OpenAICompatProviderKey,
   type OpenAICompatProviderSpec,
 } from "../registry";
-import { getAIModelPrompt } from "../utils";
+import { getAIModelPromptParts } from "../utils";
 import { isNetworkError } from "@/app/utils/errorUtils";
 
 import { fetchJSON, normalizeNumber, normalizePrompt, requireApiKey, requireUrl, completeOpenAICompatUrl, PROXY_ENDPOINTS, getOpenAICompatContent, getClaudeContent, RELAY_HINT_MARKER } from "./shared";
 
-// Prepare prompts common to all LLM services
-const preparePrompts = (params: { text: string; targetLanguage: string; sourceLanguage: string; systemPrompt?: string; userPrompt?: string; fullText?: string }) => {
+// Prepare prompts common to all LLM services. The user prompt comes back both
+// joined (`prompt`) and split at ${content} (`promptPrefix` / `promptSuffix`):
+// the prefix is byte-stable across requests and is what provider prefix
+// caching keys on (subtitle-translator#53). Anything per-request — today the
+// glossary block — goes on the suffix side, never into the prefix or system.
+const preparePrompts = (params: { text: string; targetLanguage: string; sourceLanguage: string; systemPrompt?: string; userPrompt?: string; fullText?: string; glossaryBlock?: string }) => {
   const effectiveSystemPrompt = normalizePrompt(params.systemPrompt, DEFAULT_SYSTEM_PROMPT);
   const effectiveUserPrompt = normalizePrompt(params.userPrompt, DEFAULT_USER_PROMPT);
-  const prompt = getAIModelPrompt(params.text, effectiveUserPrompt, params.targetLanguage, params.sourceLanguage, params.fullText);
-  return { effectiveSystemPrompt, prompt };
+  const { prefix: promptPrefix, suffix } = getAIModelPromptParts(params.text, effectiveUserPrompt, params.targetLanguage, params.sourceLanguage, params.fullText);
+  const promptSuffix = params.glossaryBlock ? `${params.glossaryBlock}\n\n${suffix}` : suffix;
+  return { effectiveSystemPrompt, prompt: promptPrefix + promptSuffix, promptPrefix, promptSuffix };
 };
 
 // Common OpenAI-compatible request helper (named-parameter config object)
@@ -605,11 +610,10 @@ export const llm: TranslationService = async (params) => {
 
   // sendSystemPrompt=false: omit the system ROLE for chat templates that
   // reject it (Gemma family) — but the system prompt's CONTENT must survive,
-  // prepended to the user message. The glossary block lives ONLY in the system
-  // prompt (per-request composition in translateSingle), so dropping the
-  // message entirely silently disabled the glossary's primary mechanism for
-  // the exact audience the toggle exists for. undefined defaults to include
-  // (pre-toggle configs).
+  // prepended to the user message: dropping the message entirely once
+  // silently disabled the glossary (then composed into system) for the exact
+  // audience the toggle exists for. undefined defaults to include (pre-toggle
+  // configs).
   const messages =
     sendSystemPrompt === false
       ? [{ role: "user", content: `${effectiveSystemPrompt}\n\n${prompt}` }]
@@ -726,23 +730,30 @@ export const buildClaudeThinkingBody = (model: string, directive: ThinkingDirect
 
 export const claude: TranslationService = async (params) => {
   const { apiKey, model, reasoningEffort, useRelay } = params;
-  const { effectiveSystemPrompt, prompt } = preparePrompts(params);
+  const { effectiveSystemPrompt, promptPrefix, promptSuffix } = preparePrompts(params);
 
   const key = requireApiKey("Claude", apiKey);
   const effectiveModel = model || defaultConfigs.claude.model!;
   const { maxTokens, body: thinkingBody } = buildClaudeThinkingBody(effectiveModel, reasoningEffort);
 
-  // `system` as a block array (not a plain string) is the form that accepts
-  // `cache_control` — required since Claude is the ONLY provider where prompt
-  // caching is off by default. Anthropic silently no-ops the marker when the
-  // prompt is below the cacheable threshold (~1024 tokens for Sonnet/Haiku,
-  // 2048 for Opus), so short default prompts cost nothing extra; long custom
-  // prompts (glossaries, style guides) get ~90% input discount on cache hits.
+  // Block arrays (not plain strings) are the form that accepts `cache_control`
+  // — required since Claude is the ONLY provider where prompt caching is off
+  // by default. Two breakpoints: the system prompt, and the STATIC prefix of
+  // the user message (everything the template renders before ${content} —
+  // with ${fullText} that is the whole episode, resent on every batch;
+  // subtitle-translator#53). The dynamic tail (glossary block + content) stays
+  // unmarked. Anthropic silently no-ops a marker below the per-model cacheable
+  // minimum, so short prompts cost nothing extra; hits are ~90% off input.
+  // Empty text blocks are rejected (400), hence the guards.
   // Doc: docs.anthropic.com/en/docs/build-with-claude/prompt-caching
+  const userContent = [
+    ...(promptPrefix ? [{ type: "text", text: promptPrefix, cache_control: { type: "ephemeral" } }] : []),
+    ...(promptSuffix ? [{ type: "text", text: promptSuffix }] : []),
+  ];
   const requestBody: Record<string, unknown> = {
     model: effectiveModel,
     system: [{ type: "text", text: effectiveSystemPrompt, cache_control: { type: "ephemeral" } }],
-    messages: [{ role: "user", content: prompt }],
+    messages: [{ role: "user", content: userContent }],
     max_tokens: maxTokens,
     ...thinkingBody,
   };

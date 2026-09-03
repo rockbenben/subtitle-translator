@@ -457,15 +457,16 @@ const translateSingle = async (text: string, cacheSuffix: string, config: Pipeli
   // suffix: the block is a deterministic function of {text, full term set},
   // and the cache key already covers both (text via generateCacheKey, full
   // set via the caller's cacheSuffix).
+  // Travels as its own field, NOT appended to systemPrompt: system heads the
+  // provider's cache prefix, so a per-request block there broke prefix caching
+  // for every LLM provider (subtitle-translator#53). The service inserts it on
+  // the dynamic side of the user message, after the static prefix.
   if (LLM_MODELS.includes(config.translationMethod)) {
-    // Appending to an empty base would otherwise drop the default prompt:
-    // services treat a non-empty systemPrompt as "user configured" verbatim.
-    const base = config.systemPrompt?.trim() ? config.systemPrompt : DEFAULT_SYSTEM_PROMPT;
     if (config.strictGlossaryTerms?.length) {
-      extras.systemPrompt = base + buildStrictGlossaryPromptBlock(config.strictGlossaryTerms);
+      extras.glossaryBlock = buildStrictGlossaryPromptBlock(config.strictGlossaryTerms);
     } else {
       const matched = filterTermsMatchingText(ctx.getGlossaryTerms(config.targetLanguage), text);
-      if (matched.length > 0) extras.systemPrompt = base + buildGlossaryPromptBlock(matched);
+      if (matched.length > 0) extras.glossaryBlock = buildGlossaryPromptBlock(matched);
     }
   } else if (config.translationMethod === "qwenMt") {
     // Qwen-MT: native terminology intervention instead of a prompt block.
