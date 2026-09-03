@@ -78,8 +78,17 @@ export const splitTextIntoChunks = (text: string, maxLength: number, delimiter: 
   return chunks;
 };
 
+export type PromptParts = { prefix: string; suffix: string };
+
 /**
- * Build AI model prompt with variable substitution
+ * Build AI model prompt with variable substitution, returned SPLIT at the
+ * template's first ${content}: `prefix` is everything rendered before it (the
+ * user's instructions, ${fullText}, the context-batch preamble) and is
+ * byte-identical across requests; `suffix` is the content plus whatever
+ * follows. Provider prefix caching keys on exactly this boundary
+ * (subtitle-translator#53): Claude marks `prefix` with cache_control,
+ * OpenAI-compat providers match the byte prefix automatically. A template
+ * without ${content} renders entirely into `prefix`.
  * @param fullText - Optional: complete text for ${fullText} variable (only processed when prompt contains ${fullText})
  *
  * Two invariants here are load-bearing (both shipped corrupted output before):
@@ -97,7 +106,7 @@ export const splitTextIntoChunks = (text: string, maxLength: number, delimiter: 
  *    itself + swallows context, $` duplicates the preceding text, `$&`
  *    re-injects the match. `() => value` is inserted verbatim.
  */
-export const getAIModelPrompt = (content: string, userPrompt: string, targetLanguage: string, sourceLanguage: string, fullText?: string): string => {
+export const getAIModelPromptParts = (content: string, userPrompt: string, targetLanguage: string, sourceLanguage: string, fullText?: string): PromptParts => {
   let prompt = userPrompt;
   if (sourceLanguage === "auto") {
     prompt = prompt.replace(/from \${sourceLanguage} (to|into)/g, "into");
@@ -105,16 +114,25 @@ export const getAIModelPrompt = (content: string, userPrompt: string, targetLang
 
   prompt = prompt.replaceAll("${sourceLanguage}", getLanguageName(sourceLanguage));
   prompt = prompt.replaceAll("${targetLanguage}", getLanguageName(targetLanguage));
-  // ${fullText} gate checked BEFORE content insertion — only the user's own
-  // template can opt in, never a literal token inside the document body.
+  // ${fullText} gate checked on the WHOLE template BEFORE content insertion —
+  // only the user's own template can opt in, never a literal token inside the
+  // document body.
   // ${fullText} 与 ${content} 必须【单趟】替换:先插全文再扫 ${content} 会把
   // 文档正文里的字面 ${content}(讲模板/提示词的文档)当变量展开 —— 当前
   // 待译块被拼进上下文,且坏 prompt 的产出会进缓存(违反不变量 #1)。
-  if (prompt.includes("${fullText}")) {
-    const full = fullText || content;
-    return prompt.replace(/\$\{(?:fullText|content)\}/g, (m) => (m === "${fullText}" ? full : content));
-  }
-  return prompt.replaceAll("${content}", () => content);
+  // 切分同样在【模板】上做(渲染前):全文正文里的字面 ${content} 不能成为切点。
+  const usesFullText = prompt.includes("${fullText}");
+  const full = fullText || content;
+  const render = (tpl: string): string =>
+    usesFullText ? tpl.replace(/\$\{(?:fullText|content)\}/g, (m) => (m === "${fullText}" ? full : content)) : tpl.replaceAll("${content}", () => content);
+  const at = prompt.indexOf("${content}");
+  if (at < 0) return { prefix: render(prompt), suffix: "" };
+  return { prefix: render(prompt.slice(0, at)), suffix: render(prompt.slice(at)) };
+};
+
+export const getAIModelPrompt = (content: string, userPrompt: string, targetLanguage: string, sourceLanguage: string, fullText?: string): string => {
+  const { prefix, suffix } = getAIModelPromptParts(content, userPrompt, targetLanguage, sourceLanguage, fullText);
+  return prefix + suffix;
 };
 
 /**

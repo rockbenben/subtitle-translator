@@ -51,8 +51,9 @@ const isReplaceSafe = (term: GlossaryTerm): boolean => {
 };
 
 /**
- * System-prompt fragment listing the terms (already filtered to the active
- * target language). Empty string when there are no complete terms. Includes
+ * Prompt fragment listing the terms (already filtered to the active target
+ * language); the service inserts it before the content, on the dynamic side of
+ * the user message. Empty string when there are no complete terms. Includes
  * `target ⊇ source` terms — the prompt SHOULD still steer the model on them;
  * only leak-through skips them (see isReplaceSafe).
  */
@@ -60,7 +61,7 @@ export const buildGlossaryPromptBlock = (terms: GlossaryTerm[]): string => {
   const valid = terms.filter(isComplete);
   if (valid.length === 0) return "";
   const lines = valid.map((term) => `${term.source.trim()} → ${term.target.trim()}`).join("\n");
-  return `\n\nGlossary — always translate these terms exactly as specified (source → target). Keep them consistent everywhere they appear:\n${lines}`;
+  return `Glossary — always translate these terms exactly as specified (source → target). Keep them consistent everywhere they appear:\n${lines}`;
 };
 
 // Per-term compiled form: the alternation `pattern` for the combined regex, and a
@@ -152,7 +153,7 @@ export const buildStrictGlossaryPromptBlock = (terms: GlossaryTerm[]): string =>
   const valid = terms.filter(isComplete);
   if (valid.length === 0) return "";
   const lines = valid.map((term) => `${term.source.trim()} → ${term.target.trim()}`).join("\n");
-  return `\n\nSTRICT GLOSSARY — the previous translation failed to apply these required terms. Every occurrence of each source term below MUST appear in the translation exactly as its specified target (source → target). Do not paraphrase or translate them any other way:\n${lines}`;
+  return `STRICT GLOSSARY — the previous translation failed to apply these required terms. Every occurrence of each source term below MUST appear in the translation exactly as its specified target (source → target). Do not paraphrase or translate them any other way:\n${lines}`;
 };
 
 // Tabs/newlines are the TSV field/record separators — collapse them to a space
