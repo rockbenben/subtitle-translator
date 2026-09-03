@@ -36,8 +36,8 @@
   },
   "common": {
     "exportFolder": "Dışa aktarma klasörü",
-    "exportFolderDefault": "Dışa aktarılanlar tarayıcının indirilenler klasörüne gider. Chrome, Masaüstü, Belgeler, İndirilenler ve kullanıcı klasörünün kendisini kabul etmez — bir alt klasör ya da başka bir klasör seçin.",
-    "exportFolderDownloads": "Tarayıcının indirilenler klasörü",
+    "exportFolderDefault": "Dışa aktarılanlar varsayılan indirilenler klasörüne gider.",
+    "exportFolderBlocked": "Tarayıcı, Masaüstü, Belgeler, İndirilenler ve kullanıcı klasörünün kendisini kabul etmez — bir alt klasör ya da başka bir klasör seçin.",
     "exportFolderCurrent": "Dışa aktarılanlar {dir} klasörüne gider",
     "exportFolderReset": "İndirilenler klasörüne dön",
     "exportFolderFailed": "Dışa aktarma klasörü ayarlanamadı.",

@@ -36,8 +36,8 @@
   },
   "common": {
     "exportFolder": "Exportordner",
-    "exportFolderDefault": "Exporte landen im Download-Ordner des Browsers. Chrome akzeptiert Desktop, Dokumente, Downloads und den Benutzerordner selbst nicht — wähle einen Unterordner oder einen anderen Ordner.",
-    "exportFolderDownloads": "Download-Ordner des Browsers",
+    "exportFolderDefault": "Exporte landen im Standard-Downloadordner.",
+    "exportFolderBlocked": "Der Browser akzeptiert Desktop, Dokumente, Downloads und den Benutzerordner selbst nicht — wähle einen Unterordner oder einen anderen Ordner.",
     "exportFolderCurrent": "Exporte landen in {dir}",
     "exportFolderReset": "Zurück zum Download-Ordner",
     "exportFolderFailed": "Der Exportordner konnte nicht festgelegt werden.",

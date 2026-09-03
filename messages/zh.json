@@ -36,8 +36,8 @@
   },
   "common": {
     "exportFolder": "导出目录",
-    "exportFolderDefault": "导出会保存到浏览器下载目录。Chrome 不允许选「桌面 / 文档 / 下载 / 用户目录」本身，请选子文件夹或任意其他文件夹。",
-    "exportFolderDownloads": "浏览器下载目录",
+    "exportFolderDefault": "导出会保存到默认下载目录。",
+    "exportFolderBlocked": "浏览器不允许选「桌面 / 文档 / 下载 / 用户目录」本身，请选子文件夹或任意其他文件夹。",
     "exportFolderCurrent": "导出会保存到 {dir}",
     "exportFolderReset": "恢复为下载目录",
     "exportFolderFailed": "无法设置导出目录。",

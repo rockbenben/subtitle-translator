@@ -107,6 +107,13 @@ const exportStore = createStore(DB_NAME, STORE);
 
 const readStoredHandle = (toolKey: string): Promise<ExportDirHandle | undefined> => get<ExportDirHandle>(keyFor(toolKey), exportStore);
 
+/**
+ * 当前跑在【外壳注入的原生实现】上吗。界面拿它分流提示文案：
+ * File System Access 那条路有浏览器的目录黑名单（桌面 / 文档 / 下载 / 用户目录选不了），
+ * 原生选择器没有 —— 在桌面外壳里说那句是彻头彻尾的假话。
+ */
+export const isNativeExportDir = (): boolean => nativeExportDir !== null;
+
 /** 当前环境是否支持选导出目录。false 时 UI 不该出现「导出目录」入口。 */
 export const supportsExportDir = (): boolean => nativeExportDir !== null || (typeof window !== "undefined" && typeof window.showDirectoryPicker === "function");
 
