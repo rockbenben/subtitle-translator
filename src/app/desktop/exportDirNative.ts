@@ -9,16 +9,23 @@ import { isTauriRuntime } from "./externalLink";
  * project_sync 的同步范围内，改了每次同步都会被覆盖。
  *
  * 目录选择与落盘都在 Rust 侧（src-tauri/src/lib.rs）：选目录走原生对话框并记进
- * 配置文件，落盘走 webview 的 on_download 钩子改写下载路径。所以这里没有 write
- * —— 上游注入后 writeToExportDir 一律返回 null，导出老实走 saveAs()，由那个钩子
- * 接住。
+ * 配置文件。落盘有两条路 —— write 把字节直接发给 write_export_file 命令写盘
+ * （主路径，同名让路后的真实文件名回传给 toast）；命令返回 null / 抛错时上游
+ * 自动回落 saveAs()，再由 webview 的 on_download 钩子改写下载路径兜底，两条路
+ * 在 Rust 侧共用同一份「同名让路，不覆盖」契约。
  */
 
 // 【不要静态 import @tauri-apps/api】它在浏览器里 import 得进来（invoke 要到调用
 // 时才炸），但会把整包塞进 web 构建的 bundle。用到时再动态取。
-const invokeCmd = async <T>(cmd: string): Promise<T> => {
+// body 给 Uint8Array 时,invoke 顶层参数走 application/octet-stream 原始 body
+// (tauri process-ipc-message-fn 契约),Rust 侧用 tauri::ipc::Request 接。
+const invokeCmd = async <T>(
+  cmd: string,
+  opts: { body?: Uint8Array; headers?: Record<string, string> } = {},
+): Promise<T> => {
   const { invoke } = await import("@tauri-apps/api/core");
-  return invoke<T>(cmd);
+  // InvokeOptions.headers 类型上是必填,没头时整个 options 别传
+  return invoke<T>(cmd, opts.body ?? {}, opts.headers ? { headers: opts.headers } : undefined);
 };
 
 /**
@@ -52,5 +59,14 @@ export const installNativeExportDir = (): void => {
     pick: async () => asDir(await invokeCmd<string | null>("choose_export_dir")),
     current: async () => asDir(await invokeCmd<string | null>("get_export_dir")),
     clear: () => invokeCmd<void>("clear_export_dir"),
+    // 字节直交 Rust 落盘。文件名经 encodeURIComponent 进 ASCII 请求头
+    // (HTTP 头值不能带非 ASCII;Rust 侧百分号解码),同名让路与半成品清理
+    // 都在 write_export_file 里。返回 null = 没设目录,上游回落 saveAs;
+    // 抛错也由上游 try/catch 吞成同一条回落,绝不漏给 37 个 downloadFile 点。
+    write: async (blob: Blob, fileName: string) =>
+      invokeCmd<{ fileName: string; dir: string } | null>("write_export_file", {
+        body: new Uint8Array(await blob.arrayBuffer()),
+        headers: { "x-export-file-name": encodeURIComponent(fileName) },
+      }),
   });
 };

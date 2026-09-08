@@ -1,3 +1,4 @@
+use std::fs::File;
 use std::path::{Path, PathBuf};
 use tauri::Manager;
 
@@ -6,9 +7,12 @@ use tauri::Manager;
 //
 // 【为什么整块逻辑都在 Rust 里】前端 src/** 有 92% 的文件与上游仓库
 // web-tools-by-ai 逐字节一致（downloadFile 所在的 utils/fileUtils.ts 正是其中
-// 之一），改一行就等于给每次上游同步埋一个永久冲突点。而 saveAs() 在 webview 里
-// 触发的是一次真实下载，on_download 能直接改写落盘路径 —— 于是这个功能可以做到
-// 前端零改动，并且顺带覆盖所有导出口（字幕、术语表 TSV、设置 JSON）。
+// 之一），改一行就等于给每次上游同步埋一个永久冲突点。落盘有两条路:
+//   ① write_export_file 命令:前端把字节直接发过来,真实落点(同名让路后的名字)
+//      回传给 toast —— 主路径;
+//   ② on_download:① 失败回落 saveAs 时改写落盘路径 —— 兜底,顺带覆盖所有走
+//      浏览器下载的出口（字幕、术语表 TSV、设置 JSON）。
+// 两条路共用 create_unique_file 的同名让路契约。
 //
 // 入口在工具页标题行那个按工具的导出目录按钮上（上游 components/ExportFolder.tsx），
 // 桌面端通过 src/app/desktop/exportDirNative.ts 把下面三个 command 注入上游留的口子 ——
@@ -77,6 +81,165 @@ fn clear_export_dir(app: tauri::AppHandle) -> Result<(), String> {
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(()),
         Err(e) => Err(e.to_string()),
     }
+}
+
+// ============================================================================
+// 同名让路 + 字节直写
+//
+// 3.1.0 的 on_download 只做 `*destination = dir.join(name)` —— 默认导出名就是
+// 源文件名、用户又最爱把导出目录指向源文件所在文件夹，于是 Export 无声覆盖原
+// 字幕（issue #52）。浏览器下载从来不会这么干:它一律同名让路成 `movie (1).srt`。
+// 两条落盘路径都必须复刻这条契约:
+//   ① write_export_file:前端把字节直接发过来写(主路径,真实落点回传给 toast);
+//   ② on_download:① 失败回落 saveAs 时的兜底改写,让路逻辑同一份。
+// ============================================================================
+
+/// 与上游 web uniqueFileName / MAX_UNIQUE_TRIES 同一上限:原名空着用原名,
+/// 否则 `base (i).ext`,试满 100 个就放弃 —— 宁可报错回落,也不悄悄盖掉第 100 个。
+const MAX_UNIQUE_TRIES: usize = 100;
+
+/// 第 i 个候选路径(纯拼接,不探盘)。i==0 用原名;i>0 复刻 web 的
+/// `lastIndexOf(".") > 0`:在最后一个点前插 " (i)",首字符的点(`.bashrc`)
+/// 不算扩展名分隔。
+fn candidate_path(dir: &Path, file_name: &str, i: usize) -> PathBuf {
+  if i == 0 {
+    return dir.join(file_name);
+  }
+  let insert = match file_name.rfind('.') {
+    Some(dot) if dot > 0 => dot,
+    _ => file_name.len(),
+  };
+  let (base, ext) = file_name.split_at(insert);
+  dir.join(format!("{base} ({i}){ext}"))
+}
+
+/// 用 `create_new`(POSIX O_EXCL / Windows CREATE_NEW)原子占住下一个空名字 ——
+/// 两个并发导出不可能抢到同一个文件,不需要额外的进程锁。
+/// 返回 (完整路径, 刚建出的 0 字节文件句柄);100 个名字全占着返回 Ok(None),
+/// 其他 IO 错误(目录不可写、盘掉了)如实抛出,由调用方决定回落。
+fn create_unique_file(dir: &Path, file_name: &str) -> std::io::Result<Option<(PathBuf, File)>> {
+  for i in 0..MAX_UNIQUE_TRIES {
+    let candidate = candidate_path(dir, file_name, i);
+    match std::fs::OpenOptions::new()
+      .write(true)
+      .create_new(true)
+      .open(&candidate)
+    {
+      Ok(file) => return Ok(Some((candidate, file))),
+      Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => continue,
+      Err(e) => return Err(e),
+    }
+  }
+  Ok(None)
+}
+
+/// 解 JS `encodeURIComponent` 产出的 %XX 序列,再按 UTF-8 还原文件名。
+/// 不引新 crate(percent-encoding 只是间接依赖);HTTP 头值必须是 ASCII,
+/// 未转义字节一律按原样收进缓冲。
+fn percent_decode(input: &str) -> Result<String, String> {
+  let bytes = input.as_bytes();
+  let mut out = Vec::with_capacity(bytes.len());
+  let mut i = 0;
+  while i < bytes.len() {
+    if bytes[i] == b'%' && i + 2 < bytes.len() {
+      let hex = std::str::from_utf8(&bytes[i + 1..i + 3])
+        .map_err(|_| "bad percent-encoding in file name".to_string())?;
+      let byte = u8::from_str_radix(hex, 16)
+        .map_err(|_| "bad percent-encoding in file name".to_string())?;
+      out.push(byte);
+      i += 3;
+    } else {
+      out.push(bytes[i]);
+      i += 1;
+    }
+  }
+  String::from_utf8(out).map_err(|_| "file name is not valid UTF-8".to_string())
+}
+
+/// 文件名必须是【单一相对路径段】:不含分隔符 / 盘符冒号 / NUL 等控制字符,
+/// 也不是 "." / ".."。浏览器下载会自己剥掉这些,但 write_export_file 是直达
+/// 文件系统的新 IPC 面 —— 不能让一个穿越名(`..\\..\\x`)逃出用户选的目录。
+fn is_plain_file_name(name: &str) -> bool {
+  !name.is_empty()
+    && name != "."
+    && name != ".."
+    && Path::new(name).file_name() == Some(std::ffi::OsStr::new(name))
+    && !name
+      .chars()
+      .any(|c| c == '/' || c == '\\' || c == ':' || c.is_control())
+}
+
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct WrittenFile {
+  file_name: String,
+  dir: String,
+}
+
+/// 把一次导出的字节直接写进用户选定的导出目录(上游 exportDir.ts 的
+/// `NativeExportDir.write`)。
+///
+/// 载荷形态(见 tauri 的 scripts/process-ipc-message-fn.js):JS 侧 invoke 直接
+/// 传 Uint8Array → body 是 `InvokeBody::Raw`(application/octet-stream);文件名
+/// 里的非 ASCII 字符不能进 HTTP 头,走 `x-export-file-name: encodeURIComponent(name)`。
+///
+/// - Ok(None):没设导出目录 / 目录已删除改名 —— JS 回落 saveAs 走系统下载;
+/// - Ok(Some):已写入,回传【真实落点】(同名让路可能改名),toast 只能照它说话;
+/// - Err:任何一步失败 —— JS 同样回落 saveAs;半成品在返回前已删。
+#[tauri::command]
+fn write_export_file(
+  app: tauri::AppHandle,
+  request: tauri::ipc::Request,
+) -> Result<Option<WrittenFile>, String> {
+  use std::io::Write;
+
+  // 没设目录是最平常的路径(默认就没设),不是错误:让 JS 走它的下载回落。
+  let Some(dir) = load_export_dir(&app) else {
+    return Ok(None);
+  };
+
+  let encoded = request
+    .headers()
+    .get("x-export-file-name")
+    .ok_or("missing x-export-file-name header")?
+    .to_str()
+    .map_err(|_| "x-export-file-name is not ASCII".to_string())?;
+  let file_name = percent_decode(encoded)?;
+  if !is_plain_file_name(&file_name) {
+    return Err(format!("refusing to write an invalid file name: {file_name:?}"));
+  }
+
+  let tauri::ipc::InvokeBody::Raw(bytes) = request.body() else {
+    return Err("write_export_file expects a raw octet-stream body".into());
+  };
+
+  let Some((path, mut file)) = create_unique_file(&dir, &file_name).map_err(|e| e.to_string())?
+  else {
+    return Err(format!(
+      "all {MAX_UNIQUE_TRIES} candidate names are taken: {file_name}"
+    ));
+  };
+  let write_result = file.write_all(bytes).and_then(|_| {
+    // 写完即落盘 —— 回报成功后这份译文不该只活在系统写缓存的承诺里。
+    file.sync_all()
+  });
+  if let Err(e) = write_result {
+    drop(file);
+    // 半成品必须删:0 字节文件既像一份译文(用户点开才发现是空的,真件其实在
+    // 下载目录),又会把下次导出的让路顶到 (1)。这个名字是 create_new 刚占的
+    // 空名,删它碰不到用户的旧文件 —— 与上游 FSA 分支同一契约。
+    let _ = std::fs::remove_file(&path);
+    return Err(e.to_string());
+  }
+
+  let written_name = path
+    .file_name()
+    .map(|s| s.to_string_lossy().into_owned())
+    .unwrap_or(file_name);
+  Ok(Some(WrittenFile {
+    file_name: written_name,
+    dir: dir.display().to_string(),
+  }))
 }
 
 #[cfg(desktop)]
@@ -177,7 +340,12 @@ pub fn run() {
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
-        .invoke_handler(tauri::generate_handler![get_export_dir, choose_export_dir, clear_export_dir])
+        .invoke_handler(tauri::generate_handler![
+            get_export_dir,
+            choose_export_dir,
+            clear_export_dir,
+            write_export_file
+        ])
         .setup(|app| {
             if cfg!(debug_assertions) {
                 app.handle().plugin(
@@ -219,15 +387,50 @@ pub fn run() {
                 tauri::webview::WebviewWindowBuilder::from_config(app.handle(), &window_config)?
                     .title(titled.as_str())
                     .on_download(|webview, event| {
-                        if let tauri::webview::DownloadEvent::Requested { destination, .. } = event {
-                            // 每次下载现读配置文件：下载本就不频繁，省掉一份托管状态
-                            // 和它的同步问题。目录不存在时 load_export_dir 返回 None，
-                            // destination 保持 webview 给的系统默认路径。
-                            if let Some(dir) = load_export_dir(webview.app_handle()) {
-                                if let Some(name) = destination.file_name() {
-                                    *destination = dir.join(name);
+                        match event {
+                            tauri::webview::DownloadEvent::Requested { destination, .. } => {
+                                // 每次下载现读配置文件：下载本就不频繁，省掉一份托管状态
+                                // 和它的同步问题。目录没了 load_export_dir 返回 None，
+                                // destination 保持 webview 给的系统默认路径。
+                                if let Some(dir) = load_export_dir(webview.app_handle()) {
+                                    if let Some(name) =
+                                        destination.file_name().and_then(|n| n.to_str())
+                                    {
+                                        // 主路径 write_export_file 直写;这里只接住它失败后
+                                        // 回落 saveAs 的下载。create_new 先占位:WebView2
+                                        // 随后以截断方式打开该路径(3.1.0 直接 join 覆盖
+                                        // 源文件就是这条性质,issue #52),而原子占位让两个
+                                        // 并发下载抢不到同一个名字。
+                                        match create_unique_file(&dir, name) {
+                                            Ok(Some((path, _placeholder))) => {
+                                                *destination = path;
+                                            }
+                                            Ok(None) => log::warn!(
+                                                "export dir: 100 candidate names are taken, keeping the download folder"
+                                            ),
+                                            Err(e) => {
+                                                log::error!(
+                                                    "export dir: cannot reserve file, keeping the download folder: {e}"
+                                                )
+                                            }
+                                        }
+                                    }
                                 }
                             }
+                            // 下载取消 / 失败:删掉我们 create_new 出来的 0 字节占位。
+                            // 只删 0 字节的 —— 半途留下的非空残文件不替用户做删除决定。
+                            tauri::webview::DownloadEvent::Finished {
+                                path: Some(path),
+                                success: false,
+                                ..
+                            } => {
+                                if let Ok(meta) = std::fs::metadata(&path) {
+                                    if meta.is_file() && meta.len() == 0 {
+                                        let _ = std::fs::remove_file(&path);
+                                    }
+                                }
+                            }
+                            _ => {}
                         }
                         true
                     })
@@ -267,4 +470,85 @@ pub fn run() {
         })
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn candidate_paths_match_web_unique_file_name() {
+    let d = Path::new("/tmp/d");
+    assert_eq!(candidate_path(d, "movie.srt", 0), d.join("movie.srt"));
+    assert_eq!(candidate_path(d, "movie.srt", 1), d.join("movie (1).srt"));
+    assert_eq!(
+      candidate_path(d, "movie.srt", 17),
+      d.join("movie (17).srt")
+    );
+    // 首字符的点不算扩展名(web: lastIndexOf(".") > 0)
+    assert_eq!(candidate_path(d, ".bashrc", 2), d.join(".bashrc (2)"));
+    assert_eq!(candidate_path(d, "noext", 2), d.join("noext (2)"));
+    assert_eq!(candidate_path(d, "a.b.c.vtt", 3), d.join("a.b.c (3).vtt"));
+  }
+
+  #[test]
+  fn percent_decode_roundtrips() {
+    assert_eq!(percent_decode("movie.srt").unwrap(), "movie.srt");
+    // encodeURIComponent("字幕.srt")
+    assert_eq!(
+      percent_decode("%E5%AD%97%E5%B9%95.srt").unwrap(),
+      "字幕.srt"
+    );
+    assert_eq!(percent_decode("a%20b%281%29.srt").unwrap(), "a b(1).srt");
+    assert!(percent_decode("%ZZ").is_err());
+    assert!(percent_decode("%E5").is_err()); // 截断的 UTF-8
+  }
+
+  #[test]
+  fn plain_file_name_rejects_traversal_and_controls() {
+    assert!(is_plain_file_name("movie.srt"));
+    assert!(is_plain_file_name("字幕 (1).srt"));
+    for bad in [
+      "",
+      ".",
+      "..",
+      "../x.srt",
+      "a/b",
+      "a\\b",
+      "C:x",
+      "a\0b",
+      "a\nb",
+    ] {
+      assert!(!is_plain_file_name(bad), "should reject {bad:?}");
+    }
+  }
+
+  /// 每次用进程内唯一目录,测完尽力删掉,不碰系统临时区里的别的东西。
+  fn unique_temp_dir() -> PathBuf {
+    let nanos = std::time::SystemTime::now()
+      .duration_since(std::time::UNIX_EPOCH)
+      .unwrap()
+      .as_nanos();
+    let dir =
+      std::env::temp_dir().join(format!("subtrans-test-{}-{nanos}", std::process::id()));
+    std::fs::create_dir_all(&dir).unwrap();
+    dir
+  }
+
+  #[test]
+  fn unique_file_yields_without_touching_existing() {
+    let dir = unique_temp_dir();
+    std::fs::write(dir.join("movie.srt"), b"original").unwrap();
+
+    let (p1, f1) = create_unique_file(&dir, "movie.srt").unwrap().unwrap();
+    assert_eq!(p1, dir.join("movie (1).srt"));
+    drop(f1);
+    // 刚占位的名字下一轮必须立刻被看到 —— 并发导出靠 create_new 互斥
+    let (p2, _f2) = create_unique_file(&dir, "movie.srt").unwrap().unwrap();
+    assert_eq!(p2, dir.join("movie (2).srt"));
+    // 旧文件(= 用户的原始字幕)一个字节都不许动
+    assert_eq!(std::fs::read(dir.join("movie.srt")).unwrap(), b"original");
+
+    std::fs::remove_dir_all(&dir).ok();
+  }
 }

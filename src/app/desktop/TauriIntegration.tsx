@@ -9,7 +9,8 @@ import { routing } from "@/i18n/routing";
 /**
  * 【桌面版的「导出目录」在这里接上】上游 utils/exportDir.ts 留了一个原生实现注入口，
  * 注入之后 ToolPage 标题行那个按工具的按钮在桌面上照常工作，底下换成原生对话框 +
- * Rust 的 on_download（见 desktop/exportDirNative.ts）。
+ * Rust 直写命令 write_export_file(主路径,on_download 只做兜底,
+ * 见 desktop/exportDirNative.ts)。
  *
  * 【必须在模块作用域】supportsExportDir() 在渲染期就被读，放进 effect 就晚了。
  * 本文件由 [locale]/layout.tsx 静态 import，模块求值早于任何一次渲染。
