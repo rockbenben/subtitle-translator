@@ -33,11 +33,11 @@
 #  * uploadPlainBinary — upstream says to pair it with `--no-bundle` only, and this build
 #    has to emit the installers and updater artifacts too. The three manual steps at the
 #    bottom stay.
-#  * updaterJsonPreferNsis — latest.json's `windows-x86_64` key currently resolves to the
-#    .msi. Flipping it to the NSIS setup.exe is the direction Tauri v2 is heading (the
-#    default is false "for legacy reasons"), but it changes the installer that already
-#    shipped users receive on their next update, so it is a deliberate call to make on its
-#    own, not a side effect of the v1 bump.
+#
+# updaterJsonPreferNsis is ENABLED on purpose (input below). 3.1.0/3.1.1 的已发布用户
+# 都是用 NSIS setup.exe 装的;默认 false 让 latest.json 的 windows-x86_64 指向
+# .msi,MSI 与 NSIS 是两套独立安装布局,自更新喂 MSI 会在机器上留下并列的第二份
+# 安装。翻成 true 后更新包就是 NSIS setup,原地升级、单实例,也是 Tauri v2 的方向。
 name: Build Desktop App
 
 on:
@@ -193,6 +193,9 @@ jobs:
           # [_setup] is what separates the NSIS installer from the portable exe: both .exe.
           # Drop this line to go back to the Tauri CLI's names.
           releaseAssetNamePattern: "[mainBinaryName]_[version]_[arch][_setup][ext]"
+          # 已发布用户都是 NSIS 装的,自更新必须继续喂 NSIS setup 而不是 MSI
+          # (理由见文件头注释)。
+          updaterJsonPreferNsis: true
           args: ${{ matrix.args }}
 
       # Portable "green" exe (Windows only): the raw self-contained binary tauri
