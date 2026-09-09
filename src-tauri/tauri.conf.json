@@ -2,7 +2,7 @@
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "Subtitle Translator",
   "mainBinaryName": "SubtitleTranslator",
-  "version": "3.1.1",
+  "version": "3.2.0",
   "identifier": "com.rockbenben.subtitletranslator",
   "build": {
     "frontendDist": "../out",
@@ -30,7 +30,9 @@
       "csp": "default-src 'self'; script-src 'self'; img-src 'self' asset: http://asset.localhost https://asset.localhost data: blob:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; connect-src 'self' ipc: http://ipc.localhost https://ipc.localhost https: http:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'",
       "devCsp": null,
       "freezePrototype": true,
-      "dangerousDisableAssetCspModification": ["style-src"]
+      "dangerousDisableAssetCspModification": [
+        "style-src"
+      ]
     }
   },
   "bundle": {
