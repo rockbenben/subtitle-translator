@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "typecheck": "tsc --noEmit",
     "build:lang": "node scripts/buildWithLang.js",
     "build:tauri": "cross-env TAURI_BUILD=1 next build",
     "start": "next start",

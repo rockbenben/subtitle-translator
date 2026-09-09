@@ -42,11 +42,68 @@ name: Build Desktop App
 
 on:
   workflow_dispatch:
+  pull_request:
   push:
+    branches: [main, "feat/**"]
     tags: ["v*"]
 
 jobs:
+  # 非发布事件的质量闸:tag 推送只跑发布矩阵,其余事件(push 到分支 / PR / 手动)
+  # 跑这一道。镜像文件占 src/** 的 92%,上游改坏接口要等打包才发现就太晚
+  # (exportDirNative / languagePreference 两个跨仓库契约 check 尤其容易静默失效)。
+  quality:
+    if: ${{ !startsWith(github.ref, 'refs/tags/') }}
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v7.0.1
+
+      # cargo test/clippy 要编译整棵 tauri 依赖树,webkit 开发包和发布矩阵同款
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf libgtk-3-dev
+
+      - name: Setup Node
+        uses: actions/setup-node@v7.0.0
+        with:
+          node-version: lts/*
+          cache: yarn
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+
+      - name: Cache Rust build
+        uses: Swatinem/rust-cache@v2.9.2
+        with:
+          workspaces: "./src-tauri -> target"
+
+      - name: Install frontend dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: ESLint
+        run: yarn lint
+
+      # next build 的 TS 阶段只盖 app graph,scripts/*.check.ts 这些不在其中
+      - name: TypeScript
+        run: yarn typecheck
+
+      - name: Cross-repo contract checks
+        shell: bash
+        run: |
+          npx tsx scripts/exportDirNative.check.ts
+          npx tsx scripts/languagePreference.check.ts
+
+      - name: Rust tests
+        run: cargo test --locked --manifest-path src-tauri/Cargo.toml
+
+      # 仓库刻意不跑 rustfmt(Rust 源码统一 2 空格,build.rs 同样),只卡 clippy
+      - name: Clippy
+        run: cargo clippy --locked --all-targets --manifest-path src-tauri/Cargo.toml -- -D warnings
+
   publish-tauri:
+    if: ${{ github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/v') }}
     permissions:
       contents: write
     strategy:
@@ -86,6 +143,18 @@ jobs:
         uses: Swatinem/rust-cache@v2.9.2
         with:
           workspaces: "./src-tauri -> target"
+
+      # 必须在 yarn update-version 之前:比的是【提交进去的】package.json
+      # (workflow 顶部注释里那条 tag MUST equal version 约定,之前没有任何东西钉它)
+      - name: Verify tag matches package.json version
+        if: github.event_name == 'push'
+        shell: bash
+        run: |
+          expected="v$(node -p "require('./package.json').version")"
+          if [ "$GITHUB_REF_NAME" != "$expected" ]; then
+            echo "::error::Tag '$GITHUB_REF_NAME' does not match package.json version '$expected'"
+            exit 1
+          fi
 
       - name: Install frontend dependencies
         run: |
