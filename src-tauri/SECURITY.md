@@ -32,6 +32,13 @@
   `frame-ancestors 'none'` 是常规收紧。
 - **配置文件本身必须是严格 JSON**(tauri-build 按 JSON 解析,
   `config-json5` feature 默认没开),理由写这里而不是写成注释。
+- **唯一的宿主注入脚本是启动 locale 引导**(`locale_boot_script()` →
+  `initialization_script`)。它经 WebView2 的 ScriptToExecuteOnDocumentCreated
+  下发,在首帧绘制前运行,与 tauri IPC 引导同通道,**不受页面 CSP 约束** ——
+  这是它必须唯一的原因:任何第二个初始化脚本都等于一条绕过 script-src 的通道。
+  它只读 localStorage / navigator.language 并 `location.replace`,绝不写存储;
+  判定与持久化分别镜像、归属 `useLanguagePreference.ts` 的 `decideLanguage`
+  (契约在 scripts/localeBoot.check.ts + languagePreference.check.ts)。
 
 ## `freezePrototype: true`
 

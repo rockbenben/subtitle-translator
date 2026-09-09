@@ -94,6 +94,7 @@ jobs:
         run: |
           npx tsx scripts/exportDirNative.check.ts
           npx tsx scripts/languagePreference.check.ts
+          npx tsx scripts/localeBoot.check.ts
 
       - name: Rust tests
         run: cargo test --locked --manifest-path src-tauri/Cargo.toml

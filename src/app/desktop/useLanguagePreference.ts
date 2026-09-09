@@ -42,6 +42,11 @@ export interface LanguageDecision {
  * 【核心不变量】首次跳转那一轮【绝不写盘】：current 是窗口配置的启动入口
  * locale（/en/），不是用户偏好。写了就把偏好覆盖成 en，用户下次启动再也跳不
  * 回去。重定向后 effect 会带着新 pathname 再跑一次，那一轮才落盘。
+ *
+ * 【绘制前镜像】src-tauri/src/lib.rs 的 locale_boot_script 把同一份跳转判定
+ * （stored 偏好 / 系统语言 / VALID 校验）提前到首帧之前执行，消掉 /en/ 英文
+ * 一闪；它同样不写盘。改这里的判定要连那侧一起改，契约由
+ * scripts/localeBoot.check.ts 钉。
  */
 export const decideLanguage = ({
   current,

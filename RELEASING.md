@@ -10,7 +10,7 @@
    CI 构建时会跑 `yarn update-version` 把它写进 `src-tauri/tauri.conf.json`,
    所以 `tauri.conf.json` 里的 version 不用手改、也不必提交。
 2. **推分支**:push 到 `main` / `feat/**`(或开 PR)会触发 `quality` 闸:
-   `lint` / `typecheck` / 两个跨仓契约 check / `cargo test` / `cargo clippy -D warnings`。
+   `lint` / `typecheck` / 三个跨仓契约 check / `cargo test` / `cargo clippy -D warnings`。
    必须全绿再发。
 3. **打 tag**:`git tag vX.Y.Z && git push origin vX.Y.Z`。
    tag **必须**等于 `v` + package.json version,流水线有强校验,不一致直接红。

@@ -180,6 +180,45 @@ fn navigation_allowed(url: &tauri::Url, dev: bool) -> bool {
   }
 }
 
+/// 窗口配置写死的启动入口是 `/en/`。若让英文首屏先画出来、再由 React 侧
+/// `useLanguagePreference` 软跳,非英文用户每次开机都会看到一闪而过的英文页。
+/// 这里登记一个【宿主注入脚本】(WebView2 AddScriptToExecuteOnDocumentCreated,
+/// 在任何页面脚本与首帧绘制之前跑,与 tauri IPC 引导同通道 —— 不受页面 CSP 管),
+/// 把 `useLanguagePreference` 里 `decideLanguage` 的【跳转判定】提前到绘制前:
+/// 有偏好跳偏好,首次启动跟系统语言,都不是就留在 /en/。判定逐行镜像,改动一侧
+/// 必须改另一侧(scripts/localeBoot.check.ts 钉住列表一致与「引导脚本绝不写盘」)。
+/// 持久化仍只由 React 侧在跳转【落地后】做 —— 引导脚本不碰 setItem,守住
+/// 「跳转前写盘会把偏好覆盖成入口 locale」那条不变量。
+const BOOT_LOCALES: &[&str] = &[
+  "en", "zh", "zh-hant", "pt", "es", "hi", "ar", "fr", "de", "ja", "ko", "ru", "vi", "th",
+  "tr", "bn", "id", "it",
+];
+
+fn locale_boot_script() -> String {
+  let valid = BOOT_LOCALES
+    .iter()
+    .map(|l| format!("\"{l}\""))
+    .collect::<Vec<_>>()
+    .join(",");
+  const TEMPLATE: &str = r#"(function(){try{
+var VALID=[__VALID__];
+var KEY="subtitle_translator_preferred_language";
+var seg=location.pathname.match(/^\/([a-z]{2}(?:-[a-z]+)?)(?:\/|$)/i);
+var current=seg?seg[1].toLowerCase():null;
+if(!current)return;
+var stored=null;
+try{stored=localStorage.getItem(KEY);}catch(e){}
+var sys=(navigator.language||"en").toLowerCase();
+var sysLocale=sys.indexOf("zh")===0?(/tw|hk|hant/.test(sys)?"zh-hant":"zh"):sys.split("-")[0];
+var pref=stored;
+if(!pref&&VALID.indexOf(sysLocale)!==-1)pref=sysLocale;
+if(pref&&VALID.indexOf(pref)!==-1&&pref!==current){
+location.replace(location.pathname.replace(/^\/[a-z]{2}(?:-[a-z]+)?/i,"/"+pref)+location.search+location.hash);
+}
+}catch(e){}})();"#;
+  TEMPLATE.replace("__VALID__", &valid)
+}
+
 /// Windows 保留设备名(CON / PRN / AUX / NUL / COM1-9 / LPT1-9,带任意后缀
 /// 也算 —— `CON.txt` 照样打开到设备)与结尾点/空格(Win32 会悄悄剥掉,
 /// Rust 报出来的名字和磁盘上的名字会对不上)。本应用就是 Windows 桌面端,
@@ -434,6 +473,8 @@ pub fn run() {
                     .title(titled.as_str())
                     // 主框架只许留在应用源;外链统一由 JS 拦截后交系统浏览器
                     .on_navigation(|url| navigation_allowed(url, cfg!(debug_assertions)))
+                    // 首帧绘制前把启动 locale 校到偏好,消掉 /en/ 英文一闪
+                    .initialization_script(locale_boot_script())
                     .on_download(|webview, event| {
                         match event {
                             tauri::webview::DownloadEvent::Requested { destination, .. } => {
@@ -577,6 +618,30 @@ mod tests {
     assert!(navigation_allowed(&u("http://127.0.0.1:3000/"), true));
     // 生产配置下 dev 放行也不许落到外部(双重保险)
     assert!(!navigation_allowed(&u("http://evil.test/"), true));
+  }
+
+  #[test]
+  fn locale_boot_script_well_formed() {
+    // 列表本身:都是合法 locale 段,入口 en 必须在
+    for l in BOOT_LOCALES {
+      assert!(
+        l.chars()
+          .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '-'),
+        "bad locale {l:?}"
+      );
+    }
+    assert!(BOOT_LOCALES.contains(&"en"));
+
+    let s = locale_boot_script();
+    // 占位符必须已替换成内联列表
+    assert!(!s.contains("__VALID__"));
+    assert!(s.contains("\"en\""));
+    // 引导期只读偏好、只做跳转;写盘是落地后 React 侧的职责
+    assert!(s.contains("localStorage.getItem"));
+    assert!(!s.contains("setItem"));
+    assert!(s.contains("location.replace"));
+    // 与 useLanguagePreference 同一个 localStorage 键
+    assert!(s.contains("subtitle_translator_preferred_language"));
   }
 
   #[test]
