@@ -156,9 +156,24 @@ fn percent_decode(input: &str) -> Result<String, String> {
   String::from_utf8(out).map_err(|_| "file name is not valid UTF-8".to_string())
 }
 
+/// Windows 保留设备名(CON / PRN / AUX / NUL / COM1-9 / LPT1-9,带任意后缀
+/// 也算 —— `CON.txt` 照样打开到设备)与结尾点/空格(Win32 会悄悄剥掉,
+/// Rust 报出来的名字和磁盘上的名字会对不上)。本应用就是 Windows 桌面端,
+/// 在所有平台统一拒掉,这些名字本来也不该出现在导出里。
+fn is_windows_reserved_name(name: &str) -> bool {
+  const RESERVED: &[&str] = &[
+    "CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8",
+    "COM9", "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9",
+  ];
+  let stem = name.split('.').next().unwrap_or("");
+  let upper: String = stem.chars().map(|c| c.to_ascii_uppercase()).collect();
+  RESERVED.contains(&upper.as_str()) || name.ends_with(['.', ' '])
+}
+
 /// 文件名必须是【单一相对路径段】:不含分隔符 / 盘符冒号 / NUL 等控制字符,
-/// 也不是 "." / ".."。浏览器下载会自己剥掉这些,但 write_export_file 是直达
-/// 文件系统的新 IPC 面 —— 不能让一个穿越名(`..\\..\\x`)逃出用户选的目录。
+/// 也不是 "." / ".." / Windows 保留名 / 带结尾点空格。浏览器下载会自己剥掉
+/// 这些,但 write_export_file 是直达文件系统的新 IPC 面 —— 不能让一个穿越名
+/// (`..\\..\\x`)逃出用户选的目录。
 fn is_plain_file_name(name: &str) -> bool {
   !name.is_empty()
     && name != "."
@@ -167,6 +182,7 @@ fn is_plain_file_name(name: &str) -> bool {
     && !name
       .chars()
       .any(|c| c == '/' || c == '\\' || c == ':' || c.is_control())
+    && !is_windows_reserved_name(name)
 }
 
 #[derive(serde::Serialize)]
@@ -508,6 +524,9 @@ mod tests {
   fn plain_file_name_rejects_traversal_and_controls() {
     assert!(is_plain_file_name("movie.srt"));
     assert!(is_plain_file_name("字幕 (1).srt"));
+    // 普通词以 con/lpt 开头不受影响
+    assert!(is_plain_file_name("concert.srt"));
+    assert!(is_plain_file_name(".bashrc"));
     for bad in [
       "",
       ".",
@@ -518,6 +537,14 @@ mod tests {
       "C:x",
       "a\0b",
       "a\nb",
+      // Windows 保留设备名,带不带后缀都拒
+      "CON",
+      "nul.txt",
+      "com1",
+      "LPT9.srt",
+      // Win32 会剥掉的结尾点 / 空格
+      "movie.",
+      "movie ",
     ] {
       assert!(!is_plain_file_name(bad), "should reject {bad:?}");
     }
