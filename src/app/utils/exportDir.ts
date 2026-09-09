@@ -59,11 +59,11 @@ export const setExportDirTool = (toolKey: string | null) => {
  * 存在的理由：分歧只许待在同步范围之外。所以这里只留一个口子，实现放在桌面分支
  * 自己的目录里，两边谁也不用改对方。
  *
- * 【没有 write：落盘归外壳】外壳拦的是浏览器下载本身（Tauri 挂 webview 的
- * on_download），saveAs() 触发的那一次就已经落进用户选的目录了。所以注入之后
- * writeToExportDir 一律返回 null，让 downloadFile 老实走 saveAs()。
- * 代价：那条路径拿不到落点，导出提示只报文件名、不报目录（Rust 侧改写路径这件事
- * JS 无从得知）。要改得让外壳把落点回传，等有人真的需要再说。
+ * 【落盘两条路,外壳自己选】注入了可选 write 的,writeToExportDir 把字节直接交给
+ * 外壳、由它返回真实落点(同名让路后的名字也回得来,toast 照实报);没注入 write
+ * 的,外壳拦浏览器下载本身(Tauri 挂 webview 的 on_download)——saveAs() 触发的
+ * 那一次落进用户选的目录,writeToExportDir 返回 null,downloadFile 老实走 saveAs()。
+ * 后一条路 JS 拿不到落点,提示只能报请求名;让路契约因此必须由外壳自己守住。
  */
 export interface NativeExportDir {
   /** 打开原生目录选择器并记住选择，返回目录名；用户取消返回 null。 */
@@ -72,6 +72,17 @@ export interface NativeExportDir {
   current: (toolKey: string) => Promise<string | null>;
   /** 忘掉该工具的目录，导出回到系统下载目录。 */
   clear: (toolKey: string) => Promise<void>;
+  /**
+   * 可选:由外壳直接把文件写进已选目录。返回实际落点(同名让路后的【真实】文件名
+   * 与目录名 —— 这条路径没有下载栏,调用方的 toast 是唯一反馈,必须照它说话);
+   * 返回 null 表示外壳这次不接管(没设目录 / 写失败),调用方回落 saveAs +
+   * 下载钩子。不提供时维持旧行为:一律走 saveAs,由外壳的下载钩子改写路径。
+   *
+   * 为什么后来补上它:下载钩子改写路径时,JS 无从得知让路后的真名,提示只能复述
+   * 请求名 —— 与「界面说的必须等于字节去的地方」相悖;而同名让路若漏在外壳里,
+   * 默认导出名(就是源文件名)会直接覆盖用户的原始文件(Tauri 3.1.x 踩过)。
+   */
+  write?: (blob: Blob, fileName: string) => Promise<{ fileName: string; dir: string } | null>;
 }
 
 let nativeExportDir: NativeExportDir | null = null;
@@ -253,8 +264,18 @@ const uniqueFileName = async (dir: ExportDirHandle, fileName: string): Promise<s
  * toast 是唯一的反馈。报错名字等于让用户去找一个不存在的文件。
  */
 export const writeToExportDir = async (blob: Blob, fileName: string): Promise<{ fileName: string; dir: string } | null> => {
-  // 外壳自己在下载钩子里改路径（见 setNativeExportDir），这里让路给 saveAs()
-  if (nativeExportDir) return null;
+  // 外壳接管:提供 write 就把字节直接交出去(返回真实落点);否则让路给 saveAs()
+  // —— 那种外壳自己在下载钩子里改路径(见 setNativeExportDir)。
+  if (nativeExportDir) {
+    if (!nativeExportDir.write) return null;
+    try {
+      return await nativeExportDir.write(blob, fileName);
+    } catch (error) {
+      // 与 FSA 分支同一契约:写失败不抛,退回浏览器下载,绝不丢导出
+      console.error("Native export write failed — falling back to the download folder:", error);
+      return null;
+    }
+  }
   // 落哪个目录由【当前页面的工具】决定，见 setExportDirTool
   if (!currentTool) return null;
   const dir = await readGrantedHandle(currentTool);

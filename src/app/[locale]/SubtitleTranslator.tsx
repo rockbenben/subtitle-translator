@@ -440,8 +440,11 @@ const SubtitleTranslator = () => {
 
   // 作废上一轮翻译产物:Clear All 与换/删上传文件时调用,使译文结果、导出元数据、
   // 失败面板回到"未翻译"初始态。extractedText 是源派生预览,由 prevSourceText
-  // 随 sourceText 变化复位,不在此重复。
+  // 随 sourceText 变化复位,不在此重复。resetProgress 不能漏:翻译按钮下方的
+  // TranslationProgressStrip 完成后常驻成 DONE 凭据,只认自己的 ✕(onDismiss) ——
+  // 不清进度,Clear All 后它还顶着「翻译完成」。
   const clearResults = () => {
+    resetProgress();
     setTranslatedText("");
     setTranslatedTextExt(null);
     setNeedsBilingualSuffix(false);
