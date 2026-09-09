@@ -1,7 +1,14 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "enables the default permissions",
+  "description": "Least privilege: opener only open-url (no reveal-item-in-dir), updater only check/download/install (no download-and-install). See src/app/desktop for all call sites.",
   "windows": ["main"],
-  "permissions": ["core:default", "opener:default", "updater:default"]
+  "permissions": [
+    "core:default",
+    "opener:allow-open-url",
+    "opener:allow-default-urls",
+    "updater:allow-check",
+    "updater:allow-download",
+    "updater:allow-install"
+  ]
 }

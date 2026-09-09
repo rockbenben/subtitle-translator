@@ -27,7 +27,9 @@
       }
     ],
     "security": {
-      "csp": null
+      "csp": "default-src 'self'; script-src 'self'; img-src 'self' asset: http://asset.localhost https://asset.localhost data: blob:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; connect-src 'self' ipc: http://ipc.localhost https://ipc.localhost https: http:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'",
+      "devCsp": null,
+      "freezePrototype": true
     }
   },
   "bundle": {
@@ -36,7 +38,7 @@
     "createUpdaterArtifacts": true,
     "category": "Productivity",
     "shortDescription": "Batch subtitle & document translator",
-    "longDescription": "Translate subtitles and documents in batches across many languages, fully offline-capable as a native desktop app.",
+    "longDescription": "Translate subtitles and documents in batches across many languages as a native desktop app. The UI and your files stay on your machine; translation itself is sent to the AI/MT provider you configure and needs network access.",
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",

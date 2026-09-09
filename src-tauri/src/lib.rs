@@ -156,6 +156,30 @@ fn percent_decode(input: &str) -> Result<String, String> {
   String::from_utf8(out).map_err(|_| "file name is not valid UTF-8".to_string())
 }
 
+/// 主框架导航白名单。威胁模型:渲染内容(XSS / 被代理返回的恶意页)把【整个窗口】
+/// 导航到攻击者站点,之后它披着应用的外衣钓鱼。外链在 JS 捕获阶段就被
+/// TauriIntegration 交给系统浏览器(opener),正常使用中主框架永远不该离开应用源。
+///
+/// - `tauri://`:macOS / Linux 的应用协议;
+/// - `tauri.localhost`:Windows WebView2 的应用源(http 与 https 两种 scheme 都收);
+/// - `localhost` / `127.0.0.1`:仅 debug,dev server 在这;
+/// - `blob:`:回落 saveAs 的下载走 blob URL,某些 WebView 版本会先触发一次导航
+///   回调再转成下载,拒了等于下载打不开。blob 继承应用源,放行无安全代价。
+///
+/// 客户端路由(Next 的 pushState)不触发本回调。
+fn navigation_allowed(url: &tauri::Url, dev: bool) -> bool {
+  match url.scheme() {
+    "tauri" => true,
+    "http" | "https" => match url.host_str() {
+      Some("tauri.localhost") => true,
+      Some("localhost" | "127.0.0.1") if dev => true,
+      _ => false,
+    },
+    "blob" => true,
+    _ => false,
+  }
+}
+
 /// Windows 保留设备名(CON / PRN / AUX / NUL / COM1-9 / LPT1-9,带任意后缀
 /// 也算 —— `CON.txt` 照样打开到设备)与结尾点/空格(Win32 会悄悄剥掉,
 /// Rust 报出来的名字和磁盘上的名字会对不上)。本应用就是 Windows 桌面端,
@@ -363,13 +387,19 @@ pub fn run() {
             write_export_file
         ])
         .setup(|app| {
-            if cfg!(debug_assertions) {
-                app.handle().plugin(
-                    tauri_plugin_log::Builder::default()
-                        .level(log::LevelFilter::Info)
-                        .build(),
-                )?;
-            }
+            // Release 也要日志:导出兜底路径上的 warn/error(目录不可写、100 个候选名
+            // 全占)只在这里出现,release 静默的话用户报 bug 时什么都拿不出来。
+            // 默认 targets 是 Stdout + LogDir(Windows: %LOCALAPPDATA%\<identifier>\logs),
+            // debug 给到 Debug 级,release 收 Info 及以上,日常运行不刷屏。
+            app.handle().plugin(
+                tauri_plugin_log::Builder::default()
+                    .level(if cfg!(debug_assertions) {
+                        log::LevelFilter::Debug
+                    } else {
+                        log::LevelFilter::Info
+                    })
+                    .build(),
+            )?;
 
             #[cfg(desktop)]
             {
@@ -402,6 +432,8 @@ pub fn run() {
                 // 覆盖 from_config 继承来的 title，其余配置照旧。
                 tauri::webview::WebviewWindowBuilder::from_config(app.handle(), &window_config)?
                     .title(titled.as_str())
+                    // 主框架只许留在应用源;外链统一由 JS 拦截后交系统浏览器
+                    .on_navigation(|url| navigation_allowed(url, cfg!(debug_assertions)))
                     .on_download(|webview, event| {
                         match event {
                             tauri::webview::DownloadEvent::Requested { destination, .. } => {
@@ -518,6 +550,33 @@ mod tests {
     assert_eq!(percent_decode("a%20b%281%29.srt").unwrap(), "a b(1).srt");
     assert!(percent_decode("%ZZ").is_err());
     assert!(percent_decode("%E5").is_err()); // 截断的 UTF-8
+  }
+
+  #[test]
+  fn navigation_guard_keeps_app_origin_blocks_remote() {
+    let u = |s: &str| tauri::Url::parse(s).unwrap();
+    // 应用自身的页面与客户端落点,生产放行
+    assert!(navigation_allowed(&u("http://tauri.localhost/en/"), false));
+    assert!(navigation_allowed(&u("https://tauri.localhost/zh/"), false));
+    assert!(navigation_allowed(&u("tauri://localhost/ar/"), false));
+    // saveAs 回落的 blob 下载
+    assert!(navigation_allowed(
+      &u("blob:http://tauri.localhost/9f2d1a3b-1111-2222-3333-444455556666"),
+      false
+    ));
+    // 任意外部 http(s) —— 这正是要挡的「整窗被导航去钓鱼站」
+    assert!(!navigation_allowed(&u("https://evil.com/tauri.localhost"), false));
+    assert!(!navigation_allowed(&u("http://192.168.1.10/"), false));
+    assert!(!navigation_allowed(
+      &u("http://tauri.localhost.evil.com/"),
+      false
+    ));
+    // dev server 只在 debug 放行
+    assert!(!navigation_allowed(&u("http://localhost:3000/"), false));
+    assert!(navigation_allowed(&u("http://localhost:3000/"), true));
+    assert!(navigation_allowed(&u("http://127.0.0.1:3000/"), true));
+    // 生产配置下 dev 放行也不许落到外部(双重保险)
+    assert!(!navigation_allowed(&u("http://evil.test/"), true));
   }
 
   #[test]
