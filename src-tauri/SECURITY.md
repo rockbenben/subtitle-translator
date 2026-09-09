@@ -14,8 +14,15 @@
   WebView 宿主注入,不受 CSP 约束。⚠️ 这只覆盖**构建时**的静态 HTML,
   任何运行时往 document 里插内联 `<script>` 的做法都会被拦 —— 目前
   React/Next/antd 都不这么干(antd cssinjs 只插 `<style>`)。
-- **`style-src` 保留 `'unsafe-inline'`**:antd cssinjs 与 rc 组件在运行时
-  注入 `<style>`,哈希是构建期算的,管不到运行时。
+- **`style-src` 保留 `'unsafe-inline'` + `dangerousDisableAssetCspModification:
+  ["style-src"]`,两条必须一起看**:antd cssinjs 与 rc 组件在运行时注入
+  `<style>`,哈希是构建期算的,管不到运行时。而 tauri 默认会改写 style-src ——
+  codegen 给静态 HTML 里每个 `<style>` 打 `__TAURI_STYLE_NONCE__` 占位,
+  每个响应再替换成随机 nonce 并加进 style-src。CSP 规则里**只要存在 nonce,
+  `'unsafe-inline'` 就被整句忽略**,于是 antd 运行时注入的(不带 nonce 的)
+  `<style>` 与元素 inline style 全部被拦,页面无样式(已用生产包 + CDP 实测,
+  ~150 条 style 违规)。关掉 style-src 改写后,策略原样下发,`'unsafe-inline'`
+  照常生效;**script-src 的改写保持开启**,内联脚本哈希保护不受影响。
 - **`connect-src` 放开任意 `http(s)`**:本应用的全部用途就是把翻译请求发往
   用户自填的端点 —— 本机运行时(`http://127.0.0.1:xxxx`)、局域网网关、
   各家云 API。收紧到域名白名单等于废掉自定义 provider。`ipc:` /

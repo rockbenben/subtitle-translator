@@ -29,7 +29,8 @@
     "security": {
       "csp": "default-src 'self'; script-src 'self'; img-src 'self' asset: http://asset.localhost https://asset.localhost data: blob:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; connect-src 'self' ipc: http://ipc.localhost https://ipc.localhost https: http:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'",
       "devCsp": null,
-      "freezePrototype": true
+      "freezePrototype": true,
+      "dangerousDisableAssetCspModification": ["style-src"]
     }
   },
   "bundle": {
