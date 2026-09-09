@@ -1,6 +1,7 @@
 "use client";
-import React, { memo, useState, useSyncExternalStore } from "react";
+import React, { memo, useState } from "react";
 import { usePathname } from "next/navigation";
+import { useMounted } from "@/app/hooks/useMounted";
 import { Layout, Menu, Space, Button, Dropdown, Drawer, Flex, theme } from "antd";
 import { GithubOutlined, QqOutlined, DiscordOutlined, MenuOutlined, SunOutlined, MoonOutlined, TeamOutlined, SendOutlined } from "@ant-design/icons";
 import { useTheme } from "next-themes";
@@ -38,12 +39,9 @@ export function Navigation() {
   const { token } = theme.useToken();
   const [drawerOpen, setDrawerOpen] = useState(false);
 
-  // useSyncExternalStore for hydration-safe client detection
-  const mounted = useSyncExternalStore(
-    () => () => {},
-    () => true,
-    () => false,
-  );
+  // 与上游同源的 useMounted hook(sync 同步件),别在这个 fork 里内联手写第二份 ——
+  // 文件顶部写着主仓同名文件改了要手动对齐,这就是容易漏掉的那种漂移
+  const mounted = useMounted();
 
   const isChinese = isChineseLocale(locale);
   const currentMenuKey = getCurrentMenuKey(pathname);

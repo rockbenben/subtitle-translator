@@ -65,6 +65,9 @@ export default async function LocaleLayout({ children, params }: Props) {
   setRequestLocale(locale);
   const direction = getLangDir(locale);
   const messages = await getMessages();
+  // 与上游 [locale]/layout.tsx 同源:跳到主内容的无障碍链接(样式在同步件
+  // globals.css 的 .skip-link)。本文件是桌面 fork,不在 sync 范围内,手工对齐。
+  const tCommon = await getTranslations("common");
 
   return (
     <html lang={locale} dir={direction} suppressHydrationWarning className={`${fontGrotesk.variable} ${fontMono.variable}`}>
@@ -73,8 +76,11 @@ export default async function LocaleLayout({ children, params }: Props) {
           <NextIntlClientProvider messages={messages}>
             <ThemesProvider>
               <TauriIntegration />
+              <a href="#main-content" className="skip-link">
+                {tCommon("skipToContent")}
+              </a>
               <Navigation />
-              <main style={{ maxWidth: 1280, width: "100%", marginTop: 8, marginInline: "auto", paddingInline: "clamp(16px, 4vw, 24px)", paddingBlock: 16 }}>{children}</main>
+              <main id="main-content" tabIndex={-1} style={{ maxWidth: 1280, width: "100%", marginTop: 8, marginInline: "auto", paddingInline: "clamp(16px, 4vw, 24px)", paddingBlock: 16 }}>{children}</main>
               <BackTop />
             </ThemesProvider>
           </NextIntlClientProvider>

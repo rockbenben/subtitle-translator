@@ -22,7 +22,7 @@ installNativeExportDir();
  * scripts/project_sync.py 会把 src/app/{hooks,utils,components,lib,ui/navigation}
  * 等目录同步下来，其中 hooks 与 lib/translation 是 mode: overwrite —— 该模式会
  * 删除「目标目录里存在、源目录里没有」的孤儿文件。桌面端专属文件放在那些目录
- * 里会被静默删掉（useAutoUpdate.ts / useLanguagePreference.ts 就中过这一条）。
+ * 里会被静默删掉（useAutoUpdate / useLanguagePreference 就中过这一条）。
  * sync_config.yaml 里没有任何规则指向 src/app/desktop，所以这里是安全区。
  *
  * 唯一留在共享地界的是 [locale]/layout.tsx 里挂载本组件的那一行 —— 该文件不在
