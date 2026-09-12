@@ -156,10 +156,14 @@ export const compressNewlines = (text: string, maxConsecutive: number = 2): stri
 // 1) 去掉行首的引用竖线装饰（markdown `>`、终端块/框线竖条 ▎▌│ 等），保留竖线前的缩进；
 // 2) dedent：削掉所有非空行的公共行首缩进——覆盖「无竖线、纯缩进」的 CLI 文本，同时保留代码块/嵌套列表的相对缩进；
 // 3) 按段落重排：空行＝段落分隔；列表项与 ``` 围栏代码块逐行保留、不参与合并；其余连续行拼回整段；
-// 4) 折行拼接：两侧都是中日韩字符时不补空格（避免「中 文」），否则补一个空格（拼回英文折行）。
+// 4) 折行拼接：上一行末尾空格移除；中日韩字符及标点边界不补空格（避免「中 文」或标点前后多余空格），西文折行补单空格。
 const CLI_GUTTER_RE = /^([ \t]*)(?:[>▏▎▍▌▐█│┃┆┊║]\s?)+/;
-// 范围含平假名/片假名(U+3040–U+30FF):漏掉它们会让日文折行在拼接点插多余空格。
-const CJK_CHAR_RE = /[　-ヿ㐀-鿿豈-﫿＀-￯]/;
+// 范围含平假名/片假名(U+3040–U+30FF)、中文标点(引号“”‘’、破折号——、省略号……、间隔号·等):漏掉会让折行在标点边界插多余空格。
+const CJK_CHAR_RE = /[\u00B7\u2014\u2018-\u201D\u2026　-ヿ㐀-鿿豈-﫿＀-￯]/;
+// 行尾全角/中文标点自带宽度，其后连接无论中文还是西文都不补空格
+const CJK_NO_SPACE_AFTER_RE = /[，。！？：；、）》】」』”’…—～]/;
+// 行首闭合/顿号/叹号等标点或开括号紧跟前文，其前无论中文还是西文都不补空格
+const CJK_NO_SPACE_BEFORE_RE = /[，。！？：；、）》】」』”’…—～（《【「『“‘]/;
 const LIST_ITEM_RE = /^\s*(?:[-*+]|\d+[.)])\s+/;
 // markdown 表格行（以 | 开头）：与列表项同等保留整行、不并入段落。
 // | 已从 CLI_GUTTER_RE 移除——否则会吃掉表格行首竖线，整张表还会被并成一段。
@@ -177,16 +181,31 @@ const BOLD_LABEL_RE = /^\s*\*\*[^*]+\*\*[:：]?\s*$/;
 
 const isCJKChar = (ch: string): boolean => !!ch && CJK_CHAR_RE.test(ch);
 
-// 将同一段落的折行片段拼成一行：中日韩↔中日韩边界不补空格，其余补一个空格
+const shouldOmitSpace = (prevChar: string, nextChar: string): boolean => {
+  if (!prevChar || !nextChar) return true;
+  return (
+    (isCJKChar(prevChar) && isCJKChar(nextChar)) ||
+    CJK_NO_SPACE_AFTER_RE.test(prevChar) ||
+    CJK_NO_SPACE_BEFORE_RE.test(nextChar)
+  );
+};
+
+// 将同一段落的折行片段拼成一行：上一行末尾空格移除；中日韩↔中日韩及标点边界不补空格，其余补一个空格
 const joinParagraphFragments = (fragments: string[]): string => {
   let acc = "";
   for (const fragment of fragments) {
     if (!acc) {
-      acc = fragment;
+      acc = fragment.trimEnd();
       continue;
     }
-    const noSpace = isCJKChar(acc[acc.length - 1]) && isCJKChar(fragment[0]);
-    acc += (noSpace ? "" : " ") + fragment;
+    const prev = acc.trimEnd();
+    const next = fragment.trim();
+    if (!next) {
+      acc = prev;
+      continue;
+    }
+    const noSpace = shouldOmitSpace(prev[prev.length - 1], next[0]);
+    acc = prev + (noSpace ? "" : " ") + next;
   }
   return acc;
 };
