@@ -362,7 +362,8 @@
     "globalPromptsExtra": "บริการ LLM ทั้งหมดใช้พรอมต์ชุดนี้ร่วมกัน การเปลี่ยนบริการจะไม่รีเซ็ต",
     "credentialsGroup": "ข้อมูลรับรอง",
     "modelGroup": "โมเดล",
-    "callParamsGroup": "พารามิเตอร์การเรียก"
+    "callParamsGroup": "พารามิเตอร์การเรียก",
+    "temperature": "อุณหภูมิ"
   },
   "tools": {
     "subtitleTranslator": {
@@ -431,7 +432,7 @@
     },
     "chineseConversion": {
       "title": "แปลงอักษรจีนตัวย่อ ↔ ตัวเต็ม",
-      "description": "แปลงเป็นชุดระหว่างจีนตัวย่อ จีนตัวเต็มไต้หวัน จีนตัวเต็มฮ่องกง และอักษรญี่ปุ่นใหม่"
+      "description": "รองรับการอัปโหลดไฟล์และการประมวลผลเป็นชุดระหว่างจีนตัวย่อ จีนตัวเต็มไต้หวัน จีนตัวเต็มฮ่องกง และชินจิไตญี่ปุ่น"
     },
     "novelProcessor": {
       "title": "เครื่องมือจัดรูปแบบนิยายเว็บจีน",
@@ -500,7 +501,9 @@
     "otherTools": "เครื่องมือเพิ่มเติม",
     "externalTools": {
       "legendtalk": "โต๊ะกลมนักคิด AI",
-      "imgprompt": "พรอมต์รูปภาพ AI"
+      "imgprompt": "พรอมต์รูปภาพ AI",
+      "lives": "Thousand Lives",
+      "learndata": "LearnData บันทึกโอเพนซอร์ส"
     }
   },
   "Metadata": {

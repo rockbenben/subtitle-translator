@@ -362,7 +362,8 @@
     "globalPromptsExtra": "所有 LLM 服務共用這組提示詞，切換服務不會重置",
     "credentialsGroup": "憑證",
     "modelGroup": "模型",
-    "callParamsGroup": "呼叫參數"
+    "callParamsGroup": "呼叫參數",
+    "temperature": "取樣溫度"
   },
   "tools": {
     "subtitleTranslator": {
@@ -431,7 +432,7 @@
     },
     "chineseConversion": {
       "title": "簡繁轉換",
-      "description": "批次轉換簡體、臺灣繁體、香港繁體和日本新字體"
+      "description": "支援檔案上傳與批次處理，精準轉換簡體、臺灣繁體、香港繁體和日本新字體"
     },
     "novelProcessor": {
       "title": "小說排版整理",
@@ -500,7 +501,9 @@
     "otherTools": "更多工具",
     "externalTools": {
       "legendtalk": "AI 思想家圓桌",
-      "imgprompt": "AI 繪圖提示詞"
+      "imgprompt": "AI 繪圖提示詞",
+      "lives": "千世書 人生模擬",
+      "learndata": "LearnData 開源筆記"
     }
   },
   "Metadata": {

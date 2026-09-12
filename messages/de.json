@@ -362,7 +362,8 @@
     "globalPromptsExtra": "Alle LLM-Dienste teilen sich diese Prompts; ein Dienstwechsel setzt sie nicht zurück",
     "credentialsGroup": "Zugangsdaten",
     "modelGroup": "Modell",
-    "callParamsGroup": "Aufrufparameter"
+    "callParamsGroup": "Aufrufparameter",
+    "temperature": "Temperatur"
   },
   "tools": {
     "subtitleTranslator": {
@@ -431,7 +432,7 @@
     },
     "chineseConversion": {
       "title": "Chinesisch-Konvertierung",
-      "description": "Vereinfacht, Taiwan-Traditionell, Hongkong-Traditionell und japanische Schriftzeichen in Masse konvertieren"
+      "description": "Batch-Konvertierung für Vereinfacht, Taiwan-Traditionell, Hongkong-Traditionell und Shinjitai mit Datei-Upload-Unterstützung"
     },
     "novelProcessor": {
       "title": "Chinesischer Web-Roman-Formatierer",
@@ -500,7 +501,9 @@
     "otherTools": "Mehr Tools",
     "externalTools": {
       "legendtalk": "KI-Denkerrunde",
-      "imgprompt": "KI-Bild-Prompts"
+      "imgprompt": "KI-Bild-Prompts",
+      "lives": "Thousand Lives",
+      "learndata": "LearnData Open-Source-Notizen"
     }
   },
   "Metadata": {

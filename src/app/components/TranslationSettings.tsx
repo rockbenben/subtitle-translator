@@ -673,7 +673,7 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
                 );
               })()}
             {config?.temperature !== undefined && (
-              <Form.Item label="Temperature" extra={t("temperatureExtra")}>
+              <Form.Item label={t("temperature")} extra={t("temperatureExtra")}>
                 <InputNumber
                   min={0}
                   max={1.99}
@@ -681,7 +681,7 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
                   value={config.temperature as number | undefined}
                   onChange={(value) => handleConfigChange(service, "temperature", value ?? 0)}
                   className="w-full"
-                  aria-label="Temperature"
+                  aria-label={t("temperature")}
                 />
               </Form.Item>
             )}

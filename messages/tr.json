@@ -362,7 +362,8 @@
     "globalPromptsExtra": "Tüm LLM hizmetleri bu istemleri paylaşır; hizmet değiştirmek onları sıfırlamaz",
     "credentialsGroup": "Kimlik Bilgileri",
     "modelGroup": "Model",
-    "callParamsGroup": "Çağrı Parametreleri"
+    "callParamsGroup": "Çağrı Parametreleri",
+    "temperature": "Sıcaklık"
   },
   "tools": {
     "subtitleTranslator": {
@@ -431,7 +432,7 @@
     },
     "chineseConversion": {
       "title": "Bas/Gel Çince Dönüştürücü",
-      "description": "Basitleştirilmiş, Tayvan geleneksel, Hong Kong geleneksel ve Japonca karakterleri toplu dönüştür"
+      "description": "Dosya yükleme ve toplu işlem desteğiyle Basitleştirilmiş, Tayvan/Hong Kong Geleneksel Çince ve Japon Shinjitai dönüştürme"
     },
     "novelProcessor": {
       "title": "Çince Web Roman Düzenleyici",
@@ -500,7 +501,9 @@
     "otherTools": "Daha Fazla Araç",
     "externalTools": {
       "legendtalk": "AI Düşünürler Yuvarlak Masası",
-      "imgprompt": "AI Görsel İstemleri"
+      "imgprompt": "AI Görsel İstemleri",
+      "lives": "Thousand Lives",
+      "learndata": "LearnData Açık Kaynak Notlar"
     }
   },
   "Metadata": {

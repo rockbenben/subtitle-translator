@@ -362,7 +362,8 @@
     "globalPromptsExtra": "すべての LLM サービスでこのプロンプトを共有します。サービスを切り替えてもリセットされません",
     "credentialsGroup": "認証情報",
     "modelGroup": "モデル",
-    "callParamsGroup": "呼び出しパラメータ"
+    "callParamsGroup": "呼び出しパラメータ",
+    "temperature": "サンプリング温度"
   },
   "tools": {
     "subtitleTranslator": {
@@ -431,7 +432,7 @@
     },
     "chineseConversion": {
       "title": "繁体・簡体字変換",
-      "description": "簡体字・台湾繁体字・香港繁体字・日本新字体を一括変換"
+      "description": "ファイルアップロードと一括処理に対応、簡体字・台湾繁体字・香港繁体字・日本新字体を高精度変換"
     },
     "novelProcessor": {
       "title": "中国語小説テキスト整理ツール",
@@ -500,7 +501,9 @@
     "otherTools": "その他のツール",
     "externalTools": {
       "legendtalk": "AI思想家ラウンドテーブル",
-      "imgprompt": "AI画像プロンプト"
+      "imgprompt": "AI画像プロンプト",
+      "lives": "千世書 人生シミュレーター",
+      "learndata": "LearnData オープンソースノート"
     }
   },
   "Metadata": {

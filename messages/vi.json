@@ -362,7 +362,8 @@
     "globalPromptsExtra": "Tất cả dịch vụ LLM dùng chung bộ prompt này; chuyển dịch vụ sẽ không đặt lại chúng",
     "credentialsGroup": "Thông tin xác thực",
     "modelGroup": "Mô hình",
-    "callParamsGroup": "Tham số gọi"
+    "callParamsGroup": "Tham số gọi",
+    "temperature": "Nhiệt độ"
   },
   "tools": {
     "subtitleTranslator": {
@@ -431,7 +432,7 @@
     },
     "chineseConversion": {
       "title": "Chuyển đổi Giản thể ↔ Phồn thể",
-      "description": "Chuyển đổi hàng loạt giữa giản thể, phồn thể Đài Loan, phồn thể Hồng Kông và chữ Nhật mới"
+      "description": "Hỗ trợ tải lên tệp và xử lý hàng loạt giữa chữ Giản thể, Phồn thể Đài Loan, Phồn thể Hồng Kông và Shinjitai Nhật Bản"
     },
     "novelProcessor": {
       "title": "Trình định dạng tiểu thuyết mạng Trung Quốc",
@@ -500,7 +501,9 @@
     "otherTools": "Thêm công cụ",
     "externalTools": {
       "legendtalk": "Bàn tròn nhà tư tưởng AI",
-      "imgprompt": "Câu lệnh tạo ảnh AI"
+      "imgprompt": "Câu lệnh tạo ảnh AI",
+      "lives": "Thousand Lives",
+      "learndata": "LearnData Ghi chú nguồn mở"
     }
   },
   "Metadata": {

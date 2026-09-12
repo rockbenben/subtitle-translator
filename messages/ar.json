@@ -362,7 +362,8 @@
     "globalPromptsExtra": "تشترك جميع خدمات LLM في هذه الموجهات؛ التبديل بين الخدمات لن يعيد ضبطها",
     "credentialsGroup": "بيانات الاعتماد",
     "modelGroup": "النموذج",
-    "callParamsGroup": "معاملات الاستدعاء"
+    "callParamsGroup": "معاملات الاستدعاء",
+    "temperature": "درجة الحرارة"
   },
   "tools": {
     "subtitleTranslator": {
@@ -427,7 +428,7 @@
     },
     "chineseConversion": {
       "title": "تحويل الحروف الصينية",
-      "description": "تحويل بين المبسطة والتقليدية (تايوان وهونج كونج) والأحرف اليابانية الجديدة"
+      "description": "يدعم تحميل الملفات والمعالجة المجمعة للتحويل بين الصينية المبسطة والتقليدية (تايوان وهونغ كونغ) والشينجيتاي الياباني"
     },
     "novelProcessor": {
       "title": "منسّق الروايات الصينية على الويب",
@@ -500,7 +501,9 @@
     "otherTools": "المزيد من الأدوات",
     "externalTools": {
       "legendtalk": "طاولة مفكري الذكاء الاصطناعي",
-      "imgprompt": "موجهات صور الذكاء الاصطناعي"
+      "imgprompt": "موجهات صور الذكاء الاصطناعي",
+      "lives": "Thousand Lives",
+      "learndata": "LearnData ملاحظات مفتوحة المصدر"
     }
   },
   "Metadata": {
