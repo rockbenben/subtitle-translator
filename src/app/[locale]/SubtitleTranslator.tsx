@@ -14,6 +14,7 @@ import { useExportFilename } from "@/app/hooks/useExportFilename";
 import { splitTextIntoLines, downloadFile, applyRemoveCharsToLines, describeError, getFileTypePresetConfig } from "@/app/utils";
 import {
   detectSubtitleFormat,
+  normalizeSrtVariantTimecodes,
   getOutputFileExtension,
   filterSubLines,
   ASS_STYLE_PRESETS,
@@ -214,13 +215,17 @@ const SubtitleTranslator = () => {
   useResetOnSourceChange(sourceText, () => setExtractedText(""));
 
   const performTranslation = async (sourceText: string, fileNameSet?: string, fileIndex?: number, totalFiles?: number) => {
-    const lines = splitTextIntoLines(sourceText);
-    const fileType = detectSubtitleFormat(lines);
-    if (fileType === "error") {
+    const rawLines = splitTextIntoLines(sourceText);
+    const detectedType = detectSubtitleFormat(rawLines);
+    if (detectedType === "error") {
       message.error(tSubtitle("unsupportedSub"));
       noteFileFailure();
       return;
     }
+    // 非规范时间码(裸秒 / 省毫秒,可与规范 cue 混排)先归一成标准时间码,
+    // 装配写回的物理行与 filterSubLines 看到的必须是同一份 —— 否则 cue 边界对不上。
+    const fileType = detectedType;
+    const lines = normalizeSrtVariantTimecodes(rawLines, fileType);
 
     // Get content lines and assContentStartIndex from filterSubLines (eliminates duplicate calculation)
     const { contentLines, contentIndices, assContentStartIndex } = filterSubLines(lines, fileType);
@@ -426,7 +431,9 @@ const SubtitleTranslator = () => {
       message.error(tSubtitle("unsupportedSub"));
       return;
     }
-    const { contentLines } = filterSubLines(splitTextIntoLines(sourceText), sourceFileType);
+    // 裸秒 SRT 变体先归一时间码,否则 filterSubLines 找不到任何 cue 边界、预览为空
+    const extractLines = normalizeSrtVariantTimecodes(splitTextIntoLines(sourceText), sourceFileType);
+    const { contentLines } = filterSubLines(extractLines, sourceFileType);
     const extractedText = contentLines.join("\n").trim();
 
     if (!extractedText) {

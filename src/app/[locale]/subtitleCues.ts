@@ -11,7 +11,7 @@
 // LRC(歌词,无可靠 end 时间)走行级的 parseReviewTexts / replaceReviewText。
 
 import { splitTextIntoLines } from "@/app/utils";
-import { filterSubLines, findTimeLineIndexBefore, VTT_SRT_TIME, SBV_TIME_REGEX, TIME_ARROW_SPLIT } from "@/app/lib/translation/formats/subtitle";
+import { filterSubLines, findTimeLineIndexBefore, normalizeSrtVariantTimecodes, VTT_SRT_TIME, SBV_TIME_REGEX, TIME_ARROW_SPLIT } from "@/app/lib/translation/formats/subtitle";
 
 export interface SubtitleCue {
   /** 1-based 展示序号(按出现顺序重排,与源文件 cue 序号无关) */
@@ -132,7 +132,9 @@ const parseAssCues = (lines: string[]): SubtitleCue[] => {
  */
 export const parseCues = (text: string, format: string): SubtitleCue[] => {
   if (!text.trim()) return [];
-  const lines = splitTextIntoLines(text);
+  // 裸秒 SRT 变体(0.00 --> 29.98)先归一成标准时间码;对规范文件是 no-op。
+  // 面板源侧直接解析原始 sourceText,不归一的话源 cue 全部丢失。
+  const lines = normalizeSrtVariantTimecodes(splitTextIntoLines(text), format);
   // SSA(v4.00)与 ASS 共用管线;调用方传的 format 可能是【物理扩展名】
   // (translatedTextExt,.ssa 源回写 .ssa)—— 不归一的话 .ssa 文件的对照
   // 校对面板永不渲染,而同内容粘贴(无扩展名,检测为 ass)又正常,行为自相矛盾。
@@ -193,7 +195,8 @@ const replaceAssCueText = (lines: string[], newTextByIndex: Map<number, string>)
  */
 export const replaceCueText = (text: string, format: string, newTextByIndex: Map<number, string>): string => {
   if (!text.trim()) return text;
-  const lines = splitTextIntoLines(text);
+  // 与 parseCues 同一份归一:parse 与回写看到的物理行必须一致,cue index 才对得齐
+  const lines = normalizeSrtVariantTimecodes(splitTextIntoLines(text), format);
   // ssa 归一同 parseCues —— 只归一 parse 不归一写回的话,.ssa 面板能渲染但
   // 「应用并下载」原样返回未编辑的译文。
   if (format === "ass" || format === "ssa") return replaceAssCueText(lines, newTextByIndex);
