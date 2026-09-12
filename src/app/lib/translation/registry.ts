@@ -392,15 +392,18 @@ export const PROVIDERS = {
     category: "llm",
     label: "DeepSeek",
     endpoint: "https://api.deepseek.com/chat/completions",
-    defaultModel: "deepseek-v4-flash",
+    defaultModel: "deepseek-flash",
     defaultTemperature: 0.7,
     docs: "https://api-docs.deepseek.com/",
     apiKeyUrl: "https://platform.deepseek.com/api_keys",
     defaultUseRelay: false,
-    // DeepSeek V4 系列两个 SKU 都支持 thinking / non-thinking 两种模式
-    // (docs.deepseek.com: "supporting both modes")。
+    // 官方说明 (2026-09)：模型名推荐使用 deepseek-flash（由 DeepSeek-V4.1-Flash 服务）。
+    // 旧模型名 deepseek-v4-flash 仍可调用，但已下线并路由到 V4.1 Flash；
+    // deepseek-v4-pro 于 2026-09-14 12:00 起全部路由到 V4.1 Flash，至未来 V4.1 Pro 上线。
+    // 各模型均支持 thinking / non-thinking 两种模式 (docs.deepseek.com: "supporting both modes")。
+    // 注：DeepSeek 另提供 Anthropic 兼容端点 (https://api.deepseek.com/anthropic)。
     models: [
-      { label: "DeepSeek V4 Flash", value: "deepseek-v4-flash", thinking: true },
+      { label: "DeepSeek Flash", value: "deepseek-flash", thinking: true },
       { label: "DeepSeek V4 Pro", value: "deepseek-v4-pro", thinking: true },
     ],
   },
@@ -471,7 +474,7 @@ export const PROVIDERS = {
       { label: "Claude Opus 5", value: "claude-opus-5", thinking: true },
       { label: "Claude Sonnet 5", value: "claude-sonnet-5", thinking: true },
       { label: "Claude Haiku 4.5", value: "claude-haiku-4-5", thinking: true },
-      { label: "Claude Fable 5", value: "claude-fable-5", thinking: true },
+      { label: "Claude Fable 5.1", value: "claude-fable-5-1", thinking: true },
     ],
   },
   gemini: {
@@ -976,7 +979,7 @@ export const PROVIDERS = {
     models: [
       { label: "Nemotron 3 Super 120B (free)", value: "nvidia/nemotron-3-super-120b-a12b:free" },
       { label: "Laguna S 2.1 (free)", value: "poolside/laguna-s-2.1:free" },
-      { label: "DeepSeek V4 Flash", value: "deepseek/deepseek-v4-flash", thinking: true },
+      { label: "DeepSeek V4.1 Flash", value: "deepseek/deepseek-v4.1-flash", thinking: true },
       // preview → 正式版:hy3-preview 在上游标注 2026-08-31 下线，不等它挂。
       // tencent/hy3 已核实有 4 个 status=0 的健康 provider(含腾讯自营),而
       // hy3-preview 只剩 GMICloud 单点供应 —— 单点本身就是随时归零的形态。
@@ -988,7 +991,7 @@ export const PROVIDERS = {
       // glm-5.3 不打 thinking:上游强制思考、不可禁用,打了标签 off 态会经 OpenRouter
       // 统一参数发 reasoning:{enabled:false},对它是非法请求。同原生 zhipu 的处理。
       { label: "GLM-5.3", value: "z-ai/glm-5.3" },
-      { label: "Grok 4.5", value: "x-ai/grok-4.5" },
+      { label: "Grok 4.6", value: "x-ai/grok-4.6" },
       { label: "Kimi K2.6", value: "moonshotai/kimi-k2.6", thinking: true },
       // M3 上游默认 adaptive thinking(可关)→ 打标签让 off 态经 OpenRouter
       // 统一参数发 reasoning:{enabled:false},否则默认烧推理 token。
@@ -1263,7 +1266,7 @@ export const PROVIDERS = {
     category: "aggregator",
     label: "SiliconFlow",
     endpoint: "https://api.siliconflow.cn/v1/chat/completions",
-    defaultModel: "deepseek-ai/DeepSeek-V4-Flash",
+    defaultModel: "deepseek-ai/DeepSeek-V4.1-Flash",
     defaultTemperature: 0.7,
     docs: "https://docs.siliconflow.cn/cn/api-reference/chat-completions/chat-completions",
     apiKeyUrl: "https://cloud.siliconflow.cn/me/account/ak",
@@ -1281,7 +1284,7 @@ export const PROVIDERS = {
     // 明确核过【不在】SiliconFlow 上:MiniMax-M3、GLM-5.3、Qwen3.8 —— 别照着别家
     // 的清单往这里搬。
     models: [
-      { label: "DeepSeek V4 Flash", value: "deepseek-ai/DeepSeek-V4-Flash", thinking: true },
+      { label: "DeepSeek V4.1 Flash", value: "deepseek-ai/DeepSeek-V4.1-Flash", thinking: true },
       { label: "DeepSeek V4 Pro", value: "deepseek-ai/DeepSeek-V4-Pro", thinking: true },
       { label: "Kimi K2.6 (Pro)", value: "Pro/moonshotai/Kimi-K2.6", thinking: true },
       { label: "GLM-5.2", value: "zai-org/GLM-5.2" },
