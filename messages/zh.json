@@ -362,7 +362,8 @@
     "globalPromptsExtra": "所有 LLM 服务共用这组提示词，切换服务不会重置",
     "credentialsGroup": "凭证",
     "modelGroup": "模型",
-    "callParamsGroup": "调用参数"
+    "callParamsGroup": "调用参数",
+    "temperature": "采样温度"
   },
   "tools": {
     "subtitleTranslator": {
@@ -431,7 +432,7 @@
     },
     "chineseConversion": {
       "title": "简繁转换",
-      "description": "批量转换简体、台湾繁体、香港繁体和日本新字体"
+      "description": "支持文件上传与批量处理，精准转换简体、台湾繁体、香港繁体和日本新字体"
     },
     "novelProcessor": {
       "title": "小说排版整理",
@@ -500,7 +501,9 @@
     "otherTools": "更多工具",
     "externalTools": {
       "legendtalk": "AI 思想家圆桌",
-      "imgprompt": "AI 绘图提示词"
+      "imgprompt": "AI 绘图提示词",
+      "lives": "千世书 人生模拟",
+      "learndata": "LearnData 开源笔记"
     }
   },
   "Metadata": {

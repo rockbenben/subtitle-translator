@@ -362,7 +362,8 @@
     "globalPromptsExtra": "Semua layanan LLM berbagi prompt ini; berpindah layanan tidak akan mereset-nya",
     "credentialsGroup": "Kredensial",
     "modelGroup": "Model",
-    "callParamsGroup": "Parameter Panggilan"
+    "callParamsGroup": "Parameter Panggilan",
+    "temperature": "Suhu"
   },
   "tools": {
     "subtitleTranslator": {
@@ -427,7 +428,7 @@
     },
     "chineseConversion": {
       "title": "Konversi Karakter Tionghoa",
-      "description": "Konversi batch antara Sederhana, Tradisional Taiwan, Tradisional Hong Kong, dan Aksara Jepang Baru"
+      "description": "Mendukung unggah file dan pemrosesan batch antara Tionghoa Sederhana, Tradisional Taiwan/Hong Kong, dan Shinjitai Jepang"
     },
     "novelProcessor": {
       "title": "Pemformat Novel Web China",
@@ -500,7 +501,9 @@
     "otherTools": "Alat Lainnya",
     "externalTools": {
       "legendtalk": "Meja Bundar Pemikir AI",
-      "imgprompt": "Prompt Gambar AI"
+      "imgprompt": "Prompt Gambar AI",
+      "lives": "Thousand Lives",
+      "learndata": "LearnData Catatan Sumber Terbuka"
     }
   },
   "Metadata": {

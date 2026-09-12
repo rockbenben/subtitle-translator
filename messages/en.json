@@ -362,7 +362,8 @@
     "globalPromptsExtra": "All LLM services share these prompts; switching services will not reset them",
     "credentialsGroup": "Credentials",
     "modelGroup": "Model",
-    "callParamsGroup": "Call parameters"
+    "callParamsGroup": "Call parameters",
+    "temperature": "Temperature"
   },
   "tools": {
     "subtitleTranslator": {
@@ -431,7 +432,7 @@
     },
     "chineseConversion": {
       "title": "Chinese Conversion",
-      "description": "Bulk convert Simplified, Taiwan Traditional, Hong Kong Traditional, and Japanese New Character Form"
+      "description": "Batch convert Simplified, Taiwan Traditional, Hong Kong Traditional, and Japanese Shinjitai with file upload support"
     },
     "novelProcessor": {
       "title": "Chinese Novel Formatter",
@@ -500,7 +501,9 @@
     "otherTools": "More tools",
     "externalTools": {
       "legendtalk": "AI Thinkers Roundtable",
-      "imgprompt": "AI Image Prompts"
+      "imgprompt": "AI Image Prompts",
+      "lives": "Thousand Lives",
+      "learndata": "LearnData Open Source Notes"
     }
   },
   "Metadata": {

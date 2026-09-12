@@ -362,7 +362,8 @@
     "globalPromptsExtra": "모든 LLM 서비스가 이 프롬프트를 공유하며, 서비스를 전환해도 초기화되지 않습니다",
     "credentialsGroup": "자격 증명",
     "modelGroup": "모델",
-    "callParamsGroup": "호출 매개변수"
+    "callParamsGroup": "호출 매개변수",
+    "temperature": "샘플링 온도"
   },
   "tools": {
     "subtitleTranslator": {
@@ -431,7 +432,7 @@
     },
     "chineseConversion": {
       "title": "간체·번체 변환",
-      "description": "간체, 대만 번체, 홍콩 번체, 일본 신자체 일괄 변환"
+      "description": "파일 업로드 및 일괄 처리를 지원하는 간체, 대만 번체, 홍콩 번체 및 일본 신자체 변환"
     },
     "novelProcessor": {
       "title": "중국 웹소설 텍스트 정리 도구",
@@ -500,7 +501,9 @@
     "otherTools": "더 많은 도구",
     "externalTools": {
       "legendtalk": "AI 사상가 라운드테이블",
-      "imgprompt": "AI 이미지 프롬프트"
+      "imgprompt": "AI 이미지 프롬프트",
+      "lives": "천세서 인생 시뮬레이션",
+      "learndata": "LearnData 오픈소스 노트"
     }
   },
   "Metadata": {

@@ -362,7 +362,8 @@
     "globalPromptsExtra": "Todos los servicios LLM comparten estos prompts; cambiar de servicio no los restablecerá",
     "credentialsGroup": "Credenciales",
     "modelGroup": "Modelo",
-    "callParamsGroup": "Parámetros de llamada"
+    "callParamsGroup": "Parámetros de llamada",
+    "temperature": "Temperatura"
   },
   "tools": {
     "subtitleTranslator": {
@@ -431,7 +432,7 @@
     },
     "chineseConversion": {
       "title": "Conversión chino",
-      "description": "Convertir en lote simplificado, tradicional Taiwán, tradicional Hong Kong y forma nueva de caracteres japoneses"
+      "description": "Conversión por lotes de simplificado, tradicional de Taiwán, tradicional de Hong Kong y shinjitai con soporte para subida de archivos"
     },
     "novelProcessor": {
       "title": "Formateador de novelas web chinas",
@@ -500,7 +501,9 @@
     "otherTools": "Más herramientas",
     "externalTools": {
       "legendtalk": "Mesa redonda de pensadores IA",
-      "imgprompt": "Prompts de imágenes IA"
+      "imgprompt": "Prompts de imágenes IA",
+      "lives": "Thousand Lives",
+      "learndata": "LearnData Notas de Código Abierto"
     }
   },
   "Metadata": {

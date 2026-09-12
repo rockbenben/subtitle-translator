@@ -362,7 +362,8 @@
     "globalPromptsExtra": "सभी LLM सेवाएँ इन प्रॉम्प्ट को साझा करती हैं; सेवा बदलने से वे रीसेट नहीं होंगे",
     "credentialsGroup": "क्रेडेंशियल",
     "modelGroup": "मॉडल",
-    "callParamsGroup": "कॉल पैरामीटर"
+    "callParamsGroup": "कॉल पैरामीटर",
+    "temperature": "तापमान"
   },
   "tools": {
     "subtitleTranslator": {
@@ -427,7 +428,7 @@
     },
     "chineseConversion": {
       "title": "चीनी लिपि रूपांतरण",
-      "description": "सरलीकृत, ताइवान पारंपरिक, हांगकांग पारंपरिक और जापानी नए अक्षरों के बीच बैच रूपांतरण"
+      "description": "फ़ाइल अपलोड और बैच प्रोसेसिंग के साथ सरलीकृत, ताइवान/हांगकांग पारंपरिक और जापानी Shinjitai रूपांतरण"
     },
     "novelProcessor": {
       "title": "चीनी वेब नॉवल फ़ॉर्मेटर",
@@ -500,7 +501,9 @@
     "otherTools": "अधिक टूल",
     "externalTools": {
       "legendtalk": "AI विचारक गोलमेज़",
-      "imgprompt": "AI इमेज प्रॉम्प्ट"
+      "imgprompt": "AI इमेज प्रॉम्प्ट",
+      "lives": "Thousand Lives",
+      "learndata": "LearnData ओपन सोर्स नोट्स"
     }
   },
   "Metadata": {

@@ -362,7 +362,8 @@
     "globalPromptsExtra": "সব LLM পরিষেবা এই প্রম্পট ভাগ করে নেয়; পরিষেবা পরিবর্তন করলেও রিসেট হবে না",
     "credentialsGroup": "শংসাপত্র",
     "modelGroup": "মডেল",
-    "callParamsGroup": "কল প্যারামিটার"
+    "callParamsGroup": "কল প্যারামিটার",
+    "temperature": "তাপমাত্রা"
   },
   "tools": {
     "subtitleTranslator": {
@@ -427,7 +428,7 @@
     },
     "chineseConversion": {
       "title": "চীনা লিপি রূপান্তর",
-      "description": "সরলীকৃত, তাইওয়ান ঐতিহ্যবাহী, হংকং ঐতিহ্যবাহী এবং জাপানি নতুন অক্ষরের মধ্যে ব্যাচ রূপান্তর"
+      "description": "ফাইল আপলোড ও ব্যাচ প্রসেসিং সহ সরলীকৃত, তাইওয়ান/হংকং প্রথাগত এবং জাপানি Shinjitai রূপান্তর"
     },
     "novelProcessor": {
       "title": "চীনা ওয়েব নভেল ফরম্যাটার",
@@ -500,7 +501,9 @@
     "otherTools": "আরও টুল",
     "externalTools": {
       "legendtalk": "AI চিন্তাবিদ গোলটেবিল",
-      "imgprompt": "AI ইমেজ প্রম্পট"
+      "imgprompt": "AI ইমেজ প্রম্পট",
+      "lives": "Thousand Lives",
+      "learndata": "LearnData ওপেন সোর্স নোট"
     }
   },
   "Metadata": {
