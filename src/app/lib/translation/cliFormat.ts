@@ -13,6 +13,7 @@ import type { TranslateBatchMeta, PipelineOutcome } from "./pipeline";
 import { splitTextIntoLines, hasPrecisionLossRisk } from "@/app/utils/textUtils";
 import {
   detectSubtitleFormat,
+  normalizeSrtVariantTimecodes,
   filterSubLines,
   prepareAssForTranslation,
   restoreAssAfterTranslation,
@@ -108,9 +109,12 @@ const subtitleHandler: CliFormatHandler = {
   extensions: [".srt", ".vtt", ".ass", ".ssa", ".lrc", ".sbv"],
 
   async run(text, ctx) {
-    const lines = splitTextIntoLines(text);
-    const fileType = detectSubtitleFormat(lines);
+    const rawLines = splitTextIntoLines(text);
+    const fileType = detectSubtitleFormat(rawLines);
     if (fileType === "error") throw new CliFileFormatError("unsupported subtitle format");
+    // 非规范时间码(裸秒 0.00 --> 29.98 / 省毫秒 00:30 --> 01:00)先归一成
+    // 标准时间码,下游只看见规范 SRT;同一文件里规范/非规范 cue 混排也兼容。
+    const lines = normalizeSrtVariantTimecodes(rawLines, fileType);
 
     const { contentLines, contentIndices, assContentStartIndex } = filterSubLines(lines, fileType);
     if (contentLines.length === 0) return null;

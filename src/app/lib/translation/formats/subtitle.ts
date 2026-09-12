@@ -25,6 +25,14 @@ const LRC_METADATA_REGEX = /^\[(ar|ti|al|by|offset|re|ve):/i;
 // YouTube SBV 时间行:`0:00:01.000,0:00:03.500`(逗号分隔 start,end,无 --> 箭头)。
 // 整行锚定 —— cue 文本里出现类似片段不会误判;ms 容忍 1-3 位(YouTube 固定输出 3 位)。
 export const SBV_TIME_REGEX = /^\d+:\d{2}:\d{2}\.\d{1,3},\d+:\d{2}:\d{2}\.\d{1,3}$/;
+// 「纯秒」时间行:`0.00 --> 29.98`、`60.00 --> 89.98`、`90 --> 120`(部分语音转写/
+// 剪辑工具导出的 SRT 变体,时间码是裸秒数而非 HH:MM:SS,mmm)。标准时间码含冒号,
+// 此分支不会碰到;尾部允许 VTT 风格 cue settings。
+const BARE_SECONDS_TIME_REGEX = /^\d+(?:\.\d+)?[ \t]+-->[ \t]+\d+(?:\.\d+)?(?:[ \t].*)?$/;
+// 省略毫秒的冒号时间行:`00:30 --> 01:00`(MM:SS)或 `1:00:30 --> 1:01:00`
+// (H:MM:SS)。VTT_SRT_TIME 强制 [,.] 小数位,这类行此前一票都计不上。
+// 与规范时间码互斥(规范行必含逗号/点 + 小数),不会重复计票。
+const COLON_TIME_NO_MS_REGEX = /^(?:\d{1,2}:)?\d{1,2}:\d{2}[ \t]+-->[ \t]+(?:\d{1,2}:)?\d{1,2}:\d{2}(?:[ \t].*)?$/;
 
 // 识别字幕文件的类型
 export const detectSubtitleFormat = (lines: string[]): "ass" | "vtt" | "srt" | "lrc" | "sbv" | "error" => {
@@ -70,6 +78,16 @@ export const detectSubtitleFormat = (lines: string[]): "ass" | "vtt" | "srt" | "
     if (SBV_TIME_REGEX.test(trimmed)) {
       sbvCount++;
     }
+    // 裸秒时间码(0.00 --> 29.98)是 SRT 社区变体,按 srt 计票。
+    // 标准时间码含冒号,不会被这条正则碰上。
+    if (BARE_SECONDS_TIME_REGEX.test(trimmed)) {
+      srtCount++;
+    }
+    // 省略毫秒的冒号时间码(00:30 --> 01:00)同样按 srt 计票;
+    // 与规范行互斥(规范行秒段后必跟逗号/点)。
+    if (COLON_TIME_NO_MS_REGEX.test(trimmed)) {
+      srtCount++;
+    }
   }
 
   // 根据时间行分隔符数量判断。严格多数(>)而非 >=:真 ASS 不含箭头/LRC/SBV
@@ -97,6 +115,67 @@ export const detectSubtitleFormat = (lines: string[]): "ass" | "vtt" | "srt" | "
   // 箭头时间码是更强信号,SBV 排在 srt/vtt 之后:真 SBV 不含 --> 行
   if (sbvCount > 0) return "sbv";
   return "error";
+};
+
+const pad2 = (n: number): string => String(n).padStart(2, "0");
+
+// 裸秒 token(`0.00` / `89.98` / `120`)→ `HH:MM:SS,mmm`(SRT)或
+// `HH:MM:SS.mmm`(VTT)。小数位右侧补零到 3 位毫秒;超过 3 位截断。
+const bareSecondsTokenToTimecode = (token: string, sep: "," | "."): string => {
+  const dotIdx = token.indexOf(".");
+  const secPart = dotIdx === -1 ? token : token.slice(0, dotIdx);
+  const fracPart = dotIdx === -1 ? "" : token.slice(dotIdx + 1);
+  const totalMs = parseInt(secPart, 10) * 1000 + parseInt(fracPart.padEnd(3, "0").slice(0, 3) || "0", 10);
+  const hh = Math.floor(totalMs / 3_600_000);
+  const mm = Math.floor((totalMs % 3_600_000) / 60_000);
+  const ss = Math.floor((totalMs % 60_000) / 1000);
+  const mmm = totalMs % 1000;
+  return `${pad2(hh)}:${pad2(mm)}:${pad2(ss)}${sep}${String(mmm).padStart(3, "0")}`;
+};
+
+// 无毫秒冒号 token(`00:30` / `1:00:30`)→ 标准时间码,小数段补 000。
+// 无法识别(超出两位、含小数点)时返回 null —— 调用方保留原行。
+const colonTokenToTimecode = (token: string, sep: "," | "."): string | null => {
+  const m = token.match(/^(?:(\d{1,2}):)?(\d{1,2}):(\d{2})$/);
+  if (!m) return null;
+  const hh = m[1] ? parseInt(m[1], 10) : 0;
+  return `${pad2(hh)}:${pad2(parseInt(m[2], 10))}:${m[3]}${sep}000`;
+};
+
+/**
+ * 把两类非规范但常见的 SRT 时间行就地改写成标准时间码:
+ * - 裸秒:`0.00 --> 29.98`、`90 --> 120`
+ * - 省毫秒:`00:30 --> 01:00`、`1:00:30 --> 1:01:00`
+ *
+ * 必须在 detect 之后、filterSubLines 之前调用 —— 改写后下游所有解析/装配逻辑
+ * (cue 序号识别、ASS 时间转换、in-place 装配)看到的都是规范 SRT,无需第二套
+ * 变体分支;同一份文件里规范 cue 与非规范 cue 混排也逐行各走各的;导出的时间码
+ * 也从「多数播放器不认」升级为标准格式。
+ *
+ * ⚠ 只对 fileType=srt/vtt 调用:ASS 教学字幕的 Dialogue 正文里可能出现形如
+ * `0.00 --> 29.98` 的【讲解文本】(与检测投票防的是同一类劫持),按物理行改写
+ * 会直接篡改台词。与现有时间码信任模型一致:正文行若恰好长成时间码形状,
+ * 规范 SRT 路径本来也会把它当 cue 边界 —— 这里不引入更激进的猜测。
+ */
+export const normalizeSrtVariantTimecodes = (lines: string[], fileType: string): string[] => {
+  if (fileType !== "srt" && fileType !== "vtt") return lines;
+  const sep: "," | "." = fileType === "vtt" ? "." : ",";
+  const toTimecode = (token: string): string | null => {
+    if (/^\d+(?:\.\d+)?$/.test(token)) return bareSecondsTokenToTimecode(token, sep);
+    return colonTokenToTimecode(token, sep);
+  };
+  return lines.map((line) => {
+    const trimmed = line.trim();
+    // 规范时间行(含毫秒小数段,可能带 cue settings)一字不动
+    if (VTT_SRT_TIME.test(trimmed)) return line;
+    if (!BARE_SECONDS_TIME_REGEX.test(trimmed) && !COLON_TIME_NO_MS_REGEX.test(trimmed)) return line;
+    const match = trimmed.match(/^(\S+)[ \t]+-->[ \t]+(\S+)(.*)$/);
+    if (!match) return line;
+    const start = toTimecode(match[1]);
+    const end = toTimecode(match[2]);
+    if (!start || !end) return line;
+    return `${start} --> ${end}${match[3]}`;
+  });
 };
 
 /**
