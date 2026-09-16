@@ -20,7 +20,8 @@ import {
   canDisableThinkingForModel,
   classifyEndpointUrl,
   migrateConfig,
-  categorizedOptions,
+  getVisibleCategorizedOptions,
+  isUiHiddenMethod,
   wireUrlNormalizer,
   usesBuiltinRelay,
   LLM_RELAY_BASE,
@@ -37,6 +38,7 @@ import Section from "@/app/components/styled/Section";
 import GlobalPromptsPanel from "@/app/components/GlobalPromptsPanel";
 import GlossaryManager from "@/app/components/glossaryManager/GlossaryManager";
 import { useIsMobile } from "@/app/hooks/useIsMobile";
+import { useShowHiddenProviders } from "@/app/hooks/translation/useShowHiddenProviders";
 
 const { Text, Link } = Typography;
 const { TextArea } = Input;
@@ -856,6 +858,7 @@ const TranslationSettings = () => {
   const isMobile = useIsMobile();
   const { translationMethod, setTranslationMethod, translationConfigs } = useTranslationContext();
   const isLLMModel = LLM_MODELS.includes(translationMethod);
+  const [showHiddenProviders, setShowHiddenProviders] = useShowHiddenProviders();
 
   // Chips row = every service whose getConfigStatus is non-"needs-config",
   // plus the currently-selected one. getConfigStatus is the same predicate the
@@ -871,10 +874,13 @@ const TranslationSettings = () => {
   const activeServices = useMemo(
     () =>
       TRANSLATION_PROVIDERS.filter((s) => {
+        // hidden provider(订阅套餐端点)默认不进 chips;当前已选中时例外,
+        // 否则用户看不到自己在用什么。
+        if (!showHiddenProviders && s.value !== translationMethod && isUiHiddenMethod(s.value)) return false;
         const status = getConfigStatus(s.value, translationConfigs?.[s.value] ?? getDefaultConfig(s.value));
         return status !== "needs-config" || s.value === translationMethod;
       }),
-    [translationConfigs, translationMethod],
+    [translationConfigs, translationMethod, showHiddenProviders],
   );
 
   const providerSelect = (
@@ -883,7 +889,7 @@ const TranslationSettings = () => {
       showSearch={{ optionFilterProp: "label" }}
       value={translationMethod}
       onChange={setTranslationMethod}
-      options={categorizedOptions}
+      options={getVisibleCategorizedOptions(showHiddenProviders, translationMethod)}
       aria-label={t("selectService")}
     />
   );
@@ -943,6 +949,19 @@ const TranslationSettings = () => {
       {supportsGlossary(translationMethod) && <GlossaryManager />}
 
       {isLLMModel && <GlobalPromptsPanel />}
+
+      {/* 订阅套餐端点(火山 Coding Plan、阿里 Token Plan)的唯一入口:默认
+          隐藏,显式 opt-in。警告文案承载官方文档的封号风险,别删 —— 见
+          registry volcengine / alibaba 条目注释。挪到整页最末作为次要操作,
+          避免在顶部跟主服务选择器争夺视觉焦点 —— 这是低频 opt-in,不该
+          抢顶部黄金位置。 */}
+      <Space size="small" wrap>
+        <Switch size="small" checked={showHiddenProviders} onChange={setShowHiddenProviders} aria-label={t("showCodingPlans")} />
+        <Text type="secondary">{t("showCodingPlans")}</Text>
+        <Tooltip title={t("showCodingPlansHelp")}>
+          <InfoCircleOutlined />
+        </Tooltip>
+      </Space>
     </div>
   );
 };

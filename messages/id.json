@@ -359,6 +359,8 @@
     "sendSystemPromptExtra": "Matikan hanya ketika chat template menolak peran system — kesalahan tipikal \"Conversations must start with a user prompt\" (mis. keluarga Gemma).",
     "selectService": "Pilih layanan terjemahan",
     "configuredServices": "Terkonfigurasi",
+    "showCodingPlans": "Tampilkan endpoint paket langganan",
+    "showCodingPlansHelp": "Ini adalah endpoint eksklusif paket langganan (Volcengine Coding Plan, Alibaba Bailian Token Plan). Dokumentasi resmi menyatakan bahwa endpoint ini hanya untuk penggunaan interaktif di alat pemrograman AI; menggunakan Base URL dan API key di luar cakupan yang diizinkan dapat dianggap penyalahgunaan dan menyebabkan langganan dihentikan atau akun / API key diblokir. Aktifkan hanya jika Anda memahami risikonya.",
     "globalPrompts": "Prompt LLM (global)",
     "globalPromptsExtra": "Semua layanan LLM berbagi prompt ini; berpindah layanan tidak akan mereset-nya",
     "credentialsGroup": "Kredensial",

@@ -4,9 +4,10 @@ import { useState, useRef, useEffect } from "react";
 import { Select, Input, Button, Tag, Space, Flex, Typography, Tooltip, App, theme } from "antd";
 import { ApiOutlined, BookOutlined, DatabaseOutlined, ThunderboltOutlined } from "@ant-design/icons";
 import { useTranslations } from "next-intl";
-import { categorizedOptions, findMethodLabel, getConfigStatus, isApiKeyOptional, supportsGlossary, testTranslationWithTimeout, DEFAULT_SYSTEM_PROMPT, DEFAULT_USER_PROMPT } from "@/app/lib/translation";
+import { getVisibleCategorizedOptions, findMethodLabel, getConfigStatus, isApiKeyOptional, supportsGlossary, testTranslationWithTimeout, DEFAULT_SYSTEM_PROMPT, DEFAULT_USER_PROMPT } from "@/app/lib/translation";
 import { describeError } from "@/app/utils";
 import { pingSignature } from "@/app/hooks/translation/validation";
+import { useShowHiddenProviders } from "@/app/hooks/translation/useShowHiddenProviders";
 import { useTranslationContext } from "@/app/components/TranslationContext";
 import { useIsMobile } from "@/app/hooks/useIsMobile";
 
@@ -29,6 +30,10 @@ const ApiStatusBlock = ({ disabled = false }: ApiStatusBlockProps) => {
 
   const config = getSelectedConfig();
   const methodLabel = findMethodLabel(translationMethod);
+  // hidden provider(订阅套餐端点)默认不在选择器里;开关本体在设置抽屉的
+  // TranslationSettings,这里只共享同一个持久化值。当前选中值无条件保留。
+  const [showHiddenProviders] = useShowHiddenProviders();
+  const visibleOptions = getVisibleCategorizedOptions(showHiddenProviders, translationMethod);
 
   const [sessionStatus, setSessionStatus] = useState<"idle" | "testing" | "connected" | "failed">("idle");
   const [testId, setTestId] = useState(0);
@@ -165,7 +170,7 @@ const ApiStatusBlock = ({ disabled = false }: ApiStatusBlockProps) => {
             showSearch
             value={translationMethod}
             onChange={handleMethodChange}
-            options={categorizedOptions}
+            options={visibleOptions}
             style={{ width: "100%" }}
             disabled={disabled}
             aria-label={t("translationAPI")}
@@ -188,7 +193,7 @@ const ApiStatusBlock = ({ disabled = false }: ApiStatusBlockProps) => {
             showSearch
             value={translationMethod}
             onChange={handleMethodChange}
-            options={categorizedOptions}
+            options={visibleOptions}
             style={{ flex: 1, minWidth: 0 }}
             disabled={disabled}
             aria-label={t("translationAPI")}

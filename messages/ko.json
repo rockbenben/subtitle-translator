@@ -359,6 +359,8 @@
     "sendSystemPromptExtra": "chat template이 system 역할을 거부할 때만 끄세요 — 전형적인 오류 \"Conversations must start with a user prompt\" (예: Gemma 계열).",
     "selectService": "번역 서비스 선택",
     "configuredServices": "구성됨",
+    "showCodingPlans": "구독 플랜 엔드포인트 표시",
+    "showCodingPlansHelp": "이들은 구독 플랜 전용 엔드포인트입니다(Volcengine Coding Plan, Alibaba Bailian Token Plan). 공식 문서에 따르면 AI 코딩 도구에서의 대화형 사용만 허용되며, 허용 범위 밖에서 전용 Base URL과 API 키를 사용하면 오용으로 간주되어 구독 중지 또는 계정/API 키 차단으로 이어질 수 있습니다. 위험을 이해한 경우에만 켜세요.",
     "globalPrompts": "LLM 프롬프트 (전역)",
     "globalPromptsExtra": "모든 LLM 서비스가 이 프롬프트를 공유하며, 서비스를 전환해도 초기화되지 않습니다",
     "credentialsGroup": "자격 증명",

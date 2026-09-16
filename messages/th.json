@@ -359,6 +359,8 @@
     "sendSystemPromptExtra": "ปิดเฉพาะเมื่อ chat template ปฏิเสธบทบาท system — ข้อผิดพลาดทั่วไป \"Conversations must start with a user prompt\" (เช่น ตระกูล Gemma)",
     "selectService": "เลือกบริการแปล",
     "configuredServices": "ตั้งค่าแล้ว",
+    "showCodingPlans": "แสดงปลายทางของแพ็กเกจแบบสมัครสมาชิก",
+    "showCodingPlansHelp": "นี่คือปลายทางเฉพาะของแพ็กเกจแบบสมัครสมาชิก (Volcengine Coding Plan และ Alibaba Bailian Token Plan) เอกสารอย่างเป็นทางการระบุว่าให้ใช้แบบโต้ตอบในเครื่องมือเขียนโค้ด AI เท่านั้น การใช้ Base URL และ API key นอกขอบเขตที่อนุญาตอาจถูกมองว่าเป็นการละเมิด ส่งผลให้ระงับการสมัคร หรือแบนบัญชี / API key เปิดใช้งานเมื่อเข้าใจความเสี่ยงแล้วเท่านั้น",
     "globalPrompts": "พรอมต์ LLM (ทั่วทั้งระบบ)",
     "globalPromptsExtra": "บริการ LLM ทั้งหมดใช้พรอมต์ชุดนี้ร่วมกัน การเปลี่ยนบริการจะไม่รีเซ็ต",
     "credentialsGroup": "ข้อมูลรับรอง",

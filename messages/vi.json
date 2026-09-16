@@ -359,6 +359,8 @@
     "sendSystemPromptExtra": "Chỉ tắt khi chat template từ chối vai trò system — lỗi điển hình \"Conversations must start with a user prompt\" (ví dụ họ Gemma).",
     "selectService": "Chọn dịch vụ dịch thuật",
     "configuredServices": "Đã cấu hình",
+    "showCodingPlans": "Hiển thị điểm cuối của gói đăng ký",
+    "showCodingPlansHelp": "Đây là các điểm cuối dành riêng cho gói đăng ký (Volcengine Coding Plan, Alibaba Bailian Token Plan). Tài liệu chính thức nêu rõ: chỉ được dùng tương tác trong các công cụ lập trình AI; việc dùng Base URL và API key tương ứng ngoài phạm vi cho phép có thể bị coi là lạm dụng, dẫn đến ngừng gói hoặc khóa tài khoản / API key. Chỉ bật khi bạn đã hiểu rủi ro.",
     "globalPrompts": "Prompt LLM (toàn cục)",
     "globalPromptsExtra": "Tất cả dịch vụ LLM dùng chung bộ prompt này; chuyển dịch vụ sẽ không đặt lại chúng",
     "credentialsGroup": "Thông tin xác thực",

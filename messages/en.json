@@ -359,6 +359,8 @@
     "sendSystemPromptExtra": "Turn off only when the chat template rejects the system role — typical error \"Conversations must start with a user prompt\" (e.g. Gemma family).",
     "selectService": "Select translation service",
     "configuredServices": "Configured",
+    "showCodingPlans": "Show subscription-plan endpoints",
+    "showCodingPlansHelp": "These are subscription-only endpoints (Volcengine Coding Plan and Alibaba Bailian Token Plan). The official docs state they are for interactive use in AI coding tools only; using their Base URL and API key outside the permitted scope may be treated as abuse, resulting in suspension or a ban on the account / API key. Enable only if you understand the risk.",
     "globalPrompts": "LLM prompts (global)",
     "globalPromptsExtra": "All LLM services share these prompts; switching services will not reset them",
     "credentialsGroup": "Credentials",

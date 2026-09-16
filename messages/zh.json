@@ -359,6 +359,8 @@
     "sendSystemPromptExtra": "仅当 chat template 拒绝 system 角色时关闭，典型报错 \"Conversations must start with a user prompt\"（如 Gemma 系列）",
     "selectService": "选择翻译服务",
     "configuredServices": "已配置",
+    "showCodingPlans": "显示订阅套餐节点",
+    "showCodingPlansHelp": "这些是订阅套餐专属端点（火山方舟 Coding Plan、阿里百炼 Token Plan）。官方文档指明：仅限在 AI 编程工具中交互式使用，在允许范围之外使用对应的 Base URL 和 API Key 可能被识别为滥用，导致订阅停用，或账号 / API Key 被封禁。请确认了解风险后再开启。",
     "globalPrompts": "LLM 提示词（全局）",
     "globalPromptsExtra": "所有 LLM 服务共用这组提示词，切换服务不会重置",
     "credentialsGroup": "凭证",

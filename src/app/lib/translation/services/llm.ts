@@ -295,6 +295,13 @@ const THINKING_BUILDERS: Partial<Record<OpenAICompatProviderKey, ExtraBodyBuilde
       ? { reasoning_effort: pickThinkingLevel("cerebras", model!, e) }
       : reasoningEffortOrNone(e),
   ),
+  // 订阅套餐端点(registry 里 hidden,UI 默认不显示):火山 Coding Plan 与 doubao
+  // 按量线同为扁平 thinking:{type};阿里百炼线(2026-09 起为 Token Plan 端点)
+  // 与 qianfan 同为裸 enable_thinking —— 不能用 qwenThinking,那个 on 档额外带
+  // thinking_budget,且 qwen3.8 系列等在册 SKU 根本不吃 enable_thinking(registry
+  // 里未打 thinking 标,gated 对它们不发任何思考参数)。按 method key 分流。
+  volcengine: gated("volcengine", thinkingType),
+  alibaba: gated("alibaba", enableThinking),
   // (tokenhub intentionally absent — see note above)
 };
 

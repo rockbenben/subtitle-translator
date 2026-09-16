@@ -359,6 +359,8 @@
     "sendSystemPromptExtra": "Yalnızca chat template system rolünü reddettiğinde kapatın — tipik hata \"Conversations must start with a user prompt\" (örn. Gemma ailesi).",
     "selectService": "Çeviri hizmeti seç",
     "configuredServices": "Yapılandırılmış",
+    "showCodingPlans": "Abonelik planı uç noktalarını göster",
+    "showCodingPlansHelp": "Bunlar abonelik planlarına özel uç noktalardır (Volcengine Coding Plan ve Alibaba Bailian Token Plan). Resmî belgeler, bunların yalnızca AI kodlama araçlarında etkileşimli kullanıma yönelik olduğunu belirtir; ilgili Base URL ve API anahtarının izin verilen kapsam dışında kullanılması kötüye kullanım sayılabilir ve aboneliğin askıya alınmasına veya hesabın / API anahtarının engellenmesine yol açabilir. Yalnızca riski anladıysanız etkinleştirin.",
     "globalPrompts": "LLM İstemleri (global)",
     "globalPromptsExtra": "Tüm LLM hizmetleri bu istemleri paylaşır; hizmet değiştirmek onları sıfırlamaz",
     "credentialsGroup": "Kimlik Bilgileri",

@@ -359,6 +359,8 @@
     "sendSystemPromptExtra": "Apague solo cuando el chat template rechaza el rol system — error típico \"Conversations must start with a user prompt\" (p. ej. familia Gemma).",
     "selectService": "Seleccionar servicio de traducción",
     "configuredServices": "Configurado",
+    "showCodingPlans": "Mostrar endpoints de los planes de suscripción",
+    "showCodingPlansHelp": "Son endpoints exclusivos de planes de suscripción (Volcengine Coding Plan y Alibaba Bailian Token Plan). La documentación oficial indica que solo deben usarse de forma interactiva en herramientas de programación con IA; usar su URL base y clave de API fuera del ámbito permitido puede considerarse abuso y provocar la suspensión de la suscripción o el bloqueo de la cuenta / clave de API. Actívalo solo si entiendes el riesgo.",
     "globalPrompts": "Prompts LLM (globales)",
     "globalPromptsExtra": "Todos los servicios LLM comparten estos prompts; cambiar de servicio no los restablecerá",
     "credentialsGroup": "Credenciales",

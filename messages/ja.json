@@ -359,6 +359,8 @@
     "sendSystemPromptExtra": "chat template が system ロールを拒否する場合のみオフに — 典型的なエラー \"Conversations must start with a user prompt\"（Gemma 系列など）。",
     "selectService": "翻訳サービスを選択",
     "configuredServices": "設定済み",
+    "showCodingPlans": "サブスクリプションプランのエンドポイントを表示",
+    "showCodingPlansHelp": "これらはサブスクリプションプラン専用のエンドポイントです（Volcengine Coding Plan、Alibaba Bailian Token Plan）。公式ドキュメントでは、AI コーディングツール内での対話的な利用に限られ、許可された範囲外で専用の Base URL と API キーを使うと不正利用とみなされ、サブスクリプション停止、またはアカウント / API キーの封鎖につながる可能性があるとされています。リスクを理解したうえで有効にしてください。",
     "globalPrompts": "LLM プロンプト（グローバル）",
     "globalPromptsExtra": "すべての LLM サービスでこのプロンプトを共有します。サービスを切り替えてもリセットされません",
     "credentialsGroup": "認証情報",

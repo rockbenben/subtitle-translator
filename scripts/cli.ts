@@ -23,7 +23,7 @@ import { homedir } from "node:os";
 import { buildRuntimeConfig, translateLines, type PipelineCache, type PipelineRuntimeConfig, type PipelineOutcome, type TranslateBatchMeta } from "../src/app/lib/translation/pipeline";
 import { CliFileFormatError, CLI_FORMAT_HANDLERS, triState, type CliFormatContext } from "../src/app/lib/translation/cliFormat";
 import { appendBilingualSuffix } from "../src/app/lib/translation/formats/subtitle";
-import { getDefaultConfig, defaultConfigs, LLM_MODELS } from "../src/app/lib/translation/registry";
+import { getDefaultConfig, defaultConfigs, isUiHiddenMethod, LLM_MODELS } from "../src/app/lib/translation/registry";
 import { isValidLanguageValue } from "../src/app/lib/translation/utils";
 import { REQUIRES_EXPLICIT_SOURCE, isMethodSupportedForLanguage } from "../src/app/lib/translation/languages-data";
 import { isDefiniteAuthFailure } from "../src/app/lib/translation/retry";
@@ -302,7 +302,9 @@ const main = async (): Promise<number> => {
     return 0;
   }
   if (args["list-methods"]) {
-    console.log(Object.keys(defaultConfigs).join("\n"));
+    // hidden provider(用途受限的订阅套餐端点)与网页选择器同一判据,不列;
+    // 显式 -m 指定或设置文件里选中仍然可用(defaultConfigs 全量包含)。
+    console.log(Object.keys(defaultConfigs).filter((k) => !isUiHiddenMethod(k)).join("\n"));
     return 0;
   }
   if (args["list-formats"]) {

@@ -359,6 +359,8 @@
     "sendSystemPromptExtra": "শুধুমাত্র যখন chat template system ভূমিকা প্রত্যাখ্যান করে তখনই বন্ধ করুন — সাধারণ ত্রুটি \"Conversations must start with a user prompt\" (যেমন Gemma পরিবার)।",
     "selectService": "অনুবাদ পরিষেবা নির্বাচন করুন",
     "configuredServices": "কনফিগার করা",
+    "showCodingPlans": "সাবস্ক্রিপশন প্যাকেজের এন্ডপয়েন্ট দেখান",
+    "showCodingPlansHelp": "এগুলো সাবস্ক্রিপশন-নির্দিষ্ট এন্ডপয়েন্ট (Volcengine Coding Plan, Alibaba Bailian Token Plan)। অফিসিয়াল ডকুমেন্টে বলা আছে এগুলো শুধুমাত্র AI কোডিং টুলে ইন্টারঅ্যাকটিভ ব্যবহারের জন্য; অনুমোদিত সীমার বাইরে এর Base URL এবং API key ব্যবহার করলে তা অপব্যবহার হিসেবে গণ্য হতে পারে, যার ফলে সাবস্ক্রিপশন স্থগিত বা অ্যাকাউন্ট / API key নিষিদ্ধ হতে পারে। ঝুঁকি বুঝলেই কেবল চালু করুন।",
     "globalPrompts": "LLM প্রম্পট (গ্লোবাল)",
     "globalPromptsExtra": "সব LLM পরিষেবা এই প্রম্পট ভাগ করে নেয়; পরিষেবা পরিবর্তন করলেও রিসেট হবে না",
     "credentialsGroup": "শংসাপত্র",

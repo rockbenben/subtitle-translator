@@ -359,6 +359,8 @@
     "sendSystemPromptExtra": "Nur deaktivieren, wenn die Chat-Vorlage die System-Rolle ablehnt — typischer Fehler \"Conversations must start with a user prompt\" (z. B. Gemma-Familie).",
     "selectService": "Übersetzungsdienst auswählen",
     "configuredServices": "Konfiguriert",
+    "showCodingPlans": "Abonnement-Paket-Endpunkte anzeigen",
+    "showCodingPlansHelp": "Hierbei handelt es sich um ausschließlich für Abonnementpakete verfügbare Endpunkte (Volcengine Coding Plan, Alibaba Bailian Token Plan). Laut offizieller Dokumentation sind sie nur für die interaktive Verwendung in KI-Coding-Tools vorgesehen; die Verwendung der zugehörigen Base-URL und des API-Schlüssels außerhalb des zulässigen Rahmens kann als Missbrauch gewertet werden und zur Sperrung des Abonnements oder des Kontos / API-Schlüssels führen. Nur aktivieren, wenn Sie das Risiko verstehen.",
     "globalPrompts": "LLM-Prompts (global)",
     "globalPromptsExtra": "Alle LLM-Dienste teilen sich diese Prompts; ein Dienstwechsel setzt sie nicht zurück",
     "credentialsGroup": "Zugangsdaten",
