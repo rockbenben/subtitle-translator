@@ -64,6 +64,9 @@ Subtitle files:
       --bilingual           Bilingual output (default: translated only).
       --original-first      Original above/before the translation in bilingual output.
       --bilingual-format <ass|srt>  Bilingual format for srt/vtt sources. Default: ass.
+      --no-ass-auto-wrap    Disable width-aware line wrapping in bilingual ASS output
+                            (default: on — long lines get deterministic \N breaks at
+                            punctuation, like the web tool).
       --no-context          Disable context-aware LLM batching (default: on, like the web tool).
 
 Markdown files:
@@ -90,6 +93,8 @@ const parseCliArgs = () =>
       bilingual: { type: "boolean" },
       "original-first": { type: "boolean" },
       "bilingual-format": { type: "string" },
+      // 只注册非默认侧:assAutoWrap 默认开(SUBTITLE_DEFAULTS),--no-ass-auto-wrap 关闭。
+      "no-ass-auto-wrap": { type: "boolean" },
       "md-raw": { type: "boolean" },
       // 每项只注册【非默认那一侧】的 flag —— 反向 flag 在当前默认下是空操作
       // (--md-no-code 关掉的是本来就关着的东西),加了只是给用户 4 个按了没反应

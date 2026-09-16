@@ -274,6 +274,9 @@
     "assAlignBottom": "下部中央",
     "assAlignTop": "上部中央",
     "assMarginV": "余白",
+    "assAutoWrap": "自動折り返し",
+    "assAutoWrapTooltip": "書き出し時に画面幅とフォントサイズに合わせて長い行を折り返します：文末の句読点の後で優先的に改行し、行頭に句読点を置かず、手動で挿入した改行はすべて保持されます",
+    "assAutoWrapCapacity": "約{trans} 字/行（訳文）· {orig}（原文）",
     "previewOriginal": "原文",
     "previewTranslation": "翻訳",
     "fontGroup": {

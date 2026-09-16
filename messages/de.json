@@ -274,6 +274,9 @@
     "assAlignBottom": "Unten Mitte",
     "assAlignTop": "Oben Mitte",
     "assMarginV": "Rand",
+    "assAutoWrap": "Automatischer Zeilenumbruch",
+    "assAutoWrapTooltip": "Beim Export überlange Zeilen passend zu Bildbreite und Schriftgröße umbrechen: bevorzugt nach Satzzeichen, kein Satzzeichen am Zeilenanfang, manuelle Zeilenumbrüche bleiben erhalten",
+    "assAutoWrapCapacity": "≈{trans} Zeichen/Zeile (Übersetzung) · {orig} (Original)",
     "previewOriginal": "Original",
     "previewTranslation": "Übersetzung",
     "fontGroup": {

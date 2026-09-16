@@ -28,3 +28,26 @@ export const transformSkippingSoftFilled = (lines: string[], softFilled: Set<num
 /** 逐行变换(applyRemoveCharsToMarkdown 这类接收/返回单行的),软填槽位原样保留。 */
 export const mapSkippingSoftFilled = (lines: string[], softFilled: Set<number>, transform: (line: string) => string): string[] =>
   lines.map((line, i) => (softFilled.has(i) ? line : transform(line)));
+
+/**
+ * 找出被译后加工(removeChars)【有意清空】的槽位:加工前非空白、加工后 trim 为空,
+ * 且不是软填槽位。
+ *
+ * 为什么装配层必须拿到它:字幕装配的空译文规则是「空 → 回退原文」(orElseSource),
+ * 触发条件本来含「removeChars 清空整行」。但对 `♪` 这种【整行都是要删的字符】的
+ * cue(音乐字幕里极常见),回退原文等于把用户刚要求删掉的 ♪ 原样还回去 —— 用户
+ * 眼里就是「翻译后移除字符不生效」。这些槽位是用户有意清空的,装配要让路:
+ * 仅译文模式保留 cue 外壳(时间码还在、正文空白),双语模式只出原文那一半。
+ *
+ * 只认真正由加工导致的清空:加工前就空(模型返回空串、VTT 纯标签行)仍走旧的
+ * 回退规则 —— 判据是 before/after 对比,调用方不用解释清空是怎么发生的。
+ * 比较的是 restore/replaceAll【之前】的两份数组(同形、下标对齐)。
+ */
+export const collectEmptiedSlots = (before: string[], after: string[], softFilled: ReadonlySet<number>): Set<number> => {
+  const emptied = new Set<number>();
+  for (let i = 0; i < after.length; i++) {
+    if (softFilled.has(i)) continue;
+    if ((before[i]?.trim() ?? "") !== "" && (after[i]?.trim() ?? "") === "") emptied.add(i);
+  }
+  return emptied;
+};

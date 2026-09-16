@@ -274,6 +274,9 @@
     "assAlignBottom": "底部居中",
     "assAlignTop": "頂部居中",
     "assMarginV": "邊距",
+    "assAutoWrap": "寬度自適應換行",
+    "assAutoWrapTooltip": "匯出時按畫面寬度與字號對超長行自動插入換行：優先在句末標點處斷行，標點不出現在行首，已手動插入的換行全部保留",
+    "assAutoWrapCapacity": "≈{trans} 字/行（譯文）· {orig} 字/行（原文）",
     "previewOriginal": "原文",
     "previewTranslation": "譯文",
     "fontGroup": {

@@ -274,6 +274,9 @@
     "assAlignBottom": "Centro inferior",
     "assAlignTop": "Centro superior",
     "assMarginV": "Margem",
+    "assAutoWrap": "Ajuste automático de linha",
+    "assAutoWrapTooltip": "Na exportação, quebra as linhas longas conforme a largura da tela e o tamanho da fonte: corta preferencialmente após a pontuação, nunca inicia uma linha com pontuação e preserva as quebras manuais",
+    "assAutoWrapCapacity": "≈{trans} caracteres/linha (tradução) · {orig} (original)",
     "previewOriginal": "Original",
     "previewTranslation": "Tradução",
     "fontGroup": {

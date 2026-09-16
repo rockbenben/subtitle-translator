@@ -274,6 +274,9 @@
     "assAlignBottom": "Tengah bawah",
     "assAlignTop": "Tengah atas",
     "assMarginV": "Margin",
+    "assAutoWrap": "Pelipatan baris otomatis",
+    "assAutoWrapTooltip": "Saat ekspor, baris yang terlalu panjang dilipat sesuai lebar layar dan ukuran font: memutus lebih disukai setelah tanda baca, tidak ada tanda baca di awal baris, pemisah baris manual tetap dipertahankan",
+    "assAutoWrapCapacity": "≈{trans} karakter/baris (terjemahan) · {orig} (asli)",
     "previewOriginal": "Asli",
     "previewTranslation": "Terjemahan",
     "fontGroup": {

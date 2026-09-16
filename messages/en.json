@@ -274,6 +274,9 @@
     "assAlignBottom": "Bottom center",
     "assAlignTop": "Top center",
     "assMarginV": "Margin",
+    "assAutoWrap": "Auto-fit line wrapping",
+    "assAutoWrapTooltip": "Wrap overlong lines at export time based on play width and font size: prefer breaking after sentence-ending punctuation, never start a line with punctuation, keep manually inserted line breaks",
+    "assAutoWrapCapacity": "≈{trans} chars/line (translation) · {orig} (original)",
     "previewOriginal": "Original",
     "previewTranslation": "Translation",
     "fontGroup": {

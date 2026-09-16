@@ -274,6 +274,9 @@
     "assAlignBottom": "Giữa dưới",
     "assAlignTop": "Giữa trên",
     "assMarginV": "Lề",
+    "assAutoWrap": "Tự động xuống dòng",
+    "assAutoWrapTooltip": "Khi xuất, các dòng quá dài được xuống dòng theo chiều rộng màn hình và cỡ chữ: ưu tiên cắt sau dấu câu, không bắt đầu dòng bằng dấu câu, giữ nguyên các xuống dòng thủ công",
+    "assAutoWrapCapacity": "≈{trans} ký tự/dòng (bản dịch) · {orig} (bản gốc)",
     "previewOriginal": "Bản gốc",
     "previewTranslation": "Bản dịch",
     "fontGroup": {

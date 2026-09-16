@@ -29,7 +29,7 @@ import {
   type AssStylePreset,
 } from "@/app/lib/translation/formats/subtitle";
 import { LLM_MODELS } from "@/app/lib/translation";
-import { transformSkippingSoftFilled } from "@/app/lib/translation/softFill";
+import { transformSkippingSoftFilled, collectEmptiedSlots } from "@/app/lib/translation/softFill";
 import { delay } from "@/app/lib/translation/retry";
 import LanguageSelector from "@/app/components/LanguageSelector";
 import ApiStatusBlock from "@/app/components/ApiStatusBlock";
@@ -155,6 +155,11 @@ const SubtitleTranslator = () => {
   };
   // 原生 ASS 双语:false=逐行沿用源样式(默认);true=放弃源样式、用本工具预设重新排版。
   const [assNativeRebuild, setAssNativeRebuild] = useLocalStorage<boolean>("subtitle-translator-assNativeRebuild", false);
+  // ASS 宽度自适应换行(#69):导出期按画面宽度/字号对超长 Dialogue 插 \N(优先
+  // 标点断点、避头尾、尾行回拉)。只影响本工具生成头部的两条双语 ASS 路径;fit 行
+  // 零改动。默认值与 CLI 同源(SUBTITLE_DEFAULTS)。刻意不进 AssStyleConfig ——
+  // 它是导出行为不是样式,预设切换不该带走它。
+  const [assAutoWrap, setAssAutoWrap] = useLocalStorage<boolean>("subtitle-translator-assAutoWrap", SUBTITLE_DEFAULTS.assAutoWrap);
 
   // 双语模式标志:exportMode 是 "bilingual" 或 "both" 时需要生成双语版本
   const needsBilingual = exportMode === "bilingual" || exportMode === "both";
@@ -264,8 +269,8 @@ const SubtitleTranslator = () => {
     // softFilledIndices:双语装配据此判断哪些行只出一半 —— 必须是【引擎给的
     // 软失败下标】而不是"译文==原文"的字符串比较,否则专有名词/数字/♪ 这类
     // 合法译成自身的行会被吃掉一半(见 formats/subtitle 的 isSoftFilledHalf)。
-    const generateSubtitle = (isBilingual: boolean, translatedLines: string[], exportLang: string, softFilledIndices?: ReadonlySet<number>): string =>
-      assembleSubtitleOutput({ lines, contentIndices, contentLines, translatedLines, fileType, assContentStartIndex, tagMaps, isBilingual, isOriginalFirst, bilingualFormat, assNativeRebuild, assStyle, sourceLanguage, exportLang, softFilledIndices });
+    const generateSubtitle = (isBilingual: boolean, translatedLines: string[], exportLang: string, softFilledIndices?: ReadonlySet<number>, emptiedIndices?: ReadonlySet<number>): string =>
+      assembleSubtitleOutput({ lines, contentIndices, contentLines, translatedLines, fileType, assContentStartIndex, tagMaps, isBilingual, isOriginalFirst, bilingualFormat, assNativeRebuild, assStyle, sourceLanguage, exportLang, assAutoWrap, softFilledIndices, emptiedIndices });
 
     // ASS 标签保护：翻译前剥离覆盖标签和 \N，翻译后还原
     const isAss = fileType === "ass";
@@ -321,6 +326,10 @@ const SubtitleTranslator = () => {
         // ASS 用 token 感知版(跳过 ###n### 保护槽),其余格式用通用版;
         // 实现与 CLI 共用同一份(formats/subtitle + textUtils)。
         const cleanedTranslated = transformSkippingSoftFilled(rawTranslatedLines, softFilled, (ls) => (isAss ? applyRemoveCharsToAssLines(ls, removeChars) : applyRemoveCharsToLines(ls, removeChars)));
+        // 被 removeChars 有意清空的槽位(整行 ♪ 被删光):装配不能回退原文,
+        // 否则用户要求删除的字符原样回来(报过的「移除字符不生效」)。判据与 CLI
+        // 共用 collectEmptiedSlots;比较发生在 ASS restore 之前(两份数组同形)。
+        const emptiedSlots = collectEmptiedSlots(rawTranslatedLines, cleanedTranslated, softFilled);
         const translatedLines = isAss ? restoreAssAfterTranslation(cleanedTranslated, tagMaps) : cleanedTranslated;
 
         // Generate file name base
@@ -329,8 +338,8 @@ const SubtitleTranslator = () => {
         // Handle different export modes
         if (exportMode === "both") {
           // Generate and download both translated-only and bilingual versions
-          const translatedOnlySubtitle = generateSubtitle(false, translatedLines, currentTargetLang, softFilled);
-          const bilingualSubtitle = generateSubtitle(true, translatedLines, currentTargetLang, softFilled);
+          const translatedOnlySubtitle = generateSubtitle(false, translatedLines, currentTargetLang, softFilled, emptiedSlots);
+          const bilingualSubtitle = generateSubtitle(true, translatedLines, currentTargetLang, softFilled, emptiedSlots);
           const translatedOnlyExt = getOutputFileExtension(fileType, false, bilingualFormat, sourceExt);
           // 原生 ASS 重新排版产出 v4.00+,即使源是 .ssa 也回写 .ass(仅双语版被重排)。
           const bilingualExt = fileType === "ass" && assNativeRebuild ? "ass" : getOutputFileExtension(fileType, true, bilingualFormat, sourceExt);
@@ -362,7 +371,7 @@ const SubtitleTranslator = () => {
           }
         } else {
           // Generate single version based on mode
-          const finalSubtitle = generateSubtitle(needsBilingual, translatedLines, currentTargetLang, softFilled);
+          const finalSubtitle = generateSubtitle(needsBilingual, translatedLines, currentTargetLang, softFilled, emptiedSlots);
           // 原生 ASS 重新排版(双语)产出 v4.00+ → .ass,即使源是 .ssa。
           const fileExt = fileType === "ass" && needsBilingual && assNativeRebuild ? "ass" : getOutputFileExtension(fileType, needsBilingual, bilingualFormat, sourceExt);
           const downloadFileName = generateFileName(fileName, langLabel, fileExt, multiLanguageMode);
@@ -762,6 +771,8 @@ const SubtitleTranslator = () => {
         isOriginalFirst={isOriginalFirst}
         sourceLang={sourceLanguage}
         targetLang={targetLanguage}
+        autoWrap={assAutoWrap}
+        onAutoWrapChange={setAssAutoWrap}
       />
     </Spin>
   );

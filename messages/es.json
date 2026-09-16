@@ -274,6 +274,9 @@
     "assAlignBottom": "Centro inferior",
     "assAlignTop": "Centro superior",
     "assMarginV": "Margen",
+    "assAutoWrap": "Ajuste automático de línea",
+    "assAutoWrapTooltip": "Al exportar, ajusta las líneas largas según el ancho de pantalla y el tamaño de fuente: corta preferentemente tras los signos de puntuación, nunca empieza una línea con puntuación y conserva los saltos manuales",
+    "assAutoWrapCapacity": "≈{trans} caracteres/línea (traducción) · {orig} (original)",
     "previewOriginal": "Original",
     "previewTranslation": "Traducción",
     "fontGroup": {

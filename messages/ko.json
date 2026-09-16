@@ -274,6 +274,9 @@
     "assAlignBottom": "하단 가운데",
     "assAlignTop": "상단 가운데",
     "assMarginV": "여백",
+    "assAutoWrap": "자동 줄바꿈",
+    "assAutoWrapTooltip": "내보낼 때 화면 폭과 글꼴 크기에 맞춰 긴 행을 자동으로 줄바꿈합니다: 문장 부호 뒤에서 우선적으로 끊고, 행 시작에 문장 부호가 오지 않으며, 수동으로 넣은 줄바꿈은 모두 유지됩니다",
+    "assAutoWrapCapacity": "약 {trans}자/행(번역) · {orig}(원문)",
     "previewOriginal": "원문",
     "previewTranslation": "번역",
     "fontGroup": {

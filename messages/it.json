@@ -274,6 +274,9 @@
     "assAlignBottom": "Centro basso",
     "assAlignTop": "Centro alto",
     "assMarginV": "Margine",
+    "assAutoWrap": "Ritorno a capo automatico",
+    "assAutoWrapTooltip": "All'esportazione, le righe troppo lunghe vanno a capo in base a larghezza dello schermo e dimensione del font: interruzioni preferibilmente dopo la punteggiatura, mai punteggiatura a inizio riga, i ritorni a capo manuali restano",
+    "assAutoWrapCapacity": "≈{trans} caratteri/riga (traduzione) · {orig} (originale)",
     "previewOriginal": "Originale",
     "previewTranslation": "Traduzione",
     "fontGroup": {

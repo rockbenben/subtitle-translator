@@ -25,7 +25,7 @@ import {
   type BilingualFormat,
 } from "./formats/subtitle";
 import { MARKDOWN_DEFAULTS, filterMarkdownLines, restorePlaceholders, splitMarkdownSegments, mergeMarkdownSegments, applyRemoveCharsToMarkdown, applyRemoveCharsToSegments } from "./formats/markdown";
-import { softFilledIndices, transformSkippingSoftFilled, mapSkippingSoftFilled } from "./softFill";
+import { softFilledIndices, transformSkippingSoftFilled, mapSkippingSoftFilled, collectEmptiedSlots } from "./softFill";
 
 /** CLI 驱动提供给 handler 的能力(翻译、清理、命令行开关)。 */
 export interface CliFormatContext {
@@ -139,6 +139,9 @@ const subtitleHandler: CliFormatHandler = {
     // 软填槽位跳过 —— 规则与网页端共用同一份(lib/translation/softFill)。
     const softFilled = softFilledIndices(outcome);
     const cleaned = transformSkippingSoftFilled(outcome.lines, softFilled, isAss ? (ls) => applyRemoveCharsToAssLines(ls, ctx.removeChars) : ctx.applyRemoveChars);
+    // removeChars 有意清空的槽位(整行 ♪ 被删光)不能回退原文 —— 与网页端同一份
+    // 判据,比较发生在 ASS restore 之前。
+    const emptied = collectEmptiedSlots(outcome.lines, cleaned, softFilled);
     const translatedLines = isAss ? restoreAssAfterTranslation(cleaned, tagMaps) : cleaned;
 
     const content = assembleSubtitleOutput({
@@ -161,6 +164,11 @@ const subtitleHandler: CliFormatHandler = {
       // 与网页端同一份规则:只有引擎标记为软填的槽位才只出一半。按"译文==原文"
       // 判会把专有名词/数字/♪ 这类合法译成自身的行吃掉一半(见 isSoftFilledHalf)。
       softFilledIndices: softFilled,
+      emptiedIndices: emptied,
+      // ASS 宽度自适应换行(#69):默认值来自 SUBTITLE_DEFAULTS(与网页端同一常量),
+      // --no-ass-auto-wrap 显式关闭。只影响本工具生成头部的双语 ASS 路径
+      // (SRT/VTT→ass;原生 rebuild 网页专属,CLI 恒 false)。
+      assAutoWrap: triState(undefined, ctx.flags["no-ass-auto-wrap"], SUBTITLE_DEFAULTS.assAutoWrap),
     });
 
     return { content, ext: getOutputFileExtension(fileType, bilingual, bilingualFormat, ctx.sourceExt), bilingualSuffix: bilingual };

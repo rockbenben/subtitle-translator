@@ -274,6 +274,9 @@
     "assAlignBottom": "Alt orta",
     "assAlignTop": "Üst orta",
     "assMarginV": "Kenar boşluğu",
+    "assAutoWrap": "Otomatik satır kaydırma",
+    "assAutoWrapTooltip": "Dışa aktarırken çok uzun satırlar ekran genişliğine ve yazı boyutuna göre kaydırılır: tercihen noktalama işaretlerinden sonra kesilir, satır noktalama işaretiyle başlamaz, elle eklenen satır sonları korunur",
+    "assAutoWrapCapacity": "satır başına ≈{trans} karakter (çeviri) · {orig} (orijinal)",
     "previewOriginal": "Orijinal",
     "previewTranslation": "Çeviri",
     "fontGroup": {

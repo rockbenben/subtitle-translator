@@ -1,10 +1,10 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { Drawer, Segmented, AutoComplete, Button, InputNumber, ColorPicker, Form, Row, Col, Typography, App, Divider } from "antd";
+import { Drawer, Segmented, AutoComplete, Button, InputNumber, ColorPicker, Form, Row, Col, Typography, App, Divider, Switch } from "antd";
 import { useTranslations } from "next-intl";
 import { useIsMobile } from "@/app/hooks/useIsMobile";
-import { ASS_STYLE_PRESETS, type AssStyleConfig, type AssLineStyle, type AssStylePreset } from "@/app/lib/translation/formats/subtitle";
+import { ASS_STYLE_PRESETS, assCharsPerLine, type AssStyleConfig, type AssLineStyle, type AssStylePreset } from "@/app/lib/translation/formats/subtitle";
 import { FONT_SUGGESTION_GROUPS } from "./assFonts";
 import AssStylePreview from "./AssStylePreview";
 
@@ -24,9 +24,12 @@ interface Props {
   isOriginalFirst: boolean;
   sourceLang: string;
   targetLang: string;
+  /** ASS 宽度自适应换行(#69)。刻意不进 AssStyleConfig:它是导出行为不是样式,预设切换不该带走。 */
+  autoWrap: boolean;
+  onAutoWrapChange: (v: boolean) => void;
 }
 
-const AssStyleDrawer = ({ open, onClose, config, preset, customStyle, onChange, isOriginalFirst, sourceLang, targetLang }: Props) => {
+const AssStyleDrawer = ({ open, onClose, config, preset, customStyle, onChange, isOriginalFirst, sourceLang, targetLang, autoWrap, onAutoWrapChange }: Props) => {
   const t = useTranslations("SubtitleTranslator");
   const isMobile = useIsMobile();
   const { message } = App.useApp();
@@ -164,6 +167,13 @@ const AssStyleDrawer = ({ open, onClose, config, preset, customStyle, onChange, 
             </Form.Item>
           </Col>
         </Row>
+        <Form.Item label={t("assAutoWrap")} tooltip={t("assAutoWrapTooltip")} style={{ marginBottom: 8 }}>
+          <Row align="middle" justify="space-between">
+            <Switch checked={autoWrap} onChange={onAutoWrapChange} />
+            {/* 与换行引擎共用同一公式(assCharsPerLine),字号一动容量跟着变 */}
+            <Text type="secondary">{t("assAutoWrapCapacity", { trans: assCharsPerLine(config.translation.fontSize), orig: assCharsPerLine(config.original.fontSize) })}</Text>
+          </Row>
+        </Form.Item>
         {lineFields("translation", t("assTranslationStyle"))}
         {lineFields("original", t("assOriginalStyle"))}
       </Form>

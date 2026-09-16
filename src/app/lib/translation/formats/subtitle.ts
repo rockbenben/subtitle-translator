@@ -4,9 +4,12 @@ import { splitBySpaces } from "@/app/utils/textUtils";
  * 字幕翻译的默认值 —— 网页端(SubtitleTranslator 的 useLocalStorage 初值)与
  * CLI(cliFormat 的 subtitle handler,--no-context 只做显式覆盖)共用的单一
  * 来源(与 markdown.ts 的 MARKDOWN_DEFAULTS 同款)。contextAware 默认开:
- * 字幕行短、上下文对齐收益大,是这个格式的正确默认。
+ * 字幕行短、上下文对齐收益大,是这个格式的正确默认。assAutoWrap 默认开:
+ * 双语 ASS 导出按画面宽度/字号对超长行插 \N(见 wrapAssDialogueText)——
+ * 放得下的行逐字节零改动;放不下的行今天也会被 libass WrapStyle:0 软折,
+ * 只是断点不可控,默认开只是换成确定性断点。
  */
-export const SUBTITLE_DEFAULTS: { contextAware: boolean } = { contextAware: true };
+export const SUBTITLE_DEFAULTS: { contextAware: boolean; assAutoWrap: boolean } = { contextAware: true, assAutoWrap: true };
 
 // 用于匹配 VTT/SRT 时间行（支持默认小时省略、多位数小时以及 1 到 3 位毫秒值）。
 // 分隔符两侧按 WebVTT 规范允许「一个或多个空格/Tab」—— 单空格硬编码曾把
@@ -188,8 +191,11 @@ export const normalizeSrtVariantTimecodes = (lines: string[], fileType: string):
  * 规则二:【不能删】空槽位。下游按位置配对原文半区与译文半区(校对面板、任何
  * 逐行对照的工具),删一行就整体错位 —— 3 行原文配 2 行译文,L2 的译文被读成 T3。
  *
- * 触发条件不止一种:removeChars 清空整行、VTT 里只含内联标签的 cue 剥完即空、
- * 模型返回空槽、软失败回填空串。所以别在装配点自己写 `.trim() === ""`,走这里。
+ * 触发条件:VTT 里只含内联标签的 cue 剥完即空、模型返回空槽、软失败回填空串。
+ * 所以别在装配点自己写 `.trim() === ""`,走这里。
+ * ⚠ 唯一例外是【removeChars 有意清空】的槽位(`♪` 整行被删光这类):回退原文
+ * 等于把用户要求删除的字符原样还回去,功能在用户眼里直接失效。这些槽位由
+ * collectEmptiedSlots 标出(isEmptiedSlot),装配入口必须先让它们让路。
  *
  * 判据一处,动作分三类(同 isSoftFilledHalf:规则写一次,动作因格式而异):
  * - 标量回退 —— 本函数:ASS 重新排版(逐条累加)、ASS 原地替换的译文半区
@@ -199,8 +205,19 @@ export const normalizeSrtVariantTimecodes = (lines: string[], fileType: string):
  */
 export const orElseSource = (trans: string, orig: string): string => (trans.trim() === "" ? orig : trans);
 
-/** 逐行套用 {@link orElseSource} 的数组形式。origs 短于 trans 时缺位按空串处理。 */
-const fillEmptyTranslations = (trans: string[], origs: string[]): string[] => trans.map((t, i) => orElseSource(t, origs[i] ?? ""));
+/**
+ * 逐行套用 {@link orElseSource} 的数组形式。origs 短于 trans 时缺位按空串处理。
+ * keepEmpty[i]=true 的槽位(removeChars 有意清空)不回退原文,改填空格:
+ * SRT/VTT/SBV 双语按 cue 聚合时两半按行对齐,真空行会被解析器当成 cue 结束
+ * 把 cue 截断;空格不可见且不断 cue。整条 cue 全被有意清空时调用方走
+ * joinBilingualHalves 的 singleHalf 只出原文,到不了这里的填空。
+ */
+const fillEmptyTranslations = (trans: string[], origs: string[], keepEmpty?: boolean[]): string[] =>
+  trans.map((t, i) => {
+    if (t.trim() !== "") return t;
+    if (keepEmpty?.[i]) return " ";
+    return orElseSource(t, origs[i] ?? "");
+  });
 
 /**
  * 【共享判据】这一行是否该只输出一半 —— 即它是【软失败回填的原文】。
@@ -220,9 +237,17 @@ const fillEmptyTranslations = (trans: string[], origs: string[]): string[] => tr
  */
 const isSoftFilledHalf = (index: number, softFilled?: ReadonlySet<number>): boolean => softFilled?.has(index) === true;
 
-/** 两半拼接,软填槽位只出一次(判据见 isSoftFilledHalf)。 */
-const joinBilingualHalves = (allOrig: string, allTrans: string, isOriginalFirst: boolean, joiner: string, isSoftFilled = false): string => {
-  if (isSoftFilled) return allOrig;
+/**
+ * 【共享判据】这一行的译文是不是被 removeChars【有意清空】的(collectEmptiedSlots)。
+ * 与 isSoftFilledHalf 同形、语义相邻:两类槽位在双语装配里都只出原文那一半,
+ * 但理由不同 —— 软填是「没译出,不许复读」,有意清空是「译文那半用户要求空白」。
+ * 仅译文模式下两者处置相反:软填/真空槽回退原文(orElseSource),有意清空保留空白。
+ */
+const isEmptiedSlot = (index: number, emptied?: ReadonlySet<number>): boolean => emptied?.has(index) === true;
+
+/** 两半拼接,singleHalf(整条 cue 软填、或译文被有意清空)时只出原文。 */
+const joinBilingualHalves = (allOrig: string, allTrans: string, isOriginalFirst: boolean, joiner: string, singleHalf = false): string => {
+  if (singleHalf) return allOrig;
   return isOriginalFirst ? `${allOrig}${joiner}${allTrans}` : `${allTrans}${joiner}${allOrig}`;
 };
 
@@ -500,11 +525,18 @@ export const buildAssBilingualBody = (
   // <c.color…>/卡拉 OK 时间戳,直接嵌 lines[index] 原始行会把字面标签渲染上屏。
   // 可选参数:不传时退回原始行(旧调用方兼容)。
   cleanedContents?: string[],
-  softFilled?: ReadonlySet<number>
+  softFilled?: ReadonlySet<number>,
+  // removeChars 有意清空的槽位(collectEmptiedSlots):译文半区留空段,整条 cue
+  // 全空时只出原文那一条。必须排在 softFilled 之后(末位可选,避免位置实参错位)。
+  emptied?: ReadonlySet<number>,
+  // 宽度自适应换行(#69):对最终 Dialogue 正文按角色包折(译文/原文字号不同,
+  // 见 wrapAssDialogueText)。时机必须在最终 map —— 多行 cue 以字面 \N 聚合,
+  // 包折器按它分段;放回聚合循环会把两半的换行插错位。排在末位,避免位置实参错位。
+  wrapText?: (text: string, role: "translation" | "original") => string
 ): string => {
-  // allSoftFilled:多行 cue 聚合时取【与】—— 只要有一行真译出来了,这条 cue
-  // 就该照常出双语;全部软填才只出原文那一条。
-  type CueEntry = { assStart: string; assEnd: string; translation: string; original: string; allSoftFilled: boolean };
+  // allSoftFilled/allEmptied:多行 cue 聚合时取【与】—— 只要有一行真译出来了,
+  // 这条 cue 就该照常出双语;全部软填或全部有意清空才只出原文那一条。
+  type CueEntry = { assStart: string; assEnd: string; translation: string; original: string; allSoftFilled: boolean; allEmptied: boolean };
   // Map key = 时间码行的【行号】(findTimeLineIndexBefore):文本 key 会把时间码
   // 逐字节相同的两个独立 cue 错误合并(内容跨文件"传送")。行号唯一,同一物理
   // cue 的多行内容仍正确聚合。
@@ -516,16 +548,18 @@ export const buildAssBilingualBody = (
     const timeLine = lines[timeIdx].trim();
 
     const originalText = cleanedContents?.[i] ?? lines[index];
-    // 逐条累加不经数组,用标量形式。不套的话空译文会拼出一个尾随的 \\N 硬换行,
-    // 渲染成空行并把文字挤位;整条为空时直接产出一条空 Dialogue。
-    const translatedText = orElseSource(translatedLines[i], originalText);
-
     const lineSoftFilled = isSoftFilledHalf(i, softFilled);
+    const lineEmptied = isEmptiedSlot(i, emptied);
+    // 有意清空(removeChars 删光)→ 译文半区这一段留白,不许 orElseSource 把
+    // 带 ♪ 的原文填回来;其余空译文仍回退原文(空段会拼出多余 \N、挤位)。
+    const translatedText = lineEmptied ? "" : orElseSource(translatedLines[i], originalText);
+
     const existing = subtitles.get(timeIdx);
     if (existing) {
       existing.translation += `\\N${translatedText}`;
       existing.original += `\\N${originalText}`;
       existing.allSoftFilled = existing.allSoftFilled && lineSoftFilled;
+      existing.allEmptied = existing.allEmptied && lineEmptied;
     } else {
       const [startTime, endTime] = timeLine.split(TIME_ARROW_SPLIT).map((t) => t.trim().split(/\s/)[0]);
       subtitles.set(timeIdx, {
@@ -534,16 +568,20 @@ export const buildAssBilingualBody = (
         translation: translatedText,
         original: originalText,
         allSoftFilled: lineSoftFilled,
+        allEmptied: lineEmptied,
       });
     }
   });
 
   return Array.from(subtitles.values())
-    .map(({ assStart, assEnd, translation, original, allSoftFilled }) => {
-      const transLine = `Dialogue: 0,${assStart},${assEnd},${STYLE_TRANSLATION},NTP,0000,0000,0000,,${translation}`;
-      const origLine = `Dialogue: 0,${assStart},${assEnd},${STYLE_ORIGINAL},NTP,0000,0000,0000,,${original}`;
-      // 整条 cue 都是软填(未译出)→ 只出一条,别复读(判据见 isSoftFilledHalf)。
-      if (allSoftFilled) return origLine;
+    .map(({ assStart, assEnd, translation, original, allSoftFilled, allEmptied }) => {
+      // 宽度自适应换行在最终成文上做:译文/原文按各自字号(29 vs 38 字容量)独立包折。
+      const transText = wrapText ? wrapText(translation, "translation") : translation;
+      const origText = wrapText ? wrapText(original, "original") : original;
+      const transLine = `Dialogue: 0,${assStart},${assEnd},${STYLE_TRANSLATION},NTP,0000,0000,0000,,${transText}`;
+      const origLine = `Dialogue: 0,${assStart},${assEnd},${STYLE_ORIGINAL},NTP,0000,0000,0000,,${origText}`;
+      // 整条 cue 都软填(未译出)或被有意清空 → 只出一条,别复读/别出空 Dialogue。
+      if (allSoftFilled || allEmptied) return origLine;
       // 在上的角色放第二行(后绘制 → 画在上)。
       return isOriginalFirst ? `${transLine}\n${origLine}` : `${origLine}\n${transLine}`;
     })
@@ -574,28 +612,31 @@ const normalizeVttTimeLine = (line: string): string => {
   return `${vttTimeToSrtTime(match[1])} --> ${vttTimeToSrtTime(match[2])}`;
 };
 
-/** 按 cue 聚合的一组内容行:origs / trans 逐行对齐;allSoftFilled 取【与】(cue 内只要有一行真译出来了就照常出双语)。 */
-type CueGroup = { firstIndex: number; indices: number[]; origs: string[]; trans: string[]; allSoftFilled: boolean };
+/** 按 cue 聚合的一组内容行:origs / trans / emptiedFlags 逐行对齐;两个 all* 都取【与】(cue 内只要有一行真译出来了就照常出双语)。 */
+type CueGroup = { firstIndex: number; indices: number[]; origs: string[]; trans: string[]; allSoftFilled: boolean; emptiedFlags: boolean[]; allEmptied: boolean };
 /**
  * 把内容行按【所属时间码行的行号】聚成 cue(Map 保留插入顺序)。key 用行号而非时间码文本:
  * 时间码逐字节相同的两个独立 cue 会被文本 key 错误合并(内容跨 cue"传送"、留下空壳)。
- * 「只出一半」的唯一判据仍是 isSoftFilledHalf(CLAUDE.md),这里只做按 cue 的与聚合。
+ * 「只出一半」的判据是 isSoftFilledHalf / isEmptiedSlot(CLAUDE.md),这里只做按 cue 的与聚合。
  * 曾在 buildVttBilingualSrt 与 assembleSubtitleOutput 的 SRT/VTT/SBV 分支各写一份。
  */
-const groupCues = (lines: string[], contentIndices: number[], translatedLines: string[], softFilled?: ReadonlySet<number>, timeRegex?: RegExp): Map<number, CueGroup> => {
+const groupCues = (lines: string[], contentIndices: number[], translatedLines: string[], softFilled?: ReadonlySet<number>, emptied?: ReadonlySet<number>, timeRegex?: RegExp): Map<number, CueGroup> => {
   const groups = new Map<number, CueGroup>();
   contentIndices.forEach((index, i) => {
     const timeIdx = findTimeLineIndexBefore(lines, index, timeRegex);
     if (timeIdx === -1) return;
     const lineSoftFilled = isSoftFilledHalf(i, softFilled);
+    const lineEmptied = isEmptiedSlot(i, emptied);
     const existing = groups.get(timeIdx);
     if (existing) {
       existing.indices.push(index);
       existing.origs.push(lines[index]);
       existing.trans.push(translatedLines[i]);
       existing.allSoftFilled = existing.allSoftFilled && lineSoftFilled;
+      existing.emptiedFlags.push(lineEmptied);
+      existing.allEmptied = existing.allEmptied && lineEmptied;
     } else {
-      groups.set(timeIdx, { firstIndex: index, indices: [index], origs: [lines[index]], trans: [translatedLines[i]], allSoftFilled: lineSoftFilled });
+      groups.set(timeIdx, { firstIndex: index, indices: [index], origs: [lines[index]], trans: [translatedLines[i]], allSoftFilled: lineSoftFilled, emptiedFlags: [lineEmptied], allEmptied: lineEmptied });
     }
   });
   return groups;
@@ -610,16 +651,17 @@ const groupCues = (lines: string[], contentIndices: number[], translatedLines: s
  * 拼 SRT,绝不重扫正文。对规范输入与旧 vttToSrt 路径逐字节一致(时间码 .→,、
  * 丢弃 cue settings / WEBVTT / NOTE / cue id、剥 VTT 内联标签、cue 间一个空行)。
  */
-export const buildVttBilingualSrt = (lines: string[], contentIndices: number[], translatedLines: string[], isOriginalFirst: boolean, softFilled?: ReadonlySet<number>): string => {
+export const buildVttBilingualSrt = (lines: string[], contentIndices: number[], translatedLines: string[], isOriginalFirst: boolean, softFilled?: ReadonlySet<number>, emptied?: ReadonlySet<number>): string => {
   let seq = 0;
   const cues: string[] = [];
-  for (const [timeIdx, group] of groupCues(lines, contentIndices, translatedLines, softFilled)) {
+  for (const [timeIdx, group] of groupCues(lines, contentIndices, translatedLines, softFilled, emptied)) {
     seq += 1;
     const origs = group.origs.map(stripVttInline);
     // 空译文回退原文并保持逐行对齐(判据见 orElseSource):空的一半
     // 会在时间轴后紧跟一个空行,而空行是 SRT 的 cue 分隔符 —— 整条 cue 被截断。
-    const trans = fillEmptyTranslations(group.trans.map(stripVttInline), origs);
-    const body = joinBilingualHalves(origs.join("\n"), trans.join("\n"), isOriginalFirst, "\n", group.allSoftFilled);
+    // 有意清空的槽位除外:填空格(不断 cue、视觉空白),整条 cue 全空时只出原文。
+    const trans = fillEmptyTranslations(group.trans.map(stripVttInline), origs, group.emptiedFlags);
+    const body = joinBilingualHalves(origs.join("\n"), trans.join("\n"), isOriginalFirst, "\n", group.allSoftFilled || group.allEmptied);
     cues.push(`${seq}\n${normalizeVttTimeLine(lines[timeIdx].trim())}\n${body}`);
   }
   // 与 vttToSrt 收尾一致:合并 3+ 连续空行(空译文留下的尾随空行 + cue 间空行)
@@ -946,7 +988,7 @@ const buildStyleLine = (name: "Default" | "Secondary", font: string, s: AssLineS
   const outlineColour = s.boxed ? boxFill(s.outlineColor) : hexToAssColor(s.outlineColor);
   return `Style: ${name},${font},${s.fontSize},${hexToAssColor(
     s.textColor
-  )},&H000000FF,${outlineColour},&H00000000,0,0,0,0,100,100,0,0,${borderStyle},${s.outline},${s.shadow},${config.alignment},30,30,${config.marginV},1`;
+  )},&H000000FF,${outlineColour},&H00000000,0,0,0,0,100,100,0,0,${borderStyle},${s.outline},${s.shadow},${config.alignment},${ASS_STYLE_MARGIN_L},${ASS_STYLE_MARGIN_R},${config.marginV},1`;
 };
 
 export const buildAssHeader = (config: AssStyleConfig, sourceLang: string, targetLang: string): string => {
@@ -956,8 +998,8 @@ Title: Bilingual Subtitles
 ScriptType: v4.00+
 WrapStyle: 0
 ScaledBorderAndShadow: Yes
-PlayResX: 1920
-PlayResY: 1080
+PlayResX: ${ASS_PLAY_RES_X}
+PlayResY: ${ASS_PLAY_RES_Y}
 Collisions: Normal
 
 [V4+ Styles]
@@ -967,6 +1009,245 @@ ${buildStyleLine(STYLE_ORIGINAL, fonts.original, config.original, config)}
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text`;
+};
+
+// ── ASS 宽度自适应换行(#69) ───────────────────────────────
+// 识别源(whisper/qwen-asr)经 VAD 切分后仍有少量 40-60 字长句,导出 ASS 后
+// 单行超出画面安全区。今天这些行靠 libass 的 WrapStyle:0 在渲染期做智能
+// 均衡软折,断点不可控;这里改为导出期插【确定性 \N 硬断点】:优先句末标点、
+// 其次句读标点、再次空格/CJK 字间;闭合标点不落行首、开放标点不落行尾
+// (避头尾/kinsoku,允许行尾小幅突出);尾行过短回拉;已有 \N 是强制断点,
+// 逐段独立包折。只影响本工具生成头部的两条双语 ASS 路径(SRT/VTT→ASS 与
+// 原生 ASS rebuild)—— in-place 沿用源样式的路径 PlayResX/Fontsize 未知,
+// 不碰。宽度是估算(全角≈1em、拉丁大小写混合≈0.55em、Bold/ScaleX/Spacing
+// 当前固定 0/100/0 与前提一致)。CJK 精确、普通大小写文本略保守(偶尔早折,
+// 只是观感);但全大写拉丁实测低估约 20%(0.55 vs ~0.67em),偏差方向会反转为
+// 溢出 —— 溢出的段仍有 WrapStyle:0 软折兜底,最坏情况是那几行退回渲染期
+// 非确定软折(= 旧行为),不是出画硬伤。
+
+// 与 buildAssHeader/buildStyleLine 共用的几何常量 —— 头部、Style 行、换行器
+// 三处读同一份数字,改分辨率/边距不会漂。
+export const ASS_PLAY_RES_X = 1920;
+export const ASS_PLAY_RES_Y = 1080;
+export const ASS_STYLE_MARGIN_L = 30;
+export const ASS_STYLE_MARGIN_R = 30;
+
+/** 每行容量(全角字数;UI「≈N 字/行」提示与换行共用同一公式)。 */
+export const assCharsPerLine = (fontSize: number): number =>
+  Math.floor((ASS_PLAY_RES_X - ASS_STYLE_MARGIN_L - ASS_STYLE_MARGIN_R) / Math.max(fontSize, 1));
+
+// 断点语义档:句末 > 句读 > 空格 > 全角字间(同档取行内最后一个)。
+const SENTENCE_PUNCT = new Set("。．｡！？‥…!.?");
+const CLAUSE_PUNCT = new Set("，、；：·,;:");
+// 避头尾:不得落行首(闭合类)/不得落行尾(开放类)。直引号 ' " 中立不进表
+// (don't 的省字符被当引号会误伤)。
+const NO_LINE_START = new Set("。．｡，、；：！？‥…·」』）］｝】》〉»›”’％‰℃%.,!?;:)]}");
+const NO_LINE_END = new Set("‘“「『（［｛【《〈〔«‹([{");
+
+// 组合记号/连字控制符:零宽黏前字(断点会让它脱离基字)。
+const WRAP_MARK = /\p{M}|\u200D/u;
+// 东南亚无词间空格的文字(泰/老/高棉/缅甸):词内没有空格,按基字断(无音节
+// 词典的降级);天城体等用空格分词的文字走 \p{L} 词段规则,不在此列。
+const WRAP_SEA = /[\u0E00-\u0E7F\u0E80-\u0EFF\u1780-\u17FF\u1000-\u109F]/;
+// 全角区:CJK 标点(U+3001-303F;U+3000 空格单独处理)+ 全角形式(U+FF00-FFEF)。
+const WRAP_FULLWIDTH = /[\u3001-\u303F\uFF00-\uFFEF]/;
+const WRAP_WIDE_SCRIPT = /\p{Script=Han}|\p{Script=Hiragana}|\p{Script=Katakana}|\p{Script=Hangul}/u;
+const WRAP_EMOJI = /\p{Extended_Pictographic}/u;
+// 符号(♪ ★ © …)按全角宽计、可断;货币符 \p{Sc}($ €)刻意不在内 —— 落到
+// 「未知字符」类黏进 $100 这种词段,不会把 $ 和数字断开。
+const WRAP_SYMBOL = /\p{So}|\p{Sm}/u;
+// 阿拉伯/希伯来:连写体词中切断=字形错误,词内不可断(0.6 偏保守)。
+const WRAP_ARABIC_HEBREW = /\p{Script=Arabic}|\p{Script=Hebrew}/u;
+const WRAP_WORD_CHAR = /\p{L}|\p{N}/u;
+
+type WrapAtom = {
+  cp: string; // 原文片段(码点、{\…} 标签或 \h/\n 序列)
+  w: number; // 宽度(em)
+  cls: "tag" | "space" | "word" | "wide" | "mark";
+  role?: "sentence" | "clause"; // 可断标点的语义档
+  kinsokuStart?: boolean; // 不得落行首(闭合类)
+  kinsokuEnd?: boolean; // 不得落行尾(开放类)
+  consumable?: boolean; // ASCII 空格:断点处消费(行尾不留、下行不以空格开头)
+};
+
+const classifyWrapAtom = (ch: string): WrapAtom => {
+  let atom: WrapAtom;
+  if (ch === " ") atom = { cp: ch, w: 0.28, cls: "space", consumable: true };
+  // 全角空格不消费(可能是作者有意的排版定位),前后皆可断。
+  else if (ch === "\u3000") atom = { cp: ch, w: 1.0, cls: "space" };
+  else if (WRAP_MARK.test(ch)) atom = { cp: ch, w: 0, cls: "mark" };
+  else if (WRAP_SEA.test(ch)) atom = { cp: ch, w: 0.6, cls: "wide" };
+  else if (WRAP_WIDE_SCRIPT.test(ch) || WRAP_FULLWIDTH.test(ch) || WRAP_EMOJI.test(ch) || WRAP_SYMBOL.test(ch)) atom = { cp: ch, w: 1.0, cls: "wide" };
+  else if (WRAP_ARABIC_HEBREW.test(ch)) atom = { cp: ch, w: 0.6, cls: "word" };
+  else if (WRAP_WORD_CHAR.test(ch)) atom = { cp: ch, w: 0.55, cls: "word" };
+  // 其余(ASCII 标点、未列字符):并入不可断词段。宽度:ASCII 取 0.5,其余
+  // 取保守的 1.0 —— 未知字符偏大会「提前换行」而不是溢出;不可断防切断
+  // 未列出的连写文字(一个 48 字符无空格超长词在 1860px 内也放得下,真超
+  // 了由硬切兜底)。
+  else atom = { cp: ch, w: ch.codePointAt(0)! < 0x80 ? 0.5 : 1.0, cls: "word" };
+  if (SENTENCE_PUNCT.has(ch)) atom.role = "sentence";
+  else if (CLAUSE_PUNCT.has(ch)) atom.role = "clause";
+  if (NO_LINE_START.has(ch)) atom.kinsokuStart = true;
+  if (NO_LINE_END.has(ch)) atom.kinsokuEnd = true;
+  return atom;
+};
+
+const atomizeAssSegment = (seg: string): WrapAtom[] => {
+  const atoms: WrapAtom[] = [];
+  for (let i = 0; i < seg.length; ) {
+    // ASS 覆盖标签 {\i1}/{\an8}/…:零宽、原子不拆(未闭合的 { 当普通字符)。
+    if (seg[i] === "{") {
+      const close = seg.indexOf("}", i);
+      if (close > i) {
+        atoms.push({ cp: seg.slice(i, close + 1), w: 0, cls: "tag" });
+        i = close + 1;
+        continue;
+      }
+    }
+    // \h = 不换行空格(黏词);\n = 软换行(渲染需要时才折)→ 按空格候选处理。
+    // \N 在入口已 split 掉,不会到这里。
+    if (seg[i] === "\\" && (seg[i + 1] === "h" || seg[i + 1] === "n")) {
+      atoms.push(
+        seg[i + 1] === "h"
+          ? { cp: seg.slice(i, i + 2), w: 0.28, cls: "word" }
+          : { cp: seg.slice(i, i + 2), w: 0.28, cls: "space", consumable: true }
+      );
+      i += 2;
+      continue;
+    }
+    const ch = String.fromCodePoint(seg.codePointAt(i)!);
+    atoms.push(classifyWrapAtom(ch));
+    i += ch.length;
+  }
+  return atoms;
+};
+
+/** 尾行最小宽度(em):约「1 全角字 + 1 标点」,防行尾只剩一个字/一个标点。 */
+const WRAP_MIN_TAIL_EM = 1.6;
+/** 避头尾允许的行尾突出上限(em):连续闭合串(”。」)实际不超过 2-3 字。 */
+const WRAP_PROTRUSION_MAX = 3;
+
+/** 候选从标点顺延过其后紧贴的整个闭合串 —— 处理 ”。/。」 紧邻,断点落在串后。 */
+const extendClosingRun = (atoms: WrapAtom[], i: number): number => {
+  let j = i + 1;
+  while (j < atoms.length && atoms[j].kinsokuStart) j++;
+  return j - 1;
+};
+
+/** 硬切:整行被一个不可断词占满时的保命兜底,允许违反避头尾,至少前进 1 atom。 */
+const hardCutAss = (atoms: WrapAtom[], start: number, maxEm: number): number => {
+  let w = 0;
+  let cut = start;
+  for (let j = start + 1; j < atoms.length; j++) {
+    if (w + atoms[j].w > maxEm) break;
+    w += atoms[j].w;
+    cut = j;
+  }
+  return cut;
+};
+
+const wrapAssSegment = (seg: string, maxEm: number): string => {
+  const atoms = atomizeAssSegment(seg);
+  if (atoms.length === 0) return seg;
+  if (atoms.reduce((s, a) => s + a.w, 0) <= maxEm) return seg; // fit 段零改动
+  const lines: WrapAtom[][] = [];
+  let start = 0;
+  while (start < atoms.length) {
+    let sentenceCut = -1;
+    let clauseCut = -1;
+    let spaceCut = -1;
+    let wideCut = -1;
+    // 行内是否已有可见内容(非空白/零宽 atom)。空格断点不得登记在段首空白里:
+    // 断在那儿会产出一个只有空白的首行(渲染成空行、两半行数错位)—— 段首
+    // 缩进应黏住后文一起走,不单独成行。
+    let lineHasContent = false;
+    let width = 0;
+    let protruded = 0;
+    let i = start;
+    while (i < atoms.length) {
+      const a = atoms[i];
+      if (i > start && width + a.w > maxEm) {
+        // 避头尾「追込」:溢出 atom 是闭合标点则收入行尾(允许小幅突出,连续
+        // 封顶 3em)—— 这同时是幂等性的关键:突出的标点重跑时仍被收入,
+        // 不会再断第二次。
+        if (a.kinsokuStart && protruded < WRAP_PROTRUSION_MAX && width + a.w <= maxEm + WRAP_PROTRUSION_MAX) protruded++;
+        else break;
+      }
+      width += a.w;
+      // 候选登记 =「在第 i 个 atom 之后断」。下一 atom 是组合记号时不可断
+      // (会脱离基字);标签/记号自身不登记(标签黏后文)。
+      const next = atoms[i + 1];
+      if (a.cls !== "mark" && a.cls !== "tag" && next !== undefined && next.cls !== "mark") {
+        if (a.role) {
+          // ASCII 标点只在后随空格/全角字符时可断 —— 防切 1,000 / e.g. / 3.14
+          // (全角标点在中文排印里就是这么断的,无此条件)。
+          const ascii = a.cp.codePointAt(0)! < 0x80;
+          if (!ascii || next.cls === "space" || next.cls === "wide") {
+            const cut = extendClosingRun(atoms, i);
+            if (a.role === "sentence") sentenceCut = cut;
+            else clauseCut = cut;
+          }
+        } else if (a.cls === "space" && lineHasContent) spaceCut = i;
+        else if (a.cls === "wide") wideCut = i;
+      }
+      if (a.cls !== "space" && a.cls !== "mark" && a.cls !== "tag") lineHasContent = true;
+      i++;
+    }
+    if (i >= atoms.length) {
+      lines.push(atoms.slice(start)); // 剩余全部装下(含受控突出)
+      break;
+    }
+    let cut = sentenceCut >= 0 ? sentenceCut : clauseCut >= 0 ? clauseCut : spaceCut >= 0 ? spaceCut : wideCut;
+    if (cut >= 0) {
+      // 避头尾 ±1 修正(有界):闭合标点拉回上行尾(cut++),开放标点推下行(cut--)。
+      let guard = 0;
+      while (guard++ < 4 && cut >= start && cut < atoms.length - 1) {
+        if (atoms[cut + 1].kinsokuStart) {
+          cut++;
+          continue;
+        }
+        if (atoms[cut].kinsokuEnd) {
+          cut--;
+          continue;
+        }
+        break;
+      }
+      if (cut < start) cut = -1; // 修正推过了头 → 放弃,走硬切
+    }
+    if (cut === -1) cut = hardCutAss(atoms, start, maxEm);
+    // 断点处的 ASCII 空格消费掉(行尾不留、下行不以空格开头)。cut 落在空格上
+    // 时空格本身不进任何一侧;cut 落在标点/字上时,其后紧跟的空格一并消费
+    // (下行不以空格开头 —— "e.g.\N␣some" 这种)。
+    lines.push(atoms[cut].cls === "space" && atoms[cut].consumable ? atoms.slice(start, cut) : atoms.slice(start, cut + 1));
+    start = cut + 1;
+    if (atoms[start]?.cls === "space" && atoms[start].consumable) start++;
+  }
+  // widow 回拉:尾行过短(约 1 字 + 1 标点)时从上一行尾搬 atom,至尾行达标
+  // 或上一行搬空(合并成一行)。搬运不得制造新的避头尾违例 —— 会违例就停,
+  // 接受短尾。不跨已有 \N:回拉只发生在本段的软断点上(入口已按 \N 分段)。
+  while (lines.length >= 2) {
+    const tail = lines[lines.length - 1];
+    const prev = lines[lines.length - 2];
+    if (tail.reduce((s, a) => s + a.w, 0) >= WRAP_MIN_TAIL_EM || prev.length === 0) break;
+    const move = prev[prev.length - 1];
+    if (move.kinsokuStart || prev[prev.length - 2]?.kinsokuEnd) break;
+    tail.unshift(move);
+    prev.pop();
+    if (prev.length === 0) lines.splice(lines.length - 2, 1);
+  }
+  return lines.map((l) => l.map((a) => a.cp).join("")).join("\\N");
+};
+
+/**
+ * 对一条 Dialogue 正文做宽度自适应硬换行:已有的字面 \N 全部保留为强制断点,
+ * 逐段独立包折、互不相干;只对超过可用宽度((PlayResX-边距)/字号)的段插 \N。
+ * fit 段零改动(幂等),全程只允许「插入 \N / 消费断点处 ASCII 空格」两种变化。
+ */
+export const wrapAssDialogueText = (text: string, fontSize: number): string => {
+  if (!text) return text;
+  const maxEm = (ASS_PLAY_RES_X - ASS_STYLE_MARGIN_L - ASS_STYLE_MARGIN_R) / fontSize;
+  if (!Number.isFinite(maxEm) || maxEm < 1) return text; // 异常字号不包折
+  return text.split("\\N").map((seg) => wrapAssSegment(seg, maxEm)).join("\\N");
 };
 
 // 剥【所有】行内覆盖标签(如 {\an8}/{\i1}/{\pos(..)}),使文本在干净 Default/Secondary 下渲染。
@@ -991,7 +1272,12 @@ export const buildNativeAssRebuild = (
   isOriginalFirst: boolean,
   cleanedContents?: string[],
   // 末位可选:插在中间会让既有位置实参整体错位(tsc 已当场抓到一次)。
-  softFilled?: ReadonlySet<number>
+  softFilled?: ReadonlySet<number>,
+  // removeChars 有意清空的槽位(collectEmptiedSlots):译文行留白、只出原文那一条。
+  emptied?: ReadonlySet<number>,
+  // 宽度自适应换行(#69):译文/原文按 config 各自字号包折(见 wrapAssDialogueText)。
+  // 排在末位,避免位置实参错位。
+  autoWrap?: boolean
 ): string => {
   const header = buildAssHeader(config, sourceLang, targetLang);
 
@@ -1018,11 +1304,16 @@ export const buildNativeAssRebuild = (
       const start = parts[1]?.trim() ?? "0:00:00.00";
       const end = parts[2]?.trim() ?? "0:00:00.00";
       const origText = stripAllAssTags(entry.orig);
-      const transText = orElseSource(stripAllAssTags(entry.trans), origText);
-      const transLine = `Dialogue: 0,${start},${end},${STYLE_TRANSLATION},NTP,0000,0000,0000,,${transText}`;
-      const origLine = `Dialogue: 0,${start},${end},${STYLE_ORIGINAL},NTP,0000,0000,0000,,${origText}`;
-      // 软填(未译出)→ 只出一条,别复读(判据见 isSoftFilledHalf)。
-      out.push(isSoftFilledHalf(entry.slot, softFilled) ? origLine : isOriginalFirst ? `${transLine}\n${origLine}` : `${origLine}\n${transLine}`);
+      const lineEmptied = isEmptiedSlot(entry.slot, emptied);
+      // 有意清空(removeChars 删光)→ 译文文本留白,不许 orElseSource 填回带 ♪ 的原文。
+      const transText = lineEmptied ? "" : orElseSource(stripAllAssTags(entry.trans), origText);
+      // 宽度自适应换行:两半按各自字号独立包折;空译文(emptied)不折。
+      const wrappedTrans = autoWrap && transText ? wrapAssDialogueText(transText, config.translation.fontSize) : transText;
+      const wrappedOrig = autoWrap && origText ? wrapAssDialogueText(origText, config.original.fontSize) : origText;
+      const transLine = `Dialogue: 0,${start},${end},${STYLE_TRANSLATION},NTP,0000,0000,0000,,${wrappedTrans}`;
+      const origLine = `Dialogue: 0,${start},${end},${STYLE_ORIGINAL},NTP,0000,0000,0000,,${wrappedOrig}`;
+      // 软填(未译出)或有意清空 → 只出一条,别复读/别出空 Dialogue(判据见两个判据函数)。
+      out.push(isSoftFilledHalf(entry.slot, softFilled) || lineEmptied ? origLine : isOriginalFirst ? `${transLine}\n${origLine}` : `${origLine}\n${transLine}`);
     } else {
       out.push(lines[i]); // 非对白/verbatim 原样保留
     }
@@ -1063,18 +1354,41 @@ export const assembleSubtitleOutput = (input: {
    * 行(专有名词/数字/♪)吃掉一半。
    */
   softFilledIndices?: ReadonlySet<number>;
+  /**
+   * 被 removeChars【有意清空】的槽位下标(collectEmptiedSlots,与 softFilledIndices
+   * 同源同形)。这些槽位不能走「空译文回退原文」—— 用户明确要求删掉的字符
+   * (典型:整行只有 ♪ 的音乐 cue)被回退原样还回去,功能在用户眼里就是失效。
+   * 仅译文模式:cue 外壳保留(时间码在、正文留一个不可见空格,避免多行 cue
+   * 被空行截断);双语模式:只出原文那一半(同软填的呈现)。
+   */
+  emptiedIndices?: ReadonlySet<number>;
+  /**
+   * ASS 宽度自适应换行(#69):对【本工具生成头部】的两条双语 ASS 路径
+   * (SRT/VTT→ASS、原生 ASS rebuild)的超长 Dialogue 按 PlayResX/边距/字号
+   * 估算插 \N(见 wrapAssDialogueText)。省略 = 不包折,输出与旧行为逐字节
+   * 一致 —— 引擎层默认关,默认值由两个调用方各自从 SUBTITLE_DEFAULTS 解析
+   * (与 contextAware 同款分层)。in-place 沿用源样式的 ASS 路径不受此参
+   * 影响(源 Style 指标未知)。
+   */
+  assAutoWrap?: boolean;
 }): string => {
-  const { lines, contentIndices, contentLines, translatedLines, fileType, assContentStartIndex, tagMaps, isBilingual, isOriginalFirst, bilingualFormat, assNativeRebuild, assStyle, sourceLanguage, exportLang, softFilledIndices: softFilled } = input;
+  const { lines, contentIndices, contentLines, translatedLines, fileType, assContentStartIndex, tagMaps, isBilingual, isOriginalFirst, bilingualFormat, assNativeRebuild, assStyle, sourceLanguage, exportLang, softFilledIndices: softFilled, emptiedIndices: emptied, assAutoWrap } = input;
+  // 双语 ASS 两条路径共用的包折回调:译文/原文按各自字号独立估宽(29 vs 38 字)。
+  const wrapText = assAutoWrap
+    ? (text: string, role: "translation" | "original") => wrapAssDialogueText(text, assStyle[role].fontSize)
+    : undefined;
   // null = "drop from final join" sentinel,用于 SRT/VTT 多行 cue 聚合后跳过补位行
   const outputLines: (string | null)[] = [...lines];
 
   contentIndices.forEach((index, i) => {
-    // 译文为空(removeChars 清空整行、或 VTT 纯内联标签行剥完即空)时回退
+    // 译文为空(VTT 纯内联标签行剥完即空、模型返空、软失败填空)时回退
     // 原文行(与失败面板"保留原文"同语义):仅译文模式下空行会让该 cue 失去
     // 唯一内容行 —— 重新解析丢 cue,对照校对面板源/译按序数硬配对整体后移
     // 错位,用户"修正"的译文写回到另一个 cue。
     // 双语模式走下面的分支单独处理(SRT/VTT 拼接时空译文同样会断掉 cue)。
-    if (!isBilingual && translatedLines[i].trim() === "") {
+    // ⚠ 唯一例外:removeChars 有意清空的槽位(整行 ♪ 被删光)绝不回退原文 ——
+    // 回退就是把用户要求删除的字符还回去(字幕工具报过的"移除字符不生效")。
+    if (!isBilingual && translatedLines[i].trim() === "" && !isEmptiedSlot(i, emptied)) {
       outputLines[index] = lines[index];
       return;
     }
@@ -1154,7 +1468,10 @@ export const assembleSubtitleOutput = (input: {
         // 而产生不同行为。
         outputLines[index] = trans.trim() === "" || isSoftFilledHalf(i, softFilled) ? orig : isOriginalFirst ? `${orig}\n${trans}` : `${trans}\n${orig}`;
       } else {
-        outputLines[index] = translatedLines[i];
+        // 有意清空(removeChars 删光,如整行 ♪):不能回退原文,也不能写真空串 —
+        // 多行 cue 里的内部空物理行会被 SRT/VTT/SBV 解析器当成 cue 结束,其后同
+        // cue 的译文变成孤立块、整份错位。填空格:视觉不可见,结构不断 cue。
+        outputLines[index] = isEmptiedSlot(i, emptied) && translatedLines[i].trim() === "" ? " " : translatedLines[i];
       }
     }
   });
@@ -1170,29 +1487,31 @@ export const assembleSubtitleOutput = (input: {
     // 原生 ASS「重新排版」:丢弃源样式,用本工具预设把每条 Dialogue 重排成干净双语;
     // verbatim/非对白行原样保留(上面的 forEach 逐行装配在此分支被忽略)。
     const verbatimIndices = new Set(contentIndices.filter((_, i) => tagMaps[i]?.verbatim !== undefined));
-    finalSubtitle = buildNativeAssRebuild(lines, contentIndices, translatedLines, verbatimIndices, assStyle, sourceLanguage, exportLang, isOriginalFirst, contentLines, softFilled);
+    finalSubtitle = buildNativeAssRebuild(lines, contentIndices, translatedLines, verbatimIndices, assStyle, sourceLanguage, exportLang, isOriginalFirst, contentLines, softFilled, emptied, assAutoWrap);
   } else if (shouldConvertToAssBilingual) {
     // 第 5 参传清理后的 contentLines:原始行带 VTT 内联标签(<c.color…>/卡拉
     // OK 时间戳),ASS 渲染器会把它们字面画上屏。
-    finalSubtitle = `${buildAssHeader(assStyle, sourceLanguage, exportLang)}\n${buildAssBilingualBody(lines, contentIndices, translatedLines, isOriginalFirst, contentLines, softFilled)}`;
+    finalSubtitle = `${buildAssHeader(assStyle, sourceLanguage, exportLang)}\n${buildAssBilingualBody(lines, contentIndices, translatedLines, isOriginalFirst, contentLines, softFilled, emptied, wrapText)}`;
   } else if (isBilingual && bilingualFormat === "srt" && fileType === "vtt") {
-    finalSubtitle = buildVttBilingualSrt(lines, contentIndices, translatedLines, isOriginalFirst, softFilled);
+    finalSubtitle = buildVttBilingualSrt(lines, contentIndices, translatedLines, isOriginalFirst, softFilled, emptied);
   } else {
     // SRT/VTT/SBV 双语 + format=srt:按 cue 聚合,组内"所有原文" + "所有译文",
     // 避免多行 cue 出现"原-译-原-译"交错(逐行替换会留下的副作用)
     if (isBilingual && (fileType === "srt" || fileType === "vtt" || fileType === "sbv")) {
-      const cueGroups = groupCues(lines, contentIndices, translatedLines, softFilled, fileType === "sbv" ? SBV_TIME_REGEX : undefined);
+      const cueGroups = groupCues(lines, contentIndices, translatedLines, softFilled, emptied, fileType === "sbv" ? SBV_TIME_REGEX : undefined);
       cueGroups.forEach((group) => {
         // cue 内非首行从输出中移除:内容并进首行的双语体。
         for (const idx of group.indices.slice(1)) outputLines[idx] = null;
         // 空译文【回退原文】,不是删掉。删掉会让两半行数不等 —— 3 行原文配 2 行
         // 译文,任何按位置配对的下游(校对面板、逐行对照工具)都会把 L2 的译文
         // 读成 T3。共享规则见 fillEmptyTranslations / joinBilingualHalves。
+        // removeChars 有意清空的槽位是例外:填空格占位不回原文,整条 cue 全清空时
+        // 只出原文那一半(allEmptied)。
         // (上面那条 `!isBilingual && trim() === ""` 的回退对 srt/vtt/sbv 双语
         //  够不着 —— 本块会覆盖 outputLines,所以这里必须自己处理。)
         const allOrig = group.origs.join("\n");
-        const allTrans = fillEmptyTranslations(group.trans, group.origs).join("\n");
-        outputLines[group.firstIndex] = joinBilingualHalves(allOrig, allTrans, isOriginalFirst, "\n", group.allSoftFilled);
+        const allTrans = fillEmptyTranslations(group.trans, group.origs, group.emptiedFlags).join("\n");
+        outputLines[group.firstIndex] = joinBilingualHalves(allOrig, allTrans, isOriginalFirst, "\n", group.allSoftFilled || group.allEmptied);
       });
     }
 

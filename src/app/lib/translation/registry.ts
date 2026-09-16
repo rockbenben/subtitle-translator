@@ -515,7 +515,7 @@ export const PROVIDERS = {
     category: "llm",
     label: "Qwen",
     endpoint: "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions",
-    defaultModel: "qwen3.7-plus",
+    defaultModel: "qwen3.8-flash",
     defaultTemperature: 0.7,
     docs: "https://help.aliyun.com/model-studio/qwen-api-via-openai-chat-completions",
     apiKeyUrl: "https://bailian.console.aliyun.com/?tab=model#/api-key",
@@ -535,11 +535,10 @@ export const PROVIDERS = {
     // 页面自述「当前开放纯文本模型能力供体验」,已不在推荐头牌里。
     // 3.6-flash → 3.7-flash:同代升级且【便宜 2-6 倍】(≤32k 档 ¥0.2/¥0.8 vs
     // 3.6 的 ¥1.2/¥7.2)。3.6-flash 未下线，只是被取代。
-    // 默认保持 qwen3.7-plus:官方三头牌里的高性价比档 (¥2/¥8, 1M 上下文)。
     models: [
       { label: "Qwen3.8 Max", value: "qwen3.8-max", thinking: true },
+      { label: "Qwen3.8 Flash", value: "qwen3.8-flash", thinking: true },
       { label: "Qwen3.7 Plus", value: "qwen3.7-plus", thinking: true },
-      { label: "Qwen3.7 Flash", value: "qwen3.7-flash", thinking: true },
     ],
   },
   moonshot: {

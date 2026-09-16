@@ -274,6 +274,9 @@
     "assAlignBottom": "Centre bas",
     "assAlignTop": "Centre haut",
     "assMarginV": "Marge",
+    "assAutoWrap": "Retour à la ligne automatique",
+    "assAutoWrapTooltip": "À l'export, replie les lignes trop longues selon la largeur d'écran et la taille de police : coupe de préférence après la ponctuation, jamais de ponctuation en début de ligne, les sauts manuels sont conservés",
+    "assAutoWrapCapacity": "≈{trans} caractères/ligne (traduction) · {orig} (original)",
     "previewOriginal": "Original",
     "previewTranslation": "Traduction",
     "fontGroup": {

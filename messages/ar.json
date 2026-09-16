@@ -274,6 +274,9 @@
     "assAlignBottom": "وسط أسفل",
     "assAlignTop": "وسط أعلى",
     "assMarginV": "الهامش",
+    "assAutoWrap": "التفاف الأسطر تلقائيًا",
+    "assAutoWrapTooltip": "عند التصدير، تُلفّ الأسطر الطويلة حسب عرض الشاشة وحجم الخط: القطع يفضَّل بعد علامات الترقيم، ولا تبدأ أي سطر بعلامة ترقيم، وتُحافظ على فواصل الأسطر اليدوية",
+    "assAutoWrapCapacity": "≈{trans} حرفًا/سطرًا (ترجمة) · {orig} (أصلي)",
     "previewOriginal": "الأصلي",
     "previewTranslation": "الترجمة",
     "fontGroup": {
