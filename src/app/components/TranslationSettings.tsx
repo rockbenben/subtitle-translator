@@ -386,6 +386,12 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
                         : t("urlOptionalExtra")
                 }
                 required={URL_IS_PRIMARY_CRED.has(service) || service === "azureopenai"}>
+                {/* Form.Item 默认装单控件,这里要放端点芯片 + URL 输入两块。
+                    用 <Flex vertical> 把两者纵向并列,gap 接管间距、vertical
+                    接管换行 —— 与本文件顶部主区(L897)同一模式。Space wrap
+                    本身仍是 inline-flex,被 Flex 块级化后会自然占满整行,Input
+                    落到下一行。 */}
+                <Flex vertical gap={8} style={{ width: "100%" }}>
                 {(() => {
                   const endpoints = getProviderEndpoints(service);
                   // 判据是「点了能不能改变什么」:
@@ -410,7 +416,7 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
                   // “怎么把这个服务跑起来”—— 而这正是这条路的第一道坑。
                   const activeDocs = endpoints.find((ep) => ep.url === activeEndpoint)?.docs;
                   return (
-                    <Space wrap size={[4, 8]} style={{ marginBottom: 4 }}>
+                    <Space wrap size={[4, 8]}>
                       {endpoints.map((ep) => {
                         const isActive = activeEndpoint === ep.url;
                         // 默认端点写回 ""(而不是完整 URL):cache.ts 把非空
@@ -490,6 +496,7 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
                   aria-label={`API ${t("url")}`}
                   spellCheck={false}
                 />
+                </Flex>
               </Form.Item>
             )}
             {config?.apiKey !== undefined && (
