@@ -136,6 +136,78 @@ export const dedupeLines = (lines: string[], options: DedupeOptions = {}): strin
   return out;
 };
 
+/**
+ * 配对提取：逐行取锚点正则的第一个匹配，再用配对正则在【同一行、锚点匹配段之外】
+ * 抓配对内容，同行没有就看【下一行】；抓到后按模板渲染成一条记录，记录间由调用方
+ * 自行连接。
+ *
+ * 同行搜索要先把锚点所占区间替换成等长空白——否则默认配对正则 (\d+) 会先抓到
+ * URL 里面的数字（如 https://weibo.com/2708481871/... 的 UID），永远轮不到
+ * 链接旁真正的数值。
+ *
+ * 模板变量：$0 = 锚点全文；$1..$n = 配对正则的捕获组；配对正则没有分组时
+ * $1 兜底为配对全文；引用了不存在的组 → 空串（不保留字面 $2）。
+ *
+ * total：每条配对的第 1 捕获组都是纯数字时，给出数字的合计（只管数字本身，
+ * 不拼也不校验单位——「100万/2亿」照样按 100+2 求和，数字后没有单位也一样）；
+ * 配对正则无分组或任一捕获值不是数字时为 null。
+ */
+export interface PairedExtractResult {
+  lines: string[];
+  total: string | null;
+}
+
+const TEMPLATE_VAR_RE = /\$(\d+)/g;
+const NUMERIC_VALUE_RE = /^\d+(?:\.\d+)?$/;
+
+const renderPairTemplate = (template: string, anchor: string, pair: RegExpMatchArray): string =>
+  template.replace(TEMPLATE_VAR_RE, (_, digits: string) => {
+    const idx = Number(digits);
+    if (idx === 0) return anchor;
+    const group = pair[idx];
+    // undefined 有两种来源：正则没有分组（$1 兜底为配对全文）、有分组但本组未参与
+    // 匹配（交错分支，$1 同样兜底）；$2 及以上拿不到一律空串
+    return group === undefined ? (idx === 1 ? pair[0] : "") : group;
+  });
+
+// 0.1 + 0.2 这类浮点残渣修约到 6 位后去掉尾零；播放量场景没有更高精度需求
+const formatNumericSum = (n: number): string => n.toFixed(6).replace(/\.?0+$/, "");
+
+export const extractPairedLines = (text: string, anchorRegex: RegExp, pairRegex: RegExp, template: string, shouldTrim: boolean = true): PairedExtractResult => {
+  const lines = cleanLines(text, shouldTrim);
+  // 统一剥掉 g：exec 跨行复用带 g 的正则会从上次 lastIndex 继续；我们每行都要第一个匹配
+  const anchorFinder = new RegExp(anchorRegex.source, anchorRegex.flags.replace("g", ""));
+  const pairFinder = new RegExp(pairRegex.source, pairRegex.flags.replace("g", ""));
+  const out: string[] = [];
+  let allNumeric = true;
+  let sum = 0;
+
+  for (let i = 0; i < lines.length; i++) {
+    const anchorMatch = anchorFinder.exec(lines[i]);
+    if (!anchorMatch) continue;
+    const anchor = anchorMatch[0];
+    // 同行只在锚点段之外找配对：把锚点区间掩成等长空白（不用空串——会改变列位置）
+    const maskedLine = lines[i].slice(0, anchorMatch.index) + " ".repeat(anchor.length) + lines[i].slice(anchorMatch.index + anchor.length);
+    let pair = pairFinder.exec(maskedLine);
+    if (!pair && i + 1 < lines.length) pair = pairFinder.exec(lines[i + 1]);
+    if (!pair) continue;
+
+    out.push(renderPairTemplate(template, anchor, pair));
+
+    // 没有显式捕获组就无法从配对全文里隔离数字（$1 兜底的是全文），不参与合计；
+    // 单位一律忽略——只加捕获到的数字本身（数字后面带不带单位都一样）
+    const value = pair[1];
+    if (value === undefined || !NUMERIC_VALUE_RE.test(value)) {
+      allNumeric = false;
+    } else {
+      sum += Number(value);
+    }
+  }
+
+  const total = allNumeric && out.length > 0 ? formatNumericSum(sum) : null;
+  return { lines: out, total };
+};
+
 // Cache for compressNewlines regexes to avoid recompilation
 const compressNewlinesRegexCache = new Map<number, RegExp>();
 
