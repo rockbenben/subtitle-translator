@@ -10,6 +10,7 @@
     "build:tauri": "cross-env TAURI_BUILD=1 next build",
     "start": "next start",
     "lint": "eslint",
+    "test": "vitest run",
     "outdated": "ncu",
     "cli": "tsx scripts/cli.ts",
     "tauri": "tauri",
@@ -52,7 +53,8 @@
     "eslint-config-next": "16.3.4",
     "tailwindcss": "^4",
     "tsx": "^4.23.13",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^3.2.4"
   },
   "engines": {
     "node": ">=20.9.0"
