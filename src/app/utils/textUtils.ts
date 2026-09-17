@@ -178,6 +178,25 @@ export const extractPairedLines = (text: string, anchorRegex: RegExp, pairRegex:
   // 统一剥掉 g：exec 跨行复用带 g 的正则会从上次 lastIndex 继续；我们每行都要第一个匹配
   const anchorFinder = new RegExp(anchorRegex.source, anchorRegex.flags.replace("g", ""));
   const pairFinder = new RegExp(pairRegex.source, pairRegex.flags.replace("g", ""));
+  // 扫描用（要 g，才能拿到一行里的全部命中）。matchAll 不写回 lastIndex，循环外建一次即可。
+  const anchorScanner = new RegExp(anchorRegex.source, anchorRegex.flags.includes("g") ? anchorRegex.flags : `${anchorRegex.flags}g`);
+  /**
+   * 把一行里【所有】锚点命中掩成等长空白（不用空串 —— 会改变列位置）。
+   *
+   * ⚠ 只掩第一个是不够的：一行里若有第二条链接，它路径里的数字会被配对正则抓走。
+   * `https://a.com/1 https://b.com/2 100万` 曾产出「2----https://a.com/1」，
+   * 而 tooltip 上明写着「链接里的数字不会误抓」—— 那句话只在「一行一个链接」时成立。
+   */
+  const maskAnchors = (line: string): string => {
+    let out = "";
+    let last = 0;
+    for (const m of line.matchAll(anchorScanner)) {
+      const at = m.index ?? 0;
+      out += line.slice(last, at) + " ".repeat(m[0].length);
+      last = at + m[0].length;
+    }
+    return out + line.slice(last);
+  };
   const out: string[] = [];
   let allNumeric = true;
   let sum = 0;
@@ -186,10 +205,10 @@ export const extractPairedLines = (text: string, anchorRegex: RegExp, pairRegex:
     const anchorMatch = anchorFinder.exec(lines[i]);
     if (!anchorMatch) continue;
     const anchor = anchorMatch[0];
-    // 同行只在锚点段之外找配对：把锚点区间掩成等长空白（不用空串——会改变列位置）
-    const maskedLine = lines[i].slice(0, anchorMatch.index) + " ".repeat(anchor.length) + lines[i].slice(anchorMatch.index + anchor.length);
-    let pair = pairFinder.exec(maskedLine);
-    if (!pair && i + 1 < lines.length) pair = pairFinder.exec(lines[i + 1]);
+    let pair = pairFinder.exec(maskAnchors(lines[i]));
+    // 兜底读下一行时同样要掩：下一行若本身就是另一条链接，它的路径数字会被抓成
+    // 本行的配对值，产出一条「数值其实来自另一条链接」的假记录。
+    if (!pair && i + 1 < lines.length) pair = pairFinder.exec(maskAnchors(lines[i + 1]));
     if (!pair) continue;
 
     out.push(renderPairTemplate(template, anchor, pair));

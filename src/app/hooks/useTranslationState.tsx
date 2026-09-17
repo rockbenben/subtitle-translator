@@ -498,7 +498,7 @@ const useTranslationState = () => {
               //
               // 一条通用文案 + findMethodLabel(registry 单一事实源)替代曾经的
               // per-service 映射表:新方法进 PREFLIGHT_PROBE_METHODS 自动拿到带
-              // 自己名字的提示,不存在"忘了加 opencode"这类漏项(上一版真漏过)。
+              // 自己名字的提示,不存在"忘了加 opencodeZen"这类漏项(上一版真漏过)。
               //
               // ⚠ 但【发生了自动切换】必须说出来,否则就是替用户改了 provider
               // 却让他以为还在用原来那个:下一次翻译会把整份文档发往 GTX 的公共

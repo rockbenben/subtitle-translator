@@ -22,9 +22,15 @@ interface StatsFooterProps {
   lineCount: string;
   /** 只读状态(超过字符上限时由 useTextStats 标记)。true 时显示锁图标 + 提示 */
   isReadOnly?: boolean;
+  /**
+   * 覆盖锁图标的悬停说明。默认是「超长只读」那条(common.readOnlyModeTooltip)。
+   * 结果区用它换成「派生只读」—— 那里【永远】只读，原因不是超长，
+   * 拿超长的解释去说它是错的。
+   */
+  readOnlyTooltip?: string;
 }
 
-const StatsFooter = ({ charCount, lineCount, isReadOnly }: StatsFooterProps) => {
+const StatsFooter = ({ charCount, lineCount, isReadOnly, readOnlyTooltip }: StatsFooterProps) => {
   const t = useTranslations("common");
   const { token } = theme.useToken();
 
@@ -32,7 +38,7 @@ const StatsFooter = ({ charCount, lineCount, isReadOnly }: StatsFooterProps) => 
     <Flex justify="space-between" align="center" className="mt-2">
       <div>
         {isReadOnly && (
-          <Tooltip title={t("readOnlyModeTooltip")}>
+          <Tooltip title={readOnlyTooltip ?? t("readOnlyModeTooltip")}>
             <Flex
               align="center"
               gap={6}

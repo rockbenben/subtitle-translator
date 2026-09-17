@@ -29,6 +29,17 @@ export interface TranslateTextParams extends Omit<TranslationConfig, "chunkSize"
    * serves every provider under the same /api/{provider} contract.
    */
   relayBase?: string;
+  /**
+   * 本轮翻译的会话 id（**每轮一个、轮内稳定**）。流水线在 `runTranslateLines` 里生成一次，
+   * 之后本轮的每个请求都带同一个值。只有声明了 `sessionHeader` 的 provider 会用到它
+   * （目前是 opencodeGo 的 `x-opencode-session`）。
+   *
+   * ⚠ 为什么必须是「每轮」而不是常量或每请求随机：
+   *   - 常量 → 等于告诉上游"几千个不相关的对话是同一个会话"，恰是它在监控的那类异常流量；
+   *   - 每请求随机 → 拿不到任何 routing / prompt caching 收益（上游要的正是"同一轮对话
+   *     稳定"），还多一份噪声。
+   */
+  sessionId?: string;
   // Thinking directive. An effort (low/medium/high) = thinking ON at that level;
   // the "auto" sentinel = OMIT the param and follow the server default; undefined =
   // the DEFAULT (no user entry) = thinking OFF, i.e. send the provider's explicit

@@ -46,11 +46,16 @@ type OpenAICompatRequestConfig = {
   /** Absent = provider never sends temperature (locked/rejected upstream — see registry spec). */
   defaultTemperature?: number;
   extraHeaders?: Record<string, string>;
+  /**
+   * 这个 provider 要求把本轮会话 id 放进哪个请求头（registry 声明头名）。
+   * 值取自 `params.sessionId` —— 流水线每轮生成一次，轮内稳定。
+   */
+  sessionHeader?: string;
   extraBody?: Record<string, unknown>;
 };
 
 const openAICompatRequest = async (cfg: OpenAICompatRequestConfig): Promise<string> => {
-  const { params, serviceName, endpoint, defaultModel, defaultTemperature, extraHeaders, extraBody } = cfg;
+  const { params, serviceName, endpoint, defaultModel, defaultTemperature, extraHeaders, sessionHeader, extraBody } = cfg;
   const { apiKey, model, temperature } = params;
   const { effectiveSystemPrompt, prompt } = preparePrompts(params);
   // apiKey 可选的服务跳过 requireApiKey —— 判据查 registry 的 isApiKeyOptional,
@@ -71,6 +76,9 @@ const openAICompatRequest = async (cfg: OpenAICompatRequestConfig): Promise<stri
       "Content-Type": "application/json",
       ...(key ? { Authorization: `Bearer ${key}` } : {}),
       ...extraHeaders,
+      // 会话 id 按 registry 声明的头名发（只在这两者都在时才发）。放在 extraHeaders
+      // 之后，免得被同名的静态头覆盖。
+      ...(sessionHeader && params.sessionId ? { [sessionHeader]: params.sessionId } : {}),
     },
     body: JSON.stringify({
       messages: [
@@ -102,7 +110,7 @@ const resolveEndpoint = (key: OpenAICompatProviderKey, spec: OpenAICompatProvide
 //   - TIER 1 (thinking-aware): registered in THINKING_BUILDERS below. Each
 //     entry is `gated(service, shape)` — the shared gate + one effort→wire shape.
 //   - TIER 2 (base / no builder): providers with no thinking-tagged SKUs in the
-//     registry (stepfun, opencode, tokenhub, atlascloud, litellm). Factory returns
+//     registry (stepfun, opencodeZen, tokenhub, atlascloud, litellm). Factory returns
 //     a pass-through service. isThinkingCapableProvider is false for these, so the
 //     UI offers no thinking control at all — including on custom SKUs.
 // Adding a thinking-capable provider = tag its SKU(s) in the registry + add one
@@ -323,6 +331,7 @@ const makeOpenAICompat = (key: OpenAICompatProviderKey, extraBodyBuilder?: Extra
       defaultModel: spec.defaultModel,
       defaultTemperature: spec.defaultTemperature,
       extraHeaders: spec.extraHeaders,
+      sessionHeader: spec.sessionHeader,
       extraBody: extraBodyBuilder?.(params),
     });
 };
@@ -429,8 +438,11 @@ export const gemini: TranslationService = async (params) => {
 };
 
 // Azure mirrors OpenAI's reasoning behavior (deployments map to GPT-5 SKUs), so it
-// reuses the same `reasoningEffortOrNone` shape: gpt-5.5 / gpt-chat-latest omit→
-// "medium" (ON) means a tagged deployment must send explicit "none" when off. A
+// reuses the same `reasoningEffortOrNone` shape: GPT-5.x omit→"medium" (ON) means a
+// tagged deployment must send explicit "none" when off. (gpt-chat-latest is the one
+// exception — the official page says its level is FIXED and `reasoning_effort` can't
+// configure it, so it stays untagged in the registry and falls through to the omit
+// branch below.) A
 // custom (unlisted) deployment instead sends the effort ONLY on opt-in and omits
 // otherwise — same custom-model policy as gated() (off → 400-safe omit, on → user's
 // call). (Azure is a custom service, not in OPENAI_COMPAT_KEYS, so it can't use gated.)

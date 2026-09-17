@@ -294,6 +294,8 @@ type RunCtx = {
   cache?: PipelineCache;
   /** Resolved from deps.translate, else translateCore over deps.cache. */
   translate: (params: TranslateTextParams) => Promise<string>;
+  /** 本轮会话 id —— 声明了 sessionHeader 的 provider 会把它放进对应请求头。 */
+  sessionId: string;
   /** THIS run's abort controller — auth cascade target, chained from deps.signal. */
   run?: AbortController;
   shouldStop: () => boolean;
@@ -307,8 +309,15 @@ type RunCtx = {
   wasRateLimited: () => boolean;
 };
 
-/** Chain an internal run controller off the external signal; returns cleanup. */
-const chainSignal = (run: AbortController, external?: AbortSignal): (() => void) => {
+/**
+ * 每轮会话 id。优先 `crypto.randomUUID`（Node 19+ / 浏览器**安全上下文**都有），
+ * 退回随机串 —— 明文 http 自部署时 `crypto.randomUUID` 是 undefined，不兜住就是
+ * 整个翻译流程抛 "crypto.randomUUID is not a function"，为一个小字段崩掉主流程不划算。
+ */
+const newSessionId = (): string =>
+  typeof crypto !== "undefined" && typeof crypto.randomUUID === "function" ? crypto.randomUUID() : `sess-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+
+/** Chain an internal run controller off the external signal; returns cleanup. */const chainSignal = (run: AbortController, external?: AbortSignal): (() => void) => {
   if (!external) return () => {};
   if (external.aborted) {
     run.abort();
@@ -442,6 +451,8 @@ const translateSingle = async (text: string, cacheSuffix: string, config: Pipeli
   const effort = deriveThinkingParams(config.translationMethod, config);
   if (effort) extras.reasoningEffort = effort;
   if (fullText !== undefined) extras.fullText = fullText;
+  // 本轮会话 id 随每个请求一起走（provider 侧只在声明了 sessionHeader 时才发出去）。
+  extras.sessionId = ctx.sessionId;
 
   // Per-request glossary composition. The wire prompt carries ONLY the terms
   // this text actually contains — a 500-term glossary must not ride along on
@@ -1141,6 +1152,11 @@ const runTranslateLines = async (
     cache: deps.cache,
     translate: resolveTranslate(deps),
     run: runController,
+    // 本轮会话 id：**在这里生成一次**，本轮所有请求共用（见 types.ts 里 sessionId 的注释）。
+    // 生成点选在这里而不是各请求处，是因为"会话"的边界就是一次 runTranslateLines ——
+    // 同一个文件/同一次点击的上下文批与逐行请求本来就属于同一轮对话，上游的 routing 与
+    // prompt caching 正是按这个粒度命中。
+    sessionId: newSessionId(),
     shouldStop: deps.shouldStop ?? (() => false),
     onProgress: deps.onProgress,
     onRateLimit: deps.onRateLimit,
