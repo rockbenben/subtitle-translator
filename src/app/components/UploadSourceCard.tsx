@@ -86,7 +86,10 @@ const UploadSourceCard = ({ upload, stats, fileTypes, formatsHint, multiFile = f
         onChange={upload.handleUploadChange}
         fileList={upload.fileList}
         className="mb-2">
-        <p className="ant-upload-drag-icon">
+        {/* aria-hidden: the Dragger's whole label area is one clickable element, so
+            an unhidden icon here leaked antd's English glyph name into its
+            accessible name ("… inbox 点击或将文件拖拽至此上传"). */}
+        <p className="ant-upload-drag-icon" aria-hidden>
           <InboxOutlined />
         </p>
         <p className="ant-upload-text">{t("dragAndDropText")}</p>

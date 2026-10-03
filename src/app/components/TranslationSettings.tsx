@@ -479,10 +479,10 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
                     // blur 补全 = wireUrlNormalizer(registry):对每个 service 用
                     // 【引擎实际会用的】补全器 —— claude 补 /v1/messages,OpenAI-compat
                     // 系补 /chat/completions,私有协议(deepl/azureopenai…)原样返回
-                    // 即不补全。此前是手维护清单,claude/yandex 漏在外面:界面留着
+                    // 即不补全。别退回手维护的补全清单——漏一家就是界面留着
                     // bare host、引擎默默补全,界面所见 ≠ 线上所打。
-                    // 【不再自动翻中转开关】—— 那个功能曾经存在,是三轮评审里 bug
-                    // 最密集的一处(死守卫、focus 追踪、芯片竞态、relayBase 盲区),
+                    // 【不做自动翻中转开关】—— 那个开关会引入死守卫、focus 追踪、
+                    // 芯片竞态、relayBase 盲区一类连环 bug,
                     // 而它防的事故引擎层已兜住:自定义地址 + 内置公共中转由
                     // registry.relayWouldServe 退回直连、地址不外发;开关开着但无效时,
                     // 开关下方的 useRelayCustomUrl 静态文案已把实情写明。开关状态
@@ -641,8 +641,8 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
                       // Dual-line option render: friendly name (with `default`
                       // tag for the spec's defaultModel) on top, SKU below in
                       // dim small text. Closes the visual gap between the
-                      // dropdown label ("Claude Sonnet 4.6") and what lands in
-                      // the input field ("claude-sonnet-4-6") — users see the
+                      // dropdown label ("Claude Sonnet X.Y") and what lands in
+                      // the input field ("claude-sonnet-x-y") — users see the
                       // correspondence at a glance.
                       optionRender={(oriOption) => {
                         const value = String(oriOption.value ?? "");
@@ -748,7 +748,7 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
                   value={config.domains as string | undefined}
                   onChange={(e) => handleConfigChange(service, "domains", e.target.value)}
                   autoSize={{ minRows: 2, maxRows: 6 }}
-                  aria-label="Domains"
+                  aria-label={t("qwenMtDomains")}
                 />
               </Form.Item>
             )}
@@ -917,10 +917,11 @@ const TranslationSettings = () => {
                 // antd's CheckableTagProps omits DOM passthrough props, but the
                 // component spreads {...restProps} onto its <span> — so these
                 // forward at runtime; the cast just bridges the narrow types.
+                // ⚠ 不要覆盖 role / 加 aria-pressed：antd 在 restProps 之后自己写
+                // role="checkbox" + aria-checked，button+pressed 会被压成
+                // checkbox+pressed 的非法组合（axe aria-allowed-attr critical）。
                 {...({
-                  role: "button",
                   tabIndex: 0,
-                  "aria-pressed": s.value === translationMethod,
                   onKeyDown: (e: KeyboardEvent<HTMLSpanElement>) => {
                     if (e.key === "Enter" || e.key === " ") {
                       e.preventDefault();

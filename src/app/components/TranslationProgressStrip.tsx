@@ -117,7 +117,12 @@ const TranslationProgressStrip = ({ isTranslating, percent, onCancel, onDismiss,
               </span>
             </span>
             {hasCountInfo && (
-              <span>
+              // dir=ltr: `12 / 40` has no strong directional character at all, so it
+              // takes the paragraph's base direction — and as a flex item this span IS
+              // its own paragraph, so /ar rendered it `40 / 12`. The same digits read
+              // fine when an LTR word precedes them in the same paragraph (measured),
+              // which is what makes this class of bug hide in every other counter.
+              <span dir="ltr">
                 <span style={{ color: token.colorText }}>{currentCount}</span>
                 <span style={{ opacity: 0.5 }}> / {totalCount}</span>
               </span>

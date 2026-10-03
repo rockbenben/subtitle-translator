@@ -106,7 +106,7 @@ const GlossaryManager = () => {
       // Disabled unless a preset actually exists (a dangling active id from an
       // imported settings file resolves to undefined → editing would no-op).
       extra={
-        <Button icon={<EditOutlined />} disabled={!activeGlossaryPreset} onClick={() => setDrawerOpen(true)}>
+        <Button icon={<EditOutlined aria-hidden />} disabled={!activeGlossaryPreset} onClick={() => setDrawerOpen(true)}>
           {t("edit")}
         </Button>
       }>

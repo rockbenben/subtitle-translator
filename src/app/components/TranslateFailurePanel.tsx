@@ -57,13 +57,14 @@ export default function TranslateFailurePanel({
 
   // 【这两块面板不可关闭】,是有意的,别再加 ✕。
   //
-  // 历史:曾有一套 closable={{ onClose }} + 本地 dismissed 状态。它从来没生效过
-  // —— antd 6 的 isClosable 对对象形式【只认 closable.closeIcon】(Alert.js:137),
-  // 没有它就一路落到 !!contextClosable(undefined)= false,✕ 不渲染、onClose 永不
-  // 触发,整套是看不出来的死代码。补上 closeIcon 让它"能用"之后才暴露出:关掉面板
-  // 会把【唯一的重试入口】一起带走(组件整个 return null),而进度条那边仍在打琥珀
-  // 的 INCOMPLETE「失败的行已保留原文」—— 用户被告知产物不完整,却没有任何可点的
-  // 补救动作,只能重跑整轮(多语言/批量下会把已成功的语言全部重走一遍)。
+  // 两道独立的理由,缺一不可:
+  // ① antd 的 Alert `closable` 传对象时【只认 closable.closeIcon】—— 只给 onClose
+  //    会一路落到 !!contextClosable(undefined)= false,✕ 不渲染、onClose 永不触发,
+  //    整套是看不出来的死代码。
+  // ② 即便让它能用也不能给:关掉面板会把【唯一的重试入口】一起带走(组件整个 return null),
+  //    而进度条那边仍在打琥珀
+  //    的 INCOMPLETE「失败的行已保留原文」—— 用户被告知产物不完整,却没有任何可点的
+  //    补救动作,只能重跑整轮(多语言/批量下会把已成功的语言全部重走一遍)。
   //
   // 所以关闭这件事本身就不该有:面板承载的是重试与查看失败行,它该留到用户处理完
   // 或下一轮 runTranslation 开头的 clearFailures() 为止。要收走视觉噪音,关进度条
@@ -156,11 +157,11 @@ export default function TranslateFailurePanel({
                   复制/导出右)同一模式。注意不要用 antd 的 action 槽:那会把按钮
                   【竖排】在四行文字旁边,在这块通栏面板里拉出近八百像素的空洞。 */}
               <Space size="small" wrap>
-                <Button size="small" type="primary" icon={<ReloadOutlined />} onClick={onRetry} disabled={disabled}>
+                <Button size="small" type="primary" icon={<ReloadOutlined aria-hidden />} onClick={onRetry} disabled={disabled}>
                   {t("retryFailedLines")}
                 </Button>
                 {lines.length > 0 && (
-                  <Button size="small" icon={<UnorderedListOutlined />} onClick={() => setModalOpen(true)}>
+                  <Button size="small" icon={<UnorderedListOutlined aria-hidden />} onClick={() => setModalOpen(true)}>
                     {t("viewFailedLines")}
                   </Button>
                 )}
@@ -219,11 +220,11 @@ export default function TranslateFailurePanel({
               <Space size="small" wrap>
                 {/* hasLineFailures already rendered a retry button — avoid duplicating */}
                 {!hasLineFailures && (
-                  <Button size="small" type="primary" icon={<ReloadOutlined />} onClick={onRetry} disabled={disabled}>
+                  <Button size="small" type="primary" icon={<ReloadOutlined aria-hidden />} onClick={onRetry} disabled={disabled}>
                     {t("retryFailedLines")}
                   </Button>
                 )}
-                <Button size="small" icon={<CopyOutlined />} onClick={copyAllLangs}>
+                <Button size="small" icon={<CopyOutlined aria-hidden />} onClick={copyAllLangs}>
                   {t("copyAllFailedLanguages")}
                 </Button>
               </Space>
@@ -237,7 +238,7 @@ export default function TranslateFailurePanel({
         onCancel={() => setModalOpen(false)}
         title={t("failedLinesModalTitle", { count: lines.length })}
         footer={[
-          <Button key="copy" icon={<CopyOutlined />} onClick={copyAll}>
+          <Button key="copy" icon={<CopyOutlined aria-hidden />} onClick={copyAll}>
             {t("copyAllFailed")}
           </Button>,
           <Button key="close" type="primary" onClick={() => setModalOpen(false)}>
@@ -256,23 +257,26 @@ export default function TranslateFailurePanel({
                 className="font-mono"
                 style={{
                   color: token.colorTextTertiary,
-                  marginRight: 12,
+                  // logical: this is a line-number gutter — the gap and the
+                  // alignment both have to face the content, which flips with the
+                  // reading direction (same trap as text-diff's .ln)
+                  marginInlineEnd: 12,
                   fontSize: 12,
                   letterSpacing: "0.04em",
                   display: "inline-block",
                   minWidth: `${numWidth + 1}ch`,
-                  textAlign: "right",
+                  textAlign: "end",
                 }}>
                 {/* 物理行号 → 单元序数 → 行序号(见 posOf)。 */}
                 {String(posOf(item) ?? idx + 1).padStart(numWidth, "0")}
               </span>
               {showFile && item.file && (
-                <Tag style={{ marginRight: 8 }} color="default">
+                <Tag style={{ marginInlineEnd: 8 }} color="default">
                   {item.file}
                 </Tag>
               )}
               {showLang && item.lang && (
-                <Tag style={{ marginRight: 8 }} color="default">
+                <Tag style={{ marginInlineEnd: 8 }} color="default">
                   {item.lang}
                 </Tag>
               )}

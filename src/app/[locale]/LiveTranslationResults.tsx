@@ -119,7 +119,7 @@ const LiveTranslationResults = ({ store, processedCount }: LiveTranslationResult
       {emptyHint ? (
         <div style={{ padding: "16px 14px 20px", color: token.colorTextTertiary }}>
           {/* 一行都还没处理过才转圈;已经在处理却零成功,转圈就是在撒谎。 */}
-          {processedCount === 0 && <Spin size="small" style={{ marginRight: 8 }} />}
+          {processedCount === 0 && <Spin size="small" style={{ marginInlineEnd: 8 }} />}
           <span style={{ fontSize: 13 }}>{emptyHint}</span>
         </div>
       ) : (

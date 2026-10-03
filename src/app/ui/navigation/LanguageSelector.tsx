@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Button, Dropdown, Input, Drawer, Row, Col, theme, Grid } from "antd";
 import { TranslationOutlined, CheckOutlined } from "@ant-design/icons";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { routing } from "@/i18n/routing";
 import { LOCALE_STORAGE_KEY } from "@/app/localeRedirect";
 
@@ -45,7 +45,7 @@ const LABELS: Record<string, string> = {
  *
  * ⚠ 这份列表【必须】跟着 routing.locales 走，不能自己写死一份：单语言/语种子集
  *   构建（scripts/buildWithLang.js）只产出其中一个 locale 的路由，而写死的列表照样
- *   把 18 个语种都列出来 —— 点任何一个都落到没构建出来的路由上。
+ *   把全量语种都列出来 —— 点子集外的任何一个都落到没构建出来的路由上。
  *   同一份派生写法 img-prompt 的 ui/navigation/config.ts 已经在用。
  */
 const LANGUAGES: readonly Language[] = Object.keys(LABELS)
@@ -58,6 +58,7 @@ export function LanguageSelector() {
   const router = useRouter();
   const pathname = usePathname();
   const locale = useLocale();
+  const t = useTranslations();
   const { token } = theme.useToken();
   const screens = Grid.useBreakpoint();
   const isMobile = !screens.md;
@@ -91,8 +92,8 @@ export function LanguageSelector() {
     <>
       <Input
         allowClear
-        aria-label="Search language"
-        placeholder="Search language / 语言 / Idioma..."
+        aria-label={t("common.searchLanguage")}
+        placeholder={t("common.searchLanguage")}
         prefix={<TranslationOutlined />}
         value={langQuery}
         autoFocus={isMobile ? false : langOpen}
@@ -110,14 +111,14 @@ export function LanguageSelector() {
                   size={isMobile ? "middle" : "small"}
                   type={selected ? "primary" : "text"}
                   aria-current={selected ? "true" : undefined}
-                  style={{ justifyContent: "space-between", display: "flex", width: "100%", textAlign: "left" }}
+                  style={{ justifyContent: "space-between", display: "flex", width: "100%", textAlign: "start" }}
                   onClick={() => {
                     handleLanguageChange(lang.key);
                     setLangOpen(false);
                   }}>
                   <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {lang.label}
-                    <span style={{ opacity: 0.7, marginLeft: 6 }}>({lang.key})</span>
+                    <span style={{ opacity: 0.7, marginInlineStart: 6 }}>({lang.key})</span>
                   </span>
                   {selected && <CheckOutlined aria-hidden />}
                 </Button>
@@ -125,7 +126,7 @@ export function LanguageSelector() {
             );
           })}
         </Row>
-        {filteredLanguages.length === 0 && <div style={{ padding: 8, opacity: 0.45 }}>No match</div>}
+        {filteredLanguages.length === 0 && <div style={{ padding: 8, opacity: 0.45 }}>{t("common.noMatchFound")}</div>}
       </div>
     </>
   );
@@ -148,7 +149,7 @@ export function LanguageSelector() {
   // 交给 isMobile 的话静态 HTML 永远出移动分支，hydrate 后桌面才补上语言名，头部会抖。
   // isMobile 只留面板形态（Drawer / Dropdown）的选择，那要点开才可见。
   const trigger = (
-    <Button className="lang-btn" type="text" icon={<TranslationOutlined />} aria-label="Select language" onClick={isMobile ? () => setLangOpen(true) : undefined}>
+    <Button className="lang-btn" type="text" icon={<TranslationOutlined />} aria-label={t("common.selectLanguage")} onClick={isMobile ? () => setLangOpen(true) : undefined}>
       {currentLanguage}
     </Button>
   );
@@ -158,7 +159,7 @@ export function LanguageSelector() {
       {isMobile ? (
         <>
           {trigger}
-          <Drawer title="Select Language / 选择语言" placement="bottom" onClose={() => setLangOpen(false)} open={langOpen} size="default" styles={{ body: { padding: 16 } }}>
+          <Drawer title={t("common.selectLanguage")} placement="bottom" onClose={() => setLangOpen(false)} open={langOpen} size="default" styles={{ body: { padding: 16 } }}>
             {renderLanguageList()}
           </Drawer>
         </>

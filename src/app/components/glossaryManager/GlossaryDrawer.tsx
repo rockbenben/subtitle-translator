@@ -161,13 +161,13 @@ const GlossaryDrawer = ({ open, onClose }: { open: boolean; onClose: () => void 
         <Select aria-labelledby="glossary-lang-label" style={{ minWidth: 200 }} showSearch={{ optionFilterProp: "label" }} value={selectedLang} onChange={setSelectedLang} options={LANG_OPTIONS} />
         <Tooltip title={t("tsvHint")}>
           <Upload accept=".tsv,.txt" showUploadList={false} beforeUpload={importTsv}>
-            <Button icon={<UploadOutlined />}>{t("importTsv")}</Button>
+            <Button icon={<UploadOutlined aria-hidden />}>{t("importTsv")}</Button>
           </Upload>
         </Tooltip>
         {/* Split button: click = current language (2-col, DeepL-TSV compatible);
             menu = all languages (3-col with targetLang). */}
         <Space.Compact>
-          <Button icon={<DownloadOutlined />} onClick={exportTsv} disabled={allTerms.length === 0}>
+          <Button icon={<DownloadOutlined aria-hidden />} onClick={exportTsv} disabled={allTerms.length === 0}>
             {t("exportTsv")}
           </Button>
           <Dropdown
@@ -178,7 +178,9 @@ const GlossaryDrawer = ({ open, onClose }: { open: boolean; onClose: () => void 
               },
             }}
             disabled={allTerms.length === 0}>
-            <Button icon={<DownOutlined />} />
+            {/* The split button's toggle half has no text of its own, so without a
+                label its only accessible name was antd's English glyph name ("down"). */}
+            <Button icon={<DownOutlined aria-hidden />} aria-label={tCommon("exportOptions")} />
           </Dropdown>
         </Space.Compact>
       </Space>
@@ -194,7 +196,7 @@ const GlossaryDrawer = ({ open, onClose }: { open: boolean; onClose: () => void 
         {t("langHint")}
       </Typography.Paragraph>
       {duplicateSources.size > 0 && <Alert type="warning" showIcon title={t("duplicateHint")} style={{ marginBottom: 12 }} />}
-      <Button block type="dashed" icon={<PlusOutlined />} style={{ marginBottom: 12 }} onClick={addTerm}>{t("addTerm")}</Button>
+      <Button block type="dashed" icon={<PlusOutlined aria-hidden />} style={{ marginBottom: 12 }} onClick={addTerm}>{t("addTerm")}</Button>
       <Table
         size="small"
         rowKey="__originalIdx"
