@@ -156,6 +156,11 @@ export const useAppMenu = () => {
 
   const currentToolKey = PATH_TO_KEY[CURRENT_TOOL_PATH];
 
+  // aria-hidden on every group icon: antd renders a submenu title as a
+  // div[role=menuitem] with no aria-label, so its accessible name is computed
+  // from its contents — the icon's built-in English glyph name landed in front of
+  // the translated label on every page ("global أدوات الترجمة"). The label already
+  // names the item; the icon is decoration.
   const menuItems = [
     {
       label: <Link href={`/${locale}`}>{currentToolKey ? t(`tools.${currentToolKey}.title`) : t("navigation.home")}</Link>,
@@ -168,31 +173,31 @@ export const useAppMenu = () => {
     {
       label: t("navigation.translate"),
       key: "translate",
-      icon: <GlobalOutlined />,
+      icon: <GlobalOutlined aria-hidden />,
       children: generateCategoryItems(projectCategories.translate),
     },
     {
       label: t("navigation.textParser"),
       key: "textParser",
-      icon: <FileTextOutlined />,
+      icon: <FileTextOutlined aria-hidden />,
       children: generateCategoryItems(projectCategories.textParser),
     },
     {
       label: t("navigation.jsonParser"),
       key: "jsonParser",
-      icon: <DatabaseOutlined />,
+      icon: <DatabaseOutlined aria-hidden />,
       children: generateCategoryItems(projectCategories.jsonParser),
     },
     {
       label: t("navigation.dataParser"),
       key: "dataParser",
-      icon: <FileSearchOutlined />,
+      icon: <FileSearchOutlined aria-hidden />,
       children: generateCategoryItems(projectCategories.dataParser),
     },
     {
       label: t("navigation.otherTools"),
       key: "otherTools",
-      icon: <ToolOutlined />,
+      icon: <ToolOutlined aria-hidden />,
       children: otherToolsItems,
     },
     {

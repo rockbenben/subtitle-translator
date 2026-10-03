@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 import { Layout, Menu, Space, Button, Dropdown, Drawer, Flex, theme } from "antd";
 import { GithubOutlined, QqOutlined, DiscordOutlined, MenuOutlined, SunOutlined, MoonOutlined, TeamOutlined, SendOutlined } from "@ant-design/icons";
 import { useTheme } from "next-themes";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { getLangDir } from "rtl-detect";
 import { useAppMenu } from "@/app/components/projects";
 import { isChineseLocale } from "@/app/utils";
@@ -35,6 +35,7 @@ export function Navigation() {
   const pathname = usePathname();
   const { resolvedTheme, setTheme } = useTheme();
   const locale = useLocale();
+  const t = useTranslations();
   const { token } = theme.useToken();
   const [drawerOpen, setDrawerOpen] = useState(false);
 
@@ -85,15 +86,15 @@ export function Navigation() {
             globals.css 的 `.nav-primary` 一节：静态导出只有一份 HTML，任何 JS
             判据都必然有一侧的首屏是错的（两侧代价都实测过，写在那条注释里）。 */}
         <Flex align="center" className="nav-left" style={{ flex: 1, minWidth: 0 }}>
-          <Button className="nav-burger" type="text" icon={<MenuOutlined style={iconStyle} />} onClick={() => setDrawerOpen(true)} aria-label="Open navigation" />
-          <nav aria-label="Primary" className="nav-primary">
+          <Button className="nav-burger" type="text" icon={<MenuOutlined style={iconStyle} />} onClick={() => setDrawerOpen(true)} aria-label={t("common.openNavigation")} />
+          <nav aria-label={t("common.primaryNav")} className="nav-primary">
             <Menu selectedKeys={[currentMenuKey]} mode="horizontal" items={menuItems} style={{ flex: 1, minWidth: 0, border: "none", background: "transparent" }} />
           </nav>
         </Flex>
         {/* 抽屉常驻（内容懒渲染）。两处 nav 同名不冲突：任一时刻只有一处未被
             display:none 隐藏，被隐藏的那个不会暴露给辅助技术。 */}
         <Drawer placement={drawerSide} open={drawerOpen} onClose={() => setDrawerOpen(false)} size="default" styles={{ body: { padding: 0 } }}>
-          <nav aria-label="Primary">
+          <nav aria-label={t("common.primaryNav")}>
             <Menu selectedKeys={[currentMenuKey]} mode="inline" items={menuItems} style={{ border: "none" }} />
           </nav>
         </Drawer>
@@ -138,14 +139,14 @@ export function Navigation() {
                 },
               ],
             }}>
-            <Button type="text" icon={<TeamOutlined style={iconStyle} />} aria-label="Community links" />
+            <Button type="text" icon={<TeamOutlined style={iconStyle} />} aria-label={t("common.communityLinks")} />
           </Dropdown>
 
           {/* antd Button with href renders a single <a class="ant-btn"> — avoids
               the invalid <a><button></a> nesting + unnamed outer anchor. */}
-          <Button type="text" href={DEFAULT_GITHUB} target="_blank" rel="noopener noreferrer" icon={<GithubOutlined style={iconStyle} />} aria-label="View on GitHub" />
+          <Button type="text" href={DEFAULT_GITHUB} target="_blank" rel="noopener noreferrer" icon={<GithubOutlined style={iconStyle} aria-hidden />} aria-label={t("common.viewOnGitHub")} />
 
-          <Button type="text" icon={themeIcon} onClick={handleThemeToggle} aria-label="Toggle theme" />
+          <Button type="text" icon={themeIcon} onClick={handleThemeToggle} aria-label={t("common.toggleTheme")} />
         </Space>
       </Flex>
     </Header>
