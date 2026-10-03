@@ -37,7 +37,7 @@
   "common": {
     "exportFolder": "Dossier d'export",
     "exportFolderDefault": "Les exports vont dans le dossier de téléchargement par défaut.",
-    "exportFolderBlocked": "Le navigateur refuse le Bureau, Documents, Téléchargements et le dossier utilisateur eux-mêmes : choisissez un sous-dossier ou un autre dossier.",
+    "exportFolderBlocked": "Le navigateur n'autorise pas le choix du Bureau, Documents, Téléchargements et le dossier utilisateur eux-mêmes : choisissez un sous-dossier ou un autre dossier.",
     "exportFolderCurrent": "Les exports vont dans {dir}",
     "exportFolderReset": "Revenir au dossier de téléchargement",
     "exportFolderFailed": "Impossible de définir le dossier d'export.",
@@ -50,7 +50,7 @@
     "partialExportFailed": "Échec de l'export de certaines langues : {items}",
     "userGuide": "Guide d'utilisation",
     "apiKeyPrivacy": "Enregistrée uniquement dans ce navigateur, jamais synchronisée avec un serveur.",
-    "dragAndDropText": "Cliquez ou glissez un fichier ici pour télécharger",
+    "dragAndDropText": "Cliquez ou glissez un fichier ici pour téléverser",
     "supportedFormats": "Formats supportés :",
     "configuration": "Configuration",
     "operation": "Opération",
@@ -92,7 +92,7 @@
     "multiLanguageModeTooltip": "Traduire vers plusieurs langues simultanément, enregistrées séparément",
     "translate": "Traduire",
     "totalLanguages": "Total langues :",
-    "resetUploadTooltip": "Effacer l'entrée actuelle et les fichiers téléchargés",
+    "resetUploadTooltip": "Effacer l'entrée actuelle et les fichiers téléversés",
     "resetUploadSuccess": "Effacé",
     "extractText": "Extraire le texte",
     "translationResult": "Résultat",
@@ -119,7 +119,7 @@
     "enterApiUrl": "Veuillez configurer l'URL de l'API dans « Plus de paramètres Provider ».",
     "serviceUnavailable": "{service} est temporairement inaccessible — vérifiez le réseau et l'adresse du service, réessayez plus tard ou choisissez un autre service de traduction.",
     "serviceUnavailableSwitched": "{service} est temporairement inaccessible : basculement automatique vers {fallback}. Vérifiez-le puis revenez-y dans les paramètres si vous souhaitez continuer à l'utiliser.",
-    "noFileUploaded": "Veuillez d'abord télécharger un fichier.",
+    "noFileUploaded": "Veuillez d'abord téléverser un fichier.",
     "translationExported": "Traduction terminée, fichiers exportés",
     "noSourceText": "Veuillez entrer ou coller du texte.",
     "textExtracted": "Texte extrait, ",
@@ -161,19 +161,19 @@
     "retryCount": "Nombre de tentatives",
     "retryCountTooltip": "Nombre de tentatives en cas d'échec de la traduction",
     "requestTimeoutSec": "Délai d'attente",
-    "requestTimeoutSecTooltip": "Attente maximale par requête (secondes). La réflexion des LLM prend plus de temps ; 180 s ou plus recommandé.",
+    "requestTimeoutSecTooltip": "Attente maximale par requête (secondes). Le raisonnement des LLM prend plus de temps ; 180 s ou plus recommandé.",
     "customExportFilename": "Modèle de nom de fichier",
     "customExportFilenameTooltip": "'{'name'}' = nom original, '{'lang'}' = langue, '{'ext'}' = extension, '{'date'}' = date, '{'time'}' = heure; en mode multilingue, '{'lang'}' est ajouté automatiquement pour éviter les conflits de noms",
     "partialFailureTitle": "{count} ligne(s) ont échoué",
-    "partialFailureDesc": "Ces lignes conservent le texte d'origine, la structure du fichier reste intacte. Réessayer ne renvoie qu'elles ; le reste vient du cache.",
+    "partialFailureDesc": "Ces lignes conservent le texte d'origine, la structure du fichier reste intacte. Relancer ne renverra que ces lignes ; le reste vient du cache.",
     "partialFailureWhy": "Fréquent avec les services gratuits et auto-hébergés — ce n'est généralement pas votre configuration.",
     "retryFailedLines": "Réessayer les lignes en échec",
-    "viewFailedLines": "Voir les lignes échouées",
+    "viewFailedLines": "Voir les lignes en échec",
     "failedLinesModalTitle": "{count} ligne(s) échouée(s)",
     "copyAllFailed": "Tout copier",
     "closeFailedLinesModal": "Fermer",
     "failedLanguagesTitle": "Échec de la traduction de {count} langue(s)",
-    "failedLanguagesDesc": "Tous les lots de ces langues ont échoué — généralement à cause de défauts de LLM local, de limites de débit API ou du refus du modèle pour une langue spécifique. Copiez les codes et relancez uniquement avec elles (collez dans 'Paramètres multilingues') ; les autres utiliseront le cache et seront ignorées.",
+    "failedLanguagesDesc": "Tous les lots de ces langues ont échoué — généralement à cause de un LLM local instable, de limites de débit API ou du refus du modèle pour une langue spécifique. Copiez les codes et relancez uniquement avec elles (collez dans 'Paramètres multilingues') ; les autres utiliseront le cache et seront ignorées.",
     "copyAllFailedLanguages": "Copier les codes de langue",
     "apiStatusFreeApi": "Free API",
     "apiStatusNeedsConfig": "Config. requise",
@@ -217,10 +217,25 @@
     "errorHintRelay403": "L'API a renvoyé 403 Forbidden — activez « Relais API » dans « Plus de paramètres Provider »",
     "errorHintCors": "Impossible de joindre cette adresse — vérifiez l'adresse et que le service autorise les requêtes cross-origin (CORS). Les passerelles auto-hébergées et les modèles locaux doivent l'activer eux-mêmes, ou utilisez votre propre relais API",
     "errorHintGeminiKey": "Impossible de joindre Gemini : vérifiez d'abord votre réseau (certains réseaux ne peuvent pas atteindre directement les services Google). Si le réseau fonctionne, Google rejette depuis le 19 juin 2026 les clés API sans restriction — régénérez votre clé dans AI Studio (restreinte par défaut) ou ajoutez une restriction Gemini API à l'ancienne clé dans la console Google Cloud",
-    "rateLimitCooldown": "Limite de requêtes atteinte — courte pause, nouvelle tentative automatique"
+    "rateLimitCooldown": "Limite de requêtes atteinte — courte pause, nouvelle tentative automatique",
+    "faqHeading": "Questions fréquentes",
+    "homeIndexEyebrow": "Sommaire",
+    "homeCategoryEyebrow": "{n} catégories",
+    "openNavigation": "Ouvrir la navigation",
+    "goHome": "Aller à la page d’accueil",
+    "primaryNav": "Navigation principale",
+    "toggleTheme": "Changer de thème",
+    "communityLinks": "Liens de la communauté",
+    "viewOnGitHub": "Voir sur GitHub",
+    "toolCategories": "Catégories d’outils",
+    "searchLanguage": "Rechercher une langue",
+    "selectLanguage": "Choisir une langue",
+    "noMatchFound": "Aucun résultat",
+    "backToTop": "Revenir en haut",
+    "exportOptions": "Options d’exportation"
   },
   "SubtitleTranslator": {
-    "clientDescription": "Téléchargez des sous-titres ou collez le contenu. Sélectionnez la langue cible pour une traduction rapide. Supporte le traitement par lot et conserve la chronologie.",
+    "clientDescription": "Téléversez des sous-titres ou collez le contenu. Sélectionnez la langue cible pour une traduction rapide. Supporte le traitement par lot et conserve la chronologie.",
     "liveResults": "Résultats en direct",
     "liveWaiting": "En attente de la première ligne…",
     "liveNotTranslated": "Non traduit",
@@ -234,8 +249,8 @@
     "translationFirst": "Traduction au-dessus",
     "originalFirst": "Traduction en dessous",
     "unsupportedSub": "Format non reconnu. Assurez-vous que le fichier est SRT, ASS, VTT, SBV ou LRC.",
-    "noFileUploaded": "Veuillez d'abord télécharger un fichier de sous-titres.",
-    "noSourceText": "Veuillez télécharger un fichier ou coller du texte.",
+    "noFileUploaded": "Veuillez d'abord téléverser un fichier de sous-titres.",
+    "noSourceText": "Veuillez téléverser un fichier ou coller du texte.",
     "noExtractedText": "Aucun contenu extrait, vérifiez le format du fichier.",
     "textExtracted": "Texte de sous-titres extrait, ",
     "bilingualError": "Balises de style complexes détectées. Le mode bilingue peut causer des erreurs de format. Recommandé de désactiver 'Bilingue'.",
@@ -325,7 +340,7 @@
     "batchSize": "Lignes simultanées",
     "batchSizeExtra": "Requêtes simultanées en mode sans contexte. Trop élevé déclenche les limites de l'API",
     "contextBatchSize": "Concurrence du Mode Contexte",
-    "contextBatchSizeExtra": "Lots simultanés en mode contexte. Ajustez « lignes de contexte » d'abord — plus sûr pour la vitesse. Augmenter ceci risque des limites",
+    "contextBatchSizeExtra": "Lots simultanés en mode contexte. Ajustez « lignes de contexte » d'abord — c'est le réglage le plus sûr pour gagner en vitesse. Augmenter ceci risque des limites",
     "maxTokens": "Tokens Maximum",
     "maxTokensExtra": "Limite de tokens de sortie du modèle. 0 = sans limite (par défaut du fournisseur). Définir 2048-4096 pour les modèles locaux (Ollama/llama.cpp) victimes de boucles de répétition. Atteindre la limite déclenche une erreur visible (aucune demi-traduction en cache) ; si une traduction longue légitime est coupée, augmentez cette valeur.",
     "contextWindow": "Lignes de contexte",
@@ -354,7 +369,7 @@
     "presetEmptyHint": "Aucun préréglage — modifiez et cliquez sur Enregistrer",
     "presetDefault": "Prompt par défaut",
     "presetDefaultReadonly": "Le prompt par défaut est intégré : il ne peut être ni modifié ni supprimé. Utilisez « Enregistrer comme nouveau préréglage » pour personnaliser.",
-    "qwenMtDomains": "Invites de domaine (en anglais uniquement)",
+    "qwenMtDomains": "Prompts de domaine (en anglais uniquement)",
     "sendSystemPrompt": "Envoyer le prompt system",
     "sendSystemPromptExtra": "À désactiver uniquement quand le chat template rejette le rôle system — erreur typique \"Conversations must start with a user prompt\" (par ex. famille Gemma).",
     "selectService": "Sélectionner le service de traduction",
@@ -373,7 +388,7 @@
       "title": "Traducteur Sous-titres",
       "description": "Traduction par lot SRT, ASS, VTT, SBV, LRC. 120+ langues.",
       "metaTitle": "Traducteur sous-titres gratuit | SRT/VTT/ASS IA bilingue",
-      "metaDescription": "Traducteur IA sous-titres SRT, ASS, VTT, SBV, LRC. 25+ moteurs: DeepSeek, Claude, GPT, DeepL. 120+ langues, timecodes, bilingue.",
+      "metaDescription": "Traducteur IA sous-titres SRT, ASS, VTT, SBV, LRC. 30+ moteurs: DeepSeek, Claude, GPT, DeepL. 120+ langues, timecodes, bilingue.",
       "faq": [
         {
           "q": "Quels formats de sous-titres sont pris en charge ? SRT, ASS, VTT, SBV et LRC peuvent-ils être traduits ?",
@@ -381,7 +396,7 @@
         },
         {
           "q": "Sous-titres : faut-il utiliser la traduction automatique ou la traduction IA?",
-          "a": "Pour le moins cher, traduction automatique ; pour la qualité, IA/LLM. La traduction automatique (MT) est gratuite ou bon marché mais plate pour les dialogues : la version gratuite de Google ne coûte rien (les entrées longues sont tronquées) ; DeepL est premium pour les langues européennes ; Qwen-MT et Azure Translate sont similaires. Les grands modèles IA (LLM) facturent au token mais le rendu est nettement plus naturel — DeepSeek est le meilleur rapport qualité-prix pour les saisons entières ; Claude Sonnet ou GPT-5 donnent les dialogues les plus naturels ; le contexte d'1M tokens de Gemini 3 Pro gère les sous-titres très longs. La configuration des moteurs est partagée avec [Traducteur JSON](../json-translate) et [Traducteur Markdown](../md-translator)."
+          "a": "Pour le moins cher, traduction automatique ; pour la qualité, IA/LLM. La traduction automatique (MT) est gratuite ou bon marché mais plate pour les dialogues : la version gratuite de Google ne coûte rien (les entrées longues sont tronquées) ; DeepL est premium pour les langues européennes ; Qwen-MT et Azure Translate sont similaires. Les grands modèles IA (LLM) facturent au token mais le rendu est nettement plus naturel — DeepSeek est le meilleur rapport qualité-prix pour les saisons entières ; Claude Sonnet ou GPT-6 donnent les dialogues les plus naturels ; le contexte d'1M tokens de Gemini gère les sous-titres très longs. La configuration des moteurs est partagée avec [Traducteur JSON](../json-translate) et [Traducteur Markdown](../md-translator)."
         },
         {
           "q": "Comment créer des sous-titres bilingues pour YouTube ou l'apprentissage des langues ?",
@@ -417,7 +432,7 @@
         "Timecodes intouchés — seul le texte est traduit, timing original préservé",
         "Détection automatique d'encodage UTF-8/UTF-16/GBK",
         "Position des sous-titres bilingues : au-dessus (apprentissage) ou en-dessous (visionnage)",
-        "25+ moteurs de traduction : Google gratuit, DeepSeek, Claude, GPT, Gemini, DeepL, Qwen-MT",
+        "30+ moteurs de traduction : Google gratuit, DeepSeek, Claude, GPT, Gemini, DeepL, Qwen-MT",
         "Compatible avec YouTube, Vimeo, Premiere, DaVinci Resolve, Aegisub"
       ]
     },
@@ -446,7 +461,7 @@
       "description": "Correspondance regex, tri, filtrage et plus pour le traitement en masse de texte"
     },
     "dataBatch": {
-      "title": "Processeur de texte",
+      "title": "Processeur de données par lots",
       "description": "Traitement par lots de données Excel — déduplication, extraction de colonnes, fusion, règles enchaînées"
     },
     "textJoiner": {
@@ -505,17 +520,17 @@
     "externalTools": {
       "legendtalk": "Table ronde des penseurs IA",
       "imgprompt": "Prompts d'images IA",
-      "lives": "Thousand Lives",
-      "learndata": "LearnData Notes Open Source"
+      "learndata": "LearnData Notes Open Source",
+      "hub365": "365 Open Source"
     }
   },
   "Metadata": {
     "title": "ToolsByAI | Outils de Traduction & Dev IA Gratuits",
-    "description": "ToolsByAI: 19 outils open source gratuits pour la traduction de sous-titres, Markdown, JSON i18n et le traitement par lots. 25+ moteurs IA.",
+    "description": "ToolsByAI: 19 outils open source gratuits pour la traduction de sous-titres, Markdown, JSON i18n et le traitement par lots. 30+ moteurs IA.",
     "homeTitle": "Suite ToolsByAI",
     "homeDescription": "19 outils pour traduction, texte, JSON et conversion de données. Boostez l'efficacité des développeurs et créateurs.",
     "ogTitle": "ToolsByAI | Outils de Traduction & Dev IA Gratuits",
-    "ogDescription": "ToolsByAI: 19 outils open source gratuits pour la traduction de sous-titres, Markdown, JSON i18n et le traitement par lots. 25+ moteurs IA."
+    "ogDescription": "ToolsByAI: 19 outils open source gratuits pour la traduction de sous-titres, Markdown, JSON i18n et le traitement par lots. 30+ moteurs IA."
   },
   "languages": {
     "auto": "Détection auto",
@@ -650,7 +665,7 @@
   },
   "feedback": {
     "feedback1": "Commentaires & Suggestions",
-    "feedback2": "Si vous rencontrez des problèmes ou avez des suggestions, dites-le moi!",
+    "feedback2": "Si vous rencontrez des problèmes ou avez des suggestions, dites-le-moi ! Vos retours orientent les développements futurs.",
     "feedback3": "Décrivez votre cas d'usage, problème ou idée. Je lis chaque message et répondrai/optimiserai dès que possible.",
     "reaction0": "J'aime",
     "reaction1": "Soutien",

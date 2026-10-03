@@ -5,7 +5,7 @@
     "colSource": "原文",
     "colTarget": "訳語",
     "langHint": "用語は対象言語ごとに分かれています。上の言語を切り替えて編集してください。翻訳時はその対象言語の用語のみ適用されます",
-    "exampleHint": "用語を追加すると、翻訳時に原語へ指定訳語が自動的に適用されます。システムプロンプトに書く必要はありません",
+    "exampleHint": "用語を追加すると、翻訳時に原文の語に指定訳語が自動的に適用されます。システムプロンプトに書く必要はありません",
     "presetCreated": "用語集を作成しました",
     "presetRenamed": "用語集の名前を変更しました",
     "presetDeleted": "用語集を削除しました",
@@ -28,7 +28,7 @@
     "termCount": "{count, plural, other {{count} 件の用語}}",
     "noTermsForLang": "この翻訳先言語の用語はまだありません",
     "importTsv": "TSV をインポート",
-    "tsvHint": "TSV 形式: 1 行に「原語 ⇥ 訳語」（タブ区切り）。表計算ソフトからそのまま貼り付けできます。任意の第 3 列に対象言語コード（zh、ja など）を入れると 1 つのファイルで複数言語を取り込めます",
+    "tsvHint": "TSV 形式: 1 行に「原語 ⇥ 訳語」（タブ区切り）。表計算ソフトからそのまま貼り付けできます。任意の第 3 列に対象言語コード（zh、ja など）を入れると 1 つのファイルで複数言語をインポートできます",
     "exportTsv": "TSV をエクスポート",
     "exportAllTsv": "全言語をエクスポート",
     "importDone": "{count} 件インポートしました",
@@ -37,7 +37,7 @@
   "common": {
     "exportFolder": "エクスポート先フォルダー",
     "exportFolderDefault": "エクスポートは既定のダウンロードフォルダーに保存されます。",
-    "exportFolderBlocked": "ブラウザーはデスクトップ・ドキュメント・ダウンロード・ユーザーフォルダー自体を選べません。サブフォルダーか別のフォルダーを選んでください。",
+    "exportFolderBlocked": "ブラウザはデスクトップ・ドキュメント・ダウンロード・ユーザーフォルダー自体を選べません。サブフォルダーか別のフォルダーを選んでください。",
     "exportFolderCurrent": "エクスポート先: {dir}",
     "exportFolderReset": "ダウンロードフォルダーに戻す",
     "exportFolderFailed": "エクスポート先フォルダーを設定できませんでした。",
@@ -49,13 +49,13 @@
     "ignoredLangCodes": "認識できない言語コードを無視しました：{codes}",
     "partialExportFailed": "一部の言語のエクスポートに失敗しました：{items}",
     "userGuide": "利用ガイド",
-    "apiKeyPrivacy": "このブラウザーにのみ保存され、サーバーには同期されません。",
+    "apiKeyPrivacy": "このブラウザにのみ保存され、サーバーには同期されません。",
     "dragAndDropText": "クリックまたはファイルをここにドラッグしてアップロード",
     "supportedFormats": "対応フォーマット：",
     "configuration": "設定",
     "operation": "操作",
     "optional": "任意",
-    "pleaseWait": "お待ちください...",
+    "pleaseWait": "お待ちください…",
     "pasteUploadContent": "またはここにテキストを入力・貼り付け",
     "example": "例",
     "sourceLanguage": "翻訳元言語",
@@ -112,7 +112,7 @@
     "sameLanguageTarget": "翻訳元と翻訳先が同じ言語です。自動的に翻訳先を調整しました：",
     "sameLanguageSource": "翻訳元と翻訳先が同じ言語です。自動的に翻訳元を調整しました：",
     "enterApiKey": "APIキーを入力するか、無料APIに切り替えてください。",
-    "enterApiUrl": "「その他のProvider設定」でAPIエンドポイントを設定してください。",
+    "enterApiUrl": "「その他のプロバイダー設定」でAPIエンドポイントを設定してください。",
     "serviceUnavailable": "{service} に一時的に接続できません。ネットワークとサービスのアドレスを確認し、しばらくしてから再試行するか、別の翻訳サービスをご利用ください。",
     "serviceUnavailableSwitched": "{service} に一時的に接続できないため、{fallback} に自動で切り替えました。元のサービスを使い続ける場合は、確認後に設定で戻してください。",
     "noFileUploaded": "処理するファイルをアップロードしてください。",
@@ -150,7 +150,7 @@
     "requestTimeoutSec": "タイムアウト",
     "requestTimeoutSecTooltip": "リクエストあたりの最大待機時間（秒）。LLMの思考時間は長いため、180秒以上を推奨します。",
     "customExportFilename": "エクスポートファイル名の形式",
-    "customExportFilenameTooltip": "'{'name'}' = 元のファイル名, '{'lang'}' = 言語, '{'ext'}' = 拡張子, '{'date'}' = 日付, '{'time'}' = 時間；多言語モードでは '{'lang'}' が自動追加され、ファイル名の衝突を防ぎます",
+    "customExportFilenameTooltip": "'{'name'}' = 元のファイル名, '{'lang'}' = 言語, '{'ext'}' = 拡張子, '{'date'}' = 日付, '{'time'}' = 時間；多言語モードでは '{'lang'}' が自動追加され、ファイル名の競合を防ぎます",
     "partialFailureTitle": "{count}行の翻訳に失敗しました",
     "partialFailureDesc": "これらの行は原文のまま残っており、ファイル構造は保たれています。再試行は該当行だけを送信し、残りはキャッシュから復元します。",
     "partialFailureWhy": "無料・自前サーバーで起きやすく、たいてい設定の問題ではありません。",
@@ -170,13 +170,13 @@
     "apiStatusFailed": "接続失敗",
     "apiStatusTimeout": "接続がタイムアウトしました",
     "testConnection": "接続テスト",
-    "moreProviderSettings": "その他のProvider設定",
+    "moreProviderSettings": "その他のプロバイダー設定",
     "format": "フォーマット",
     "formatTooltip": "フォーマット：空行および先頭・末尾の空白を除去",
     "resultToSource": "結果 ➔ 原文",
     "resultToSourceTooltip": "結果テキストを入力欄に上書き",
     "readOnlyMode": "読み取り専用モード",
-    "readOnlyModeTooltip": "テキストが長すぎるため、エディターは一時的に読み取り専用となり、一部のみをプレビュー表示しています。完全な内容は影響を受けず、処理と書き出しは全文に対して行われます。",
+    "readOnlyModeTooltip": "テキストが長すぎるため、エディターは一時的に読み取り専用となり、一部のみをプレビュー表示しています。完全な内容は影響を受けず、処理とエクスポートは全文に対して行われます。",
     "fileExported": "ファイルをエクスポートしました：{fileName}",
     "exportFailed": "ファイルをエクスポートできませんでした：{fileName}",
     "exportedToFolder": "{dir} に保存しました：{fileName}",
@@ -213,11 +213,26 @@
     "errorHint429": "リクエストが多すぎます。しばらくしてから再試行してください",
     "errorHint456": "今期の翻訳クォータを使い切りました",
     "errorHint5xx": "サーバーエラーです。しばらくしてから再試行してください",
-    "errorHintRelay": "ネットワークエラー（CORS 制限の可能性があります）。「その他のProvider設定」で「API 中継」を有効にしてください",
-    "errorHintRelay403": "API が 403 Forbidden を返しました。「その他のProvider設定」で「API 中継」を有効にしてください",
+    "errorHintRelay": "ネットワークエラー（CORS 制限の可能性があります）。「その他のプロバイダー設定」で「API 中継」を有効にしてください",
+    "errorHintRelay403": "API が 403 Forbidden を返しました。「その他のプロバイダー設定」で「API 中継」を有効にしてください",
     "errorHintCors": "このアドレスに接続できません。アドレスが正しいか、サービス側でクロスオリジン（CORS）が許可されているかを確認してください。自前のゲートウェイやローカルモデルでは自分で有効にする必要があります。または自分の API 中継をご利用ください",
     "errorHintGeminiKey": "Gemini に接続できません。まずネットワークを確認してください（一部のネットワークでは Google サービスに直接接続できません）。ネットワークに問題がなければ、2026年6月19日以降 Google は無制限の API キーを拒否しています。AI Studio でキーを再生成する（デフォルトで制限付き）か、Google Cloud コンソールで既存キーに Gemini API 制限を追加してください",
-    "rateLimitCooldown": "レート制限に達したため少し待機し、自動的に再試行します"
+    "rateLimitCooldown": "レート制限に達したため少し待機し、自動的に再試行します",
+    "faqHeading": "よくある質問",
+    "homeIndexEyebrow": "索引",
+    "homeCategoryEyebrow": "分類 {n} 件",
+    "openNavigation": "ナビゲーションを開く",
+    "goHome": "ホームへ戻る",
+    "primaryNav": "メインナビゲーション",
+    "toggleTheme": "テーマを切り替える",
+    "communityLinks": "コミュニティリンク",
+    "viewOnGitHub": "GitHub で見る",
+    "toolCategories": "ツール分類",
+    "searchLanguage": "言語を検索",
+    "selectLanguage": "言語を選択",
+    "noMatchFound": "該当なし",
+    "backToTop": "トップへ戻る",
+    "exportOptions": "エクスポートオプション"
   },
   "SubtitleTranslator": {
     "clientDescription": "字幕ファイルをアップロードまたは内容を貼り付け、翻訳先言語を選択して素早く翻訳。一括処理に対応し、タイムラインを自動保持。",
@@ -227,7 +242,7 @@
     "liveNoneSucceeded": "この実行ではまだ翻訳できた行がありません — 下の失敗情報をご確認ください",
     "subtitleFormat": "訳文の出力",
     "translatedOnly": "訳文のみ",
-    "bilingual": "対訳",
+    "bilingual": "バイリンガル",
     "exportBoth": "両方",
     "bilingualTooltip": "訳文のみとバイリンガル対照の 2 ファイルを同時に生成",
     "bilingualFormatTooltip": "ASS：原文と訳文に別々のフォント/色を適用可能。SRT：プレーンテキスト、同じキューに重ねて表示。",
@@ -238,7 +253,7 @@
     "noSourceText": "字幕ファイルをアップロードするか、テキストを貼り付けてください。",
     "noExtractedText": "字幕内容が抽出されませんでした。ファイル形式を確認してください。",
     "textExtracted": "字幕テキストを抽出しました、",
-    "bilingualError": "複雑なスタイルタグが検出されました。対訳モードでは書式が崩れる可能性があるため、「対訳」をオフにすることをお勧めします。",
+    "bilingualError": "複雑なスタイルタグが検出されました。対訳モードでは書式が崩れる可能性があるため、「バイリンガル」をオフにすることをお勧めします。",
     "reviewTitle": "対訳レビュー",
     "reviewColSource": "原文",
     "reviewColTarget": "訳文",
@@ -275,7 +290,7 @@
     "assAlignTop": "上部中央",
     "assMarginV": "余白",
     "assAutoWrap": "自動折り返し",
-    "assAutoWrapTooltip": "書き出し時に画面幅とフォントサイズに合わせて長い行を折り返します：文末の句読点の後で優先的に改行し、行頭に句読点を置かず、手動で挿入した改行はすべて保持されます",
+    "assAutoWrapTooltip": "エクスポート時に画面幅とフォントサイズに合わせて長い行を折り返します：文末の句読点の後で優先的に改行し、行頭に句読点を置かず、手動で挿入した改行はすべて保持されます",
     "assAutoWrapCapacity": "約{trans} 字/行（訳文）· {orig}（原文）",
     "previewOriginal": "原文",
     "previewTranslation": "翻訳",
@@ -304,7 +319,7 @@
     "testConfigTooltip": "現在のAPI設定が有効か検証",
     "testConfigSuccess": "API設定は正常です",
     "testConfigFail": "APIテスト失敗、設定を確認してください。",
-    "url": "インターフェースアドレス",
+    "url": "API エンドポイント",
     "urlExtra": "localhostおよびリモートアドレスに対応",
     "endpointDocs": "ドキュメントを見る",
     "deeplxUrlExtra": "任意。空欄にすると当方の公開サーバーを使用します",
@@ -325,11 +340,11 @@
     "batchSize": "同時翻訳行数",
     "batchSizeExtra": "非コンテキストモードでの同時リクエスト数。過大な値は API レート制限を引き起こします",
     "contextBatchSize": "文脈モード並列数",
-    "contextBatchSizeExtra": "コンテキストモードでの同時バッチ数。まず「コンテキスト行数」を調整 —— 速度面で安全。これを上げるとレート制限のリスク",
+    "contextBatchSizeExtra": "コンテキストモードでの同時バッチ数。まず「コンテキスト行数」を調整 —— 速度面で安全。これを上げるとレート制限にかかるリスクがあります",
     "maxTokens": "最大トークン数",
     "maxTokensExtra": "モデルの 1 回の出力トークン数を制限。0 = 無制限（ベンダーデフォルト）。ローカルモデル（Ollama/llama.cpp）は 2048-4096 を推奨、繰り返しループ対策。上限到達時は明示的にエラー（半端な翻訳をキャッシュしない）。正常な翻訳が切れた場合はこの値を大きく。",
     "contextWindow": "コンテキスト行数",
-    "contextWindowExtra": "1 バッチあたりの行数。大きいほどリクエスト数が減り高速化しますが、モデルのトークン上限を超える可能性",
+    "contextWindowExtra": "1 バッチあたりの行数。大きいほどリクエスト数が減り高速化しますが、モデルのトークン上限を超える可能性があります",
     "delayTime": "遅延時間",
     "delayTimeExtra": "リクエストとリクエストの間の待機時間。レート制限に頻繁にかかる場合は大きくして速度を落とします",
     "useRelay": "API 中継",
@@ -373,15 +388,15 @@
       "title": "字幕翻訳機",
       "description": "SRT、ASS、VTT、SBV、LRC字幕を一括翻訳、120以上の言語に対応",
       "metaTitle": "字幕翻訳 - SRT/ASS/VTT/SBV/LRC一括 AI翻訳・バイリンガル",
-      "metaDescription": "AI 字幕翻訳、SRT/ASS/VTT/SBV/LRC 一括変換、DeepSeek/Claude/GPT 25+ エンジン、タイムコード保持で二言語字幕。",
+      "metaDescription": "AI 字幕翻訳、SRT/ASS/VTT/SBV/LRC 一括変換、DeepSeek/Claude/GPT 30+ エンジン、タイムコード保持で二言語字幕。",
       "faq": [
         {
           "q": "対応している字幕フォーマットは？SRT、ASS、VTT、SBV、LRC すべて翻訳できますか？",
-          "a": "SRT、ASS、VTT、SBV、LRC の 5 形式に対応。SRT/VTT は YouTube、HTML5 プレイヤー、クリエイターダッシュボード向け（YouTube 字幕は yt-dlp で書き出し）；ASS/SSA は Aegisub とアニメ字幕グループ向けで、行頭の位置タグ（\\\\an8 など）は翻訳後に自動復元；SBV は YouTube Studio の字幕エディタが書き出すネイティブ形式；LRC は音楽歌詞ファイル向け。ファイルエンコーディング（UTF-8/UTF-16/GBK/Shift-JIS）は jschardet で自動判定。複雑な ASS インライン特効タグ（色、アニメーション、カラオケ）は簡略化されます。"
+          "a": "SRT、ASS、VTT、SBV、LRC の 5 形式に対応。SRT/VTT は YouTube、HTML5 プレイヤー、クリエイターダッシュボード向け（YouTube 字幕は yt-dlp でエクスポート）；ASS/SSA は Aegisub とアニメ字幕グループ向けで、行頭の位置タグ（\\\\an8 など）は翻訳後に自動復元；SBV は YouTube Studio の字幕エディタが書き出すネイティブ形式；LRC は音楽歌詞ファイル向け。ファイルエンコーディング（UTF-8/UTF-16/GBK/Shift-JIS）は jschardet で自動判定。複雑な ASS インライン特効タグ（色、アニメーション、カラオケ）は簡略化されます。"
         },
         {
           "q": "字幕翻訳には機械翻訳と AI 翻訳のどちらを使う？品質と価格はどう違う？",
-          "a": "安さは機械翻訳、品質は AI 大規模言語モデル。機械翻訳（MT）は安価/無料ですが対話の語感が平板：Google 無料版はゼロコスト（長文は切り詰め）；DeepL は欧州言語間で最高品質；Qwen-MT、Azure Translate も同類。AI 大規模言語モデル（LLM）はトークン課金で割高ですが訳文が明らかに自然——コストパフォーマンスは DeepSeek（シーズン作品の大量翻訳に最適）；口語感は Claude Sonnet または GPT-5 が最強；超長字幕は Gemini 3 Pro の 100 万 token コンテキストで処理。エンジン設定は [JSON 翻訳](../json-translate)、[Markdown 翻訳](../md-translator) と共有。"
+          "a": "安さは機械翻訳、品質は AI 大規模言語モデル。機械翻訳（MT）は安価/無料ですが対話の語感が平板：Google 無料版はゼロコスト（長文は切り詰め）；DeepL は欧州言語間で最高品質；Qwen-MT、Azure Translate も同類。AI 大規模言語モデル（LLM）はトークン課金で割高ですが訳文が明らかに自然——コストパフォーマンスは DeepSeek（シーズン作品の大量翻訳に最適）；口語感は Claude Sonnet または GPT-6 が最強；超長字幕は Gemini の 100 万 token コンテキストで処理。エンジン設定は [JSON 翻訳](../json-translate)、[Markdown 翻訳](../md-translator) と共有。"
         },
         {
           "q": "ニコニコ、YouTube の日英二言語字幕や語学学習用字幕を作成できますか？",
@@ -401,7 +416,7 @@
         },
         {
           "q": "字幕をプレーンテキストの台本に変換できますか？特定のセリフだけ書き出せますか？",
-          "a": "「テキスト抽出」ボタンをクリックすると、タイムコードと連番を除いた対話テキストをワンクリックで抽出（自動でクリップボードへコピー）できます。語学学習教材、ポッドキャスト台本、AI 学習データ、声優への引き渡しなどに便利です。より精密な行レベル編集（キーワードでフィルタ、用語の一括置換、接頭辞・接尾辞追加、重複削除・並べ替え）が必要な場合は、書き出し後に [テキストツールボックス](../text-toolbox) の正規表現マッチングと行操作機能と組み合わせるとスムーズです。"
+          "a": "「テキスト抽出」ボタンをクリックすると、タイムコードと連番を除いた対話テキストをワンクリックで抽出（自動でクリップボードへコピー）できます。語学学習教材、ポッドキャスト台本、AI 学習データ、声優への引き渡しなどに便利です。より精密な行レベル編集（キーワードでフィルタ、用語の一括置換、接頭辞・接尾辞追加、重複削除・並べ替え）が必要な場合は、エクスポート後に [テキストツールボックス](../text-toolbox) の正規表現マッチングと行操作機能と組み合わせるとスムーズです。"
         },
         {
           "q": "翻訳後にタイムコードがずれたり文字化け（□□□）する場合は？",
@@ -413,11 +428,11 @@
         }
       ],
       "features": [
-        "SRT、ASS、VTT、SBV、LRC 4 形式対応、ASS 位置タグ（\\\\an8 等）を翻訳後も保持",
+        "SRT、ASS、VTT、SBV、LRC 5 形式対応、ASS 位置タグ（\\\\an8 等）を翻訳後も保持",
         "タイムコード無変更 — テキストのみ翻訳、元の時間情報を完全保持",
         "UTF-8/UTF-16/Shift-JIS 自動エンコード検出",
         "バイリンガル訳文位置：上（学習）または下（視聴）",
-        "25+ 翻訳エンジン：Google 無料、DeepSeek、Claude、GPT、Gemini、DeepL、Qwen-MT",
+        "30+ 翻訳エンジン：Google 無料、DeepSeek、Claude、GPT、Gemini、DeepL、Qwen-MT",
         "ニコニコ、YouTube、Premiere、DaVinci Resolve、Aegisub 互換"
       ]
     },
@@ -446,7 +461,7 @@
       "description": "正規表現マッチング・ソート・フィルタリングなどを統合したテキスト一括処理ツール"
     },
     "dataBatch": {
-      "title": "テキスト処理ツール（自用）",
+      "title": "データ一括処理",
       "description": "Excel 表データの一括重複削除・列抽出・テキスト結合、複数ルールを順次実行"
     },
     "textJoiner": {
@@ -505,17 +520,17 @@
     "externalTools": {
       "legendtalk": "AI思想家ラウンドテーブル",
       "imgprompt": "AI画像プロンプト",
-      "lives": "千世書 人生シミュレーター",
-      "learndata": "LearnData オープンソースノート"
+      "learndata": "LearnData オープンソースノート",
+      "hub365": "365 オープンソース"
     }
   },
   "Metadata": {
     "title": "ToolsByAI | 無料で使えるAI翻訳＆データ処理ツール集",
-    "description": "ToolsByAI、19 個の無料ツール：字幕・Markdown・JSON i18n 翻訳、テキストや JSON 一括処理。25+ AI エンジン。",
+    "description": "ToolsByAI、19 個の無料ツール：字幕・Markdown・JSON i18n 翻訳、テキストや JSON 一括処理。30+ AI エンジン。",
     "homeTitle": "ToolsByAI ツールセット",
     "homeDescription": "19 ツール。多言語翻訳、テキスト処理、JSONデータ変換など、開発者とクリエイターの効率向上を支援。",
     "ogTitle": "ToolsByAI | 無料で使えるAI翻訳＆データ処理ツール集",
-    "ogDescription": "ToolsByAI、19 個の無料ツール：字幕・Markdown・JSON i18n 翻訳、テキストや JSON 一括処理。25+ AI エンジン。"
+    "ogDescription": "ToolsByAI、19 個の無料ツール：字幕・Markdown・JSON i18n 翻訳、テキストや JSON 一括処理。30+ AI エンジン。"
   },
   "languages": {
     "auto": "自動検出",

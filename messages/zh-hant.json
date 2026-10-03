@@ -4,7 +4,7 @@
     "defaultName": "我的術語表",
     "colSource": "原文",
     "colTarget": "譯法",
-    "langHint": "詞條按目標語言分組：在上方切換語言進行編輯，翻譯時只套用當前目標語言的詞條",
+    "langHint": "詞條按目標語言分組：在上方切換語言進行編輯，翻譯時只套用目前目標語言的詞條",
     "exampleHint": "新增詞條後，原文詞在翻譯時會自動採用指定譯法，無需寫進系統提示詞",
     "presetCreated": "已新增術語表",
     "presetRenamed": "已重新命名術語表",
@@ -55,8 +55,8 @@
     "configuration": "配置選項",
     "operation": "操作",
     "optional": "可選",
-    "pleaseWait": "請稍等...",
-    "pasteUploadContent": "或在此輸入、粘貼文字",
+    "pleaseWait": "請稍等…",
+    "pasteUploadContent": "或在此輸入、貼上文字",
     "example": "示例",
     "sourceLanguage": "源語言",
     "targetLanguage": "目標語言",
@@ -89,10 +89,10 @@
     "contextAwareTranslation": "上下文關聯翻譯",
     "contextAwareTranslationTooltip": "結合上下文語境進行翻譯，提升連貫性和準確度（僅 AI 模型支援）",
     "multiLanguageMode": "多語言模式",
-    "multiLanguageModeTooltip": "同時翻譯為多種語言，分別保存為獨立檔案",
+    "multiLanguageModeTooltip": "同時翻譯為多種語言，分別儲存為獨立檔案",
     "translate": "開始翻譯",
     "totalLanguages": "目標語言數：",
-    "resetUploadTooltip": "清空當前輸入內容和已上傳檔案",
+    "resetUploadTooltip": "清空目前輸入內容和已上傳檔案",
     "resetUploadSuccess": "已清空",
     "extractText": "提取純文字",
     "translationResult": "翻譯結果",
@@ -118,12 +118,12 @@
     "sameLanguageTarget": "源語言與目標語言相同，已自動調整目標語言為",
     "sameLanguageSource": "源語言與目標語言相同，已自動調整源語言為",
     "enterApiKey": "請輸入 API 金鑰或切換至免費 API。",
-    "enterApiUrl": "請在「更多 Provider 設定」中配置介面地址。",
+    "enterApiUrl": "請在「更多 Provider 設定」中配置介面位址。",
     "serviceUnavailable": "{service} 暫時連不上：請檢查網路與服務位址是否可用，稍後再試，或換一個翻譯服務。",
     "serviceUnavailableSwitched": "{service} 暫時連不上，已自動切換到 {fallback}。如需繼續使用原服務，請檢查後在設定中切回。",
     "noFileUploaded": "請先上傳需要處理的檔案。",
     "translationExported": "翻譯完成，檔案已匯出",
-    "noSourceText": "請輸入或粘貼文字內容。",
+    "noSourceText": "請輸入或貼上文字內容。",
     "textExtracted": "已提取文字，",
     "sourceArea": "輸入區",
     "resultArea": "結果區",
@@ -132,8 +132,8 @@
     "updateCount": "已更新條目數",
     "startProcess": "開始處理",
     "result": "處理結果",
-    "exportSettingTooltip": "匯出配置到檔案",
-    "importSettingTooltip": "從檔案匯入配置",
+    "exportSettingTooltip": "匯出設定到檔案",
+    "importSettingTooltip": "從檔案匯入設定",
     "exportSettingSuccess": "設定已匯出",
     "exportSettingError": "匯出失敗，請重試",
     "dictLoadFailed": "轉換字典載入失敗，請檢查網路或重新整理頁面",
@@ -166,16 +166,16 @@
     "copyAllFailed": "複製全部",
     "closeFailedLinesModal": "關閉",
     "failedLanguagesTitle": "翻譯失敗 {count} 種語言",
-    "failedLanguagesDesc": "這幾種語言的所有批次都翻掛了——常見於本地 LLM 抽風、API 限流或模型拒譯特定語種。可點「複製語言代碼」拿到清單，下次只對它們重跑（在「多語言設定」裡貼上即可），其它語言走快取不重翻。",
+    "failedLanguagesDesc": "這幾種語言的所有批次都翻譯失敗了——常見於本地 LLM 異常、API 限流或模型拒譯特定語種。可點「複製語言代碼」拿到清單，下次只對它們重跑（在「多語言設定」裡貼上即可），其它語言走快取不重翻。",
     "copyAllFailedLanguages": "複製語言代碼",
     "apiStatusFreeApi": "Free API",
     "apiStatusNeedsConfig": "需配置",
     "apiStatusConfigured": "已填寫",
     "apiStatusTesting": "測試中",
-    "apiStatusConnected": "✓ 已連接",
-    "apiStatusFailed": "連接失敗",
+    "apiStatusConnected": "✓ 已連線",
+    "apiStatusFailed": "連線失敗",
     "apiStatusTimeout": "連線逾時",
-    "testConnection": "測試連接",
+    "testConnection": "測試連線",
     "moreProviderSettings": "更多 Provider 設定",
     "fileExported": "已匯出檔案：{fileName}",
     "exportFailed": "匯出檔案失敗：{fileName}",
@@ -217,10 +217,25 @@
     "errorHintRelay403": "介面回傳 403 禁止存取，請在「更多 Provider 設定」中開啟「中轉 API」",
     "errorHintCors": "無法連線到該位址：請檢查位址是否正確，並確認服務已允許跨來源（CORS）。自建閘道與本機模型需要自行開啟，或改用你自己的中轉 API",
     "errorHintGeminiKey": "無法連線 Gemini：請先檢查網路（部分網路環境無法直連 Google 服務）。若網路正常，則可能是 Google 自 2026-06-19 起拒絕「無限制 API Key」——請在 AI Studio 重新產生金鑰（預設已限制），或在 Google Cloud 主控台為舊金鑰新增 Gemini API 限制",
-    "rateLimitCooldown": "請求過於頻繁，已自動暫停片刻後重試"
+    "rateLimitCooldown": "請求過於頻繁，已自動暫停片刻後重試",
+    "faqHeading": "常見問題",
+    "homeIndexEyebrow": "工具索引",
+    "homeCategoryEyebrow": "{n} 個分類",
+    "openNavigation": "打開導覽",
+    "goHome": "返回首頁",
+    "primaryNav": "主導覽",
+    "toggleTheme": "切換主題",
+    "communityLinks": "社群連結",
+    "viewOnGitHub": "在 GitHub 檢視",
+    "toolCategories": "工具分類",
+    "searchLanguage": "搜尋語言",
+    "selectLanguage": "選擇語言",
+    "noMatchFound": "無匹配結果",
+    "backToTop": "回到頂端",
+    "exportOptions": "匯出選項"
   },
   "SubtitleTranslator": {
-    "clientDescription": "上傳字幕檔案或粘貼內容，選擇目標語言即可快速翻譯。支持批量處理，自動保留時間軸。",
+    "clientDescription": "上傳字幕檔案或貼上內容，選擇目標語言即可快速翻譯。支援批次處理，自動保留時間軸。",
     "liveResults": "即時結果",
     "liveWaiting": "等待第一行譯文…",
     "liveNotTranslated": "未譯出",
@@ -235,9 +250,9 @@
     "originalFirst": "譯文在下",
     "unsupportedSub": "無法識別字幕格式，請確保檔案為 SRT、ASS、VTT、SBV 或 LRC 格式。",
     "noFileUploaded": "請先上傳字幕檔案。",
-    "noSourceText": "請上傳字幕檔案或粘貼文本。",
+    "noSourceText": "請上傳字幕檔案或貼上文字。",
     "noExtractedText": "未提取到字幕內容，請檢查檔案格式。",
-    "textExtracted": "已提取字幕文本，",
+    "textExtracted": "已提取字幕文字，",
     "bilingualError": "檢測到複雜樣式標籤，雙語模式可能導致格式錯亂，建議關閉「雙語」。",
     "reviewTitle": "對照校對",
     "reviewColSource": "原文",
@@ -271,8 +286,8 @@
     "assOutline": "描邊",
     "assShadow": "陰影",
     "assAlignment": "對齊",
-    "assAlignBottom": "底部居中",
-    "assAlignTop": "頂部居中",
+    "assAlignBottom": "底部置中",
+    "assAlignTop": "頂部置中",
     "assMarginV": "邊距",
     "assAutoWrap": "寬度自適應換行",
     "assAutoWrapTooltip": "匯出時按畫面寬度與字號對超長行自動插入換行：優先在句末標點處斷行，標點不出現在行首，已手動插入的換行全部保留",
@@ -294,29 +309,29 @@
   "TranslationSettings": {
     "resetConfigSuccess": "已恢復預設配置",
     "resetCacheConfirm": "確定清除所有翻譯快取嗎？此操作不可復原",
-    "docs": "文檔",
+    "docs": "文件",
     "resetCacheTooltip": "清除所有翻譯快取（操作不可撤銷）",
     "resetCache": "清除快取",
     "resetCacheSuccess": "翻譯快取已清除",
     "resetCacheFail": "清除翻譯快取失敗",
     "resetConfig": "恢復預設",
     "testConfig": "測試 API",
-    "testConfigTooltip": "驗證當前 API 配置是否可用",
+    "testConfigTooltip": "驗證目前 API 配置是否可用",
     "testConfigSuccess": "API 配置正常",
     "testConfigFail": "API 測試失敗，請檢查配置。",
-    "url": "API 接口地址",
-    "urlExtra": "支援 localhost 和遠程地址",
+    "url": "API 介面位址",
+    "urlExtra": "支援 localhost 和遠端位址",
     "endpointDocs": "查看文件",
     "deeplxUrlExtra": "選填，留空使用我們提供的公共伺服器",
-    "urlOptionalExtra": "選填，留空使用預設接口地址",
+    "urlOptionalExtra": "選填，留空使用預設接口位址",
     "customApiHelp": "可填入任何 OpenAI 相容 API 的端點，包括本地 Ollama / LM Studio / vLLM 以及 Together AI / Fireworks AI 等雲服務。",
     "urlAutoCompleted": "URL 已自動補全",
-    "modelExtra": "LLM 模型名稱，請參考 API 文檔選擇可用模型",
+    "modelExtra": "LLM 模型名稱，請參考 API 文件選擇可用模型",
     "temperatureExtra": "採樣溫度（0-2）：數值越高輸出越隨機，越低輸出越確定。建議值：0.2-0.8",
     "systemPrompt": "系統提示詞",
     "systemPromptExtra": "LLM 翻譯的系統提示詞，留空使用預設",
-    "userPrompt": "用戶提示詞",
-    "userPromptExtra": "自訂翻譯提示詞，留空使用預設。變量說明",
+    "userPrompt": "使用者提示詞",
+    "userPromptExtra": "自訂翻譯提示詞，留空使用預設。變數說明",
     "for": "為",
     "textToTranslate": "待翻譯文字",
     "fullText": "全文",
@@ -327,7 +342,7 @@
     "contextBatchSize": "上下文並發數",
     "contextBatchSizeExtra": "上下文模式的並發批次數。先調「上下文行數」加速更穩，本項易限流",
     "maxTokens": "最大輸出 tokens",
-    "maxTokensExtra": "限制模型單次回應的 token 數。0 = 不限制（用廠商預設）。本地模型（Ollama/llama.cpp）建議設 2048-4096，避免死迴圈占用太久。觸頂會顯式失敗（不會寫半截譯文），正常翻譯被截則調大此值。",
+    "maxTokensExtra": "限制模型單次回應的 token 數。0 = 不限制（用廠商預設）。本地模型（Ollama/llama.cpp）建議設 2048-4096，避免死迴圈佔用太久。觸頂會顯式失敗（不會寫半截譯文），正常翻譯被截則調大此值。",
     "contextWindow": "上下文行數",
     "contextWindowExtra": "每批包含的行數。值越大請求越少、加速越明顯，但可能超 token 上限",
     "delayTime": "延遲時間",
@@ -343,13 +358,13 @@
     "reasoningEffortNoOff": "此服務不支援關閉思考——Min 送出它的最低檔，仍會推理、仍會計費。調高通常更準確，但更慢、更耗 token。自訂模型還有 Auto = 跟隨模型自帶預設。",
     "presetSelect": "選擇預設",
     "presetSave": "另存為新預設",
-    "presetDelete": "刪除當前預設",
+    "presetDelete": "刪除目前預設",
     "presetNamePlaceholder": "預設名稱（如：影視字幕 / 技術文件）",
     "presetSaved": "已另存為新預設",
-    "presetDeleted": "已刪除當前預設",
+    "presetDeleted": "已刪除目前預設",
     "presetNameRequired": "請輸入預設名稱",
-    "presetUpdate": "儲存到當前預設",
-    "presetUpdated": "已儲存到當前預設",
+    "presetUpdate": "儲存到目前預設",
+    "presetUpdated": "已儲存到目前預設",
     "presetDeleteConfirm": "確定要刪除此預設嗎？",
     "presetEmptyHint": "暫無預設，編輯後點儲存",
     "presetDefault": "預設提示詞",
@@ -373,19 +388,19 @@
       "title": "字幕翻譯器",
       "description": "批次翻譯 SRT、ASS、VTT、SBV、LRC 字幕，支援 120+ 語言",
       "metaTitle": "字幕翻譯器 - SRT/ASS/VTT/SBV/LRC 批次 AI 翻譯與雙語字幕產生",
-      "metaDescription": "AI 字幕翻譯，SRT/ASS/VTT/SBV/LRC 批量互轉，接入 DeepSeek、Claude、GPT 等 25+ 引擎，保留時間軸一鍵匯出雙語字幕。",
+      "metaDescription": "AI 字幕翻譯，SRT/ASS/VTT/SBV/LRC 批次互轉，接入 DeepSeek、Claude、GPT 等 30+ 引擎，保留時間軸一鍵匯出雙語字幕。",
       "faq": [
         {
           "q": "支援哪些字幕格式？SRT、ASS、VTT、SBV、LRC 都能翻譯嗎？",
-          "a": "支援 SRT、ASS、VTT、SBV、LRC 五種格式。SRT/VTT 適配 YouTube、HTML5 播放器和創作中心下載（YouTube 用 yt-dlp 匯出）；ASS/SSA 適配 Aegisub 與動漫字幕組，行首位置標籤（如 \\\\an8）翻譯後自動還原；SBV 適配 YouTube 字幕後台（創作者字幕編輯器的匯出格式）；LRC 適配音樂歌詞檔案。檔案編碼（UTF-8/UTF-16/GBK/Shift-JIS）透過 jschardet 自動識別。複雜的 ASS 行內特效標籤（顏色、動畫、卡拉 OK）會被簡化。"
+          "a": "支援 SRT、ASS、VTT、SBV、LRC 五種格式。SRT/VTT 適配 YouTube、B 站、HTML5 播放器（YouTube 用 yt-dlp 匯出、B 站在創作中心下載）；ASS/SSA 適配 Aegisub 與動漫字幕組，行首位置標籤（如 \\\\an8）翻譯後自動還原；SBV 適配 YouTube 字幕後台（創作者字幕編輯器的匯出格式）；LRC 適配音樂歌詞檔案。檔案編碼（UTF-8/UTF-16/GBK/Shift-JIS）透過 jschardet 自動識別。複雜的 ASS 行內特效標籤（顏色、動畫、卡拉 OK）會被簡化。"
         },
         {
           "q": "字幕翻譯用機器翻譯還是 AI 翻譯？哪個品質好、哪個便宜？",
-          "a": "便宜選機器翻譯，高品質選 AI 大模型。機器翻譯（MT）便宜或免費但對白語感平庸：Google 免費版零成本（長文字會被截斷）、DeepL 歐洲語言頂尖、Qwen-MT 和 Azure Translate 同屬此類。AI 大模型（LLM）按 token 計費但譯文明顯更自然——性價比首選 DeepSeek（整季劇集大批量首選）；口語化品質首選 Claude Sonnet 或 GPT-5；超長字幕用 Gemini 3 Pro 的 1M token 上下文。引擎設定在 [JSON 翻譯](../json-translate)、[Markdown 翻譯](../md-translator) 間共享。"
+          "a": "便宜選機器翻譯，高品質選 AI 大模型。機器翻譯（MT）便宜或免費但對白語感平庸：Google 免費版零成本（長文字會被截斷）、DeepL 歐洲語言頂尖、Qwen-MT 和 Azure Translate 同屬此類。AI 大模型（LLM）按 token 計費但譯文明顯更自然——性價比首選 DeepSeek（整季劇集大批次首選）；口語化品質首選 Claude Sonnet 或 GPT-6；超長字幕用 Gemini 的 1M token 上下文。引擎設定在 [JSON 翻譯](../json-translate)、[Markdown 翻譯](../md-translator) 間共享。"
         },
         {
           "q": "怎麼做 B 站、YouTube 的中英雙語字幕？能用於語言學習嗎？",
-          "a": "選擇「雙語」匯出模式，譯文位置可選在原文上方（學英語推薦）或下方（看外語劇推薦）。匯出 ASS 格式可爲原文和譯文設定不同顏色、字體大小和位置，直接上傳至 B 站字幕系統或 YouTube 社區字幕，Premiere/DaVinci Resolve 也可直接嵌入。"
+          "a": "選擇「雙語」匯出模式，譯文位置可選在原文上方（學英語推薦）或下方（看外語劇推薦）。匯出 ASS 格式可為原文和譯文設定不同顏色、字體大小和位置，直接上傳至 B 站字幕系統或 YouTube 社區字幕，Premiere/DaVinci Resolve 也可直接嵌入。"
         },
         {
           "q": "一次能批次翻譯幾個字幕檔案？整季劇集怎麼處理？",
@@ -400,12 +415,12 @@
           "a": "不需要。在翻譯流程中選擇目標語言和匯出格式即可一鍵互轉：SRT ↔ VTT、SRT/VTT → ASS、雙語 ASS/SRT 均支援。VTT 轉 SRT 時自動處理 <c.classname> 內聯標籤和 <00:00:06.040> 卡拉 OK 時間戳；轉 ASS 會保留 \\\\an8 等位置標籤並套用預設樣式。注意：來源語言和目標語言相同時會被自動禁止，目前格式轉換需要綁定一次實際翻譯。"
         },
         {
-          "q": "能不能把字幕轉成純文字劇本？或者只匯出部分台詞？",
+          "q": "能不能把字幕轉成純文字劇本？或者只匯出部分臺詞？",
           "a": "「提取純文字」按鈕可一鍵提取去掉時間碼和序號的對白文字（自動複製到剪貼簿），適合做語言學習教材、podcast 腳本回填、AI 餵料二次處理或轉給配音演員。如需更精細的行級編輯（按關鍵字篩選、批次替換術語、加前後綴、去重排序），匯出後用 [文字工具箱](../text-toolbox) 的正規表達式比對和行操作功能配合更順手；超長字幕想按時間或字數拆段，配合 [文字分割](../text-splitter) 處理。"
         },
         {
           "q": "翻譯後字幕時間軸對不上或出現亂碼（□□□）怎麼辦？",
-          "a": "工具只翻譯文字，時間軸完整保留不做任何修改。如翻譯後時間對不上，通常是源檔案幀率與目標影片不一致（23.976 vs 25 fps）所致，需用 Aegisub 或 Subtitle Edit 調整。亂碼問題：工具通過 jschardet 自動識別 UTF-8/UTF-16/GBK/Shift-JIS 等編碼，識別失敗會回退到 UTF-8，此時請先用 Notepad++ 或 VS Code 另存爲 UTF-8 再上傳。"
+          "a": "工具只翻譯文字，時間軸完整保留不做任何修改。如翻譯後時間對不上，通常是源檔案幀率與目標影片不一致（23.976 vs 25 fps）所致，需用 Aegisub 或 Subtitle Edit 調整。亂碼問題：工具通過 jschardet 自動識別 UTF-8/UTF-16/GBK/Shift-JIS 等編碼，識別失敗會回退到 UTF-8，此時請先用 Notepad++ 或 VS Code 另存為 UTF-8 再上傳。"
         },
         {
           "q": "字幕翻譯會上傳到伺服器嗎？隱私安全嗎？",
@@ -415,9 +430,9 @@
       "features": [
         "支援 SRT、ASS、VTT、SBV、LRC 五種字幕格式，ASS 位置標籤（\\\\an8 等）翻譯後保留",
         "時間軸零修改（僅翻譯文字，時間碼原樣保留）",
-        "UTF-8/UTF-16/GBK 編碼自動檢測",
+        "UTF-8/UTF-16/GBK 編碼自動偵測",
         "雙語字幕譯文位置可選（上方學習 / 下方觀看）",
-        "25+ 翻譯引擎：Google 免費、DeepSeek、Claude、GPT、Gemini、DeepL、Qwen-MT",
+        "30+ 翻譯引擎：Google 免費、DeepSeek、Claude、GPT、Gemini、DeepL、Qwen-MT",
         "相容 B 站、YouTube、Premiere、DaVinci Resolve、Aegisub"
       ]
     },
@@ -427,7 +442,7 @@
     },
     "mdTranslator": {
       "title": "Markdown 翻譯",
-      "description": "批次翻譯 Markdown 文檔，保留格式和代碼"
+      "description": "批次翻譯 Markdown 文件，保留格式和代碼"
     },
     "textSplitter": {
       "title": "文字分割",
@@ -475,7 +490,7 @@
     },
     "jsonSortClassify": {
       "title": "JSON 排序分組",
-      "description": "數組排序和分組，支援自訂規則"
+      "description": "陣列排序和分組，支援自訂規則"
     },
     "jsonMatchUpdate": {
       "title": "JSON 匹配更新",
@@ -505,20 +520,20 @@
     "externalTools": {
       "legendtalk": "AI 思想家圓桌",
       "imgprompt": "AI 繪圖提示詞",
-      "lives": "千世書 人生模擬",
-      "learndata": "LearnData 開源筆記"
+      "learndata": "LearnData 開源筆記",
+      "hub365": "365 開源計畫"
     }
   },
   "Metadata": {
     "title": "ToolsByAI | 免費開源的 AI 翻譯與資料處理工具集",
-    "description": "ToolsByAI 集合 19 款免費工具：字幕、Markdown、JSON i18n 翻譯，文字/JSON 批次處理。25+ AI 引擎，全前端處理。",
+    "description": "ToolsByAI 集合 19 款免費工具：字幕、Markdown、JSON i18n 翻譯，文字/JSON 批次處理。30+ AI 引擎，全前端處理。",
     "homeTitle": "ToolsByAI 工具集",
     "homeDescription": "19 款實用工具，涵蓋多語言翻譯、文字處理、JSON 編輯和資料轉換，助力開發者和創作者提升效率。",
     "ogTitle": "ToolsByAI | 免費開源的 AI 翻譯與資料處理工具集",
-    "ogDescription": "ToolsByAI 集合 19 款免費工具：字幕、Markdown、JSON i18n 翻譯，文字/JSON 批次處理。25+ AI 引擎，全前端處理。"
+    "ogDescription": "ToolsByAI 集合 19 款免費工具：字幕、Markdown、JSON i18n 翻譯，文字/JSON 批次處理。30+ AI 引擎，全前端處理。"
   },
   "languages": {
-    "auto": "自動檢測",
+    "auto": "自動偵測",
     "en": "英語",
     "zh": "中文",
     "zh-hant": "繁體中文",
@@ -644,16 +659,16 @@
   },
   "CopyToClipboard": {
     "empty": "內容為空，無需複製",
-    "unsupported": "當前瀏覽器不支持剪貼板操作，請嘗試手動複製或使用其他瀏覽器",
+    "unsupported": "目前瀏覽器不支援剪貼簿操作，請嘗試手動複製或使用其他瀏覽器",
     "success": "已複製",
     "failure": "複製失敗，請手動複製"
   },
   "feedback": {
-    "feedback1": "反饋與建議",
-    "feedback2": "如果你在使用過程中遇到了問題，或者有任何建議和想法，歡迎隨時告訴我！你的反饋將直接影響到未來功能的開發和改進，幫助我們一起打造更符合大家需求的工具。",
-    "feedback3": "請詳細描述一下你的使用場景或遇到的問題，或者分享你的創意想法。我會認真看每一條反饋，並儘快做出調整和優化。",
+    "feedback1": "回饋與建議",
+    "feedback2": "如果你在使用過程中遇到了問題，或者有任何建議和想法，歡迎隨時告訴我！你的回饋將直接影響到未來功能的開發和改進，幫助我們一起打造更符合大家需求的工具。",
+    "feedback3": "請詳細描述一下你的使用場景或遇到的問題，或者分享你的創意想法。我會認真看每一條回饋，並儘快做出調整和優化。",
     "reaction0": "贊一個",
-    "reaction1": "支持下",
+    "reaction1": "支援下",
     "reaction2": "有點酷",
     "reaction3": "啥玩意",
     "reaction4": "看不懂",

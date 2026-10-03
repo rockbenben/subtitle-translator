@@ -81,7 +81,7 @@
     "hideResultsTooltip": "Ocultar vista previa de resultados para evitar retrasos por contenido extenso",
     "hideResults": "Ocultar Vista Previa",
     "directExportTooltip": "Descargar automáticamente tras procesar, omitir vista previa",
-    "directExport": "Auto Exportar",
+    "directExport": "Exportación automática",
     "useCache": "Usar Caché",
     "useCacheTooltip": "Reutilizar caché de traducción anterior para acelerar el proceso",
     "cacheOff": "Caché desactivada",
@@ -116,7 +116,7 @@
     "sameLanguageTarget": "Idiomas origen y destino iguales; destino ajustado automáticamente a",
     "sameLanguageSource": "Idiomas origen y destino iguales; origen ajustado automáticamente a",
     "enterApiKey": "Introduce clave API o cambia a API Gratuita.",
-    "enterApiUrl": "Por favor configure la URL de API en «Más ajustes del Provider».",
+    "enterApiUrl": "Por favor, configura la URL de API en «Más ajustes del Provider».",
     "serviceUnavailable": "{service} no está disponible temporalmente: comprueba la red y la dirección del servicio, inténtalo más tarde o cambia a otro servicio de traducción.",
     "serviceUnavailableSwitched": "{service} no está disponible temporalmente: se cambió automáticamente a {fallback}. Compruébalo y vuelve a seleccionarlo en los ajustes si quieres seguir usándolo.",
     "noFileUploaded": "Por favor sube un archivo primero.",
@@ -173,7 +173,7 @@
     "copyAllFailed": "Copiar todo",
     "closeFailedLinesModal": "Cerrar",
     "failedLanguagesTitle": "{count} idioma(s) de destino fallaron",
-    "failedLanguagesDesc": "Todos los lotes de estos idiomas fallaron — generalmente por fallos de LLM local, límites de tasa de API o rechazo del modelo a un idioma específico. Copie los códigos y vuelva a ejecutar solo con ellos (pegue en 'Configuración multilingüe'); los demás usarán caché y se omitirán.",
+    "failedLanguagesDesc": "Todos los lotes de estos idiomas fallaron — generalmente por fallos de LLM local, límites de frecuencia de la API o rechazo del modelo a un idioma específico. Copia los códigos y vuelve a ejecutar solo con ellos (pega en 'Configuración multilingüe'); los demás usarán caché y se omitirán.",
     "copyAllFailedLanguages": "Copiar códigos de idioma",
     "apiStatusFreeApi": "Free API",
     "apiStatusNeedsConfig": "Requiere config.",
@@ -210,14 +210,29 @@
     "errorHint408": "La solicitud expiró, vuelva a intentarlo",
     "errorHint413": "Texto demasiado grande — reduzca el tamaño del bloque o divida el texto",
     "errorHint422": "Un parámetro no es compatible con este modelo — a menudo opciones de razonamiento",
-    "errorHint429": "Límite de solicitudes superado, inténtelo más tarde",
+    "errorHint429": "Límite de solicitudes superado, inténtalo más tarde",
     "errorHint456": "Cuota de traducción agotada para este período",
     "errorHint5xx": "Error del servidor, inténtelo más tarde",
     "errorHintRelay": "Error de red (posiblemente CORS): active \"Relé API\" en «Más ajustes del Provider»",
     "errorHintRelay403": "La API devolvió 403 Forbidden: active \"Relé API\" en «Más ajustes del Provider»",
     "errorHintCors": "No se puede conectar con esta dirección: compruebe la dirección y que el servicio permita solicitudes de origen cruzado (CORS). Las pasarelas autoalojadas y los modelos locales deben habilitarlo, o use su propio Relé API",
     "errorHintGeminiKey": "No se puede conectar con Gemini: compruebe primero su red (algunas redes no pueden acceder directamente a los servicios de Google). Si la red funciona, desde el 19 de junio de 2026 Google rechaza las claves API sin restricciones — regenere su clave en AI Studio (restringida por defecto) o añada una restricción de Gemini API a la clave antigua en la consola de Google Cloud",
-    "rateLimitCooldown": "Límite de solicitudes alcanzado — pausa breve, se reintentará automáticamente"
+    "rateLimitCooldown": "Límite de solicitudes alcanzado — pausa breve, se reintentará automáticamente",
+    "faqHeading": "Preguntas frecuentes",
+    "homeIndexEyebrow": "Índice",
+    "homeCategoryEyebrow": "{n} categorías",
+    "openNavigation": "Abrir navegación",
+    "goHome": "Ir a la página de inicio",
+    "primaryNav": "Navegación principal",
+    "toggleTheme": "Cambiar tema",
+    "communityLinks": "Enlaces de la comunidad",
+    "viewOnGitHub": "Ver en GitHub",
+    "toolCategories": "Categorías de herramientas",
+    "searchLanguage": "Buscar idioma",
+    "selectLanguage": "Seleccionar idioma",
+    "noMatchFound": "Sin resultados",
+    "backToTop": "Volver arriba",
+    "exportOptions": "Opciones de exportación"
   },
   "SubtitleTranslator": {
     "clientDescription": "Sube subtítulos o pega contenido. Selecciona idioma destino para traducción rápida. Soporta procesamiento por lotes y conserva línea de tiempo.",
@@ -230,7 +245,7 @@
     "bilingual": "Bilingüe",
     "exportBoth": "Ambos",
     "bilingualTooltip": "Generar simultáneamente la versión solo traducida y la versión bilingüe",
-    "bilingualFormatTooltip": "ASS: estilos de fuente/color separados para original y traducción. SRT: texto plano, ambas líneas apiladas en la misma señal.",
+    "bilingualFormatTooltip": "ASS: estilos de fuente/color separados para original y traducción. SRT: texto plano, ambas líneas apiladas en el mismo bloque temporal.",
     "translationFirst": "Traducción Arriba",
     "originalFirst": "Traducción Abajo",
     "unsupportedSub": "Formato no reconocido. Asegúrate de que el archivo sea SRT, ASS, VTT, SBV o LRC.",
@@ -295,7 +310,7 @@
     "resetConfigSuccess": "Configuración restablecida a los valores predeterminados",
     "resetCacheConfirm": "¿Borrar toda la caché de traducción? Esta acción no se puede deshacer.",
     "docs": "Docs",
-    "resetCacheTooltip": "Borrar todo el caché de traducción (irreversible)",
+    "resetCacheTooltip": "Borrar toda la caché de traducción (irreversible)",
     "resetCache": "Borrar Caché",
     "resetCacheSuccess": "Caché de traducción borrada",
     "resetCacheFail": "Error al borrar la caché de traducción",
@@ -314,9 +329,9 @@
     "modelExtra": "Nombre modelo LLM, ver documentación API",
     "temperatureExtra": "Temperatura (0-2): Más alto = más aleatorio, más bajo = más determinista. Recomendado: 0.2-0.8",
     "systemPrompt": "Prompt Sistema",
-    "systemPromptExtra": "Prompt sistema para traducción LLM, dejar vacío para defecto",
+    "systemPromptExtra": "Prompt sistema para traducción LLM, dejar vacío para usar el predeterminado",
     "userPrompt": "Prompt Usuario",
-    "userPromptExtra": "Prompt traducción personalizado, dejar vacío para defecto. Variables:",
+    "userPromptExtra": "Prompt traducción personalizado, dejar vacío para usar el predeterminado. Variables:",
     "for": "para",
     "textToTranslate": "texto a traducir",
     "fullText": "texto completo",
@@ -331,9 +346,9 @@
     "contextWindow": "Líneas de contexto",
     "contextWindowExtra": "Líneas por lote. Mayor = menos solicitudes y más velocidad, pero puede exceder el límite de tokens del modelo",
     "delayTime": "Retraso",
-    "delayTimeExtra": "Tiempo de espera entre peticiones consecutivas. Auméntalo si te limitan la tasa con frecuencia",
+    "delayTimeExtra": "Tiempo de espera entre peticiones consecutivas. Auméntalo si te aplican límites de frecuencia a menudo",
     "useRelay": "Relé API",
-    "useRelayTooltip": "Activa el relé de API si encuentras errores de CORS o 403. Las peticiones pasarán por el relé camino del proveedor; solo reenvía, no almacena nada.",
+    "useRelayTooltip": "Activa el relé de API si encuentras errores de CORS o 403. Las peticiones pasarán por el relé de camino al proveedor; solo reenvía, no almacena nada.",
     "useRelayCustomUrl": "Endpoint personalizado en uso: el relé público integrado solo reenvía direcciones que él declara, por lo que esta dirección nunca se envía allí — las solicitudes van directas. Para pasar por un relé, active el interruptor e introduzca abajo la dirección de su propio relé.",
     "relayBase": "Dirección del relé",
     "relayBaseExtra": "Déjalo vacío para usar el relé integrado. Esta dirección se aplica a todos los servicios con el relé activado y requiere tu propio despliegue del mismo Worker de relé.",
@@ -344,16 +359,16 @@
     "presetSelect": "Seleccionar preset",
     "presetSave": "Guardar como nuevo preset",
     "presetDelete": "Eliminar preset actual",
-    "presetNamePlaceholder": "Nombre del preajuste (p. ej. Subtítulos / Documentación técnica)",
+    "presetNamePlaceholder": "Nombre del preset (p. ej. Subtítulos / Documentación técnica)",
     "presetSaved": "Guardado como nuevo preset",
     "presetDeleted": "Preset actual eliminado",
     "presetNameRequired": "Por favor ingrese un nombre",
     "presetUpdate": "Guardar en preset actual",
     "presetUpdated": "Guardado en preset actual",
     "presetDeleteConfirm": "¿Eliminar este preset?",
-    "presetEmptyHint": "Aún no hay preajustes — edite y haga clic en Guardar",
+    "presetEmptyHint": "Aún no hay presets — edita y haz clic en Guardar",
     "presetDefault": "Prompt predeterminado",
-    "presetDefaultReadonly": "El prompt predeterminado es integrado: no se puede modificar ni eliminar. Usa \"Guardar como nuevo ajuste\" para personalizar.",
+    "presetDefaultReadonly": "El prompt predeterminado es integrado: no se puede modificar ni eliminar. Usa \"Guardar como nuevo preset\" para personalizar.",
     "qwenMtDomains": "Avisos de dominio (solo en inglés)",
     "sendSystemPrompt": "Enviar prompt system",
     "sendSystemPromptExtra": "Apague solo cuando el chat template rechaza el rol system — error típico \"Conversations must start with a user prompt\" (p. ej. familia Gemma).",
@@ -373,7 +388,7 @@
       "title": "Traductor Subtítulos",
       "description": "Traducción por lote SRT, ASS, VTT, SBV, LRC. 120+ idiomas.",
       "metaTitle": "Traductor subtítulos gratis | SRT/VTT/ASS IA bilingüe",
-      "metaDescription": "Traductor IA subtítulos SRT, ASS, VTT, SBV, LRC. 25+ motores: DeepSeek, Claude, GPT, DeepL. 120+ idiomas, timecodes, bilingüe.",
+      "metaDescription": "Traductor IA subtítulos SRT, ASS, VTT, SBV, LRC. 30+ motores: DeepSeek, Claude, GPT, DeepL. 120+ idiomas, timecodes, bilingüe.",
       "faq": [
         {
           "q": "¿Qué formatos de subtítulos son compatibles? ¿Se pueden traducir SRT, ASS, VTT, SBV y LRC?",
@@ -381,11 +396,11 @@
         },
         {
           "q": "Subtítulos: ¿usar traducción automática o traducción IA/LLM? ¿Cuál es la mejor calidad, cuál la más barata?",
-          "a": "Para lo barato, traducción automática; para calidad, IA/LLM. La traducción automática (MT) es barata o gratis pero plana en diálogos: la versión gratuita de Google no cuesta nada (los textos largos se truncan); DeepL es top para lenguas europeas; Qwen-MT y Azure Translate son similares. Los grandes modelos IA (LLM) facturan por token pero suenan notablemente más naturales — DeepSeek es la mejor relación calidad-precio para lotes de temporadas; Claude Sonnet o GPT-5 dan los diálogos más naturales; el contexto de 1M tokens de Gemini 3 Pro maneja subtítulos del tamaño de un libro. La configuración del motor se comparte con [Traductor JSON](../json-translate) y [Traductor Markdown](../md-translator)."
+          "a": "Para lo barato, traducción automática; para calidad, IA/LLM. La traducción automática (MT) es barata o gratis pero plana en diálogos: la versión gratuita de Google no cuesta nada (los textos largos se truncan); DeepL es top para lenguas europeas; Qwen-MT y Azure Translate son similares. Los grandes modelos IA (LLM) facturan por token pero suenan notablemente más naturales — DeepSeek es la mejor relación calidad-precio para lotes de temporadas; Claude Sonnet o GPT-6 dan los diálogos más naturales; el contexto de 1M tokens de Gemini maneja subtítulos del tamaño de un libro. La configuración del motor se comparte con [Traductor JSON](../json-translate) y [Traductor Markdown](../md-translator)."
         },
         {
           "q": "¿Cómo crear subtítulos bilingües para YouTube o aprendizaje de idiomas?",
-          "a": "Seleccione modo 'Bilingüe' con su idioma de destino. Posición de la traducción: arriba (para aprender) o abajo (para ver contenido). Exporte como ASS para subtítulos bilingües con colores, directamente usable en YouTube, Premiere o DaVinci Resolve."
+          "a": "Selecciona el modo 'Bilingüe' con tu idioma de destino. Posición de la traducción: arriba (para aprender) o abajo (para ver contenido). Exporte como ASS para subtítulos bilingües con colores, directamente usable en YouTube, Premiere o DaVinci Resolve."
         },
         {
           "q": "¿Cuántos archivos de subtítulos puedo traducir por lotes a la vez? ¿Qué tal una temporada entera de series?",
@@ -401,7 +416,7 @@
         },
         {
           "q": "¿Puedo convertir subtítulos a guiones de texto plano? ¿O exportar solo líneas específicas?",
-          "a": "El botón «Extraer Texto» extrae el texto del diálogo sin timecodes ni números de cue (copiado automáticamente al portapapeles) — útil para materiales de aprendizaje de idiomas, guiones de podcast, datos de entrenamiento de IA o entrega a actores de doblaje. Para edición línea a línea más fina (filtrar por palabra clave, sustituir términos en lote, añadir prefijo/sufijo, ordenar/dedupe), combina con [Text Toolbox](../text-toolbox) — sus funciones de regex y operaciones por línea cubren la mayoría de tareas. Para dividir subtítulos muy largos por tiempo o caracteres, usa."
+          "a": "El botón «Extraer Texto» extrae el texto del diálogo sin timecodes ni números de cue (copiado automáticamente al portapapeles) — útil para materiales de aprendizaje de idiomas, guiones de podcast, datos de entrenamiento de IA o entrega a actores de doblaje. Para edición línea a línea más fina (filtrar por palabra clave, sustituir términos en lote, añadir prefijo/sufijo, ordenar/dedupe), combina con [Text Toolbox](../text-toolbox) — sus funciones de regex y operaciones por línea cubren la mayoría de tareas. Para dividir subtítulos muy largos por tiempo o caracteres, usa el [Divisor de texto](../text-splitter)."
         },
         {
           "q": "¿Qué hacer si los timecodes no coinciden o aparecen caracteres ilegibles (□□□)?",
@@ -417,7 +432,7 @@
         "Timecodes intactos — solo se traduce el texto, timing original preservado",
         "Detección automática de codificación UTF-8/UTF-16/GBK",
         "Posición subtítulos bilingües: arriba (aprendizaje) o abajo (visualización)",
-        "25+ motores de traducción: Google gratis, DeepSeek, Claude, GPT, Gemini, DeepL, Qwen-MT",
+        "30+ motores de traducción: Google gratis, DeepSeek, Claude, GPT, Gemini, DeepL, Qwen-MT",
         "Compatible con YouTube, Vimeo, Premiere, DaVinci Resolve, Aegisub"
       ]
     },
@@ -446,7 +461,7 @@
       "description": "Coincidencia regex, ordenación, filtrado y más para el procesamiento masivo de texto"
     },
     "dataBatch": {
-      "title": "Procesador de texto",
+      "title": "Procesador de datos por lotes",
       "description": "Procesamiento por lotes de datos Excel — deduplicación, extracción por columnas, fusión, reglas encadenadas"
     },
     "textJoiner": {
@@ -505,8 +520,8 @@
     "externalTools": {
       "legendtalk": "Mesa redonda de pensadores IA",
       "imgprompt": "Prompts de imágenes IA",
-      "lives": "Thousand Lives",
-      "learndata": "LearnData Notas de Código Abierto"
+      "learndata": "LearnData Notas de Código Abierto",
+      "hub365": "365 Código Abierto"
     }
   },
   "Metadata": {
@@ -518,7 +533,7 @@
     "ogDescription": "ToolsByAI: 19 herramientas open source para traducir subtítulos, Markdown y JSON i18n. Sin instalación, en el navegador."
   },
   "languages": {
-    "auto": "Detección Auto",
+    "auto": "Detección automática",
     "en": "Inglés",
     "zh": "Chino",
     "zh-hant": "Chino Tradicional",

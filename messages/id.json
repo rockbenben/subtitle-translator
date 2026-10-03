@@ -66,12 +66,12 @@
     "noTargetLanguage": "Pilih setidaknya satu bahasa target.",
     "translationError": "Terjemahan gagal",
     "translationCancelled": "Terjemahan dibatalkan",
-    "translationStopped": "Berhenti",
+    "translationStopped": "Dihentikan",
     "resumeFromCache": "Baris yang sudah diterjemahkan tersimpan di cache — terjemahkan lagi untuk melanjutkan dari titik berhenti",
-    "cancelKeepsProgress": "Membatalkan tetap menyimpan hasil yang sudah ada",
+    "cancelKeepsProgress": "Pembatalan tetap menyimpan hasil yang sudah ada",
     "dismiss": "Tutup",
     "translationAPI": "API Terjemahan",
-    "enter": "Masuk",
+    "enter": "Masukkan",
     "getApiKey": "Dapatkan Kunci API",
     "charLabel": "Karakter",
     "lineLabel": "Baris",
@@ -153,14 +153,14 @@
     "customExportFilenameTooltip": "'{'name'}' = nama file asli, '{'lang'}' = bahasa, '{'ext'}' = ekstensi, '{'date'}' = tanggal, '{'time'}' = waktu; dalam mode multibahasa, '{'lang'}' ditambahkan otomatis untuk mencegah bentrokan nama",
     "partialFailureTitle": "{count} baris gagal diterjemahkan",
     "partialFailureDesc": "Baris-baris itu tetap berisi teks asli, jadi struktur berkas utuh. Coba lagi hanya mengirim ulang baris tersebut; sisanya dari cache.",
-    "partialFailureWhy": "Umum pada layanan gratis dan swa-inang — biasanya bukan masalah pengaturan Anda.",
+    "partialFailureWhy": "Umum pada layanan gratis dan self-hosted — biasanya bukan masalah pengaturan Anda.",
     "retryFailedLines": "Coba lagi baris yang gagal",
     "viewFailedLines": "Lihat baris yang gagal",
     "failedLinesModalTitle": "{count} baris yang gagal",
     "copyAllFailed": "Salin semua",
     "closeFailedLinesModal": "Tutup",
     "failedLanguagesTitle": "{count} bahasa target gagal",
-    "failedLanguagesDesc": "Semua batch untuk bahasa-bahasa ini gagal — biasanya karena masalah LLM lokal, batas tingkat API, atau penolakan model terhadap bahasa tertentu. Salin kode dan jalankan ulang hanya untuk mereka (tempelkan di 'Pengaturan Multi-Bahasa'); yang lain akan dilewati dari cache.",
+    "failedLanguagesDesc": "Semua batch untuk bahasa-bahasa ini gagal — biasanya karena masalah LLM lokal, batas laju API, atau penolakan model terhadap bahasa tertentu. Salin kode dan jalankan ulang hanya untuk mereka (tempelkan di 'Pengaturan Multi-Bahasa'); yang lain akan dilewati dari cache.",
     "copyAllFailedLanguages": "Salin kode bahasa",
     "apiStatusFreeApi": "Free API",
     "apiStatusNeedsConfig": "Perlu konfig.",
@@ -217,7 +217,22 @@
     "errorHintRelay403": "API mengembalikan 403 Forbidden — aktifkan \"Relay API\" di \"Pengaturan Provider lain\"",
     "errorHintCors": "Tidak dapat terhubung ke alamat ini — periksa alamatnya dan pastikan layanan mengizinkan permintaan lintas-asal (CORS). Gateway mandiri dan model lokal harus mengaktifkannya sendiri, atau gunakan Relay API milik Anda",
     "errorHintGeminiKey": "Tidak dapat terhubung ke Gemini: periksa jaringan Anda terlebih dahulu (beberapa jaringan tidak dapat mengakses layanan Google secara langsung). Jika jaringan baik-baik saja, sejak 19 Juni 2026 Google menolak kunci API tanpa pembatasan — buat ulang kunci di AI Studio (dibatasi secara default) atau tambahkan pembatasan Gemini API pada kunci lama di Google Cloud Console",
-    "rateLimitCooldown": "Batas permintaan tercapai — jeda sejenak, akan dicoba ulang otomatis"
+    "rateLimitCooldown": "Batas permintaan tercapai — jeda sejenak, akan dicoba ulang otomatis",
+    "faqHeading": "Pertanyaan umum",
+    "homeIndexEyebrow": "Indeks",
+    "homeCategoryEyebrow": "{n} kategori",
+    "openNavigation": "Buka navigasi",
+    "goHome": "Kembali ke beranda",
+    "primaryNav": "Navigasi utama",
+    "toggleTheme": "Ganti tema",
+    "communityLinks": "Tautan komunitas",
+    "viewOnGitHub": "Lihat di GitHub",
+    "toolCategories": "Kategori alat",
+    "searchLanguage": "Cari bahasa",
+    "selectLanguage": "Pilih bahasa",
+    "noMatchFound": "Tidak ada hasil",
+    "backToTop": "Kembali ke atas",
+    "exportOptions": "Opsi ekspor"
   },
   "SubtitleTranslator": {
     "clientDescription": "Unggah subtitle atau tempel konten. Pilih bahasa target untuk terjemahan cepat. Mendukung pemrosesan batch dan mempertahankan timeline.",
@@ -325,7 +340,7 @@
     "batchSize": "Baris simultan",
     "batchSizeExtra": "Permintaan simultan dalam mode tanpa konteks. Terlalu tinggi memicu batas laju API",
     "contextBatchSize": "Konkurensi Mode Konteks",
-    "contextBatchSizeExtra": "Batch simultan dalam mode konteks. Sesuaikan «baris konteks» dulu —— lebih aman untuk kecepatan. Menambah ini berisiko batas",
+    "contextBatchSizeExtra": "Batch simultan dalam mode konteks. Sesuaikan «baris konteks» dulu —— lebih aman untuk kecepatan. Menambah ini berisiko kena batas laju",
     "maxTokens": "Token Maksimum",
     "maxTokensExtra": "Batas token output model. 0 = tanpa batas (default vendor). Atur 2048-4096 untuk model lokal (Ollama/llama.cpp) yang terjebak loop repetisi. Mencapai batas memicu error yang terlihat (tidak ada terjemahan setengah jadi di cache); jika terjemahan panjang yang sah terpotong, naikkan nilai ini.",
     "contextWindow": "Baris konteks",
@@ -373,7 +388,7 @@
       "title": "Penerjemah Subtitle",
       "description": "Terjemahan batch SRT, ASS, VTT, SBV, LRC. 120+ bahasa.",
       "metaTitle": "Penerjemah Subtitle Gratis | Batch SRT/VTT/ASS + Dwibahasa",
-      "metaDescription": "Penerjemah subtitle SRT, ASS, VTT, SBV, LRC. 25+ mesin: DeepSeek, Claude, GPT, DeepL, Google. 120+ bahasa, timecode, dwibahasa.",
+      "metaDescription": "Penerjemah subtitle SRT, ASS, VTT, SBV, LRC. 30+ mesin: DeepSeek, Claude, GPT, DeepL, Google. 120+ bahasa, timecode, dwibahasa.",
       "faq": [
         {
           "q": "Format subtitle apa saja yang didukung? Bisa menerjemahkan SRT, ASS, VTT, SBV, dan LRC?",
@@ -381,7 +396,7 @@
         },
         {
           "q": "Subtitle: pakai mesin terjemahan atau terjemahan AI/LLM? Mana kualitas terbaik, mana paling murah?",
-          "a": "Untuk biaya rendah pilih mesin terjemahan, untuk kualitas tinggi pilih AI/LLM. Mesin terjemahan (MT) murah atau gratis tetapi terasa datar untuk dialog: Google versi gratis tanpa biaya (teks panjang akan terpotong), DeepL terbaik untuk bahasa Eropa, Qwen-MT dan Azure Translate termasuk kategori yang sama. Model AI besar (LLM) ditagih per token tetapi hasil terjemahannya jauh lebih natural — DeepSeek pilihan utama untuk nilai terbaik (ideal untuk batch satu musim penuh); Claude Sonnet atau GPT-5 untuk kualitas dialog paling natural; gunakan konteks 1M token Gemini 3 Pro untuk subtitle yang sangat panjang. Konfigurasi mesin dibagikan dengan [Penerjemah JSON](../json-translate) dan [Penerjemah Markdown](../md-translator)."
+          "a": "Untuk biaya rendah pilih mesin terjemahan, untuk kualitas tinggi pilih AI/LLM. Mesin terjemahan (MT) murah atau gratis tetapi terasa datar untuk dialog: Google versi gratis tanpa biaya (teks panjang akan terpotong), DeepL terbaik untuk bahasa Eropa, Qwen-MT dan Azure Translate termasuk kategori yang sama. Model AI besar (LLM) ditagih per token tetapi hasil terjemahannya jauh lebih natural — DeepSeek pilihan utama untuk nilai terbaik (ideal untuk batch satu musim penuh); Claude Sonnet atau GPT-6 untuk kualitas dialog paling natural; gunakan konteks 1M token Gemini untuk subtitle yang sangat panjang. Konfigurasi mesin dibagikan dengan [Penerjemah JSON](../json-translate) dan [Penerjemah Markdown](../md-translator)."
         },
         {
           "q": "Bagaimana membuat subtitle dwibahasa untuk YouTube atau pembelajaran bahasa?",
@@ -389,11 +404,11 @@
         },
         {
           "q": "Berapa banyak file subtitle yang bisa diterjemahkan secara batch? Bagaimana dengan satu musim episode lengkap?",
-          "a": "Unggah batch subtitle satu musim penuh untuk diterjemahkan bersamaan tanpa batas keras jumlah file (batas aktual tergantung pada konkurensi mesin terjemahan dan kuota API Anda). Setiap file diterjemahkan dan di-cache secara independen (IndexedDB), jadi me-refresh halaman tidak akan menghilangkan file yang sudah diterjemahkan. Untuk terminologi bersama antar episode (nama karakter, nama tempat), masukkan glosarium di System Prompt — semua file berbagi konteks yang sama, memastikan terjemahan konsisten di seluruh musim."
+          "a": "Unggah batch subtitle satu musim penuh untuk diterjemahkan bersamaan tanpa batas keras jumlah file (batas aktual tergantung pada konkurensi mesin terjemahan dan kuota API Anda). Setiap file diterjemahkan dan di-cache secara independen (IndexedDB), jadi me-refresh halaman tidak akan menghilangkan file yang sudah diterjemahkan. Untuk terminologi bersama antar episode (nama karakter, nama tempat), masukkan glosarium di Prompt Sistem — semua file berbagi konteks yang sama, memastikan terjemahan konsisten di seluruh musim."
         },
         {
           "q": "Bagaimana mempertahankan nama orang, merek, dan istilah khusus dalam subtitle agar tidak salah diterjemahkan?",
-          "a": "Tambahkan glosarium di System Prompt; semua mesin AI/LLM akan mematuhinya. Contoh: «Pertahankan apa adanya: iPhone, OpenAI, Premiere, nama orang John Smith». Sangat direkomendasikan untuk serial TV — semua episode berbagi kamus istilah yang sama, mencegah protagonis dipanggil dengan satu cara di episode 1 dan berbeda di episode 8. Mesin terjemahan (Google, DeepL, Qwen-MT) tidak menerima kustomisasi prompt, memerlukan pasca-pemrosesan manual."
+          "a": "Tambahkan glosarium di Prompt Sistem; semua mesin AI/LLM akan mematuhinya. Contoh: «Pertahankan apa adanya: iPhone, OpenAI, Premiere, nama orang John Smith». Sangat direkomendasikan untuk serial TV — semua episode berbagi kamus istilah yang sama, mencegah protagonis dipanggil dengan satu cara di episode 1 dan berbeda di episode 8. Mesin terjemahan (Google, DeepL, Qwen-MT) tidak menerima kustomisasi prompt, memerlukan pasca-pemrosesan manual."
         },
         {
           "q": "Bagaimana mengonversi SRT ke VTT atau ASS? Perlu konverter format subtitle terpisah?",
@@ -417,7 +432,7 @@
         "Timecode tidak diubah — hanya teks diterjemahkan, waktu asli dipertahankan",
         "Deteksi pengkodean otomatis UTF-8/UTF-16/GBK",
         "Posisi subtitle dwibahasa: atas (belajar) atau bawah (menonton)",
-        "25+ mesin terjemahan: Google gratis, DeepSeek, Claude, GPT, Gemini, DeepL, Qwen-MT",
+        "30+ mesin terjemahan: Google gratis, DeepSeek, Claude, GPT, Gemini, DeepL, Qwen-MT",
         "Kompatibel dengan YouTube, Premiere, DaVinci Resolve, Aegisub"
       ]
     },
@@ -442,7 +457,7 @@
       "description": "Pencocokan regex, pengurutan, penyaringan, dan pemrosesan teks batch"
     },
     "dataBatch": {
-      "title": "Pemrosesan Teks Pribadi",
+      "title": "Pemrosesan Data Batch",
       "description": "Pemrosesan data Excel batch — deduplikasi, ekstraksi kolom, gabung teks, aturan berurutan"
     },
     "textJoiner": {
@@ -505,8 +520,8 @@
     "externalTools": {
       "legendtalk": "Meja Bundar Pemikir AI",
       "imgprompt": "Prompt Gambar AI",
-      "lives": "Thousand Lives",
-      "learndata": "LearnData Catatan Sumber Terbuka"
+      "learndata": "LearnData Catatan Sumber Terbuka",
+      "hub365": "365 Sumber Terbuka"
     }
   },
   "Metadata": {
@@ -514,14 +529,14 @@
     "description": "ToolsByAI: 19 alat open source untuk menerjemahkan subtitle, Markdown, dan JSON i18n. Tanpa instalasi, berbasis browser.",
     "homeTitle": "Suite ToolsByAI",
     "homeDescription": "19 alat untuk terjemahan, teks, JSON, dan konversi data. Tingkatkan efisiensi pengembang dan kreator.",
-    "ogTitle": "ToolsByAI - Alat Dev AI Gratis dan Open Source",
+    "ogTitle": "ToolsByAI - Peralatan Data & Terjemahan AI untuk Developer",
     "ogDescription": "ToolsByAI: 19 alat open source untuk menerjemahkan subtitle, Markdown, dan JSON i18n. Tanpa instalasi, berbasis browser."
   },
   "languages": {
     "auto": "Deteksi Otomatis",
     "en": "Inggris",
     "zh": "Mandarin",
-    "zh-hant": "Mandarin Tradisional",
+    "zh-hant": "Tionghoa Tradisional",
     "es": "Spanyol",
     "fr": "Prancis",
     "de": "Jerman",
@@ -658,7 +673,7 @@
     "reaction3": "Apa?",
     "reaction4": "Bingung",
     "placeholder": "Tinggalkan pesan (tidak perlu login, email opsional untuk balasan)",
-    "metaDescription": "Halaman feedback Tools By AI: laporkan bug, sarankan fitur, atau bagikan ide. Berbasis Waline, posting anonim, gratis."
+    "metaDescription": "Halaman Umpan Balik Tools By AI: laporkan bug, sarankan fitur, atau bagikan ide. Berbasis Waline, posting anonim, gratis."
   },
   "AppError": {
     "title": "Halaman gagal dimuat",

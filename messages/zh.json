@@ -55,7 +55,7 @@
     "configuration": "配置选项",
     "operation": "操作",
     "optional": "可选",
-    "pleaseWait": "请稍等...",
+    "pleaseWait": "请稍等…",
     "pasteUploadContent": "或在此输入、粘贴文本",
     "example": "示例",
     "sourceLanguage": "源语言",
@@ -217,7 +217,22 @@
     "errorHintRelay403": "接口返回 403 禁止访问，请在「更多 Provider 设置」中开启「中转 API」",
     "errorHintCors": "无法连接到该地址：请检查地址是否正确，并确认服务已允许跨域（CORS）。自建网关与本地模型需要自行开启，或改用你自己的中转 API",
     "errorHintGeminiKey": "无法连接 Gemini：请先检查网络（部分网络环境无法直连 Google 服务）。若网络正常，则可能是 Google 自 2026-06-19 起拒绝「无限制 API Key」——请在 AI Studio 重新生成密钥（默认已限制），或在 Google Cloud 控制台为旧密钥添加 Gemini API 限制",
-    "rateLimitCooldown": "请求过于频繁，已自动暂停片刻后重试"
+    "rateLimitCooldown": "请求过于频繁，已自动暂停片刻后重试",
+    "faqHeading": "常见问题",
+    "homeIndexEyebrow": "工具索引",
+    "homeCategoryEyebrow": "{n} 个分类",
+    "openNavigation": "打开导航",
+    "goHome": "返回首页",
+    "primaryNav": "主导航",
+    "toggleTheme": "切换主题",
+    "communityLinks": "社区链接",
+    "viewOnGitHub": "在 GitHub 查看",
+    "toolCategories": "工具分类",
+    "searchLanguage": "搜索语言",
+    "selectLanguage": "选择语言",
+    "noMatchFound": "无匹配结果",
+    "backToTop": "回到顶部",
+    "exportOptions": "导出选项"
   },
   "SubtitleTranslator": {
     "clientDescription": "上传字幕文件或粘贴内容，选择目标语言即可快速翻译。支持批量处理，自动保留时间轴。",
@@ -325,7 +340,7 @@
     "batchSize": "并发行数",
     "batchSizeExtra": "非上下文模式的并发请求数。过高会触发 API 限流",
     "contextBatchSize": "上下文并发数",
-    "contextBatchSizeExtra": "上下文模式的并发批次数。先调「上下文行数」加速更稳，本项易限流",
+    "contextBatchSizeExtra": "上下文模式的并发批次数。先调「上下文行数」加速更稳，本项易触发限流",
     "maxTokens": "最大输出 tokens",
     "maxTokensExtra": "限制模型单次响应的 token 数。0 = 不限制（用厂商默认）。本地模型（Ollama/llama.cpp）建议设 2048-4096，避免死循环占用太久。触顶会显式失败（不会写半截译文），正常翻译被截则调大此值。",
     "contextWindow": "上下文行数",
@@ -373,7 +388,7 @@
       "title": "字幕翻译器",
       "description": "批量翻译 SRT、ASS、VTT、SBV、LRC 字幕，支持 120+ 语言",
       "metaTitle": "字幕翻译器 - SRT/ASS/VTT/SBV/LRC 批量 AI 翻译与双语字幕生成",
-      "metaDescription": "AI 字幕翻译，SRT/ASS/VTT/SBV/LRC 批量互转，接入 DeepSeek、Claude、GPT 等 25+ 引擎，保留时间轴一键导出双语字幕。",
+      "metaDescription": "AI 字幕翻译，SRT/ASS/VTT/SBV/LRC 批量互转，接入 DeepSeek、Claude、GPT 等 30+ 引擎，保留时间轴一键导出双语字幕。",
       "faq": [
         {
           "q": "支持哪些字幕格式？SRT、ASS、VTT、SBV、LRC 都能翻译吗？",
@@ -381,7 +396,7 @@
         },
         {
           "q": "字幕翻译用机器翻译还是 AI 翻译？哪个质量好、哪个便宜？",
-          "a": "便宜选机器翻译，高质量选 AI 大模型。机器翻译（MT）便宜或免费但对白语感平庸：Google 免费版零成本（长文本会被截断）、DeepL 欧洲语言顶尖、Qwen-MT 和 Azure Translate 同属此类。AI 大模型（LLM）按 token 计费但译文明显更自然——性价比首选 DeepSeek（整季剧集大批量首选）；口语化质量首选 Claude Sonnet 或 GPT-5；超长字幕用 Gemini 3 Pro 的 1M token 上下文。引擎配置在 [JSON 翻译](../json-translate)、[Markdown 翻译](../md-translator) 间共享。"
+          "a": "便宜选机器翻译，高质量选 AI 大模型。机器翻译（MT）便宜或免费但对白语感平庸：Google 免费版零成本（长文本会被截断）、DeepL 欧洲语言顶尖、Qwen-MT 和 Azure Translate 同属此类。AI 大模型（LLM）按 token 计费但译文明显更自然——性价比首选 DeepSeek（整季剧集大批量首选）；口语化质量首选 Claude Sonnet 或 GPT-6；超长字幕用 Gemini 的 1M token 上下文。引擎配置在 [JSON 翻译](../json-translate)、[Markdown 翻译](../md-translator) 间共享。"
         },
         {
           "q": "怎么做 B 站、YouTube 的中英双语字幕？能用于语言学习吗？",
@@ -417,7 +432,7 @@
         "时间轴零修改（仅翻译文本，时间码原样保留）",
         "UTF-8/UTF-16/GBK 编码自动检测",
         "双语字幕译文位置可选（上方学习 / 下方观看）",
-        "25+ 翻译引擎：Google 免费、DeepSeek、Claude、GPT、Gemini、DeepL、Qwen-MT",
+        "30+ 翻译引擎：Google 免费、DeepSeek、Claude、GPT、Gemini、DeepL、Qwen-MT",
         "兼容 B 站、YouTube、Premiere、DaVinci Resolve、Aegisub"
       ]
     },
@@ -505,17 +520,17 @@
     "externalTools": {
       "legendtalk": "AI 思想家圆桌",
       "imgprompt": "AI 绘图提示词",
-      "lives": "千世书 人生模拟",
-      "learndata": "LearnData 开源笔记"
+      "learndata": "LearnData 开源笔记",
+      "hub365": "365 开源计划"
     }
   },
   "Metadata": {
     "title": "ToolsByAI | 免费开源的 AI 翻译与数据处理工具集",
-    "description": "ToolsByAI 集合 19 款免费工具：字幕、Markdown、JSON i18n 翻译，文本/JSON 批处理。25+ AI 引擎，全前端处理。",
+    "description": "ToolsByAI 集合 19 款免费工具：字幕、Markdown、JSON i18n 翻译，文本/JSON 批处理。30+ AI 引擎，全前端处理。",
     "homeTitle": "ToolsByAI 工具集",
     "homeDescription": "19 款实用工具，涵盖多语言翻译、文本处理、JSON 编辑和数据转换，助力开发者和创作者提升效率。",
     "ogTitle": "ToolsByAI | 免费开源的 AI 翻译与数据处理工具集",
-    "ogDescription": "ToolsByAI 集合 19 款免费工具：字幕、Markdown、JSON i18n 翻译，文本/JSON 批处理。25+ AI 引擎，全前端处理。"
+    "ogDescription": "ToolsByAI 集合 19 款免费工具：字幕、Markdown、JSON i18n 翻译，文本/JSON 批处理。30+ AI 引擎，全前端处理。"
   },
   "languages": {
     "auto": "自动检测",

@@ -26,6 +26,7 @@ import {
   MessageOutlined,
   DiffOutlined,
   MergeCellsOutlined,
+  AppstoreOutlined,
 } from "@ant-design/icons";
 import Link from "next/link";
 import { useTranslations, useLocale } from "next-intl";
@@ -78,7 +79,8 @@ const projectCategories = {
 } as const;
 
 interface ExternalTool {
-  title: string;
+  title?: string;
+  titleKey?: string;
   key: string;
   icon: React.ReactNode;
   chineseOnly?: boolean;
@@ -89,6 +91,7 @@ const externalTools: ExternalTool[] = [
   { title: "Legend Talk", key: "legendtalk", icon: <MessageOutlined /> },
   { title: "IMGPrompt", key: "imgprompt", icon: <BgColorsOutlined /> },
   { title: "LearnData 开源笔记", key: "learndata", icon: <BookOutlined />, chineseOnly: true },
+  { titleKey: "navigation.externalTools.hub365", key: "hub365", icon: <AppstoreOutlined /> },
 ];
 
 const getExternalHref = (key: string, locale: string): string => {
@@ -104,6 +107,9 @@ const getExternalHref = (key: string, locale: string): string => {
       return "https://talk.newzone.top";
     case "learndata":
       return "https://newzone.top/";
+    case "hub365":
+      // 365 站只有中/英两语（SPA）。语言优先级 ?lang= > localStorage > 浏览器语言；显式传参让落地语言跟随本站。
+      return `https://365.aishort.top/?lang=${locale === "zh" || locale === "zh-hant" ? "zh" : "en"}`;
     default:
       return "#";
   }
@@ -138,7 +144,7 @@ export const useAppMenu = () => {
     return {
       label: (
         <a href={getExternalHref(tool.key, locale)} target="_blank" rel="noopener noreferrer">
-          {tool.title}
+          {tool.titleKey ? t(tool.titleKey) : tool.title}
         </a>
       ),
       key: tool.key,

@@ -91,7 +91,7 @@
     "multiLanguageMode": "Multi-language mode",
     "multiLanguageModeTooltip": "Translate to multiple languages simultaneously, saved as separate files",
     "translate": "Translate",
-    "totalLanguages": "Total Languages:",
+    "totalLanguages": "Target languages:",
     "resetUploadTooltip": "Clear current input and uploaded files",
     "resetUploadSuccess": "Cleared",
     "extractText": "Extract text",
@@ -113,8 +113,8 @@
     "translateDoneIncomplete": "Some items were not completed",
     "multiTranslating": "Translating, total target languages:",
     "model": "Model",
-    "sameLanguageTarget": "Source and target languages are the same; automatically adjusted target to",
-    "sameLanguageSource": "Source and target languages are the same; automatically adjusted source to",
+    "sameLanguageTarget": "Source and target languages are the same; automatically adjusted the target to",
+    "sameLanguageSource": "Source and target languages are the same; automatically adjusted the source to",
     "enterApiKey": "Enter API key or switch to Free API.",
     "enterApiUrl": "Please configure the API URL in 'More provider settings'.",
     "serviceUnavailable": "{service} is temporarily unreachable — check your network and the service address, try again later, or switch to a different translation service.",
@@ -217,7 +217,22 @@
     "errorHintRelay403": "The API returned 403 Forbidden — enable \"API relay\" under \"More provider settings\"",
     "errorHintCors": "Can't reach this endpoint — check the address, and make sure the service allows cross-origin requests (CORS). Self-hosted gateways and local models have to enable it themselves, or use your own API relay",
     "errorHintGeminiKey": "Cannot reach Gemini: check your network first (some networks cannot reach Google services directly). If the network is fine, Google has been rejecting unrestricted API keys since June 19, 2026 — regenerate your key in AI Studio (restricted by default) or add a Gemini API restriction to the old key in Google Cloud Console",
-    "rateLimitCooldown": "Rate limited — pausing briefly, will retry automatically"
+    "rateLimitCooldown": "Rate limited — pausing briefly, will retry automatically",
+    "faqHeading": "FAQ",
+    "homeIndexEyebrow": "Index",
+    "homeCategoryEyebrow": "{n} categories",
+    "openNavigation": "Open navigation",
+    "goHome": "Go to homepage",
+    "primaryNav": "Primary navigation",
+    "toggleTheme": "Toggle theme",
+    "communityLinks": "Community links",
+    "viewOnGitHub": "View on GitHub",
+    "toolCategories": "Tool categories",
+    "searchLanguage": "Search language",
+    "selectLanguage": "Select language",
+    "noMatchFound": "No match",
+    "backToTop": "Back to top",
+    "exportOptions": "Export options"
   },
   "SubtitleTranslator": {
     "clientDescription": "Upload subtitles or paste content. Select target language for fast translation. Supports batch processing and retains timelines.",
@@ -371,9 +386,9 @@
   "tools": {
     "subtitleTranslator": {
       "title": "Subtitle Translator",
-      "description": "Batch translate SRT, ASS, VTT, SBV, LRC subtitles. 120+ languages.",
+      "description": "Batch translate SRT, ASS, VTT, SBV, LRC subtitles. 120+ languages",
       "metaTitle": "Free Subtitle Translator | Batch SRT/VTT/ASS + Bilingual",
-      "metaDescription": "AI subtitle translator SRT, ASS, VTT, SBV, LRC. 25+ engines: DeepSeek, Claude, GPT, DeepL. 120+ languages, timecodes, bilingual.",
+      "metaDescription": "AI subtitle translator SRT, ASS, VTT, SBV, LRC. 30+ engines: DeepSeek, Claude, GPT, DeepL. 120+ languages, timecodes, bilingual.",
       "faq": [
         {
           "q": "Which subtitle formats are supported? Can it translate SRT, ASS, VTT, SBV, and LRC?",
@@ -381,7 +396,7 @@
         },
         {
           "q": "Should I use machine translation or AI/LLM translation for subtitles? Which is best quality, which is cheapest?",
-          "a": "For cheap, use machine translation; for quality, use an AI/LLM. Machine translation (MT) is cheap or free but reads flat for dialogue: Google free tier costs nothing (long inputs get truncated); DeepL is top tier for European languages; Qwen-MT and Azure Translate are similar. AI/LLM bills per token but reads noticeably more natural — DeepSeek is the value pick for whole-season batches; Claude Sonnet or GPT-5 give the most natural dialogue; Gemini 3 Pro's 1M-token context handles book-length subtitles. Engine configs are shared with [JSON Translator](../json-translate) and [Markdown Translator](../md-translator)."
+          "a": "For low cost, use machine translation; for quality, use an AI/LLM. Machine translation (MT) is cheap or free but reads flat for dialogue: Google free tier costs nothing (long inputs get truncated); DeepL is top tier for European languages; Qwen-MT and Azure Translate are similar. AI/LLM bills per token but reads noticeably more natural — DeepSeek is the value pick for whole-season batches; Claude Sonnet or GPT-6 give the most natural dialogue; Gemini's 1M-token context handles book-length subtitles. Engine configs are shared with [JSON Translator](../json-translate) and [Markdown Translator](../md-translator)."
         },
         {
           "q": "How do I create bilingual subtitles for YouTube or language learning?",
@@ -417,7 +432,7 @@
         "Timecodes untouched — tool only translates text, original timing preserved",
         "UTF-8/UTF-16/GBK encoding auto-detection",
         "Bilingual subtitle position: above (learning) or below (viewing)",
-        "25+ translation engines: Google free, DeepSeek, Claude, GPT, Gemini, DeepL, Qwen-MT",
+        "30+ translation engines: Google free, DeepSeek, Claude, GPT, Gemini, DeepL, Qwen-MT",
         "Compatible with YouTube, Twitch, Vimeo, Premiere, DaVinci Resolve, Aegisub"
       ]
     },
@@ -439,7 +454,7 @@
     },
     "novelProcessor": {
       "title": "Chinese Novel Formatter",
-      "description": "One-click formatting for downloaded Chinese web novels — smart line breaks, chapter splitting, and clean layout."
+      "description": "One-click formatting for downloaded Chinese web novels — smart line breaks, chapter splitting, and clean layout"
     },
     "textToolbox": {
       "title": "Multi-Function Text Processor",
@@ -471,7 +486,7 @@
     },
     "jsonNodeInserter": {
       "title": "JSON Node Bulk Insert",
-      "description": "Batch insert new nodes at specified position"
+      "description": "Batch insert new nodes at a specified position"
     },
     "jsonSortClassify": {
       "title": "JSON Sort & Group",
@@ -491,7 +506,7 @@
     },
     "textDiff": {
       "title": "Text Diff",
-      "description": "Compare two texts or files side by side and pinpoint the first difference."
+      "description": "Compare two texts or files side by side and pinpoint the first difference"
     }
   },
   "navigation": {
@@ -505,17 +520,17 @@
     "externalTools": {
       "legendtalk": "AI Thinkers Roundtable",
       "imgprompt": "AI Image Prompts",
-      "lives": "Thousand Lives",
-      "learndata": "LearnData Open Source Notes"
+      "learndata": "LearnData Open Source Notes",
+      "hub365": "365 Open Source"
     }
   },
   "Metadata": {
     "title": "ToolsByAI | Free Open Source AI Translation & Data Tools",
-    "description": "ToolsByAI: 19 free open-source tools for subtitle, Markdown, JSON i18n translation and text/JSON batch processing. 25+ AI engines.",
+    "description": "ToolsByAI: 19 free open-source tools for subtitle, Markdown, JSON i18n translation and text/JSON batch processing. 30+ AI engines.",
     "homeTitle": "ToolsByAI Toolset",
     "homeDescription": "19 tools for translation, text, JSON, and data conversion. Boost efficiency for developers and creators.",
     "ogTitle": "ToolsByAI | Free Open Source AI Translation & Data Tools",
-    "ogDescription": "ToolsByAI: 19 free open-source tools for subtitle, Markdown, JSON i18n translation and text/JSON batch processing. 25+ AI engines."
+    "ogDescription": "ToolsByAI: 19 free open-source tools for subtitle, Markdown, JSON i18n translation and text/JSON batch processing. 30+ AI engines."
   },
   "languages": {
     "auto": "Auto Detect",
@@ -658,7 +673,7 @@
     "reaction3": "What?",
     "reaction4": "Confused",
     "placeholder": "Leave a message (no login required, email optional for reply)",
-    "metaDescription": "Feedback for Tools By AI: report bugs, suggest features, share use-case ideas. Built on Waline, anonymous posting allowed, free."
+    "metaDescription": "Feedback for ToolsByAI: report bugs, suggest features, share use-case ideas. Built on Waline, anonymous posting allowed, free."
   },
   "AppError": {
     "title": "Page failed to load",

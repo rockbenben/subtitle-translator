@@ -217,7 +217,22 @@
     "errorHintRelay403": "API trả về 403 Forbidden — hãy bật \"Chuyển tiếp API\" trong \"Thêm cài đặt Provider\"",
     "errorHintCors": "Không thể kết nối tới địa chỉ này — hãy kiểm tra địa chỉ và xem dịch vụ có cho phép yêu cầu khác nguồn (CORS) hay không. Cổng tự dựng và mô hình cục bộ phải tự bật, hoặc dùng Chuyển tiếp API của riêng bạn",
     "errorHintGeminiKey": "Không thể kết nối Gemini: hãy kiểm tra mạng trước (một số mạng không thể truy cập trực tiếp dịch vụ Google). Nếu mạng bình thường, từ 19/06/2026 Google từ chối các API key không giới hạn — hãy tạo lại key trong AI Studio (mặc định đã giới hạn) hoặc thêm giới hạn Gemini API cho key cũ trong Google Cloud Console",
-    "rateLimitCooldown": "Đạt giới hạn yêu cầu — tạm dừng một lát rồi tự động thử lại"
+    "rateLimitCooldown": "Đạt giới hạn yêu cầu — tạm dừng một lát rồi tự động thử lại",
+    "faqHeading": "Câu hỏi thường gặp",
+    "homeIndexEyebrow": "Mục lục",
+    "homeCategoryEyebrow": "{n} danh mục",
+    "openNavigation": "Mở điều hướng",
+    "goHome": "Về trang chủ",
+    "primaryNav": "Điều hướng chính",
+    "toggleTheme": "Đổi giao diện",
+    "communityLinks": "Liên kết cộng đồng",
+    "viewOnGitHub": "Xem trên GitHub",
+    "toolCategories": "Danh mục công cụ",
+    "searchLanguage": "Tìm ngôn ngữ",
+    "selectLanguage": "Chọn ngôn ngữ",
+    "noMatchFound": "Không có kết quả",
+    "backToTop": "Lên đầu trang",
+    "exportOptions": "Tùy chọn xuất"
   },
   "SubtitleTranslator": {
     "clientDescription": "Tải lên phụ đề hoặc dán nội dung. Chọn ngôn ngữ đích để dịch nhanh. Hỗ trợ xử lý hàng loạt và giữ nguyên dòng thời gian.",
@@ -325,7 +340,7 @@
     "batchSize": "Số dòng đồng thời",
     "batchSizeExtra": "Yêu cầu đồng thời trong chế độ không ngữ cảnh. Quá cao sẽ kích hoạt giới hạn API",
     "contextBatchSize": "Đồng thời Chế độ Ngữ cảnh",
-    "contextBatchSizeExtra": "Lô đồng thời trong chế độ ngữ cảnh. Điều chỉnh «dòng ngữ cảnh» trước —— an toàn hơn cho tốc độ. Tăng cái này có rủi ro giới hạn",
+    "contextBatchSizeExtra": "Lô đồng thời trong chế độ ngữ cảnh. Điều chỉnh «dòng ngữ cảnh» trước — cách tăng tốc an toàn hơn. Tăng giá trị này dễ chạm giới hạn",
     "maxTokens": "Số Token Tối Đa",
     "maxTokensExtra": "Giới hạn token đầu ra của model. 0 = không giới hạn (mặc định nhà cung cấp). Đặt 2048-4096 cho model nội bộ (Ollama/llama.cpp) khi gặp vòng lặp lặp lại. Chạm giới hạn sẽ báo lỗi rõ ràng (không có nửa bản dịch trong cache); nếu bản dịch dài hợp lệ bị cắt, hãy tăng giá trị này.",
     "contextWindow": "Số dòng ngữ cảnh",
@@ -344,7 +359,7 @@
     "presetSelect": "Chọn cài đặt sẵn",
     "presetSave": "Lưu như cài đặt sẵn mới",
     "presetDelete": "Xóa cài đặt sẵn hiện tại",
-    "presetNamePlaceholder": "Tên cấu hình (ví dụ: Phụ đề / Tài liệu kỹ thuật)",
+    "presetNamePlaceholder": "Tên cài đặt sẵn (ví dụ: Phụ đề / Tài liệu kỹ thuật)",
     "presetSaved": "Đã lưu như cài đặt sẵn mới",
     "presetDeleted": "Đã xóa cài đặt sẵn hiện tại",
     "presetNameRequired": "Vui lòng nhập tên cài đặt sẵn",
@@ -370,10 +385,10 @@
   },
   "tools": {
     "subtitleTranslator": {
-      "title": "Dịch giả Phụ đề",
+      "title": "Trình Dịch Phụ Đề",
       "description": "Dịch hàng loạt SRT, ASS, VTT, SBV, LRC. 120+ ngôn ngữ.",
       "metaTitle": "Dịch Phụ Đề Miễn Phí | Hàng Loạt SRT/VTT/ASS + Song Ngữ",
-      "metaDescription": "Trình dịch phụ đề SRT, ASS, VTT, SBV, LRC. 25+ engine: DeepSeek, Claude, GPT, DeepL, Google. 120+ ngôn ngữ, timecode, song ngữ.",
+      "metaDescription": "Trình dịch phụ đề SRT, ASS, VTT, SBV, LRC. 30+ engine: DeepSeek, Claude, GPT, DeepL, Google. 120+ ngôn ngữ, timecode, song ngữ.",
       "faq": [
         {
           "q": "Hỗ trợ những định dạng phụ đề nào? SRT, ASS, VTT, SBV và LRC đều dịch được chứ?",
@@ -381,7 +396,7 @@
         },
         {
           "q": "Phụ đề: dùng dịch máy hay dịch AI/LLM? Cái nào chất lượng tốt nhất, cái nào rẻ nhất?",
-          "a": "Để rẻ thì dùng dịch máy, để chất lượng thì dùng AI/LLM. Dịch máy (MT) rẻ hoặc miễn phí nhưng đối thoại nghe phẳng: Google bản miễn phí không tốn chi phí (đầu vào dài bị cắt); DeepL là đỉnh cao cho các ngôn ngữ châu Âu; Qwen-MT và Azure Translate tương tự. Các mô hình AI lớn (LLM) tính phí theo token nhưng nghe tự nhiên hơn rõ rệt — DeepSeek là giá trị tốt nhất cho khối lượng cả mùa; Claude Sonnet hoặc GPT-5 cho đối thoại tự nhiên nhất; ngữ cảnh 1M token của Gemini 3 Pro xử lý phụ đề cỡ một cuốn sách. Cấu hình engine được dùng chung với [Dịch JSON](../json-translate)."
+          "a": "Để rẻ thì dùng dịch máy, để chất lượng thì dùng AI/LLM. Dịch máy (MT) rẻ hoặc miễn phí nhưng đối thoại nghe phẳng: Google bản miễn phí không tốn chi phí (đầu vào dài bị cắt); DeepL là đỉnh cao cho các ngôn ngữ châu Âu; Qwen-MT và Azure Translate tương tự. Các mô hình AI lớn (LLM) tính phí theo token nhưng nghe tự nhiên hơn rõ rệt — DeepSeek là giá trị tốt nhất cho khối lượng cả mùa; Claude Sonnet hoặc GPT-6 cho đối thoại tự nhiên nhất; ngữ cảnh 1M token của Gemini xử lý phụ đề cỡ một cuốn sách. Cấu hình engine được dùng chung với [Dịch JSON](../json-translate)."
         },
         {
           "q": "Làm sao tạo phụ đề song ngữ cho YouTube hoặc học ngoại ngữ?",
@@ -417,16 +432,16 @@
         "Timecode không đổi — chỉ dịch văn bản, thời gian gốc được bảo toàn",
         "Tự phát hiện mã hóa UTF-8/UTF-16/GBK",
         "Vị trí phụ đề song ngữ: trên (học) hoặc dưới (xem)",
-        "25+ engine dịch: Google miễn phí, DeepSeek, Claude, GPT, Gemini, DeepL, Qwen-MT",
+        "30+ engine dịch: Google miễn phí, DeepSeek, Claude, GPT, Gemini, DeepL, Qwen-MT",
         "Tương thích với YouTube, Premiere, DaVinci Resolve, Aegisub"
       ]
     },
     "jsonTranslate": {
-      "title": "Dịch giả JSON i18n",
+      "title": "Trình Dịch JSON i18n",
       "description": "Dịch tệp ngôn ngữ i18n hàng loạt, với đối sánh JSONPath và ánh xạ khóa"
     },
     "mdTranslator": {
-      "title": "Dịch giả Markdown",
+      "title": "Trình Dịch Markdown",
       "description": "Dịch Markdown hàng loạt, giữ định dạng và mã"
     },
     "textSplitter": {
@@ -446,7 +461,7 @@
       "description": "Tích hợp regex, sắp xếp, lọc và nhiều tính năng xử lý văn bản hàng loạt"
     },
     "dataBatch": {
-      "title": "Xử lý văn bản",
+      "title": "Xử lý dữ liệu hàng loạt",
       "description": "Xử lý dữ liệu Excel hàng loạt — loại bỏ trùng, trích xuất cột, hợp nhất văn bản, quy tắc nối tiếp"
     },
     "textJoiner": {
@@ -478,7 +493,7 @@
       "description": "Sắp xếp và nhóm mảng, quy tắc tùy chỉnh"
     },
     "jsonMatchUpdate": {
-      "title": "Cập nhật JSON Match",
+      "title": "Khớp & Cập Nhật JSON",
       "description": "Cập nhật hàng loạt dựa trên khớp trường"
     },
     "dataParserFlare": {
@@ -490,7 +505,7 @@
       "description": "Tạo dữ liệu JSON IMGPrompt hàng loạt"
     },
     "textDiff": {
-      "title": "Text Diff",
+      "title": "So Sánh Văn Bản",
       "description": "So sánh hai văn bản hoặc tệp song song và xác định điểm khác biệt đầu tiên."
     }
   },
@@ -505,17 +520,17 @@
     "externalTools": {
       "legendtalk": "Bàn tròn nhà tư tưởng AI",
       "imgprompt": "Câu lệnh tạo ảnh AI",
-      "lives": "Thousand Lives",
-      "learndata": "LearnData Ghi chú nguồn mở"
+      "learndata": "LearnData Ghi chú nguồn mở",
+      "hub365": "365 Nguồn mở"
     }
   },
   "Metadata": {
     "title": "ToolsByAI - Bộ Công Cụ Dịch Thuật & Dữ Liệu AI Online",
-    "description": "ToolsByAI: 19 công cụ mã nguồn mở miễn phí cho dịch phụ đề, Markdown, JSON i18n và xử lý văn bản/JSON. 25+ engine AI.",
+    "description": "ToolsByAI: 19 công cụ mã nguồn mở miễn phí cho dịch phụ đề, Markdown, JSON i18n và xử lý văn bản/JSON. 30+ engine AI.",
     "homeTitle": "Bộ ToolsByAI",
     "homeDescription": "19 công cụ cho dịch, văn bản, JSON và chuyển đổi dữ liệu. Tăng cường hiệu quả cho nhà phát triển và người sáng tạo.",
-    "ogTitle": "ToolsByAI - Công Cụ Dev AI Miễn Phí & Mã Nguồn Mở",
-    "ogDescription": "ToolsByAI: 19 công cụ mã nguồn mở miễn phí cho dịch phụ đề, Markdown, JSON i18n và xử lý văn bản/JSON. 25+ engine AI."
+    "ogTitle": "ToolsByAI - Bộ Công Cụ Dịch Thuật & Dữ Liệu AI Online",
+    "ogDescription": "ToolsByAI: 19 công cụ mã nguồn mở miễn phí cho dịch phụ đề, Markdown, JSON i18n và xử lý văn bản/JSON. 30+ engine AI."
   },
   "languages": {
     "auto": "Tự động phát hiện",

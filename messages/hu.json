@@ -20,8 +20,8 @@
     "presetNamePlaceholder": "Szójegyzék neve (pl. egy műsor)",
     "edit": "Kifejezések szerkesztése",
     "drawerTitle": "Szójegyzék szerkesztése",
-    "sourcePlaceholder": "Forrás kifejezés (pl. 斯派克)",
-    "targetPlaceholder": "Fordítás (pl. Spike)",
+    "sourcePlaceholder": "Forrás kifejezés (pl. Spike)",
+    "targetPlaceholder": "Fordítás (pl. 斯派克)",
     "addTerm": "Kifejezés hozzáadása",
     "searchPlaceholder": "Kifejezések keresése",
     "duplicateHint": "Azonos forráskifejezések találhatók — forráskifejezésenként csak egy bejegyzés lesz érvényes",
@@ -37,7 +37,7 @@
   "common": {
     "exportFolder": "Exportálási mappa",
     "exportFolderDefault": "Az exportálások az alapértelmezett letöltési mappába kerülnek.",
-    "exportFolderBlocked": "A böngésző nem fogadja el magát az Asztalt, a Dokumentumokat, a Letöltéseket vagy a felhasználói mappát — válassz egy alappalát vagy bármilyen más mappát.",
+    "exportFolderBlocked": "A böngésző nem fogadja el magát az Asztalt, a Dokumentumokat, a Letöltéseket vagy a felhasználói mappát — válassz egy almappát vagy bármilyen más mappát.",
     "exportFolderCurrent": "Az exportálások ide kerülnek: {dir}",
     "exportFolderReset": "Vissza a letöltési mappához",
     "exportFolderFailed": "Nem sikerült beállítani az exportálási mappát.",
@@ -68,7 +68,7 @@
     "translationCancelled": "A fordítás megszakítva",
     "translationStopped": "Leállítva",
     "resumeFromCache": "A kész sorok gyorsítótárban vannak — fordítsd újra a folytatáshoz",
-    "cancelKeepsProgress": "A megszakítás megőrzi a már lefordítottrészt",
+    "cancelKeepsProgress": "A megszakítás megőrzi a már lefordított részt",
     "dismiss": "Elvetés",
     "translationAPI": "Fordítási API",
     "enter": "Bevitel",
@@ -165,7 +165,7 @@
     "customExportFilename": "Exportálandó fájlnév mintája",
     "customExportFilenameTooltip": "'{'name'}' = eredeti fájlnév, '{'lang'}' = nyelv, '{'ext'}' = kiterjesztés, '{'date'}' = dátum, '{'time'}' = idő; többnyelvű módban a '{'lang'}' automatikusan hozzáadódik a névütközések elkerülése érdekében",
     "partialFailureTitle": "{count} sor sikertelen",
-    "partialFailureDesc": "Ezek a sorok megtartották az eredeti szövegüket, így a fájl szerkezete sértetlen marad. Az újrapróbálkozás csak ezeket küldi újra; a többi a gyorsítótárbóljön.",
+    "partialFailureDesc": "Ezek a sorok megtartották az eredeti szövegüket, így a fájl szerkezete sértetlen marad. Az újrapróbálkozás csak ezeket küldi újra; a többi a gyorsítótárból jön.",
     "partialFailureWhy": "Gyakori az ingyenes és saját üzemeltetésű végpontoknál — általában nem jelent problémát a beállításaidban.",
     "retryFailedLines": "Hibás sorok újrapóbálása",
     "viewFailedLines": "Hibás sorok megtekintése",
@@ -217,7 +217,22 @@
     "errorHintRelay403": "Az API 403-as tiltott hibát adott vissza — engedélyezd az \"API-továbbítást (relay)\" a \"További szolgáltatói beállítások\" alatt",
     "errorHintCors": "Nem érhető el ez a végpont — ellenőrizd a címet, és győződj meg arról, hogy a szolgáltatás engedélyezi a cross-origin (CORS) kéréseket. A saját üzemeltetésű átjáróknak és a helyi modelleknek ezt saját maguknak kell engedélyezniük, vagy használnod kell a saját API-továbbítódat",
     "errorHintGeminiKey": "A Gemini nem érhető el: először ellenőrizd a hálózatot (egyes hálózatok nem érik el közvetlenül a Google szolgáltatásait). Ha a hálózat rendben van, a Google 2026. június 19. óta elutasítja a korlátozás nélküli API-kulcsokat — generálj újra kulcsot az AI Studio-ban (alapértelmezetten korlátozott), vagy adj hozzá Gemini API korlátozást a régi kulcshoz a Google Cloud Console-ban",
-    "rateLimitCooldown": "Sebességhatár elérve — rövid szünet, automatikus újrapróbálkozás következik"
+    "rateLimitCooldown": "Sebességhatár elérve — rövid szünet, automatikus újrapróbálkozás következik",
+    "faqHeading": "Gyakori kérdések",
+    "homeIndexEyebrow": "Mutató",
+    "homeCategoryEyebrow": "{n} kategória",
+    "openNavigation": "Navigáció megnyitása",
+    "goHome": "Ugrás a kezdőlapra",
+    "primaryNav": "Fő navigáció",
+    "toggleTheme": "Téma váltása",
+    "communityLinks": "Közösségi linkek",
+    "viewOnGitHub": "Megtekintés a GitHubon",
+    "toolCategories": "Eszközkategóriák",
+    "searchLanguage": "Nyelv keresése",
+    "selectLanguage": "Nyelv kiválasztása",
+    "noMatchFound": "Nincs találat",
+    "backToTop": "Vissza a tetejére",
+    "exportOptions": "Exportálási beállítások"
   },
   "SubtitleTranslator": {
     "clientDescription": "Tölts fel feliratokat vagy illessz be tartalmat. Válassz célnyelvet a gyors fordításhoz. Támogatja a kötegelt feldolgozást és megőrzi az időbélyegeket.",
@@ -274,7 +289,7 @@
     "assAlignBottom": "Alul középen",
     "assAlignTop": "Felül középen",
     "assMarginV": "Margó",
-    "assAutoWrap": "Automatikus sorTördelés",
+    "assAutoWrap": "Automatikus sortördelés",
     "assAutoWrapTooltip": "A túl hosszú sorok tördelése exportáláskor a lejátszási szélesség és a betűméret alapján: mondatvégi írásjelek utáni tördelés előnyben részesítése, soha ne kezdődjön sor írásjellel, kézzel beszúrt sor-törések megőrzése",
     "assAutoWrapCapacity": "≈{trans} kar./sor (fordítás) · {orig} (eredeti)",
     "previewOriginal": "Eredeti",
@@ -351,7 +366,7 @@
     "presetUpdate": "Mentés a jelenlegi előbeállításba",
     "presetUpdated": "Mentve a jelenlegi előbeállításba",
     "presetDeleteConfirm": "Törlöd ezt az előbeállítást?",
-    "presetEmptyHint": "Még nincsenek előbeállítások — szerkesszed, majd kattints a Mentés új előbeállításként gombra",
+    "presetEmptyHint": "Még nincsenek előbeállítások — szerkess, majd kattints a Mentés új előbeállításként gombra",
     "presetDefault": "Alapértelmezett utasítás",
     "presetDefaultReadonly": "Az alapértelmezett utasítás beépített — nem módosítható és nem törölhető. A testreszabáshoz használd a \"Mentés új előbeállításként\" lehetőséget.",
     "qwenMtDomains": "Tartományi utasítások (csak angolul)",
@@ -373,7 +388,7 @@
       "title": "Feliratfordító",
       "description": "SRT, ASS, VTT, SBV, LRC feliratok kötegelt fordítása. 120+ nyelv.",
       "metaTitle": "Ingyenes Feliratfordító | Kötegelt SRT/VTT/ASS + Kétnyelvű",
-      "metaDescription": "AI feliratfordító SRT, ASS, VTT, SBV, LRC. 25+ motor: DeepSeek, Claude, GPT, DeepL. 120+ nyelv, időbélyegek, kétnyelvű.",
+      "metaDescription": "AI feliratfordító SRT, ASS, VTT, SBV, LRC. 30+ motor: DeepSeek, Claude, GPT, DeepL. 120+ nyelv, időbélyegek, kétnyelvű.",
       "faq": [
         {
           "q": "Milyen feliratformátumok támogatottak? Lehet SRT, ASS, VTT, SBV és LRC feliratokat fordítani?",
@@ -381,7 +396,7 @@
         },
         {
           "q": "Gépi fordítást vagy AI/LLM fordítást használjak a feliratokhoz? Melyiknek a legjobb a minősége, melyik a legolcsóbb?",
-          "a": "Olcsósághoz használj gépi fordítást; minőséghez használj AI-t / LLM-et. A gépi fordítás (MT) olcsó vagy ingyenes, de a párbeszédekben mesterkéltnek hangzik: a Google ingyenes szintje nem kerül semmibe (a hosszú bemeneteket csonkolja); a DeepL az európai nyelvek élvonala; a Qwen-MT és az Azure Translate hasonló. Az AI / LLM tokenenként számláz, de észrevehetően természetesebben olvas — a DeepSeek az egész évados kötegek kedvező árú választása; a Claude Sonnet vagy a GPT-5 adja a legtermészetesebb párbeszédeket; a Gemini 3 Pro 1 millió tokenes kontextusa könyv hosszúságú feliratokat is kezel. A motorbeállítások meg vannak osztva a [JSON-fordítóval](../json-translate) és a [Markdown-fordítóval](../md-translator)."
+          "a": "Olcsósághoz használj gépi fordítást; minőséghez használj AI-t / LLM-et. A gépi fordítás (MT) olcsó vagy ingyenes, de a párbeszédekben mesterkéltnek hangzik: a Google ingyenes szintje nem kerül semmibe (a hosszú bemeneteket csonkolja); a DeepL az európai nyelvek élvonala; a Qwen-MT és az Azure Translate hasonló. Az AI / LLM tokenenként számláz, de észrevehetően természetesebben olvas — a DeepSeek az egész évados kötegek kedvező árú választása; a Claude Sonnet vagy a GPT-6 adja a legtermészetesebb párbeszédeket; a Gemini 1 millió tokenes kontextusa könyv hosszúságú feliratokat is kezel. A motorbeállítások meg vannak osztva a [JSON-fordítóval](../json-translate) és a [Markdown-fordítóval](../md-translator)."
         },
         {
           "q": "Hogyan készíthetek kétnyelvű feliratokat a YouTube-hoz vagy nyelvtanuláshoz?",
@@ -397,10 +412,10 @@
         },
         {
           "q": "Hogyan konvertálhatok SRT-t VTT-be vagy ASS-be? Szükségem van külön feliratformátum-konverterre?",
-          "a": "Nincs szükség külön eszközre. Válaszd ki a célnyelvet és az exportálási formátumot a fordítás során az egykattintásos konvertáláshoz: SRT ↔ VTT, SRT/VTT → ASS, plusz kétnyelvű ASS/SRT kimenet. A VTT-ből SRT-be konvertálás automatikusan kezeli a beágyazott <c.classname> címkéket és <00:00:06.040> karaoke időbélyegeket; az ASS konverzió megőrzi az \\an8 pozíciótagsokat alapértelmezett stílussal. Megjegyzés: az azonos forrás- és célnyelvet az érvényesítés blokkolja, így a formátumkonverzió jelenleg tényleges fordítási menetet igényel."
+          "a": "Nincs szükség külön eszközre. Válaszd ki a célnyelvet és az exportálási formátumot a fordítás során az egykattintásos konvertáláshoz: SRT ↔ VTT, SRT/VTT → ASS, plusz kétnyelvű ASS/SRT kimenet. A VTT-ből SRT-be konvertálás automatikusan kezeli a beágyazott <c.classname> címkéket és <00:00:06.040> karaoke időbélyegeket; az ASS konverzió megőrzi az \\an8 pozíciócímkéket alapértelmezett stílussal. Megjegyzés: az azonos forrás- és célnyelvet az érvényesítés blokkolja, így a formátumkonverzió jelenleg tényleges fordítási menetet igényel."
         },
         {
-          "q": "Konvertálhatok feliratokat sima szöveges szkriptekbé? Vagy exportálhatok csak bizonyos sorokat?",
+          "q": "Konvertálhatok feliratokat sima szöveges szkriptekbe? Vagy exportálhatok csak bizonyos sorokat?",
           "a": "Az 'Szöveg kinyerése' gomb kinyeri a párbeszéd szövegét időbélyegek vagy sorszámok nélkül (automatikusan a vágólapra másolva) — hasznos nyelvtanulási anyagokhoz, podcast szkriptekhez, AI-képzési adatokhoz vagy szinkronszínészi átadásokhoz. Részletesebb soronkénti szerkesztéshez (szűrés kulcsszó szerint, kifejezések kötegelt cseréje, előtag/utótag hozzáadása, rendezés/duplikációk szűrése) párosítsd a [Szöveges eszköztárral](../text-toolbox) — annak reguláris kifejezései és sorműveletei a legtöbb felirattakarítási feladatot lefedik. A nagyon hosszú feliratok idő vagy karakterszám szerinti felosztásához használd a [Szövegfelosztót](../text-splitter)."
         },
         {
@@ -413,11 +428,11 @@
         }
       ],
       "features": [
-        "Támogatja az SRT, ASS, VTT, SBV, LRC feliratformátumokat, megőrizve az ASS pozíciótagsokat (\\\\an8 stb.) a fordítás után",
+        "Támogatja az SRT, ASS, VTT, SBV, LRC feliratformátumokat, megőrizve az ASS pozíciócímkéket (\\\\an8 stb.) a fordítás után",
         "Az időbélyegek érintetlenek maradnak — az eszköz csak a szöveget fordítja, az eredeti időzítés megmarad",
         "UTF-8 / UTF-16 / GBK kódolás automatikus felismerése",
         "Kétnyelvű felirat pozíciója: felül (tanulás) vagy alul (megtekintés)",
-        "25+ fordítómotor: Google free, DeepSeek, Claude, GPT, Gemini, DeepL, Qwen-MT",
+        "30+ fordítómotor: Google free, DeepSeek, Claude, GPT, Gemini, DeepL, Qwen-MT",
         "Kompatibilis a YouTube-bal, Twitch-csel, Vimeóval, Premiere-rel, DaVinci Resolve-val, Aegisubbal"
       ]
     },
@@ -505,17 +520,17 @@
     "externalTools": {
       "legendtalk": "AI gondolkodók kerekasztala",
       "imgprompt": "AI képpromptok",
-      "lives": "Ezer élet",
-      "learndata": "LearnData nyílt forráskódú jegyzetek"
+      "learndata": "LearnData nyílt forráskódú jegyzetek",
+      "hub365": "365 Nyílt forráskód"
     }
   },
   "Metadata": {
     "title": "ToolsByAI | Ingyenes nyílt forráskódú AI fordító és adateszközök",
-    "description": "ToolsByAI: 19 ingyenes nyílt forráskódú eszköz feliratok, Markdown, JSON i18n fordításhoz, valamint szöveg- és JSON-kötegelt feldolgozáshoz. 25+ AI motor.",
+    "description": "ToolsByAI: 19 ingyenes nyílt forráskódú eszköz feliratok, Markdown, JSON i18n fordításhoz, valamint szöveg- és JSON-kötegelt feldolgozáshoz. 30+ AI motor.",
     "homeTitle": "ToolsByAI eszközkészlet",
     "homeDescription": "19 eszköz fordításhoz, szöveghez, JSON-hoz és adatkonverzióhoz. Növeld a fejlesztők és alkotók hatékonyságát.",
     "ogTitle": "ToolsByAI | Ingyenes nyílt forráskódú AI fordító és adateszközök",
-    "ogDescription": "ToolsByAI: 19 ingyenes nyílt forráskódú eszköz feliratok, Markdown, JSON i18n fordításhoz, valamint szöveg- és JSON-kötegelt feldolgozáshoz. 25+ AI motor."
+    "ogDescription": "ToolsByAI: 19 ingyenes nyílt forráskódú eszköz feliratok, Markdown, JSON i18n fordításhoz, valamint szöveg- és JSON-kötegelt feldolgozáshoz. 30+ AI motor."
   },
   "languages": {
     "auto": "Automatikus felismerés",

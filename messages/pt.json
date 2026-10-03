@@ -112,9 +112,9 @@
     "sameLanguageTarget": "Idiomas de origem e destino iguais; destino ajustado automaticamente para",
     "sameLanguageSource": "Idiomas de origem e destino iguais; origem ajustada automaticamente para",
     "enterApiKey": "Insira a chave API ou mude para API Gratuita.",
-    "enterApiUrl": "Por favor, configure a URL da API em \"Mais configurações do Provider\".",
+    "enterApiUrl": "Por favor, configure a URL da API em \"Mais configurações do provedor\".",
     "serviceUnavailable": "{service} está temporariamente inacessível — verifique a rede e o endereço do serviço, tente novamente mais tarde ou mude para outro serviço de tradução.",
-    "serviceUnavailableSwitched": "{service} está temporariamente inacessível — mudámos automaticamente para {fallback}. Verifique-o e volte a selecioná-lo nas definições se quiser continuar a usá-lo.",
+    "serviceUnavailableSwitched": "{service} está temporariamente inacessível — mudamos automaticamente para {fallback}. Verifique o serviço original e, se estiver tudo certo, selecione-o novamente em Configurações.",
     "noFileUploaded": "Por favor, envie um arquivo primeiro.",
     "translationExported": "Tradução concluída, arquivos exportados",
     "noSourceText": "Por favor, insira ou cole o texto.",
@@ -162,7 +162,7 @@
     "failedLanguagesTitle": "Falha em {count} idioma(s) de destino",
     "failedLanguagesDesc": "Todos os lotes para estes idiomas falharam — geralmente devido a problemas LLM locais, limites de taxa de API ou recusa do modelo a um idioma específico. Copie os códigos e execute novamente apenas com eles (cole em 'Configurações multilíngue'); os outros usarão o cache e serão ignorados.",
     "copyAllFailedLanguages": "Copiar códigos de idioma",
-    "apiStatusFreeApi": "Free API",
+    "apiStatusFreeApi": "API Gratuita",
     "apiStatusNeedsConfig": "Requer config.",
     "apiStatusConfigured": "Configurado",
     "apiStatusTesting": "Testando",
@@ -170,7 +170,7 @@
     "apiStatusFailed": "Falha na conexão",
     "apiStatusTimeout": "Tempo de conexão esgotado",
     "testConnection": "Testar conexão",
-    "moreProviderSettings": "Mais configurações do Provider",
+    "moreProviderSettings": "Mais configurações do provedor",
     "format": "Formatar",
     "formatTooltip": "Formatar: remover linhas vazias e espaços no início/fim",
     "resultToSource": "Resultado ➔ Original",
@@ -185,7 +185,7 @@
     "replaceText": "Substituir texto",
     "generateJson": "Gerar JSON",
     "networkUnavailable": "O serviço de tradução está temporariamente inacessível — pode ser um problema de rede ou o serviço está com algum problema momentâneo. Tente novamente mais tarde ou troque para outro serviço de tradução.",
-    "translationTimeout": "A solicitação de tradução expirou — pode ser uma rede lenta ou o serviço está demorando muito para responder. Tente novamente mais tarde ou troque para outro serviço de tradução.",
+    "translationTimeout": "A requisição de tradução expirou — pode ser uma rede lenta ou o serviço está demorando muito para responder. Tente novamente mais tarde ou troque para outro serviço de tradução.",
     "translationTimeoutLocal": "Tempo esgotado na tradução com o modelo local. Causas comuns: a concorrência excede os slots paralelos do seu servidor local e os pedidos ficam em fila até expirar; ou o modelo entra num ciclo de repetição (normalmente idioma de origem errado). Reduza «Parâmetros de chamada → Linhas simultâneas» neste serviço ou aumente «Configurações Avançadas → Tempo limite», e confirme que o idioma de origem corresponde ao texto.",
     "langGroupCommon": "Comuns",
     "langGroupEurope": "Europa",
@@ -198,7 +198,7 @@
     "langPresetEurope": "Europeias principais",
     "langPresetEastAsian": "Ásia Oriental",
     "langPresetIndian": "Subcontinente Indiano",
-    "selectedCount": "{count} selecionadas",
+    "selectedCount": "{count} selecionados",
     "recentLanguages": "Recentes",
     "langGroupAmericasOceania": "Américas e Oceânia",
     "relatedTools": "Ferramentas relacionadas",
@@ -213,11 +213,26 @@
     "errorHint429": "Limite de requisições excedido, tente novamente mais tarde",
     "errorHint456": "Cota de tradução esgotada neste período",
     "errorHint5xx": "Erro do servidor, tente novamente mais tarde",
-    "errorHintRelay": "Erro de rede (possivelmente CORS) — ative o \"Relay da API\" em \"Mais configurações do Provider\"",
-    "errorHintRelay403": "A API retornou 403 Forbidden — ative o \"Relay da API\" em \"Mais configurações do Provider\"",
+    "errorHintRelay": "Erro de rede (possivelmente CORS) — ative o \"Relay da API\" em \"Mais configurações do provedor\"",
+    "errorHintRelay403": "A API retornou 403 Forbidden — ative o \"Relay da API\" em \"Mais configurações do provedor\"",
     "errorHintCors": "Não foi possível acessar este endereço — verifique o endereço e se o serviço permite requisições de origem cruzada (CORS). Gateways auto-hospedados e modelos locais precisam habilitar isso, ou use o seu próprio Relay da API",
     "errorHintGeminiKey": "Não foi possível conectar ao Gemini: verifique primeiro sua rede (algumas redes não alcançam diretamente os serviços do Google). Se a rede estiver bem, desde 19/06/2026 o Google rejeita chaves de API sem restrições — gere novamente sua chave no AI Studio (restrita por padrão) ou adicione uma restrição de Gemini API à chave antiga no Console do Google Cloud",
-    "rateLimitCooldown": "Limite de requisições atingido — pausando brevemente, repetiremos automaticamente"
+    "rateLimitCooldown": "Limite de requisições atingido — pausando brevemente, repetiremos automaticamente",
+    "faqHeading": "Perguntas frequentes",
+    "homeIndexEyebrow": "Índice",
+    "homeCategoryEyebrow": "{n} categorias",
+    "openNavigation": "Abrir navegação",
+    "goHome": "Ir para a página inicial",
+    "primaryNav": "Navegação principal",
+    "toggleTheme": "Alternar tema",
+    "communityLinks": "Links da comunidade",
+    "viewOnGitHub": "Ver no GitHub",
+    "toolCategories": "Categorias de ferramentas",
+    "searchLanguage": "Pesquisar idioma",
+    "selectLanguage": "Selecionar idioma",
+    "noMatchFound": "Nenhum resultado",
+    "backToTop": "Voltar ao topo",
+    "exportOptions": "Opções de exportação"
   },
   "SubtitleTranslator": {
     "clientDescription": "Envie legendas ou cole conteúdo. Selecione o idioma de destino para tradução rápida. Suporta processamento em lote e preserva a linha do tempo.",
@@ -260,7 +275,7 @@
     "assTranslationStyle": "Estilo da tradução",
     "assOriginalStyle": "Estilo do original",
     "assFontName": "Fonte",
-    "assFontPlaceholder": "Deixar vazio = automático conforme idioma alvo",
+    "assFontPlaceholder": "Deixar vazio = automático conforme o idioma de destino",
     "assReadSystemFonts": "Ler fontes do sistema",
     "assSystemFontsGroup": "Fontes do sistema",
     "assReadSystemFontsUnsupported": "Este navegador não consegue ler fontes do sistema — digite um nome de fonte",
@@ -313,9 +328,9 @@
     "urlAutoCompleted": "URL completada automaticamente",
     "modelExtra": "Nome modelo LLM, ver documentação API",
     "temperatureExtra": "Temperatura (0-2): Mais alto = mais aleatório, mais baixo = mais determinístico. Recomendado: 0.2-0.8",
-    "systemPrompt": "Prompt Sistema",
+    "systemPrompt": "Prompt do sistema",
     "systemPromptExtra": "Prompt sistema para tradução LLM, deixar vazio para padrão",
-    "userPrompt": "Prompt Usuário",
+    "userPrompt": "Prompt do usuário",
     "userPromptExtra": "Prompt tradução personalizado, deixar vazio para padrão. Variáveis:",
     "for": "para",
     "textToTranslate": "texto a traduzir",
@@ -373,7 +388,7 @@
       "title": "Tradutor Legendas",
       "description": "Tradução em lote SRT, ASS, VTT, SBV, LRC. 120+ idiomas.",
       "metaTitle": "Tradutor de Legendas | Lote SRT/VTT/ASS + Bilíngue",
-      "metaDescription": "Tradutor IA de legendas SRT, ASS, VTT, SBV, LRC. 25+ motores: DeepSeek, Claude, GPT, DeepL. 120+ idiomas, timecodes, bilíngue.",
+      "metaDescription": "Tradutor IA de legendas SRT, ASS, VTT, SBV, LRC. 30+ motores: DeepSeek, Claude, GPT, DeepL. 120+ idiomas, timecodes, bilíngue.",
       "faq": [
         {
           "q": "Quais formatos de legenda são suportados? É possível traduzir SRT, ASS, VTT, SBV e LRC?",
@@ -381,18 +396,18 @@
         },
         {
           "q": "Legendas: usar tradução automática ou tradução IA/LLM? Qual a melhor qualidade, qual a mais barata?",
-          "a": "Para barato, tradução automática; para qualidade, IA/LLM. A tradução automática (MT) é barata ou grátis mas soa rasa em diálogos: a versão gratuita do Google custa zero (textos longos são truncados); DeepL é referência para idiomas europeus; Qwen-MT e Azure Translate são similares. Os grandes modelos IA (LLM) cobram por token mas soam notavelmente mais naturais — DeepSeek é o melhor custo-benefício para lotes de temporadas; Claude Sonnet ou GPT-5 dão os diálogos mais naturais; o contexto de 1M tokens do Gemini 3 Pro absorve legendas do tamanho de um livro. As configurações do motor são compartilhadas com [Tradutor JSON](../json-translate) e [Tradutor Markdown](../md-translator)."
+          "a": "Para barato, tradução automática; para qualidade, IA/LLM. A tradução automática (MT) é barata ou grátis mas soa rasa em diálogos: a versão gratuita do Google custa zero (textos longos são truncados); DeepL é referência para idiomas europeus; Qwen-MT e Azure Translate são similares. Os grandes modelos IA (LLM) cobram por token mas soam notavelmente mais naturais — DeepSeek é o melhor custo-benefício para lotes de temporadas; Claude Sonnet ou GPT-6 dão os diálogos mais naturais; o contexto de 1M tokens do Gemini absorve legendas do tamanho de um livro. As configurações do motor são compartilhadas com [Tradutor JSON](../json-translate) e [Tradutor Markdown](../md-translator)."
         },
         {
           "q": "Como criar legendas bilíngues para YouTube ou aprendizado de idiomas?",
-          "a": "Selecione modo 'Bilíngue' com o idioma alvo. Posicione a tradução acima (para aprendizado) ou abaixo (para consumo). Exporte como ASS para legendas bilíngues coloridas, diretamente usáveis no YouTube, Premiere ou DaVinci Resolve."
+          "a": "Selecione modo 'Bilíngue' com o idioma de destino. Posicione a tradução acima (para aprendizado) ou abaixo (para consumo). Exporte como ASS para legendas bilíngues coloridas, diretamente usáveis no YouTube, Premiere ou DaVinci Resolve."
         },
         {
           "q": "Quantos arquivos de legenda posso traduzir em lote? E uma temporada inteira de episódios?",
-          "a": "Suporta upload em lote de uma temporada inteira para tradução simultânea, sem limite rígido de arquivos (o limite real depende da concorrência do motor e da sua cota de API). Cada arquivo é traduzido e cacheado de forma independente (IndexedDB), então recarregar a página não perde os arquivos já traduzidos. Para terminologia compartilhada entre episódios (nomes de personagens, locais), coloque um glossário no System Prompt — todos os arquivos compartilham o mesmo contexto, garantindo consistência ao longo de toda a temporada."
+          "a": "Suporta upload em lote de uma temporada inteira para tradução simultânea, sem limite rígido de arquivos (o limite real depende da concorrência do motor e da sua cota de API). Cada arquivo é traduzido e cacheado de forma independente (IndexedDB), então recarregar a página não perde os arquivos já traduzidos. Para terminologia compartilhada entre episódios (nomes de personagens, locais), coloque um glossário no prompt de sistema — todos os arquivos compartilham o mesmo contexto, garantindo consistência ao longo de toda a temporada."
         },
         {
-          "q": "Como preservo nomes próprios, marcas e termos específicos nas legendas para que não sejam mal traduzidos?",
+          "q": "Como preservar nomes próprios, marcas e termos específicos nas legendas para que não sejam mal traduzidos?",
           "a": "Adicione um glossário no Prompt de Sistema; todos os motores IA/LLM o respeitarão. Exemplo: «Manter literal: iPhone, OpenAI, Premiere, nome de pessoa John Smith». Especialmente recomendado para séries de TV — todos os episódios compartilham o mesmo dicionário terminológico, evitando que um protagonista seja chamado de uma forma no episódio 1 e diferente no episódio 8. A tradução automática (Google, DeepL, Qwen-MT) não aceita personalização por prompt, requer pós-processamento manual."
         },
         {
@@ -417,7 +432,7 @@
         "Timecodes intactos — apenas o texto é traduzido, timing original preservado",
         "Detecção automática de codificação UTF-8/UTF-16/GBK",
         "Posição de legenda bilíngue: acima (aprendizado) ou abaixo (visualização)",
-        "25+ motores de tradução: Google grátis, DeepSeek, Claude, GPT, Gemini, DeepL, Qwen-MT",
+        "30+ motores de tradução: Google grátis, DeepSeek, Claude, GPT, Gemini, DeepL, Qwen-MT",
         "Compatível com YouTube, Premiere, DaVinci Resolve, Aegisub"
       ]
     },
@@ -446,7 +461,7 @@
       "description": "Integra correspondência por regex, ordenação, filtragem e outras funcionalidades para processamento em lote"
     },
     "dataBatch": {
-      "title": "Processador de Texto",
+      "title": "Processador de dados em lote",
       "description": "Processamento em lote de dados Excel — deduplicação, extração de colunas, fusão, regras encadeadas"
     },
     "textJoiner": {
@@ -497,25 +512,25 @@
   "navigation": {
     "home": "Início",
     "all": "Todos",
-    "translate": "Ferramentas Tradução",
-    "textParser": "Ferramentas Texto",
+    "translate": "Ferramentas de Tradução",
+    "textParser": "Ferramentas de Texto",
     "jsonParser": "Ferramentas JSON",
-    "dataParser": "Ferramentas Dados",
+    "dataParser": "Ferramentas de Dados",
     "otherTools": "Mais ferramentas",
     "externalTools": {
       "legendtalk": "Mesa-redonda de pensadores de IA",
       "imgprompt": "Prompts de imagem de IA",
-      "lives": "Thousand Lives",
-      "learndata": "LearnData Notas de Código Aberto"
+      "learndata": "LearnData Notas de Código Aberto",
+      "hub365": "365 Código Aberto"
     }
   },
   "Metadata": {
     "title": "ToolsByAI - Ferramentas de IA e Dados para Desenvolvedores",
-    "description": "ToolsByAI: 19 ferramentas open source grátis para tradução de legendas, Markdown, JSON i18n e processamento em lote. 25+ motores IA.",
+    "description": "ToolsByAI: 19 ferramentas open source grátis para tradução de legendas, Markdown, JSON i18n e processamento em lote. 30+ motores IA.",
     "homeTitle": "Suíte ToolsByAI",
     "homeDescription": "19 ferramentas para tradução, texto, JSON e conversão de dados. Impulsione a eficiência de desenvolvedores e criadores.",
-    "ogTitle": "ToolsByAI - Ferramentas Dev IA Gratuitas e Open Source",
-    "ogDescription": "ToolsByAI: 19 ferramentas open source grátis para tradução de legendas, Markdown, JSON i18n e processamento em lote. 25+ motores IA."
+    "ogTitle": "ToolsByAI - Ferramentas de IA e Dados para Desenvolvedores",
+    "ogDescription": "ToolsByAI: 19 ferramentas open source grátis para tradução de legendas, Markdown, JSON i18n e processamento em lote. 30+ motores IA."
   },
   "languages": {
     "auto": "Detecção Auto",
