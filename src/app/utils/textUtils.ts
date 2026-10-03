@@ -41,7 +41,7 @@ export const truncate = (str: string, num: number = MAX_DISPLAY_LENGTH): string 
 const splitCNParagraph = (text: string) => {
   // ⚠ 正则【字面量】,转义必须是单反斜杠。此前整条正则是字符串形式粘贴过来
   // 的双反斜杠(\\n、\\w、\\u4e00):在字面量里 \\n 匹配「反斜杠+字母n」而非
-  // 换行 —— 13 处换行守卫全部失效(已有换行仍重复插空行)、[\\u4e00-\\u9fa5]
+  // 换行 —— 全部换行守卫失效(已有换行仍重复插空行)、[\\u4e00-\\u9fa5]
   // 解析成乱码字符类(对话归因「”他说道。“」永不分段)、\\b/\\w 分支要求
   // 输入含字面反斜杠(死分支)。
   // ⚠ 字符类交集 [\w&&[^\d]] 只在 v flag 下存在:无 v 时类在首个 ] 闭合,
@@ -52,7 +52,8 @@ const splitCNParagraph = (text: string) => {
   return text.replace(paragraphCNSplitRegex, "$1\n");
 };
 
-// 英文按句切分:Intl.Segmenter 的 sentence 粒度(曾经为这一句拉 350KB 的 compromise)
+// 英文按句切分:Intl.Segmenter 的 sentence 粒度 —— 别为此再引第三方分句库,
+// 为一个函数拉进整个包的体积代价远超收益。
 const splitEnglishParagraph = async (text: string): Promise<string> =>
   Array.from(new Intl.Segmenter("en", { granularity: "sentence" }).segment(text), (s) => s.segment.trim())
     .filter(Boolean)

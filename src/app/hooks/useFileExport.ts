@@ -6,7 +6,7 @@ import { useTranslations } from "next-intl";
 import { downloadFile, type DownloadResult } from "@/app/utils";
 
 /**
- * 「导出一个文件并如实汇报」—— 一次导出的完整动作，21 个调用点共用一份。
+ * 「导出一个文件并如实汇报」—— 一次导出的完整动作，所有工具页共用一份。
  *
  * 【为什么必须有它】此前各处都是这两行：
  *

@@ -162,11 +162,11 @@ const makeFileCache = (file: string): PipelineCache & { flush: (force?: boolean)
   let lastFlushMs = 0;
   const FLUSH_MIN_INTERVAL_MS = 2000;
   // 自适应节流窗口。缓存小的时候恒等于下限(flush 只要几毫秒,10× 远不到 2s),
-  // 行为与固定 2s 完全一致;只有当整份缓存大到 flush 本身变慢时才会拉开。
-  // 起因:flush 是 read+parse+merge+stringify+write 整份文件,36MB 时实测 573ms,
-  // 而暖跑(全命中缓存、每个输出远快于 2s)会稳定顶在节流下限上 —— 于是墙钟的
-  // 两三成花在序列化缓存上,恰恰是在「全命中、本该秒回」的那种运行里。
-  // 10× 把序列化摊到约 10% 墙钟,且随缓存大小自校准,不用猜一个固定值。
+  // 行为与固定下限完全一致;只有当整份缓存大到 flush 本身变慢时才会拉开。
+  // 起因:flush 是 read+parse+merge+stringify+write 【整份文件】,缓存规模一大,
+  // 单次 flush 就成了可观耗时;而暖跑(全命中缓存、每个输出远快于下限)会稳定顶在
+  // 节流下限上 —— 墙钟的大头花在反复序列化上,恰恰是「全命中、本该秒回」的那种运行。
+  // 10× 把序列化摊到约一成墙钟,且随缓存大小自校准,不用猜一个固定值。
   let flushIntervalMs = FLUSH_MIN_INTERVAL_MS;
   return {
     get: async (k) => store.get(k) ?? null,
@@ -190,10 +190,10 @@ const makeFileCache = (file: string): PipelineCache & { flush: (force?: boolean)
     // ——恰恰是缓存存在的意义——大部分时间花在反复序列化上,可能慢过冷跑。
     // 节流到 2 秒一次;收尾与取消路径传 force 强制落盘。
     // ponytail: 硬杀(kill -9)最多丢节流窗口内的译文;要一条不丢得改追加式日志。
-    // 「有没有待落盘的东西」以【日志是否为空】为准,不看 dirty 标志。上一版写
-    // 失败时置 dirty=false 却特意留着日志说「等下次 set 再试」—— 但最后那次
-    // force flush 开头就是 `if (!dirty) return`,直接被自己挡在门外:文件锁一
-    // 解除本可以写成功,结果整批已付费的译文还是没落盘。
+    // 「有没有待落盘的东西」以【日志是否为空】为准,不看 dirty 标志:写失败时日志
+    // 必须留着等下次 set 再试,而任何「失败即清标志」的短路都会让收尾那次
+    // force flush 在开头就 `return` —— 文件锁一解除本可以写成功,结果整批已付费
+    // 的译文还是没落盘。
     flush: (force = false) => {
       if (written.size === 0 && deleted.size === 0) return;
       const now = Date.now();
@@ -262,7 +262,6 @@ const makeFileCache = (file: string): PipelineCache & { flush: (force?: boolean)
  * 以及目标语言去重。最后一个不是路径,但语言代码【会进输出文件名】
  * (stem.<lang>.ext),所以在文件系统层面适用同一条等价关系 ——
  * `-t zh-hant -t zh-Hant` 是两个不同字符串、两次计费、一个磁盘文件。
- * (不写死消费点个数:这里曾写"三个",而实际已经长到五类。)
  *
  * 折叠范围为何含 darwin(取舍详见 main 里输入去重处的长注释):敏感卷上误合并
  * 会被那里的显式检查响亮拦下,而不敏感卷上漏检是静默覆盖 —— 选前者。
@@ -318,7 +317,8 @@ const main = async (): Promise<number> => {
     // 读不出是 Zen 还是 Go(正是它让人以为两条产品线该合成一个 provider),而
     // ① 它的用户极少,② 过期值会优雅回落(getDefaultConfig 判不过就回 DEFAULT_API,
     // 且不写回 localStorage),③ 同一厂商的姊妹条目已经叫 opencodeGo。
-    // 代价要说清:下游三个 app 存档里的 "opencode" 会失效,且 Worker 必须重新部署
+    // 代价要说清:下游各 app(消费方清单见 sync-provider-catalog.ts 的 CONSUMERS)
+    // 存档里的 "opencode" 会失效,且 Worker 必须重新部署
     // (/api/opencode → /api/opencodeZen)。
     console.log(
       Object.keys(defaultConfigs)
@@ -401,7 +401,8 @@ const main = async (): Promise<number> => {
   };
 
   // API 中转是【浏览器专属的补丁】:defaultUseRelay 只为绕开某些 provider 的
-  // CORS 预检(tokenhub / yandex),Node 里根本没有 CORS。原样继承那个默认值
+  // CORS 预检(哪些家由 registry 的 defaultUseRelay / defaults.useRelay 决定,
+  // 别在这里点名),Node 里根本没有 CORS。原样继承那个默认值
   // 等于把用户的 API key 默默送去第三方 Cloudflare Worker —— 用户从没导出过
   // 网页设置、命令行也没有对应开关,想关都关不掉;中转一挂,直连本来能通的
   // 请求也跟着全灭。
@@ -469,9 +470,9 @@ const main = async (): Promise<number> => {
 
   // ③ 语言支持性 —— 只对【语言表内】的代码做:CLI 没有选择器约束,gtx/google
   //    等服务接受表外代码(pt、zh-TW…直接透传 wire),对它们报错是误杀,警告
-  //    放行交服务端判定。源侧检查【不依赖目标是否在表内】—— 上一版把它挂在
-  //    目标循环里,目标全在表外时 REQUIRES_EXPLICIT_SOURCE/源支持性被整体
-  //    跳过,-t pt -m translategemma 又静默烧完预算写原文文件。
+  //    放行交服务端判定。源侧检查【不依赖目标是否在表内】,必须独立于目标循环:
+  //    挂在目标循环里时,目标全在表外会让 REQUIRES_EXPLICIT_SOURCE/源支持性被
+  //    整体跳过,-t pt -m translategemma 又静默烧完预算写原文文件。
   const sourceKnown = isValidLanguageValue(sourceLanguage);
   if (!sourceKnown) console.error(`warning: source "${sourceLanguage}" is not in the language table — skipping pre-flight support check, passing it through to the service.`);
   if (sourceKnown && sourceLanguage === "auto" && REQUIRES_EXPLICIT_SOURCE.has(method)) {
@@ -511,7 +512,7 @@ const main = async (): Promise<number> => {
     cache?.flush(true);
   });
 
-  // 刻意【不做】网页端那样的可达性预检:加过一版,一次审查暴露四个坑 ——
+  // 刻意【不做】网页端那样的可达性预检,它的失败模式:
   // 探测自己会撞 429(默认的 gtxFreeAPI 是限流共享端点,一次瞬时 429 就
   // exit 2 杀掉本可正常翻完的一轮)、没有超时(黑洞端点无限期挂住)、强制
   // 联网(全缓存的离线重跑被打死)、auth 失败被误报成「不可达」。修对它
@@ -723,7 +724,7 @@ const main = async (): Promise<number> => {
       // 放在翻译后的话,整份文件已经翻完(--no-cache / 换 provider 时是真实计费)
       // 才被丢弃,用户还要等一轮翻译才看到这条错误。
       // 前缀在回调【外】算一次:它对每个候选都一样,放进回调就是每扫一个元素
-      // 重做两次模板拼接 + 两次 toLowerCase(N=1000 时实测 2.8s → 0.9s)。
+      // 重做两次模板拼接 + 两次 toLowerCase —— 大输入下这一步就能盖过其余检查。
       // 先折叠再拼接是安全的:`.` 与 `_` 无大小写,不会被 toLowerCase 移位。
       const prefix = pathKey(`${stem}.${lang}`);
       const collidingInput = inputsInOutDir.find(({ base }) => base.startsWith(`${prefix}.`) || base.startsWith(`${prefix}_`))?.path;

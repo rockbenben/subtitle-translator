@@ -111,9 +111,9 @@ export interface FailedLine {
    *
    * 存在的理由:软填的槽位装的是【未翻译的原文】,调用方的译后加工
    * (removeChars 等)绝不能碰它 —— 碰了就产出既非原文也非译文的东西,而
-   * 界面和 CLI 都刚刚承诺过"失败的行已保留原文"。此前调用方只能拿 `line`
-   * 去【反推】下标,三个调用方里有两个推错了(字幕/Markdown 直接整份套用,
-   * 只有 JSON handler 做对),所以由引擎直接给出,别再让每个调用方自己算。
+   * 界面和 CLI 都承诺了"失败的行已保留原文"。让调用方拿 `line` 去【反推】下标
+   * 曾在两个工具里推错过（整份套用译后加工，把保留的原文也改了），
+   * 所以由引擎直接给出,别再让每个调用方自己算。
    */
   index?: number;
 }
@@ -140,8 +140,7 @@ export type TranslateBatchMeta = {
   /**
    * 【出参】调用方传一个空 Set,引擎把本次软填(保留原文)的槽位下标写进去。
    *
-   * 为什么是出参而不是返回值:translateBatch 返回 string[],被三个工具页和四条
-   * 测试直接消费;而调用方【必须】知道哪些槽位装的是原文 —— 译后加工
+   * 为什么是出参而不是返回值:translateBatch 返回 string[],被多个工具页与测试直接消费;而调用方【必须】知道哪些槽位装的是原文 —— 译后加工
    * (removeChars)碰了它们就产出既非原文也非译文的东西,而界面同屏正说着
    * "失败的行已保留原文"。Set 出参既不改返回形状,也不引入"必须紧接着读某个
    * ref"的时序耦合。CLI 侧走 cliFormat 的 softFilledIndices(同一份语义)。
@@ -158,9 +157,9 @@ export type TranslateBatchMeta = {
  * 直接发 k 会在含空行的文件里指向别人家的行(空行数就是偏移量)。
  *
  * ⚠ `line`(物理源行号)【必须】带上,不能以"消费方手里有 meta.lineNumbers、
- * 让它自己映射"为由省掉 —— 那正是上一版的做法,而没有任何消费方真的去映射:
- * 面板于是打 contentLines 序数(cue #12),正下方失败面板打真实行号(47),
- * 两者同样式并排,用户照着面板跳过去落在时间轴上。同一份数据的两种坐标同屏
+ * 让它自己映射"为由省掉 —— 消费方并不会真的去映射:实时面板于是打 contentLines
+ * 序数,正下方失败面板打真实行号,两者同样式并排,用户照着面板跳过去落在别处。
+ * 同一份数据的两种坐标同屏
  * 出现,就得由【发出方】统一,不能指望每个消费方各自记得换算。
  */
 export interface LineTranslatedEvent {
@@ -212,12 +211,10 @@ export type PipelineRuntimeConfig = TranslationConfig & {
  * 批量路径的 runtime config 组装 —— 网页壳(useTranslationState translateBatch)
  * 与 CLI 壳(scripts/cli.ts buildConfig)共用。
  *
- * 它【是】PipelineRuntimeConfig 的唯一组装线。这句话曾经不成立:单行路径
- * translateSingleWithGlossary 与 JSONTranslator 的四个手写循环各自手拼 config,
- * 不受 RuntimeGlobals 的必填键约束 —— delayTime 就这么漏过一次且已上线(字幕/
- * Markdown 每行间隔 200ms、JSON 对同一个 provider 满速打)。现在 JSONTranslator
- * 经 translateBatch 走 translateLines,单行入口已删,新增全局旋钮时漏接
- * 【必然】编译失败,不再靠人记得。
+ * 它【是】PipelineRuntimeConfig 的唯一组装线：单行/批量路径都不得手拼 config。
+ * 手拼的后果是全局旋钮（如 delayTime）在某条路径上静默失效 —— 同一个 provider，
+ * 字幕/Markdown 有节流而 JSON 满速打。新增全局旋钮时漏接【必然】编译失败
+ * （RuntimeGlobals 全键必填），不再靠人记得。
  *
  * independent:调用方的翻译单元互相独立且必须逐单元往返(JSON 值 —— 内嵌换行
  * 是值的一部分)时置 true。它压住【两条】批处理路径:这里剥掉 chunkSize 挡住
@@ -373,9 +370,9 @@ export const translateCore = async (params: TranslateTextParams, cache?: Pipelin
   // document semantics (&lt;div&gt; in an HTML-escaped doc became a real tag)
   // and cached the corrupted form.
   const cleanedText = HTML_ENCODING_METHODS.has(translationMethod) ? cleanTranslatedText(translatedText) : translatedText;
-  // Fire-and-forget cache write — failures swallowed in the cache impl,
-  // and the next read of this key is ≥1s later (retry interval) so the write
-  // has plenty of time to settle. Awaiting would add 5-50ms per line for nothing.
+  // Fire-and-forget cache write — failures swallowed in the cache impl, and the
+  // same key is next read only after the retry interval, so the write has time
+  // to settle. Awaiting each write would park the translation loop behind IDB.
   if (useCache && cache) {
     void cache.set(cacheKey, cleanedText);
   }
@@ -613,11 +610,10 @@ const enforceGlossaryOnLine = async (sourceLine: string, rawTranslated: string, 
     return first;
   } catch (error) {
     // auth 【必须向上抛】,这是本文件的既定约定(grep `isAuthError(` 可见其余抛出点)。
-    // 曾经这里一律吞掉,理由写的是「auth 中止已由 translateSingle 传给本 run 的
-    // controller」—— controller 确实被 abort 了,但错误的【身份】丢了:后续批次
-    // 全部短路成 `Translation aborted`,而工具层对它是 `if (isCascadedAbort) continue`
-    // ——静默。结果是过期的 key 配上开着的术语表,用户点翻译得到零输出、零 toast、
-    // 零失败面板,完全不知道 key 已经失效(WAF/CDN 返回 403 也同形)。
+    // 吞掉它会把错误的【身份】弄丢:后续批次全部短路成 `Translation aborted`,而工具层
+    // 对它是 `if (isCascadedAbort) continue` ——静默。结果是过期的 key 配上开着的术语表,
+    // 用户点翻译得到零输出、零 toast、零失败面板,完全不知道 key 已经失效
+    // (WAF/CDN 返回 403 也同形)。
     if (isAuthError(error)) throw error;
     // 其余(网络抖动 / 级联中止)不拖垮已成功的首译。
     return first;
@@ -830,7 +826,7 @@ const translateWithContext = async (
           // instead of a half-localized mix like "斯派克, hi".
           const enforced = await enforceGlossaryOnLine(batchSources[j], translatedBatch[j], cacheSuffix, runtimeConfig, ctx, fullText);
           translatedLines[batchStart + j] = enforced;
-          // 实时流:这一槽立刻可见,不等整批 20-60s 的请求全部回来。
+          // 实时流:这一槽立刻可见,不等整批请求全部回来。
           ctx.emitLine?.({ index: batchStart + j, original: batchSources[j], translation: enforced });
           // Cache the finalized line by its source text so a future run skips
           // it (see prefillFromLineCache above). Survives the batch-level purge
@@ -940,9 +936,8 @@ const translateWithContext = async (
 
     // Circuit breaker: when the provider is wholesale-down (quota-exhausted
     // 429, sustained outage), every cluster fails identically — without a
-    // breaker a 1000-line file would grind through ~100 sequential doomed
-    // pRetry cycles (~12-20 extra minutes + a request storm against an
-    // already rate-limited API) before the soft-fill finally runs. Three
+    // breaker,整份文件的每个簇都会烧完一轮注定失败的重试,再把海量补打请求
+    // 砸向一个已经限流的 API,最后才轮到 soft-fill。Three
     // consecutive clusters with ZERO newly-filled slots = systemic failure,
     // bail and let the soft-fill surface the failure panel. A breaker can't
     // misfire on healthy-but-spotty runs: any cluster that fills even one
@@ -977,8 +972,8 @@ const translateWithContext = async (
     }
   };
 
-  // Show progress immediately so users see the modal is alive (a single LLM
-  // batch can take 20-60s before the first in-loop updateProgress). On a
+  // Show progress immediately so users see the modal is alive (一次 LLM 批请求
+  // 可能跑很久才回到循环里更新进度)。On a
   // cache-heavy re-run, the blank pre-fill + per-line cache prefill have
   // already decided most slots — surface that at once so the bar jumps to
   // near-complete instead of sitting at ~0% through the prefill + first
@@ -993,13 +988,12 @@ const translateWithContext = async (
   // line-by-line mode uses the separate `batchSize` (see translateLines)
   // which is safe to run higher since each request is a single short
   // prompt. Defaults per provider:
-  //   - Cloud LLMs (claude, gemini, openai-compat, ...): 3 — under every
-  //     mainstream provider's concurrent cap (Claude paid 5-10, DeepSeek
-  //     30, Gemini generous). Free-tier users hitting 429 get caught by
-  //     pRetry + auto-retry.
+  //   - Cloud LLMs (claude, gemini, openai-compat, ...): 3 — 刻意压在主流云
+  //     provider 的并发上限以下（各家配额随厂商调价变化，不在这里誊数）。
+  //     免费档真撞 429 由 pRetry + 自动重试兜。
   //   - Custom LLM (Ollama local): 1 — Ollama runs inference single-threaded
-  //     by default, >1 concurrent would queue on the server and our 180s
-  //     requestTimeoutSec would fire on queued requests before they run.
+  //     by default, >1 concurrent would queue on the server and requestTimeoutSec
+  //     would fire on queued requests before they run.
   // Power users with proper paid tiers can raise contextBatchSize in
   // Advanced Settings for faster throughput.
   //
@@ -1236,7 +1230,7 @@ const runTranslateLines = async (
       // Batched cache probe (ONE transaction) → indices that will hit cache.
       // baseDelay (default 200ms) exists to rate-limit REAL API calls; a cache
       // hit makes none, so throttling it just made a fully-cached re-run crawl
-      // (baseDelay × lines / concurrency — ~20s on a 1000-line file). Used
+      // (耗时量级 = baseDelay × 行数 / 并发)。Used
       // only to SKIP the delay below; the translate path is unchanged (the
       // per-line cache check inside translateSingleWithGlossary still runs).
       const cacheHitIndices = new Set<number>();
@@ -1505,7 +1499,7 @@ const runTranslateLines = async (
       const unusable = failedK.has(k) || translated === undefined || translated.trim() === "";
       out[sourceIdx[k]] = unusable ? contentLines[sourceIdx[k]] : applyGlossary(ctx, translated, config.targetLanguage);
       // 兜底:上面的按块对齐理应让 undefined 不再出现,真出现了也必须记一条
-      // 失败 —— 静默保留原文正是上一轮要修掉的东西。failedK 的行已记过。
+      // 失败 —— 静默保留原文正是这里要防的失败形态。failedK 的行已记过。
       if (unusable && !failedK.has(k)) {
         const i = sourceIdx[k];
         failures.push({ text: contentLines[i], line: failureLine(config, meta, i), index: i, lang: config.targetLanguage, file: meta?.fileName });

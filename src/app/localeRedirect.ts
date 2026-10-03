@@ -22,8 +22,7 @@ import { routing } from "@/i18n/routing";
  *   原因同样写在 not-found.tsx 顶部。
  * ⚠ L 用的是 `routing.locales`（本次构建【实际产出】的那些），【不是】ALL_LOCALES
  *   全集。单语言构建下这两者不同：拿全集去匹配，会把偏好德语的用户 replace 到
- *   `/de` —— 而那条路由根本没被构建出来，直接 404。曾经写错过一次，实测发现
- *   （build:lang zh 的产物里 L 仍是 18 个）。
+ *   `/de` —— 而那条路由根本没被构建出来，直接 404。
  * ⚠ 中文按地区分简繁：zh-TW / zh-HK / zh-MO / *-Hant → zh-hant，其余 zh-* → zh。
  *   弄反了比不做更糟（台湾用户落到简体）。
  * ⚠ location.replace 而非 href：不留历史记录，否则用户按返回会被反复弹回来。

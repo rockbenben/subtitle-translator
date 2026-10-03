@@ -351,7 +351,7 @@ export const requireUrl = (serviceName: string, url: string | undefined): string
 // 注意:这里【不再】拼接用户提示文案。每个状态码代表的可行动问题由展示层
 // 的 describeError(utils/errorUtils.ts)按错误对象的 .status 查 i18n 键
 // (common.errorHint*)生成 —— 纯 TS 的 service 层拿不到 locale,文案烤进
-// message 只能双语硬编码,搬到显示侧后 19 语种全覆盖。本函数只负责把
+// message 只能双语硬编码,搬到显示侧后由 i18n 覆盖全部 locale。本函数只负责把
 // 响应体里的真实错误信息提炼成 `[status] message` 形态。
 export const formatHttpError = (data: unknown, status: number): string => {
   const obj = data as Record<string, unknown> | null;

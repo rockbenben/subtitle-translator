@@ -42,3 +42,34 @@ export const numberTitleRegex = /^[ 　\t]{0,4}\d{1,5}([：:,.， 、_—\-]|【
 export const chapterPattern = /^(第?\s{0,4}[\d〇零一二两三四五六七八九十百千万壹贰叁肆伍陆柒捌玖拾佰仟]+?\s{0,4}章)(.*)$/;
 
 export const novelSectionHeaderRegex = /^(?:作者|(?:内容|作品)?简介|创作|标签)[:：]?/u;
+
+// ── 章节标题判定（chapterTitleRegex/numberTitleRegex 命中 + 下面三条约束）──
+// 两个正则都只锚定"行首像不像标题"，chapterTitleRegex 的「第」还是可选的，
+// 于是 "一部正在上映的电影，票价三十起步。" 这类正文句会被当成章节标题：
+// 合并同章标题会把它和另一处同号行之间的整段正文静默删掉，章节重排会把全书
+// 从这句话处切开搬走。三条约束（行长上限、句末句号、非「第X章」标题的句中逗号）
+// 划在"真标题簇"与"正文句簇"之间的空档上：真标题最长 35 字，>40 字的命中行全是
+// 正文句。判错的代价是这一行不再当章节边界（正文并入上一章），不会删内容。
+export const CHAPTER_TITLE_MAX_LEN = 40;
+
+// 显式「第X标记」前缀，捕获标记用于区分「章」与其他（部/节/集/卷/回…）
+const chapterHeadRegex = /^第\s*[〇零一二三四五六七八九十百千万两壹贰叁肆伍陆柒捌玖拾佰仟萬\d]{1,10}\s*([章节卷集幕回部篇])/;
+const sentenceEndRegex = /[。.]$/;
+// 「句中有逗号」= 除末字符外出现过逗号：真标题里的逗号是并列短语
+// （"混江湖，就是要叫人忌惮！"），正文句的逗号是分句分隔。
+const innerCommaRegex = /[，,]/;
+
+export const isChapterTitleLine = (line: string): boolean => {
+  const t = line.trim();
+  if (!t) return false;
+  if ([...t].length > CHAPTER_TITLE_MAX_LEN) return false;
+  if (!chapterTitleRegex.test(t) && !numberTitleRegex.test(t)) return false;
+  const head = t.match(chapterHeadRegex);
+  // 没有「第X章」这类显式前缀、又以句号收尾 —— 是正文句，不是标题
+  if (!head && sentenceEndRegex.test(t)) return false;
+  // 有显式前缀但标记不是「章」(部/节/集/卷/回…) 且 句号收尾 + 内含逗号 ——
+  // 「第二部《办公室风情》的票房表现，…更好。」「第1节比赛接近尾声，…」这类
+  // 正文句。「第61章 方圆有事想求。」这类章标记的标题不受影响。
+  if (head && head[1] !== "章" && sentenceEndRegex.test(t) && innerCommaRegex.test(t.slice(0, -1))) return false;
+  return true;
+};

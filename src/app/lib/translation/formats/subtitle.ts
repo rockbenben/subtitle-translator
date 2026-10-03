@@ -222,8 +222,8 @@ const fillEmptyTranslations = (trans: string[], origs: string[], keepEmpty?: boo
 /**
  * 【共享判据】这一行是否该只输出一半 —— 即它是【软失败回填的原文】。
  *
- * ⚠ 判据是【下标】,不是字符串相等。上一版比较 trans === orig,看似等价,
- * 实际把一类完全正常的翻译也吃掉了一半:专有名词(Tokyo)、数字、OK、♪、
+ * ⚠ 判据必须是【下标】，不能比较 trans === orig —— 看似等价，实际会把一类完全
+ * 正常的翻译也吃掉一半:专有名词(Tokyo)、数字、OK、♪、
  * 招牌文字在 en→de/es、zh→zh-hant 这类导出里【合法地】译成自身。用户要的是
  * 双语,拿到的却是部分 cue 只剩一种语言的残缺文件;ASS 路径更糟 —— 只输出
  * origLine 会让那行用 Secondary 样式/位置渲染,在视频中间显出一行错位字幕。

@@ -191,8 +191,8 @@ const useTranslationState = () => {
   // pipeline 内部的 auth abort 只掐得断本轮,拦不住下一轮 —— 入口守卫同样需要一个跨 controller 的旗标。
   //
   // 没有它:过期 key + 5 个目标语言 = 5 轮注定失败的满并发请求,用户看着进度条把
-  // 同一个错误重演五遍。CLI 早就有这条(cli.ts「凭据失败快停」),网页端三个工具
-  // 此前都没有。
+  // 同一个错误重演五遍。CLI 侧同一判据早就有（scripts/cli.ts「凭据失败快停」），
+  // 这里是网页端对齐它。
   //
   // ⚠ 存的是【原始错误】而不是布尔,因为入口守卫要把它原样抛出去。绝不能像
   // 取消那样抛级联标记("Translation aborted"):工具层对级联标记是【静默
@@ -338,7 +338,7 @@ const useTranslationState = () => {
   //
   // relayBase(全局设置)在这里并入 —— 这是「wire 会打到哪」的唯一咽喉:
   // 状态徽章 identity、Test、探测、翻译主链路全部从本函数取 config,合并放在
-  // 消费端曾漏掉三处(bcbc7e579),放在这里则未来消费者天然拿到。写回无污染:
+  // 消费端（曾漏掉过几处），放在这里则未来消费者天然拿到。写回无污染:
   // preset 保存读的是裸 translationConfigs,且 migrateConfig 的 defaults-key-only
   // 合并会把误入存储的 relayBase 剥掉(它不在任何 defaults 里)。
   const getSelectedConfig = (): TranslationConfig & { relayBase: string } => {
@@ -496,9 +496,9 @@ const useTranslationState = () => {
               // this scope still reads the old value (deeplx). Safe because we
               // immediately `return false`.
               //
-              // 一条通用文案 + findMethodLabel(registry 单一事实源)替代曾经的
-              // per-service 映射表:新方法进 PREFLIGHT_PROBE_METHODS 自动拿到带
-              // 自己名字的提示,不存在"忘了加 opencodeZen"这类漏项(上一版真漏过)。
+              // 一条通用文案 + findMethodLabel(registry 单一事实源)，不需要 per-service
+              // 映射表:新方法进 PREFLIGHT_PROBE_METHODS 自动拿到带
+              // 自己名字的提示，不存在"忘了给某家写文案"这类漏项（手工表必然漏项）。
               //
               // ⚠ 但【发生了自动切换】必须说出来,否则就是替用户改了 provider
               // 却让他以为还在用原来那个:下一次翻译会把整份文档发往 GTX 的公共

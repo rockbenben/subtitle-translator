@@ -378,8 +378,8 @@ const jsonHandler: CliFormatHandler = {
     // 既非原文也非译文的东西(网页端把 removeChars 放在成功分支内)。
     // 用引擎给的 index,不再从 line 反推(independent 路径下二者恰好相等,
     // 但那是巧合 —— 这条路径一旦开始传 lineNumbers 就会静默错位)。
-    // 走共享 helper 而不是内联同一段逻辑 —— softFill.ts 的头注释说这个惯用法
-    // 曾在四处复制、而分歧「只会在用户的产物里显形」;JSON 路径不该是第五份。
+    // 走共享 helper 而不是内联同一段逻辑 —— 这个「跳过软填槽位」的惯用法多处
+    // 各写一份就会漂移，而分歧只会在用户的产物里显形（规则见 softFill.ts）。
     const cleaned = transformSkippingSoftFilled(outcome.lines, softFilledIndices(outcome), ctx.applyRemoveChars);
     cleaned.forEach((v, i) => setters[i](v));
 

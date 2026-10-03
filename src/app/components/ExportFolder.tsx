@@ -17,7 +17,7 @@ import { supportsExportDir, isNativeExportDir, getExportDirName, pickExportDir, 
  * —— 两个毛病在"按工具存 ＋ 放进每页只渲染一次的容器"之后一起消失。
  *
  * 【为什么不放导航栏】那是全站级容器，而 `Navigation.tsx` 被 sync 排除、各子项目
- * 自维护，挂在那里每次 merge 都要救一遍（见 #52 / #65）。ToolPage 是同步件。
+ * 自维护，挂在那里每次 merge 都要重新处理一遍。ToolPage 是同步件。
  */
 let runLocked = false;
 const lockListeners = new Set<() => void>();

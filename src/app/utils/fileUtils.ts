@@ -16,7 +16,7 @@ export interface DownloadResult {
  */
 export const downloadFile = async (content: string | Blob | ArrayBuffer, fileName: string, mimeType = "text/plain;charset=utf-8"): Promise<DownloadResult> => {
   // ⚠ Blob 构造【必须】在 try 里:超大文本(TextSplitter 合并全文)会抛 Invalid
-  // string length,而八个调用点是 `void downloadFile(...)` —— 漏在 try 外就是一条
+  // string length,而只要存在不 await / 漏接 reject 的调用路径，构造落在 try 外就是一条
   // 既无日志、又无干净 Error 的 unhandled rejection。
   try {
     // 创建 Blob（如果内容不是 Blob）

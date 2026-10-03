@@ -3,9 +3,9 @@
 import { useLocalStorage } from "@/app/hooks/useLocalStorage";
 
 /**
- * 是否在服务选择器里显示 hidden provider(目前是 volcengine 方舟 Coding Plan、
- * alibaba 百炼 Token Plan 两个用途受限的订阅套餐端点,见 registry 的
- * BaseProvider.hidden)。默认关 —— 这些端点对网页翻译工具有官方文档载明的
+ * 是否在服务选择器里显示 registry 标了 hidden 的 provider（成员就是 `hidden` 为真的
+ * 那几条，别在这里点名；判据见 BaseProvider.hidden）。默认关 —— 这类用途受限的
+ * 订阅套餐端点对网页翻译工具有官方文档载明的
  * 封号风险(开关旁挂着警告文案)。
  *
  * TranslationSettings(开关本体 + chips)与 ApiStatusBlock(服务 Select)
