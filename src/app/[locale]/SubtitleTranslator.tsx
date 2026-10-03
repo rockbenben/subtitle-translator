@@ -35,21 +35,30 @@ import LanguageSelector from "@/app/components/LanguageSelector";
 import ApiStatusBlock from "@/app/components/ApiStatusBlock";
 import ContextTranslationBlock from "@/app/components/ContextTranslationBlock";
 import TranslationProgressStrip from "@/app/components/TranslationProgressStrip";
-import LiveTranslationResults from "./LiveTranslationResults";
 import { useTranslationContext } from "@/app/components/TranslationContext";
 import ResultCard from "@/app/components/ResultCard";
 import Section from "@/app/components/styled/Section";
-import BilingualReviewPanel from "./BilingualReviewPanel";
 import AdvancedTranslationSettings from "@/app/components/AdvancedTranslationSettings";
 import TranslateFailurePanel from "@/app/components/TranslateFailurePanel";
 
-import MultiLanguageSettingsModal from "@/app/components/MultiLanguageSettingsModal";
 import UploadSourceCard from "@/app/components/UploadSourceCard";
 
 import dynamic from "next/dynamic";
 import { useFileExport, describeExport } from "@/app/hooks/useFileExport";
 import { useLockExportFolder } from "@/app/components/ExportFolder";
 const AssStyleDrawer = dynamic(() => import("./AssStyleDrawer"), { ssr: false });
+// Deferred panels: only mounted behind interaction gates (isTranslating /
+// review-conditions / multiLangModalOpen), so their chunks stay off first load.
+const LiveTranslationResults = dynamic(() => import("./LiveTranslationResults"), { ssr: false });
+const BilingualReviewPanel = dynamic(() => import("./BilingualReviewPanel"), { ssr: false });
+const MultiLanguageSettingsModal = dynamic(() => import("@/app/components/MultiLanguageSettingsModal"), {
+  ssr: false,
+  loading: () => (
+    <div className="flex justify-center items-center py-20">
+      <Spin size="large" />
+    </div>
+  ),
+});
 
 const { Text } = Typography;
 
@@ -483,7 +492,7 @@ const SubtitleTranslator = () => {
               <Button
                 type="primary"
                 size="large"
-                icon={<GlobalOutlined spin={isTranslating} />}
+                icon={<GlobalOutlined spin={isTranslating} aria-hidden />}
                 className="flex-1"
                 onClick={() => (uploadMode === "single" ? runTranslation(performTranslation, sourceText, contextAware ? "subtitle" : undefined) : runBatchTranslation(performTranslation, multipleFiles, readFile, tSubtitle("noFileUploaded")))}
                 disabled={isTranslating}
@@ -492,7 +501,7 @@ const SubtitleTranslator = () => {
               </Button>
 
               {uploadMode === "single" && sourceText && (
-                <Button size="large" onClick={handleExtractText} icon={<FormatPainterOutlined />}>
+                <Button size="large" onClick={handleExtractText} icon={<FormatPainterOutlined aria-hidden />}>
                   {t("extractText")}
                 </Button>
               )}
@@ -591,7 +600,7 @@ const SubtitleTranslator = () => {
                   key: "subtitle",
                   label: (
                     <Space>
-                      <FileTextOutlined />
+                      <FileTextOutlined aria-hidden />
                       <Text strong>{tSubtitle("subtitleFormat")}</Text>
                     </Space>
                   ),
@@ -669,7 +678,7 @@ const SubtitleTranslator = () => {
 
                       {showAssStyle && (
                         <Tooltip title={tSubtitle("assStyleTooltip")}>
-                          <Button size="small" icon={<FormatPainterOutlined />} disabled={isTranslating} onClick={() => setAssStyleOpen(true)}>
+                          <Button size="small" icon={<FormatPainterOutlined aria-hidden />} disabled={isTranslating} onClick={() => setAssStyleOpen(true)}>
                             {tSubtitle("assStyleButton")}
                           </Button>
                         </Tooltip>
@@ -681,7 +690,7 @@ const SubtitleTranslator = () => {
                   key: "advanced",
                   label: (
                     <Space>
-                      <ControlOutlined />
+                      <ControlOutlined aria-hidden />
                       <Text strong>{t("advancedSettings")}</Text>
                     </Space>
                   ),
