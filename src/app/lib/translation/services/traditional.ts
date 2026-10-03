@@ -26,6 +26,12 @@ const toDeepLSource = (lang: string): string => DEEPL_SOURCE_MAP[lang] ?? lang.t
 
 const toDeepLTarget = (lang: string): string => DEEPL_TARGET_MAP[lang] ?? lang.toUpperCase();
 
+// 官方 Translator 认证页原文(learn.microsoft.com):Ocp-Apim-Subscription-Region 对【global
+// 资源】optional、对【multi-service / regional 资源】required。我们打的是 global 端点
+// (api.cognitive.microsofttranslator.com),却仍一律要求并发送 region —— 因为常见 key
+// (multi-service / regional)缺它必错,而 global 资源会忽略这个值(填着无害);default
+// region=eastasia 只是占位,真正的 regional/multi-service 用户须填自己资源所在区。
+// ⇒ 这是有意的保守默认,不是 bug(2026-10-02 依官方原文复核确认)。
 const getAzureRegion = (region: string | undefined): string => {
   const value = region?.trim();
   if (!value) {
@@ -191,73 +197,31 @@ export const gtxFreeAPI: TranslationService = async (params) => {
 };
 
 // ===== Edge API (Free) — Microsoft Edge's built-in translator backend =====
-// Same engine as Azure Translator, fronted by Edge's free auth endpoint:
-// GET edge.microsoft.com/translate/auth issues a ~10-min JWT accepted by
-// api-edge.cognitive.microsofttranslator.com. CORS fully open (ACAO *) on
-// both endpoints, \n preserved, raw & / < untouched (plain-text mode), and
-// our master codes (zh / zh-hant) accepted as-is — live-verified 2026-06-10.
-const EDGE_AUTH_ENDPOINT = "https://edge.microsoft.com/translate/auth";
-const EDGE_TRANSLATE_ENDPOINT = "https://api-edge.cognitive.microsofttranslator.com/translate?api-version=3.0";
-
-// Token cache: refresh at 8 min (2-min safety margin on the ~10-min JWT).
-// The in-flight promise is shared (single-flight) so a 100-line batch fires ONE
-// auth request, not 100 — both on cold start AND on a 401 storm (the whole
-// concurrent batch sees the same expired token at once and asks to refresh).
-let edgeTokenCache: { value: string; expiresAt: number } | null = null;
-let edgeTokenInflight: Promise<string> | null = null;
-
-// `staleToken` (optional) = the token the caller just saw rejected (401/403).
-// We hand back the cache only if it has already moved PAST that token; otherwise
-// we refresh. A concurrent refresh is joined rather than duplicated, so 100 lines
-// 401-ing on the same token collapse to a single auth fetch.
-const getEdgeToken = (signal: AbortSignal | undefined, staleToken?: string): Promise<string> => {
-  if (edgeTokenCache && edgeTokenCache.value !== staleToken && Date.now() < edgeTokenCache.expiresAt) {
-    return Promise.resolve(edgeTokenCache.value);
-  }
-  if (edgeTokenInflight) return edgeTokenInflight;
-  const inflight = (async () => {
-    // signal: ties the auth fetch to the initiating line's abort/timeout so a
-    // hung auth endpoint can't wedge the run. Peers awaiting this promise see
-    // an AbortError on cancel — handled as a cascaded abort by the translator.
-    const response = await fetch(EDGE_AUTH_ENDPOINT, { signal });
-    if (!response.ok) {
-      throw Object.assign(new Error(formatHttpError(null, response.status)), { status: response.status });
-    }
-    const value = (await response.text()).trim();
-    edgeTokenCache = { value, expiresAt: Date.now() + 8 * 60_000 };
-    return value;
-  })().finally(() => {
-    edgeTokenInflight = null;
-  });
-  edgeTokenInflight = inflight;
-  return inflight;
-};
+// 免费、免 key、免 auth 的 Edge 云端翻译口：POST edge.microsoft.com/translate/translatetext。
+// 引擎仍是 Azure Translator，所以复用 toAzureCode 码位重映射（ckb→ku）与 languages-data 的
+// AZURE_UNSUPPORTED 语言表；master 裸码（zh / zh-hant）实测原样可用。浏览器可直连（ACAO:*，
+// OPTIONS 预检 204 放行 content-type），且无需 UA（浏览器本来也设不了 UA）⇒ 零配置路径照常。
+// ⚠ 2026-10-02 迁到此口：老的 `/translate/auth`（铸 10 分钟 JWT）→ api-edge 两步流【已被换掉】——
+//   auth 口四变体（Edg UA/无 UA/尾斜杠/POST）一律 404（是 404 而非 geo-403，像路由移除不是地域封锁），
+//   /translatetext 本机实测 200 直接回译文。此前"疑似 CN 地域不可达"的判断据此更正为接口更换。
+// ⚠ 已知差异：正文 emoji 会被翻成 `??`（`<tag>`、`\n` 原样保留、`&` 当普通词处理），是这口既有行为、
+//   非我们可控；字幕偶发 emoji 会丢，需要 emoji 原样的场景走别的 provider。
+const EDGE_TRANSLATE_ENDPOINT = "https://edge.microsoft.com/translate/translatetext";
 
 export const edgeFreeAPI: TranslationService = async (params) => {
-  const { text, targetLanguage, sourceLanguage } = params;
+  const { text, targetLanguage, sourceLanguage, signal } = params;
   // Edge backend = Azure Translator → reuse the Azure code remaps (ckb → ku).
   const target = toAzureCode(targetLanguage);
-  const source = sourceLanguage !== "auto" ? toAzureCode(sourceLanguage) : null;
-  const endpoint = `${EDGE_TRANSLATE_ENDPOINT}&to=${target}${source ? `&from=${source}` : ""}`;
-
-  const doRequest = async (token: string) =>
-    fetch(endpoint, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-      body: JSON.stringify([{ Text: text }]),
-      signal: params.signal,
-    });
-
-  const token = await getEdgeToken(params.signal);
-  let response = await doRequest(token);
-  // Expired/revoked JWT mid-run → ONE transparent refresh+retry. Without it a
-  // 401 classifies as an auth error and fast-aborts the whole batch, killing
-  // every run longer than the ~10-min token lifetime. Passing the rejected
-  // `token` as stale makes the refresh single-flight across the whole batch.
-  if (response.status === 401 || response.status === 403) {
-    response = await doRequest(await getEdgeToken(params.signal, token));
-  }
-
+  // auto 传空 from=（实测走自动检测，回 detectedLanguage）。
+  const source = sourceLanguage !== "auto" ? toAzureCode(sourceLanguage) : "";
+  const url = `${EDGE_TRANSLATE_ENDPOINT}?from=${encodeURIComponent(source)}&to=${encodeURIComponent(target)}&isEnterpriseClient=false`;
+  // Body 是纯字符串数组（该口按数组收多条；本服务沿用逐行单值调用，一条一批）。
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify([text]),
+    signal,
+  });
   if (!response.ok) throw httpStatusError(response);
 
   const data = (await response.json()) as Array<{ translations?: Array<{ text?: string }> }> | null;
@@ -447,9 +411,10 @@ const TRANSLATEGEMMA_OVERRIDES: Record<string, { code?: string; name?: string }>
   fil: { code: "fil-PH", name: "Filipino" }, // ours: "Filipino(Tagalog)"
 });
 
-// Defense-in-depth: validate already blocks `auto`, yue, and bho
-// before we get here, but a future code path (direct API consumer, CLI, etc.)
-// could bypass it. Throws with bilingual message for direct visibility.
+// Defense-in-depth: validate 已按 UNSUPPORTED_LANGS.translategemma 整表拦掉不支持的
+// 代码（`auto` 另走 REQUIRES_EXPLICIT_SOURCE），before we get here, but a future code
+// path (direct API consumer, CLI, etc.) could bypass it. Throws with bilingual message
+// for direct visibility.
 const getTranslategemmaLangInfo = (code: string): { code: string; name: string } => {
   if (code === "auto") {
     throw new Error("TranslateGemma requires an explicit source language (auto-detect not supported). / TranslateGemma 不支持自动检测源语言，请明确选择源语言。");
@@ -694,9 +659,10 @@ export const translategemma: TranslationService = async (params) => {
 // system prompt could do here except corrupt the input distribution.
 //
 // Language-name overrides: the model card closes its supported-language list
-// with "Please use the language name specified above", and those names differ
-// from ours in exactly six places. Everything else passes through
+// with "Please use the language name specified above", and a handful of those
+// names differ from ours. Everything else passes through
 // getLanguageName — same "only declare the differences" rule as TranslateGemma.
+// 差异项全部列在下面的 MILMMT_LANG_NAMES 里，别在这里数条数。
 // ⚠ null 原型。字面量对象继承 Object.prototype,`MILMMT_LANG_NAMES["constructor"]`
 // 返回的是 `Object` 函数而不是 undefined,`??` 于是不触发 —— 实测
 // `-f constructor` 会把 `function Object() { [native code] }` 拼进提示词。

@@ -214,13 +214,17 @@ export const languages: LanguageOption[] = [
 // DeepL's language set, NOT the next-gen 110+ list the official API gained in
 // 2025. The old assumption "DeepLX ≡ DeepL coverage" was empirically false:
 // live-probed every master code against the shipped default endpoint
-// (THIRD_PARTY_ENDPOINTS.deeplx, re-probed 2026-07-28) — everything outside
-// this allowlist returns HTTP 400 "Invalid target_lang" (incl. hi/vi/he/th/fa/
-// ur/bn/sw/fil/yue/ca/sr/hr...). zh-hant is EXCLUDED deliberately: the endpoint
-// answers 200 for ZH-HANT but silently returns Simplified script (verified
-// byte-identical to the ZH-HANS response) — silently-wrong output is worse
-// than a clean upfront block. The denylist below is derived as
-// master − allowlist so new master additions default to blocked until probed.
+// (THIRD_PARTY_ENDPOINTS.deeplx) — everything outside this allowlist is rejected
+// with HTTP 400. ⚠ 但 400 文案不统一(2026-10-02 复测):hi 回 {code:-32600,data.what:
+// "Invalid target_lang."},vi/he 回 {code:1156049,message:"Invalid Request"}(无 data.what)
+// —— 拦不拦由本 allowlist 决定,不靠解析错误体。
+// ⚠ 上游已改版:官方 deeplx 自 v1.2 起走 oneshot 端点(oneshot-free.www.deepl.com)、接受
+//   38 码(含 vi/he/es-419/en-gb/en-us)、alternatives 恒 null。但我们默认镜像【仍是 legacy
+//   JSONRPC 面】(响应带 jsonrpc 字段、alternatives 非 null),且实测【照样拒 vi/he】。⇒ 这份
+//   31 码表是按【该 legacy 后端】校准的,不按上游文档;用户自建 v1.2+ 会更宽,但新码先拦、
+//   probed 后才放(安全侧)。
+// zh-hant 仍故意排除:ZH-HANT 回 200 但给简体(2026-10-02 再次逐字节等于 ZH-HANS),
+// silently-wrong 比 upfront block 差;source_lang=auto 实测可用。denylist = master − 本 allowlist。
 const DEEPLX_SUPPORTED: ReadonlySet<string> = new Set([
   "en", "zh", "es", "fr", "de", "ja", "ko", "ar", "ru", "pt-br", "pt-pt", "id", "it",
   "pl", "uk", "nl", "ro", "el", "hu", "sv", "cs", "bg", "da", "fi", "nb", "sk", "lt",
@@ -279,21 +283,20 @@ const UNSUPPORTED_LANGS: Record<string, Set<string>> = {
   // Azure Translator — 24 codes, verified 2026-07-28. Note `be` and `tg` are
   // denied because they appear only in Azure's Transliterate API table, NOT in
   // Text Translation, which is the API we hit.
-  // Shared with edgeFreeAPI below — Edge's free endpoint
-  // (api-edge.cognitive.microsofttranslator.com) is the same Azure Translator
-  // engine behind Edge's free auth, so coverage is identical.
+  // Shared with edgeFreeAPI below — Edge 免费口现走 edge.microsoft.com/translatetext，
+  // 底下仍是同一台 Azure Translator 引擎（免 key、免 auth），所以语言覆盖与 azure 一致。
   azure: AZURE_UNSUPPORTED,
   edgeFreeAPI: AZURE_UNSUPPORTED,
 
-  // Qwen-MT plus/flash/turbo. Verified 2026-07-28: 43 denied → the 79 that pass
-  // the gate are exactly the 79 master codes in Qwen-MT's official table.
-  // Qwen-MT lists 92 codes; the rest of its gap vs our master is Arabic
-  // dialects + codes like ast/nn/vec/war that aren't in our master at all.
-  // Derived by parsing the doc page's raw HTML — extracting every code yields
-  // exactly 92 entries, matching the documented count, so it's complete.
-  // Key-gated, so unlike gtx/deeplx this one can't be live-probed; the rule
-  // here is strictly not-in-the-official-table ⇒ deny.
-  // Official list: https://help.aliyun.com/zh/model-studio/machine-translation
+  // Qwen-MT (阿里百炼,需 key ⇒ 不像 gtx/deeplx 能 live-probe;规则就是"不在官方表内 ⇒ deny")。
+  // 官方 machine-translation 页有【两张表】(2026-10-02 curl 逐字复核):
+  //   · plus / flash / turbo 各 92 语种 —— 下面这份 denylist 按 92 表推,对这三支成立;
+  //   · 【qwen-mt-lite 只有 31 语种】,另有一张 lite 专表。
+  // ⚠ 已知缺口:本 map 按 provider 键控、不分模型(见 isMethodSupportedForLanguage),
+  //   92 口径套到 lite 上会多放行一批 lite 其实不支持的码 —— 后果只是选到不支持语种时
+  //   出劣质/兜底译文,不是崩。真修要把 language gate 改成 model-aware、再给 lite 叠一层
+  //   deny(牵动 UI 语言下拉随选中模型变),是否为这一个模型值当机制留给维护者裁。
+  // Official: https://help.aliyun.com/zh/model-studio/machine-translation
   qwenMt: new Set([
     "ky", "tk", "tg", "mn", "ml", "pa", "bho", "ha", "am", "ug",
     "ga", "gn",
@@ -304,9 +307,9 @@ const UNSUPPORTED_LANGS: Record<string, Set<string>> = {
   ]),
 
   // MiLMMT-46 (Xiaomi) — derived as master − MILMMT_SUPPORTED (see above).
-  // `auto` is handled separately via REQUIRES_EXPLICIT_SOURCE; the six
-  // language-NAME overrides live in services/traditional.ts as
-  // MILMMT_LANG_NAMES, same "only declare the differences" rule as below.
+  // `auto` is handled separately via REQUIRES_EXPLICIT_SOURCE; the language-NAME
+  // overrides live in services/traditional.ts as
+  // MILMMT_LANG_NAMES（条数以那张表为准）, same "only declare the differences" rule as below.
   milmmt: new Set(languages.map((l) => l.value).filter((v) => v !== "auto" && !MILMMT_SUPPORTED.has(v))),
 
   // TranslateGemma 4b-it. Conservative: deny everything not in WMT24++.

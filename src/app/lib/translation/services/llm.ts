@@ -6,6 +6,7 @@ import {
   defaultConfigs,
   isAdaptiveThinkingClaude,
   isAlwaysThinkingClaude,
+  isBetweenToolsOffClaude,
   isCustomModel,
   isThinkingModel,
   isApiKeyOptional,
@@ -62,12 +63,10 @@ const openAICompatRequest = async (cfg: OpenAICompatRequestConfig): Promise<stri
   // 与 getConfigStatus(驱动 UI 标签与 validate)是同一个,不在这里重拼一遍 OR。
   // 拦下一个 UI 刚标成「无需配置」的服务,是自相矛盾。
   const key = isApiKeyOptional(params.translationMethod) ? apiKey?.trim() : requireApiKey(serviceName, apiKey);
-  // Model optional when BOTH user model and spec default are empty (only
-  // litellm: defaultModel "" by design). Omit the field — same semantics as
-  // the hand-written `llm` Custom service — so server-side defaults apply
-  // (`litellm --model X` / general_settings.completion_model). Sending "" is
-  // equivalent only on gateways that falsy-test it; omission is spec-clean.
-  // Every other provider has a non-empty defaultModel → field always present.
+  // Model 字段：用户填的 model 与 spec 的 defaultModel 都为空时【整个字段省略】，
+  // 让服务端自己的默认（网关启动参数 / completion_model 那类）生效。发空串只在
+  // 少数会把 falsy 值当"未提供"的网关上等效，省略才是规范做法。自建网关型 service
+  // 走同一语义。其余 provider 都有非空 defaultModel ⇒ 该字段恒在。
   const effectiveModel = model || defaultModel;
 
   const data = await fetchJSON(endpoint, {
@@ -109,8 +108,8 @@ const resolveEndpoint = (key: OpenAICompatProviderKey, spec: OpenAICompatProvide
 // Two-tier OpenAI-compat service generation:
 //   - TIER 1 (thinking-aware): registered in THINKING_BUILDERS below. Each
 //     entry is `gated(service, shape)` — the shared gate + one effort→wire shape.
-//   - TIER 2 (base / no builder): providers with no thinking-tagged SKUs in the
-//     registry (stepfun, opencodeZen, tokenhub, atlascloud, litellm). Factory returns
+//   - TIER 2 (base / no builder): OPENAI_COMPAT provider 里【没有】THINKING_BUILDERS
+//     条目的那些 —— 名单由这两处派生，别在这里重列（重列过一次就漂过一次）。Factory returns
 //     a pass-through service. isThinkingCapableProvider is false for these, so the
 //     UI offers no thinking control at all — including on custom SKUs.
 // Adding a thinking-capable provider = tag its SKU(s) in the registry + add one
@@ -270,7 +269,14 @@ const THINKING_BUILDERS: Partial<Record<OpenAICompatProviderKey, ExtraBodyBuilde
     /kimi-k3/.test(model ?? "") ? { reasoning_effort: pickThinkingLevel("moonshot", model!, e) } : thinkingType(e),
   ),
   doubao: gated("doubao", thinkingType),
-  zhipu: gated("zhipu", thinkingType),
+  // GLM-5.3 系不是扁平 thinking:{type} 那一条：官方只接受 `thinking:{type:"enabled"}` 配
+  // `reasoning_effort`(low/high/max,默认 max)，并明写「不再支持 thinking.type:"disabled"」
+  // 「否则请求将失败」(docs.bigmodel.cn/cn/guide/models/text/glm-5.3.md)。所以关闭态按官方
+  // 迁移原句映射到最低档 low，而不是发一个会被拒的 disabled。老世代 GLM 未打标 → gated 省略。
+  zhipu: gated("zhipu", (e, model) => ({ thinking: { type: "enabled" }, reasoning_effort: pickThinkingLevel("zhipu", model!, e) })),
+  // Step 3.7 Flash 官方专节「支持三档推理强度」low/medium/high（medium 默认），全篇无
+  // none/disabled 关闭值 ⇒ 关闭态发最低档，绝不发厂商没写的值。未打标的 SKU 由 gated 省略。
+  stepfun: gated("stepfun", (e, model) => ({ reasoning_effort: pickThinkingLevel("stepfun", model!, e) })),
   mimo: gated("mimo", thinkingType),
   // MiniMax M3: thinking:{type:"adaptive"|"disabled"} (server-default adaptive = ON)
   minimax: gated("minimax", minimaxThinking),
@@ -459,10 +465,6 @@ export const gemini: TranslationService = async (params) => {
   return text.trim();
 };
 
-// Azure 的 service 与思考参数已并入 openai-compat 工厂（见上方 THINKING_BUILDERS
-// 的 azureopenai 行 + 带 requireUrl 守卫的 wrapper）—— 旧的 buildAzureReasoningBody
-// 与手写 fetch 整体删除，逐分支语义由 gated() 原样承接。
-
 // Yandex AI Studio — protocol-wise plain OpenAI-compat chat/completions, but a
 // custom service because the factory can't assemble per-tenant model URIs:
 // gpt://<folder_id>/<model>/latest is built from the dedicated `folderId`
@@ -619,7 +621,7 @@ export const llm: TranslationService = async (params) => {
 export const CLAUDE_DIRECT_ENDPOINT = getProviderEndpoints("claude")![0].url;
 
 /**
- * Gemini 的 generationConfig（目前只含 thinkingConfig）。抽成具名导出而不是内联，
+ * Gemini 的 generationConfig 构造。抽成具名导出而不是内联，
  * 是为了让【同步给下游的 provider 目录】能直接求值拿到这份线格式 —— 手抄一份
  * 到下游就会分叉，而这两家没有 THINKING_BUILDERS 条目可调（它们是 custom
  * service，思考参数写在实现里）。
@@ -655,12 +657,15 @@ export const buildGeminiThinkingConfig = (model: string, directive: ThinkingDire
 // Pure request-shaping for Claude's two thinking generations — exported for
 // thinking.test.ts (same pattern as buildYandexModelUri). Membership
 // predicate lives in the registry (isAdaptiveThinkingClaude).
-//   - Adaptive gen (Opus 4.7/4.8, Sonnet 5, Fable 5, Mythos): effort →
-//     thinking:{type:"adaptive"} + output_config.effort; off → explicit
-//     disabled (Sonnet 5 server-defaults adaptive otherwise); "auto" → omit
+//   - Adaptive gen (Opus 4.7/4.8/5/5.5, Sonnet 5/5.5, Fable 5/5.1, Mythos): effort →
+//     thinking:{type:"adaptive"} + output_config.effort; "auto" → omit
 //     entirely and follow the server default. Legacy budget_tokens shape 400s.
-//     ⚠ 这一代里 Fable 5 / Mythos 是 "Always on":它们连 disabled 也 400,
-//     「关」只能是整个字段不发(isAlwaysThinkingClaude)。
+//     ⚠ 这一代的【关闭档】按官方逐模型表分三种形态，发错就是每请求 400（2026-10-02 逐页核原文）：
+//       · Opus 5.5 / Fable 5.x / Mythos = "Always on" → 连 disabled 也 400，「关」只能整个字段不发
+//         (isAlwaysThinkingClaude)；
+//       · Sonnet 5.5 → 发 disabled 会 400，官方的最低档是 between_tools (isBetweenToolsOffClaude)，
+//         且它在 xhigh/max effort 下发会 400 —— 只在【不带 effort】的关闭态发；
+//       · 老世代(Sonnet 5 / Opus 5 / Opus 4.7-4.8) → 仍发 disabled。
 //   - Extended gen (Haiku 4.5, Sonnet 4.6): effort → enabled + budget_tokens
 //     (integer budget, not enum); off/auto → omit (server default is off).
 // `directive` comes from deriveThinkingParams, which normalizes tagged-model
@@ -674,19 +679,32 @@ export const buildClaudeThinkingBody = (model: string, directive: ThinkingDirect
   const alwaysOn = isAlwaysThinkingClaude(model);
   const autoDirective = directive === "auto";
   const effort: ReasoningEffort | undefined = autoDirective ? undefined : directive;
+  // 关闭态里 Sonnet 5.5 要发 between_tools —— 它仍是"会产出 thinking 块"的一档
+  // （工具调用之间的进度文本以 thinking 块回来），所以输出上限按可能思考来留。
+  const betweenToolsOff = adaptive && !effort && !autoDirective && !alwaysOn && isBetweenToolsOffClaude(model);
   // Anthropic requires budget_tokens < max_tokens. When thinking may engage —
   // an explicit effort, an adaptive model left on "auto" (the server may then
-  // think on its own), or an always-on SKU whose "off" we can't actually honor
-  // — we reserve 10K for reasoning + ~6K for the visible response. Plain
+  // think on its own), an always-on SKU whose "off" we can't actually honor,
+  // or a between_tools off —
+  // we raise max_tokens to 16384 so CLAUDE_BUDGET 的每一档都严格小于它，思考预算
+  // 与可见回复都有空间。Plain
   // requests stay at the original 8096 cap.
-  const mayThink = !!effort || (adaptive && (autoDirective || alwaysOn));
+  const mayThink = !!effort || (adaptive && (autoDirective || alwaysOn || betweenToolsOff));
   const body: Record<string, unknown> = {};
   if (adaptive) {
     if (effort) {
       body.thinking = { type: "adaptive" };
       body.output_config = { effort };
-    } else if (!autoDirective && !alwaysOn) {
-      body.thinking = { type: "disabled" };
+    } else if (!autoDirective) {
+      // 三种官方关闭形态之一：always-on 的那几支整个字段不发；Sonnet 5.5 发
+      // between_tools（disabled 会被拒）；其余老世代发 disabled。
+      if (alwaysOn) {
+        // 不发 thinking —— 它照样会想，max_tokens 已经留了余量。
+      } else if (betweenToolsOff) {
+        body.thinking = { type: "between_tools" };
+      } else {
+        body.thinking = { type: "disabled" };
+      }
     }
   } else if (effort) {
     // Cap budget at ~12000 to leave room for the visible response under 16384.
