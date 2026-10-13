@@ -350,6 +350,7 @@
     "useRelay": "Relay API",
     "useRelayTooltip": "Aktifkan relai API jika Anda menemui galat CORS atau 403. Permintaan lalu melewati relai menuju penyedia; ia hanya meneruskan tanpa menyimpan apa pun.",
     "useRelayCustomUrl": "Endpoint kustom sedang digunakan: relay publik bawaan hanya meneruskan alamat yang dideklarasikannya, jadi alamat ini tidak pernah dikirim ke sana — permintaan langsung terhubung. Untuk melalui relay, aktifkan sakelar dan masukkan alamat relai Anda sendiri di bawah.",
+    "useRelayLocalOnly": "Alamat lokal atau jaringan privat: hanya komputer ini yang dapat menjangkau, relay tidak bisa — sakelar tidak berpengaruh pada endpoint ini.",
     "relayBase": "Alamat relai",
     "relayBaseExtra": "Kosongkan untuk memakai relai bawaan. Alamat ini berlaku bagi semua layanan yang relainya aktif dan menuntut penerapan Worker relai yang sama oleh Anda sendiri.",
     "relayBaseInvalid": "Alamat tidak valid — perlu URL lengkap yang diawali http:// atau https://, tanpa string kueri atau #fragmen, dan bukan endpoint /api (masukkan hanya host atau awalan path relai). Terjemahan akan gagal sampai diperbaiki; kosongkan kolom untuk memakai relai bawaan.",

@@ -350,6 +350,7 @@
     "useRelay": "API relay",
     "useRelayTooltip": "Enable API relay if you encounter CORS or 403 errors. Requests then travel through the relay on the way to the provider — it forwards without storing anything.",
     "useRelayCustomUrl": "Custom endpoint in use: the built-in public relay only forwards endpoints it declares, so this address is never sent there — requests go direct. To relay a custom endpoint, turn this on and enter your own relay address below.",
+    "useRelayLocalOnly": "Local or private-network address: only this computer can reach it, so a relay can never help — the switch has no effect on this endpoint.",
     "relayBase": "Relay address",
     "relayBaseExtra": "Leave empty to use the built-in relay. This address applies to every service with relay enabled, and must be your own deployment of the same relay Worker.",
     "relayBaseInvalid": "Invalid address — must be a full URL starting with http:// or https://, with no query string or #fragment, and not an /api endpoint (enter only the relay's host or path prefix). Translation will fail until it is fixed; leave the field empty to use the built-in relay.",

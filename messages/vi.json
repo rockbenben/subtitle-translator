@@ -350,6 +350,7 @@
     "useRelay": "Chuyển tiếp API",
     "useRelayTooltip": "Bật bộ chuyển tiếp API nếu bạn gặp lỗi CORS hoặc 403. Khi đó yêu cầu đi qua bộ chuyển tiếp tới nhà cung cấp; nó chỉ chuyển tiếp mà không lưu gì.",
     "useRelayCustomUrl": "Đang dùng endpoint tùy chỉnh: trạm trung chuyển công cộng tích hợp chỉ chuyển tiếp các địa chỉ mà nó khai báo, nên địa chỉ này không bao giờ được gửi đến đó — yêu cầu đi thẳng. Để đi qua trung chuyển, hãy bật công tắc và nhập địa chỉ trung chuyển của riêng bạn bên dưới.",
+    "useRelayLocalOnly": "Địa chỉ cục bộ hoặc mạng riêng: chỉ máy này truy cập được, trạm trung chuyển không tới được — công tắc không có tác dụng với endpoint này.",
     "relayBase": "Địa chỉ trung chuyển",
     "relayBaseExtra": "Để trống để dùng trung chuyển tích hợp. Địa chỉ này áp dụng cho mọi dịch vụ đã bật trung chuyển và cần bạn tự triển khai cùng một Worker trung chuyển.",
     "relayBaseInvalid": "Địa chỉ không hợp lệ — cần URL đầy đủ bắt đầu bằng http:// hoặc https://, không có chuỗi truy vấn hay #phân đoạn, và không phải endpoint /api (chỉ nhập host hoặc tiền tố đường dẫn của trung chuyển). Dịch sẽ thất bại cho đến khi sửa; để trống để dùng trung chuyển tích hợp.",

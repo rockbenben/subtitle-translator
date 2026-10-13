@@ -31,7 +31,7 @@ const toDeepLTarget = (lang: string): string => DEEPL_TARGET_MAP[lang] ?? lang.t
 // (api.cognitive.microsofttranslator.com),却仍一律要求并发送 region —— 因为常见 key
 // (multi-service / regional)缺它必错,而 global 资源会忽略这个值(填着无害);default
 // region=eastasia 只是占位,真正的 regional/multi-service 用户须填自己资源所在区。
-// ⇒ 这是有意的保守默认,不是 bug(2026-10-02 依官方原文复核确认)。
+// ⇒ 这是有意的保守默认,不是 bug(依官方原文复核确认)。
 const getAzureRegion = (region: string | undefined): string => {
   const value = region?.trim();
   if (!value) {
@@ -201,7 +201,7 @@ export const gtxFreeAPI: TranslationService = async (params) => {
 // 引擎仍是 Azure Translator，所以复用 toAzureCode 码位重映射（ckb→ku）与 languages-data 的
 // AZURE_UNSUPPORTED 语言表；master 裸码（zh / zh-hant）实测原样可用。浏览器可直连（ACAO:*，
 // OPTIONS 预检 204 放行 content-type），且无需 UA（浏览器本来也设不了 UA）⇒ 零配置路径照常。
-// ⚠ 2026-10-02 迁到此口：老的 `/translate/auth`（铸 10 分钟 JWT）→ api-edge 两步流【已被换掉】——
+// ⚠ 已迁到此口：老的 `/translate/auth`（铸 10 分钟 JWT）→ api-edge 两步流【已被换掉】——
 //   auth 口四变体（Edg UA/无 UA/尾斜杠/POST）一律 404（是 404 而非 geo-403，像路由移除不是地域封锁），
 //   /translatetext 本机实测 200 直接回译文。此前"疑似 CN 地域不可达"的判断据此更正为接口更换。
 // ⚠ 已知差异：正文 emoji 会被翻成 `??`（`<tag>`、`\n` 原样保留、`&` 当普通词处理），是这口既有行为、

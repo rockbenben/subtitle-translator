@@ -350,6 +350,7 @@
     "useRelay": "API Aktarıcı",
     "useRelayTooltip": "CORS veya 403 hatası alırsanız API aktarıcıyı açın. İstekler o zaman sağlayıcıya giderken aktarıcıdan geçer; yalnızca iletir, hiçbir şey saklamaz.",
     "useRelayCustomUrl": "Özel uç nokta kullanılıyor: yerleşik genel aktarıcı yalnızca kendi bildirdiği adresleri iletir, bu nedenle bu adres oraya asla gönderilmez — istekler doğrudan gider. Aktarıcı üzerinden geçmek için anahtarı açın ve aşağıya kendi aktarıcı adresinizi girin.",
+    "useRelayLocalOnly": "Yerel veya özel ağ adresi: yalnızca bu bilgisayar erişebilir, aktarıcı ulaşamaz — bu uç noktada anahtarın etkisi yoktur.",
     "relayBase": "Aktarma adresi",
     "relayBaseExtra": "Yerleşik aktarmayı kullanmak için boş bırakın. Bu adres, aktarması açık olan tüm servisler için geçerlidir ve aynı aktarma Worker'ını kendiniz dağıtmanızı gerektirir.",
     "relayBaseInvalid": "Adres geçersiz — http:// veya https:// ile başlayan, sorgu dizesi veya #parça içermeyen ve /api uç noktası olmayan tam bir URL gerekir (yalnızca aktarmanın ana bilgisayarını veya yol önekini girin). Düzeltilene kadar çeviri başarısız olur; yerleşik aktarmayı kullanmak için alanı boş bırakın.",

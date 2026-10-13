@@ -163,7 +163,7 @@ const gated =
 
 // ── Shared wire shapes (reused across vendors with identical protocols) ──────
 //
-// 【思考参数的官方出处】2026-08-20 逐家核对过一轮,改形态前先读对应页,别猜:
+// 【思考参数的官方出处】逐家核对过一轮,改形态前先读对应页,别猜:
 //   deepseek     api-docs.deepseek.com/zh-cn/guides/thinking_mode
 //                (thinking:{type} + reasoning_effort:low/high/max —— 无 medium)
 //   openai/azure developers.openai.com/api/docs/guides/reasoning
@@ -198,10 +198,29 @@ const thinkingType: EffortShape = (e) => ({ thinking: { type: e ? "enabled" : "d
 // ⚠ SiliconFlow 【不】用这个形态(理由见 THINKING_BUILDERS 里 siliconflow 行的注释)。
 const enableThinking: EffortShape = (e) => ({ enable_thinking: !!e });
 
-// `reasoning_effort` enum with explicit "none" off — OpenAI GPT-5.x (omit-default
-// medium on 5.5) + Grok (omit-default "low"). Azure mirrors openai exactly (its
-// deployments map to the same GPT-5 SKUs) — see its gated() entry below.
+// ⚠ reasoningEffortOrNone 只适用于【收 none 的 family】(GPT-5.x / Grok 系)。
+//   openai 与 azureopenai 不能直接用它 —— 这两个
+//   provider 内部就有两种关闭能力(见下面 openaiEffort)。
 const reasoningEffortOrNone: EffortShape = (e) => ({ reasoning_effort: e ?? "none" });
+
+// OpenAI / Azure OpenAI:关闭态按【SKU】发,不能一刀切 none。
+// 逐型号页(developers.openai.com/api/docs/models/<id>.md,curl 直出):
+//   gpt-6-luna / gpt-6-sol / gpt-5.6-* / gpt-5.4-mini 收 none(5.4-mini 的 none 还是默认值)
+//   gpt-6-astra  「supports low, medium, high, xhigh, and max」—— 【没有 none】
+//   gpt-6.1-sol  「The none and minimal reasoning efforts are not supported」
+// 一刀切发 none ⇒ astra / 6.1-sol 上【每请求 400】(DeepSeek「10M tokens」事故的同款形态:
+// 发一个厂商枚举里没有的值当"关",要么被拒、要么被忽略后按服务端默认静默计费)。
+// 一刀切发最低档 ⇒ 反向出错:luna 明明支持 none 却照常推理,用户关了思考仍在烧钱。
+// 所以判据是【该 SKU 有没有声明 thinkingLevels】—— 声明了 = 官方没有关闭值,
+// 能做到的"最关"就是最低档;没声明 = none 是真关闭值。数据在 registry,这里不按名字猜。
+const openaiEffort =
+  (service: OpenAICompatProviderKey): EffortShape =>
+  (e, model) => {
+    const sku = model ?? OPENAI_COMPAT_PROVIDERS[service].defaultModel;
+    const levels = getProviderModels(service).find((m) => m.value === sku)?.thinkingLevels;
+    return { reasoning_effort: levels?.length ? pickThinkingLevel(service, sku, e) : e ?? "none" };
+  };
+
 // `reasoning_effort` binary high|none — Cohere (command-a-reasoning) + Mistral
 // (adjustable medium/small). Vendor exposes only two effective tiers, so any "on"
 // effort collapses to "high"; off sends an explicit "none" (both server-default-ON).
@@ -235,7 +254,7 @@ const minimaxThinking: EffortShape = (e) => ({ thinking: { type: e ? "adaptive" 
 // 翻译要的行为。加开关的完整步骤见 registry.ts tokenhub models 上方的 playbook
 // (含 ⚠ 别用 reasoning_effort:"none")。NVIDIA NIM 的 thinking 不走本表 —— 它的
 // chat_template_kwargs 注入在 service 里内联 (buildNvidiaThinkingParams)；
-// 2026-09-25 随 deepseek-v4.1-flash 上架重新启用，NIM 默认关思考、省略=关，
+// 随 deepseek-v4.1-flash 上架重新启用，NIM 默认关思考、省略=关，
 // 所以它既不需要显式 disable、也不进 SERVER_DEFAULT_THINKING_ON。
 
 // (No temperature handling here: providers whose lineup rejects/locks the param
@@ -244,12 +263,12 @@ const minimaxThinking: EffortShape = (e) => ({ thinking: { type: e ? "adaptive" 
 
 const THINKING_BUILDERS: Partial<Record<OpenAICompatProviderKey, ExtraBodyBuilder>> = {
   // `reasoning_effort` enum, explicit "none" off (server-default-ON)
-  openai: gated("openai", reasoningEffortOrNone),
+  openai: gated("openai", openaiEffort("openai")),
   // Azure 镜像 openai 同形态（部署名映射同一批 GPT-5 SKU，GPT-5.x omit→medium
   // 意味着关闭态必须发显式 "none"）。gpt-chat-latest 在 registry 不打标签 →
   // 走 listed-but-untagged 省略分支。旧版是手写 buildAzureReasoningBody，
-  // 2026-09-26 并入工厂后与 gated() 逐分支同构（tagged 2 态 / custom 3 态 / 省略）。
-  azureopenai: gated("azureopenai", reasoningEffortOrNone),
+  // 并入工厂后与 gated() 逐分支同构（tagged 2 态 / custom 3 态 / 省略）。
+  azureopenai: gated("azureopenai", openaiEffort("azureopenai")),
   // Grok:档位表在 registry 的 grok.models[].thinkingLevels(官方逐模型表)。
   // ⚠ off 态发【最低档 low】而不是 "none":官方枚举只有 low/medium/high/xhigh,
   // 并明写 "Reasoning cannot be disabled"。发 "none" 两种结局都坏 —— 被拒则
@@ -295,7 +314,7 @@ const THINKING_BUILDERS: Partial<Record<OpenAICompatProviderKey, ExtraBodyBuilde
   // OpenRouter: graded effort when on; universal `reasoning:{enabled:false}` off for
   // tagged upstream reasoning SKUs (untagged free models omit via the gate).
   // OpenRouter:官方【统一参数】是 reasoning 对象(openrouter.ai/docs/use-cases/
-  // reasoning-tokens,2026-08-20 核对),effort 取 max/xhigh/high/medium/low/
+  // reasoning-tokens),effort 取 max/xhigh/high/medium/low/
   // minimal/none。开关两态都用同一个对象 —— 曾经开启态发顶层 reasoning_effort、
   // 关闭态发 reasoning:{enabled:false},两种写法混用:文档只把统一对象列为推荐
   // 形态,顶层别名没有成文保证,一旦它不再被识别,开启态就静默失效(而关闭态
@@ -304,7 +323,7 @@ const THINKING_BUILDERS: Partial<Record<OpenAICompatProviderKey, ExtraBodyBuilde
   // Graded reasoning_effort, OMIT off (undisableable): Groq gpt-oss.
   groq: gated("groq", groqEffort),
   // Cerebras:两个公共模型的 reasoning_effort 取值【不同】,必须按 SKU 分流
-  // (inference-docs.cerebras.ai/api-reference/chat-completions,2026-08-20):
+  // (inference-docs.cerebras.ai/api-reference/chat-completions):
   //   · gpt-oss-120b: low/medium(默认)/high —— 无 none,关不掉 → 走档位表,
   //     关闭态发最低档 low(registry 的 thinkingLevels 已声明)
   //   · gemma-4-31b:  none(默认)/low/medium/high —— 有真正的关闭值,
@@ -381,7 +400,7 @@ export const deepseek: TranslationService = async (params) => {
   }
 };
 
-// Azure —— 工厂服务 + 一层 requireUrl 守卫。2026-09-26 并入 openai-compat 工厂
+// Azure —— 工厂服务 + 一层 requireUrl 守卫。并入 openai-compat 工厂
 // （前提事实：v1 API 接受裸 api-key 走 Authorization: Bearer，官方 key 认证示例
 // 就是裸 OpenAI 客户端 —— 见 registry azureopenai 条目注释）。守卫拦的是
 // 空/纯空白 URL：工厂对 openai-compat 的「留空 = 官方默认」兜底在这里不存在
@@ -565,13 +584,30 @@ export const nvidia: TranslationService = async (params) => {
 };
 
 export const llm: TranslationService = async (params) => {
-  const { apiKey, url, model, temperature, sendSystemPrompt, maxTokens } = params;
+  const { apiKey, url, model, temperature, sendSystemPrompt, maxTokens, useRelay, relayBase } = params;
   const { effectiveSystemPrompt, prompt } = preparePrompts(params);
 
   const serviceName = "Custom (OpenAI-compatible)";
-  // Belt-and-suspenders: UI auto-completes on blur, but settings imported from
-  // file or edited via localStorage may bypass that — re-normalize here.
-  const apiEndpoint = completeOpenAICompatUrl(requireUrl(serviceName, url));
+  // Custom 没有隐式默认端点(URL 即凭证),所以 requireUrl 这道守卫是【承重】的,
+  // 不能因为「resolveWireEndpoint 已经会补全」就删。⚠ llm 的 getRelayAllowlist
+  // 【不是空的】—— 它先读 spec.endpoints,所以 [0] 是那枚 LM Studio 芯片
+  // (http://127.0.0.1:1234/v1/chat/completions,实测 9 条)。少了这道守卫,空地址
+  // 会走 resolveWireEndpoint 的「空 url → allowlist[0]」兜底,静默打向一个用户
+  // 从没选过的本地运行时 —— 比抛错糟得多。
+  requireUrl(serviceName, url);
+  // 出口地址与所有中转能力服务共用一条咽喉(registry.resolveWireEndpoint):
+  // 补全器、allowlist、「能不能走中转」全在 registry 一处,与界面同判据。
+  //
+  // ⚠ Custom 在这里能走通中转,靠的是【用户自己的 relayBase】+ 他自己那份 Worker
+  // 里声明的 `llm` allowlist。四种组合的落点(全在 relayWouldServe 里判):
+  //   · 直连                       → 直接打用户填的地址
+  //   · 自建 relayBase             → {base}/api/llm?endpoint=<用户地址>
+  //   · 内置公共中转 + 任意自填地址 → 退回直连。内置 Worker 的 llm allowlist 只声明了
+  //                                   那两枚公开芯片(Together / Fireworks),自填地址不在
+  //                                   其中,发过去只会换一个 400,还把 ?token=SECRET
+  //                                   留在别人的日志里。
+  //   · 环回/内网地址(本地运行时) → 退回直连(远端够不着 127.0.0.1)
+  const apiEndpoint = resolveWireEndpoint("llm", { url, useRelay, relayBase });
 
   const headers: Record<string, string> = { "Content-Type": "application/json" };
   if (apiKey?.trim()) {
@@ -633,7 +669,7 @@ export const CLAUDE_DIRECT_ENDPOINT = getProviderEndpoints("claude")![0].url;
  */
 export const buildGeminiThinkingConfig = (model: string, directive: ThinkingDirective | undefined): Record<string, unknown> => {
   // thinkingLevel 是 Gemini 3.x 起才有的字段,打到 2.x/1.x 上是 400
-  // "Thinking level is not supported for this model."(2026-09-01 实测 gemini-2.5-flash)。
+  // "Thinking level is not supported for this model."(实测 gemini-2.5-flash)。
   // ⚠ 别照 docs/thinking 那张档位表判 —— 它把 2.5 列成支持 low/medium/high,但那页写的是
   // Interactions API(/v1beta/interactions,扁平 generation_config.thinking_level,服务端
   // 替你映射成 budget);本仓走 generateContent,那里的字段参考写的是 "Use with earlier
@@ -660,7 +696,7 @@ export const buildGeminiThinkingConfig = (model: string, directive: ThinkingDire
 //   - Adaptive gen (Opus 4.7/4.8/5/5.5, Sonnet 5/5.5, Fable 5/5.1, Mythos): effort →
 //     thinking:{type:"adaptive"} + output_config.effort; "auto" → omit
 //     entirely and follow the server default. Legacy budget_tokens shape 400s.
-//     ⚠ 这一代的【关闭档】按官方逐模型表分三种形态，发错就是每请求 400（2026-10-02 逐页核原文）：
+//     ⚠ 这一代的【关闭档】按官方逐模型表分三种形态，发错就是每请求 400（逐页核原文）：
 //       · Opus 5.5 / Fable 5.x / Mythos = "Always on" → 连 disabled 也 400，「关」只能整个字段不发
 //         (isAlwaysThinkingClaude)；
 //       · Sonnet 5.5 → 发 disabled 会 400，官方的最低档是 between_tools (isBetweenToolsOffClaude)，

@@ -350,6 +350,7 @@
     "useRelay": "API-továbbítás (API relay)",
     "useRelayTooltip": "Engedélyezd az API-továbbítást, ha CORS- vagy 403-as hibákat tapasztalsz. A kérések ekkor a továbbítón keresztül haladnak a szolgáltató felé — anélkül továbbít, hogy bármit tárolna.",
     "useRelayCustomUrl": "Egyéni végpont használatban: a beépített nyilvános továbbító csak az általa deklarált végpontokat továbbítja, így ez a cím sosem kerül oda — a kérések közvetlenül mennek. Egyéni végpont továbbításához kapcsold be, és add meg lent a saját továbbító címedet.",
+    "useRelayLocalOnly": "Helyi vagy privát hálózati cím: csak ez a gép éri el, a továbbító nem jut el — a kapcsoló ennél a végpontnál nincs hatása.",
     "relayBase": "Továbbító címe (Relay address)",
     "relayBaseExtra": "Hagyd üresen a beépített továbbító használatához. Ez a cím minden engedélyezett továbbítóval rendelkező szolgáltatásra vonatkozik, és ugyanezen továbbító Worker saját telepítésének kell lennie.",
     "relayBaseInvalid": "Érvénytelen cím — teljes http:// vagy https:// kezdetű URL-nek kell lennie, lekérdezési karakterlánc vagy #fragment nélkül, és nem lehet /api végpont (csak a továbbító gazdagépét vagy útvonal-előtagját add meg). A fordítás addig nem fog működni, amíg ki nem javítod; a beépített továbbító használatához hagyd üresen a mezőt.",

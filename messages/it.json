@@ -350,6 +350,7 @@
     "useRelay": "Relay API",
     "useRelayTooltip": "Attiva il relay API se incontri errori CORS o 403. Le richieste passeranno dal relay verso il provider; inoltra soltanto, senza memorizzare nulla.",
     "useRelayCustomUrl": "Endpoint personalizzato in uso: il relay pubblico integrato inoltra solo gli indirizzi che dichiara, quindi questo indirizzo non gli viene mai inviato — le richieste vanno dirette. Per passare da un relay, attiva l'interruttore e inserisci sotto l'indirizzo del tuo relay.",
+    "useRelayLocalOnly": "Indirizzo locale o di rete privata: solo questa macchina lo raggiunge, un relay non può arrivarci — l'interruttore non ha effetto su questo endpoint.",
     "relayBase": "Indirizzo del relay",
     "relayBaseExtra": "Lascia vuoto per usare il relay integrato. Questo indirizzo vale per tutti i servizi con relay attivo e richiede un tuo deploy dello stesso Worker di relay.",
     "relayBaseInvalid": "Indirizzo non valido: serve un URL completo che inizi con http:// o https://, senza query string né #frammento, e che non sia un endpoint /api (inserisci solo l'host o il prefisso di percorso del relay). La traduzione fallirà finché non viene corretto; lascia il campo vuoto per usare il relay integrato.",

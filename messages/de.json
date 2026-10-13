@@ -350,6 +350,7 @@
     "useRelay": "API-Relay",
     "useRelayTooltip": "Aktiviere das API-Relay bei CORS- oder 403-Fehlern. Anfragen laufen dann über das Relay zum Provider – es leitet nur weiter und speichert nichts.",
     "useRelayCustomUrl": "Benutzerdefinierter Endpunkt in Verwendung: Das eingebaute öffentliche Relay leitet nur von ihm deklarierte Adressen weiter, daher wird diese Adresse nie dorthin gesendet — Anfragen gehen direkt. Um über ein Relay zu gehen, aktivieren Sie den Schalter und tragen Sie unten Ihre eigene Relay-Adresse ein.",
+    "useRelayLocalOnly": "Lokale oder private Adresse: Nur dieser Rechner erreicht sie, ein Relay kommt nicht hin – bei dieser Adresse bleibt der Schalter wirkungslos.",
     "relayBase": "Relay-Adresse",
     "relayBaseExtra": "Leer lassen, um das integrierte Relay zu nutzen. Diese Adresse gilt für alle Dienste mit aktiviertem Relay und erfordert eine eigene Bereitstellung desselben Relay-Workers.",
     "relayBaseInvalid": "Ungültige Adresse — es wird eine vollständige URL mit http:// oder https:// benötigt, ohne Query-String oder #Fragment und kein /api-Endpunkt (nur Host oder Pfad-Präfix des Relays eingeben). Bis zur Korrektur schlägt die Übersetzung fehl; leer lassen, um das integrierte Relay zu verwenden.",

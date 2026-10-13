@@ -23,7 +23,8 @@ import {
   getVisibleCategorizedOptions,
   isUiHiddenMethod,
   wireUrlNormalizer,
-  usesBuiltinRelay,
+  relayWouldServe,
+  isPrivateRelayTarget,
   LLM_RELAY_BASE,
   isValidRelayBase,
   supportsGlossary,
@@ -83,7 +84,23 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
   // 自定义地址 + 中转的组合是合理诉求:自建 Worker 的用户把自己的地址加进
   // PROVIDER_URLS 就能用;对内置公共中转,引擎会对这种组合退回直连且不外发
   // 地址(registry.relayWouldServe),所以开关开着也不会有请求打进公共 Worker。
-  const urlKind = classifyEndpointUrl(service, config?.url as string | undefined).kind;
+  // 中转开关下方的说明必须说【真话】:判据是引擎自己的 relayWouldServe —— 拨这根
+  // 开关到底会不会改变请求去向。「不会」有三种,成因不同,文案要分开:
+  //   ① 环回/内网地址(本地运行时芯片 127.0.0.1 等)→ 中转到不了那里,填自建中转
+  //      也没用(远端 Worker 眼里的 127.0.0.1 是它自己)。
+  //   ② 内置公共中转没有这个 provider 的路由(Custom/llm 就是这一类)→ 退回直连,
+  //      填自建中转地址才开始生效。
+  //   ③ 其余的「填了自定义网关地址」→ 沿用既有的自定义地址提示。
+  // ⚠ 旧判据是 `urlKind==="custom" && 内置中转`。它对三种情况说错话:
+  //   · Custom 的任意自填网关 → 旧判据碰巧对了(判 custom),但理由是错的;
+  //   · Custom 的 Together / Fireworks 芯片 → 判 variant,旧判据显示"勾上就能绕过
+  //     CORS",而当时内置中转根本没有 llm 路由,勾了仍是直连(现在有路由了,巧合变对);
+  //   · Local runtime 芯片(127.0.0.1 等)→ 判 variant,同样宣称能中转,而它【永远】
+  //     不能 —— 远端 Worker 够不着用户的环回。
+  // 对着一个拨了也不会生效的开关说「勾上就能用」,比不提示更糟,所以一律改问
+  // relayWouldServe —— 那是引擎自己的判据,文案与行为由构造保证不叉开。
+  const relayWouldRoute = relayWouldServe(service, { url: config?.url as string | undefined, relayBase });
+  const relayExtra = relayWouldRoute ? t("useRelayTooltip") : isPrivateRelayTarget(service, config?.url as string | undefined) ? t("useRelayLocalOnly") : t("useRelayCustomUrl");
   // 空 = 用内置中转,不算错;非空但不合法(漏 https://、javascript: 等)才标红。
   const relayBaseInvalid = relayBase.trim() !== "" && !isValidRelayBase(relayBase);
 
@@ -567,11 +584,10 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
                 因为设置面板会为每个 provider 各渲染一份，裸 id 会重复。 */
             }
             {config?.useRelay !== undefined && (
-              // 永不置灰:开关与「填哪个地址」正交。填了自定义地址时换一句提示,
-              // 说明这时开关对内置公共中转不起作用(该地址不在它的 allowlist 里,
-              // 引擎会退回直连、也不会把地址发过去 —— 见 registry.relayWouldServe),
-              // 要经中转就填自建中转地址。是提示,不是禁用:填了自建地址后开关照常生效。
-              <Form.Item label={t("useRelay")} htmlFor={`${service}-useRelay`} extra={urlKind === "custom" && usesBuiltinRelay(relayBase) ? t("useRelayCustomUrl") : t("useRelayTooltip")} style={{ marginBottom: config.useRelay ? 24 : 0 }}>
+              // 永不置灰:开关与「填哪个地址」正交。提示文案按 relayWouldServe 的
+              // 真实结论分三种(见上方 relayExtra 的定义),要经中转就填自建中转地址。
+              // 是提示,不是禁用:填了自建地址后开关照常生效。
+              <Form.Item label={t("useRelay")} htmlFor={`${service}-useRelay`} extra={relayExtra} style={{ marginBottom: config.useRelay ? 24 : 0 }}>
                 <Switch id={`${service}-useRelay`} checked={config.useRelay as boolean | undefined} onChange={(checked) => handleConfigChange(service, "useRelay", checked)} aria-label={t("useRelay")} />
               </Form.Item>
             )}

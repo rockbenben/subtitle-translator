@@ -350,6 +350,7 @@
     "useRelay": "Relé API",
     "useRelayTooltip": "Activa el relé de API si encuentras errores de CORS o 403. Las peticiones pasarán por el relé de camino al proveedor; solo reenvía, no almacena nada.",
     "useRelayCustomUrl": "Endpoint personalizado en uso: el relé público integrado solo reenvía direcciones que él declara, por lo que esta dirección nunca se envía allí — las solicitudes van directas. Para pasar por un relé, active el interruptor e introduzca abajo la dirección de su propio relé.",
+    "useRelayLocalOnly": "Dirección local o de red privada: solo este equipo puede alcanzarla, un relé no puede llegar — el interruptor no tiene efecto en este endpoint.",
     "relayBase": "Dirección del relé",
     "relayBaseExtra": "Déjalo vacío para usar el relé integrado. Esta dirección se aplica a todos los servicios con el relé activado y requiere tu propio despliegue del mismo Worker de relé.",
     "relayBaseInvalid": "Dirección no válida: se requiere una URL completa que empiece por http:// o https://, sin cadena de consulta ni #fragmento, y que no sea un endpoint /api (introduzca solo el host o el prefijo de ruta del relé). La traducción fallará hasta que se corrija; deje el campo vacío para usar el relé integrado.",
