@@ -508,6 +508,10 @@
     "textDiff": {
       "title": "Text Diff",
       "description": "Compare dois textos ou arquivos lado a lado e localize a primeira diferença."
+    },
+    "braceExpander": {
+      "title": "Expansor de chaves",
+      "description": "Expande um modelo em uma lista completa, sintaxe do bash"
     }
   },
   "navigation": {
@@ -527,11 +531,11 @@
   },
   "Metadata": {
     "title": "ToolsByAI - Ferramentas de IA e Dados para Desenvolvedores",
-    "description": "ToolsByAI: 19 ferramentas open source grátis para tradução de legendas, Markdown, JSON i18n e processamento em lote. 30+ motores IA.",
+    "description": "ToolsByAI: 20 ferramentas open source grátis para tradução de legendas, Markdown, JSON i18n e processamento em lote. 30+ motores IA.",
     "homeTitle": "Suíte ToolsByAI",
-    "homeDescription": "19 ferramentas para tradução, texto, JSON e conversão de dados. Impulsione a eficiência de desenvolvedores e criadores.",
+    "homeDescription": "20 ferramentas para tradução, texto, JSON e conversão de dados. Impulsione a eficiência de desenvolvedores e criadores.",
     "ogTitle": "ToolsByAI - Ferramentas de IA e Dados para Desenvolvedores",
-    "ogDescription": "ToolsByAI: 19 ferramentas open source grátis para tradução de legendas, Markdown, JSON i18n e processamento em lote. 30+ motores IA."
+    "ogDescription": "ToolsByAI: 20 ferramentas open source grátis para tradução de legendas, Markdown, JSON i18n e processamento em lote. 30+ motores IA."
   },
   "languages": {
     "auto": "Detecção Auto",

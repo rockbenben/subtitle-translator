@@ -508,6 +508,10 @@
     "textDiff": {
       "title": "텍스트 비교",
       "description": "두 텍스트 또는 파일을 나란히 비교하여 첫 번째 차이점을 정확히 찾아냅니다."
+    },
+    "braceExpander": {
+      "title": "중괄호 확장",
+      "description": "템플릿 한 줄로 완전한 목록을 일괄 생성 — bash 중괄호 확장 문법 그대로"
     }
   },
   "navigation": {
@@ -527,11 +531,11 @@
   },
   "Metadata": {
     "title": "ToolsByAI | 무료 오픈소스 AI 번역 및 데이터 처리 도구",
-    "description": "ToolsByAI: 자막·Markdown·JSON i18n 번역 및 텍스트/JSON 일괄 처리 19개 무료 도구, 30+ AI 엔진.",
+    "description": "ToolsByAI: 자막·Markdown·JSON i18n 번역 및 텍스트/JSON 일괄 처리 20개 무료 도구, 30+ AI 엔진.",
     "homeTitle": "ToolsByAI 도구 모음",
-    "homeDescription": "19 무료 도구. 다국어 번역, 텍스트 처리, JSON 변환 등 개발자와 크리에이터의 업무 효율 향상.",
+    "homeDescription": "20 무료 도구. 다국어 번역, 텍스트 처리, JSON 변환 등 개발자와 크리에이터의 업무 효율 향상.",
     "ogTitle": "ToolsByAI | 무료 오픈소스 AI 번역 및 데이터 처리 도구",
-    "ogDescription": "ToolsByAI: 자막·Markdown·JSON i18n 번역 및 텍스트/JSON 일괄 처리 19개 무료 도구, 30+ AI 엔진."
+    "ogDescription": "ToolsByAI: 자막·Markdown·JSON i18n 번역 및 텍스트/JSON 일괄 처리 20개 무료 도구, 30+ AI 엔진."
   },
   "languages": {
     "auto": "자동 감지",

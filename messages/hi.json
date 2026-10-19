@@ -508,6 +508,10 @@
     "textDiff": {
       "title": "Text Diff",
       "description": "दो पाठ या फ़ाइलें साथ-साथ तुलना करें और पहला अंतर खोजें।"
+    },
+    "braceExpander": {
+      "title": "ब्रेस विस्तारक",
+      "description": "एक टेम्पलेट को पूरी सूची में फैलाएँ, bash brace सिंटैक्स"
     }
   },
   "navigation": {
@@ -527,11 +531,11 @@
   },
   "Metadata": {
     "title": "ToolsByAI - डेवलपर्स के लिए मुफ्त AI अनुवाद और डेटा टूल्स",
-    "description": "ToolsByAI: उपशीर्षक, Markdown, JSON i18n अनुवाद और टेक्स्ट/JSON बैच प्रोसेसिंग के लिए 19 मुफ्त ओपन-सोर्स टूल। 30+ AI इंजन।",
+    "description": "ToolsByAI: उपशीर्षक, Markdown, JSON i18n अनुवाद और टेक्स्ट/JSON बैच प्रोसेसिंग के लिए 20 मुफ्त ओपन-सोर्स टूल। 30+ AI इंजन।",
     "homeTitle": "ToolsByAI सूट",
-    "homeDescription": "अनुवाद, टेक्स्ट, JSON और डेटा रूपांतरण के लिए 19 उपकरण। डेवलपर्स और क्रिएटर्स की दक्षता बढ़ाएं।",
+    "homeDescription": "अनुवाद, टेक्स्ट, JSON और डेटा रूपांतरण के लिए 20 उपकरण। डेवलपर्स और क्रिएटर्स की दक्षता बढ़ाएं।",
     "ogTitle": "ToolsByAI - डेवलपर्स के लिए मुफ्त AI अनुवाद और डेटा टूल्स",
-    "ogDescription": "ToolsByAI: उपशीर्षक, Markdown, JSON i18n अनुवाद और टेक्स्ट/JSON बैच प्रोसेसिंग के लिए 19 मुफ्त ओपन-सोर्स टूल। 30+ AI इंजन।"
+    "ogDescription": "ToolsByAI: उपशीर्षक, Markdown, JSON i18n अनुवाद और टेक्स्ट/JSON बैच प्रोसेसिंग के लिए 20 मुफ्त ओपन-सोर्स टूल। 30+ AI इंजन।"
   },
   "languages": {
     "auto": "स्वतः पहचान",

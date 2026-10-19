@@ -508,6 +508,10 @@
     "textDiff": {
       "title": "文字比對",
       "description": "並排比較兩段文字或檔案，標示首處差異的確切位置。"
+    },
+    "braceExpander": {
+      "title": "格式批次生成",
+      "description": "一行範本批次展開成完整清單，語法照抄 bash 大括號展開"
     }
   },
   "navigation": {
@@ -527,11 +531,11 @@
   },
   "Metadata": {
     "title": "ToolsByAI | 免費開源的 AI 翻譯與資料處理工具集",
-    "description": "ToolsByAI 集合 19 款免費工具：字幕、Markdown、JSON i18n 翻譯，文字/JSON 批次處理。30+ AI 引擎，全前端處理。",
+    "description": "ToolsByAI 集合 20 款免費工具：字幕、Markdown、JSON i18n 翻譯，文字/JSON 批次處理。30+ AI 引擎，全前端處理。",
     "homeTitle": "ToolsByAI 工具集",
-    "homeDescription": "19 款實用工具，涵蓋多語言翻譯、文字處理、JSON 編輯和資料轉換，助力開發者和創作者提升效率。",
+    "homeDescription": "20 款實用工具，涵蓋多語言翻譯、文字處理、JSON 編輯和資料轉換，助力開發者和創作者提升效率。",
     "ogTitle": "ToolsByAI | 免費開源的 AI 翻譯與資料處理工具集",
-    "ogDescription": "ToolsByAI 集合 19 款免費工具：字幕、Markdown、JSON i18n 翻譯，文字/JSON 批次處理。30+ AI 引擎，全前端處理。"
+    "ogDescription": "ToolsByAI 集合 20 款免費工具：字幕、Markdown、JSON i18n 翻譯，文字/JSON 批次處理。30+ AI 引擎，全前端處理。"
   },
   "languages": {
     "auto": "自動偵測",

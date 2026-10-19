@@ -508,6 +508,10 @@
     "textDiff": {
       "title": "テキスト差分",
       "description": "2つのテキストまたはファイルを並べて比較し、最初の差異を特定します。"
+    },
+    "braceExpander": {
+      "title": "ブレース展開",
+      "description": "1 行のテンプレートから完全なリストへ一括展開（bash のブレース展開と同じ構文）"
     }
   },
   "navigation": {
@@ -527,11 +531,11 @@
   },
   "Metadata": {
     "title": "ToolsByAI | 無料で使えるAI翻訳＆データ処理ツール集",
-    "description": "ToolsByAI、19 個の無料ツール：字幕・Markdown・JSON i18n 翻訳、テキストや JSON 一括処理。30+ AI エンジン。",
+    "description": "ToolsByAI、20 個の無料ツール：字幕・Markdown・JSON i18n 翻訳、テキストや JSON 一括処理。30+ AI エンジン。",
     "homeTitle": "ToolsByAI ツールセット",
-    "homeDescription": "19 ツール。多言語翻訳、テキスト処理、JSONデータ変換など、開発者とクリエイターの効率向上を支援。",
+    "homeDescription": "20 ツール。多言語翻訳、テキスト処理、JSONデータ変換など、開発者とクリエイターの効率向上を支援。",
     "ogTitle": "ToolsByAI | 無料で使えるAI翻訳＆データ処理ツール集",
-    "ogDescription": "ToolsByAI、19 個の無料ツール：字幕・Markdown・JSON i18n 翻訳、テキストや JSON 一括処理。30+ AI エンジン。"
+    "ogDescription": "ToolsByAI、20 個の無料ツール：字幕・Markdown・JSON i18n 翻訳、テキストや JSON 一括処理。30+ AI エンジン。"
   },
   "languages": {
     "auto": "自動検出",

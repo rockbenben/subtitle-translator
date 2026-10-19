@@ -508,6 +508,10 @@
     "textDiff": {
       "title": "Text Diff",
       "description": "Compare dos textos o archivos en paralelo y localice la primera diferencia."
+    },
+    "braceExpander": {
+      "title": "Expansor de llaves",
+      "description": "Expande una plantilla en una lista completa, sintaxis de bash"
     }
   },
   "navigation": {
@@ -527,11 +531,11 @@
   },
   "Metadata": {
     "title": "ToolsByAI | Herramientas de Traducción y Dev con IA",
-    "description": "ToolsByAI: 19 herramientas open source para traducir subtítulos, Markdown y JSON i18n. Sin instalación, en el navegador.",
+    "description": "ToolsByAI: 20 herramientas open source para traducir subtítulos, Markdown y JSON i18n. Sin instalación, en el navegador.",
     "homeTitle": "Suite ToolsByAI",
-    "homeDescription": "19 herramientas para traducción, texto, JSON y conversión de datos. Impulsa la eficiencia de desarrolladores y creadores.",
+    "homeDescription": "20 herramientas para traducción, texto, JSON y conversión de datos. Impulsa la eficiencia de desarrolladores y creadores.",
     "ogTitle": "ToolsByAI | Herramientas de Traducción y Dev con IA",
-    "ogDescription": "ToolsByAI: 19 herramientas open source para traducir subtítulos, Markdown y JSON i18n. Sin instalación, en el navegador."
+    "ogDescription": "ToolsByAI: 20 herramientas open source para traducir subtítulos, Markdown y JSON i18n. Sin instalación, en el navegador."
   },
   "languages": {
     "auto": "Detección automática",

@@ -508,6 +508,10 @@
     "textDiff": {
       "title": "Text Diff",
       "description": "Compare two texts or files side by side and pinpoint the first difference"
+    },
+    "braceExpander": {
+      "title": "Brace Expander",
+      "description": "Expand one template into a full list, using bash brace expansion"
     }
   },
   "navigation": {
@@ -527,11 +531,11 @@
   },
   "Metadata": {
     "title": "ToolsByAI | Free Open Source AI Translation & Data Tools",
-    "description": "ToolsByAI: 19 free open-source tools for subtitle, Markdown, JSON i18n translation and text/JSON batch processing. 30+ AI engines.",
+    "description": "ToolsByAI: 20 free open-source tools for subtitle, Markdown, JSON i18n translation and text/JSON batch processing. 30+ AI engines.",
     "homeTitle": "ToolsByAI Toolset",
-    "homeDescription": "19 tools for translation, text, JSON, and data conversion. Boost efficiency for developers and creators.",
+    "homeDescription": "20 tools for translation, text, JSON, and data conversion. Boost efficiency for developers and creators.",
     "ogTitle": "ToolsByAI | Free Open Source AI Translation & Data Tools",
-    "ogDescription": "ToolsByAI: 19 free open-source tools for subtitle, Markdown, JSON i18n translation and text/JSON batch processing. 30+ AI engines."
+    "ogDescription": "ToolsByAI: 20 free open-source tools for subtitle, Markdown, JSON i18n translation and text/JSON batch processing. 30+ AI engines."
   },
   "languages": {
     "auto": "Auto Detect",

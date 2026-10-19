@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  PartitionOutlined,
   BgColorsOutlined,
   DatabaseOutlined,
   ExperimentOutlined,
@@ -51,6 +52,7 @@ const TOOL_ICONS: Record<ToolKey, React.ReactNode> = {
   novelProcessor: <FontSizeOutlined />,
   textToolbox: <CodeOutlined />,
   textJoiner: <MergeCellsOutlined />,
+  braceExpander: <PartitionOutlined />,
   textDiff: <DiffOutlined />,
   dataBatch: <ProfileOutlined />,
   jsonValueExtractor: <FileSearchOutlined />,

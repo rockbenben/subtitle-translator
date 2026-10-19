@@ -508,6 +508,10 @@
     "dataParserImgPrompt": {
       "title": "IMGPrompt 数据生成",
       "description": "批量生成 IMGPrompt JSON 数据"
+    },
+    "braceExpander": {
+      "title": "格式批量生成",
+      "description": "一行模板批量展开成完整清单，语法照抄 bash 花括号展开"
     }
   },
   "navigation": {
@@ -527,11 +531,11 @@
   },
   "Metadata": {
     "title": "ToolsByAI | 免费开源的 AI 翻译与数据处理工具集",
-    "description": "ToolsByAI 集合 19 款免费工具：字幕、Markdown、JSON i18n 翻译，文本/JSON 批处理。30+ AI 引擎，全前端处理。",
+    "description": "ToolsByAI 集合 20 款免费工具：字幕、Markdown、JSON i18n 翻译，文本/JSON 批处理。30+ AI 引擎，全前端处理。",
     "homeTitle": "ToolsByAI 工具集",
-    "homeDescription": "19 款实用工具，涵盖多语言翻译、文本处理、JSON 编辑和数据转换，助力开发者和创作者提升效率。",
+    "homeDescription": "20 款实用工具，涵盖多语言翻译、文本处理、JSON 编辑和数据转换，助力开发者和创作者提升效率。",
     "ogTitle": "ToolsByAI | 免费开源的 AI 翻译与数据处理工具集",
-    "ogDescription": "ToolsByAI 集合 19 款免费工具：字幕、Markdown、JSON i18n 翻译，文本/JSON 批处理。30+ AI 引擎，全前端处理。"
+    "ogDescription": "ToolsByAI 集合 20 款免费工具：字幕、Markdown、JSON i18n 翻译，文本/JSON 批处理。30+ AI 引擎，全前端处理。"
   },
   "languages": {
     "auto": "自动检测",

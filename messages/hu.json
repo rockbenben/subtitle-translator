@@ -508,6 +508,10 @@
     "textDiff": {
       "title": "Szövegösszehasonlító (Diff)",
       "description": "Két szöveg vagy fájl összehasonlítása egymás mellett az első eltérés megjelölésével."
+    },
+    "braceExpander": {
+      "title": "Zárójel-kiterjesztő",
+      "description": "Egy sablont teljes listává bontása, bash brace szintaxissal"
     }
   },
   "navigation": {
@@ -527,11 +531,11 @@
   },
   "Metadata": {
     "title": "ToolsByAI | Ingyenes nyílt forráskódú AI fordító és adateszközök",
-    "description": "ToolsByAI: 19 ingyenes nyílt forráskódú eszköz feliratok, Markdown, JSON i18n fordításhoz, valamint szöveg- és JSON-kötegelt feldolgozáshoz. 30+ AI motor.",
+    "description": "ToolsByAI: 20 ingyenes nyílt forráskódú eszköz feliratok, Markdown, JSON i18n fordításhoz, valamint szöveg- és JSON-kötegelt feldolgozáshoz. 30+ AI motor.",
     "homeTitle": "ToolsByAI eszközkészlet",
-    "homeDescription": "19 eszköz fordításhoz, szöveghez, JSON-hoz és adatkonverzióhoz. Növeld a fejlesztők és alkotók hatékonyságát.",
+    "homeDescription": "20 eszköz fordításhoz, szöveghez, JSON-hoz és adatkonverzióhoz. Növeld a fejlesztők és alkotók hatékonyságát.",
     "ogTitle": "ToolsByAI | Ingyenes nyílt forráskódú AI fordító és adateszközök",
-    "ogDescription": "ToolsByAI: 19 ingyenes nyílt forráskódú eszköz feliratok, Markdown, JSON i18n fordításhoz, valamint szöveg- és JSON-kötegelt feldolgozáshoz. 30+ AI motor."
+    "ogDescription": "ToolsByAI: 20 ingyenes nyílt forráskódú eszköz feliratok, Markdown, JSON i18n fordításhoz, valamint szöveg- és JSON-kötegelt feldolgozáshoz. 30+ AI motor."
   },
   "languages": {
     "auto": "Automatikus felismerés",

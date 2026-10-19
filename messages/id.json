@@ -508,6 +508,10 @@
     "textDiff": {
       "title": "Text Diff",
       "description": "Bandingkan dua teks atau file berdampingan dan temukan perbedaan pertama."
+    },
+    "braceExpander": {
+      "title": "Ekspander Kurung Kurawal",
+      "description": "Kembangkan satu templat menjadi daftar lengkap, sintaks brace bash"
     }
   },
   "navigation": {
@@ -527,11 +531,11 @@
   },
   "Metadata": {
     "title": "ToolsByAI - Peralatan Data & Terjemahan AI untuk Developer",
-    "description": "ToolsByAI: 19 alat open source untuk menerjemahkan subtitle, Markdown, dan JSON i18n. Tanpa instalasi, berbasis browser.",
+    "description": "ToolsByAI: 20 alat open source untuk menerjemahkan subtitle, Markdown, dan JSON i18n. Tanpa instalasi, berbasis browser.",
     "homeTitle": "Suite ToolsByAI",
-    "homeDescription": "19 alat untuk terjemahan, teks, JSON, dan konversi data. Tingkatkan efisiensi pengembang dan kreator.",
+    "homeDescription": "20 alat untuk terjemahan, teks, JSON, dan konversi data. Tingkatkan efisiensi pengembang dan kreator.",
     "ogTitle": "ToolsByAI - Peralatan Data & Terjemahan AI untuk Developer",
-    "ogDescription": "ToolsByAI: 19 alat open source untuk menerjemahkan subtitle, Markdown, dan JSON i18n. Tanpa instalasi, berbasis browser."
+    "ogDescription": "ToolsByAI: 20 alat open source untuk menerjemahkan subtitle, Markdown, dan JSON i18n. Tanpa instalasi, berbasis browser."
   },
   "languages": {
     "auto": "Deteksi Otomatis",

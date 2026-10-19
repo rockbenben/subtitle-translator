@@ -508,6 +508,10 @@
     "textDiff": {
       "title": "Text Diff",
       "description": "দুটি পাঠ্য বা ফাইল পাশাপাশি তুলনা করুন এবং প্রথম পার্থক্য খুঁজুন।"
+    },
+    "braceExpander": {
+      "title": "ব্রেস এক্সপ্যান্ডার",
+      "description": "একটি টেমপ্লেটকে সম্পূর্ণ তালিকায় বিস্তার করুন, bash brace সিনট্যাক্স"
     }
   },
   "navigation": {
@@ -527,11 +531,11 @@
   },
   "Metadata": {
     "title": "ToolsByAI - ডেভেলপারদের জন্য ফ্রি AI অনুবাদ ও ডেটা টুলস",
-    "description": "ToolsByAI: 19টি ফ্রি ওপেন-সোর্স টুল—সাবটাইটেল, Markdown, JSON i18n অনুবাদ ও টেক্সট/JSON ব্যাচ প্রসেসিং। 30+ AI ইঞ্জিন।",
+    "description": "ToolsByAI: 20টি ফ্রি ওপেন-সোর্স টুল—সাবটাইটেল, Markdown, JSON i18n অনুবাদ ও টেক্সট/JSON ব্যাচ প্রসেসিং। 30+ AI ইঞ্জিন।",
     "homeTitle": "ToolsByAI স্যুট",
-    "homeDescription": "অনুবাদ, টেক্সট, JSON এবং ডেটা রূপান্তরের জন্য 19 টুল। ডেভেলপার এবং নির্মাতাদের দক্ষতা বাড়ান।",
+    "homeDescription": "অনুবাদ, টেক্সট, JSON এবং ডেটা রূপান্তরের জন্য 20 টুল। ডেভেলপার এবং নির্মাতাদের দক্ষতা বাড়ান।",
     "ogTitle": "ToolsByAI - ডেভেলপারদের জন্য ফ্রি AI অনুবাদ ও ডেটা টুলস",
-    "ogDescription": "ToolsByAI: 19টি ফ্রি ওপেন-সোর্স টুল—সাবটাইটেল, Markdown, JSON i18n অনুবাদ ও টেক্সট/JSON ব্যাচ প্রসেসিং। 30+ AI ইঞ্জিন।"
+    "ogDescription": "ToolsByAI: 20টি ফ্রি ওপেন-সোর্স টুল—সাবটাইটেল, Markdown, JSON i18n অনুবাদ ও টেক্সট/JSON ব্যাচ প্রসেসিং। 30+ AI ইঞ্জিন।"
   },
   "languages": {
     "auto": "স্বয়ংক্রিয় শনাক্তকরণ",

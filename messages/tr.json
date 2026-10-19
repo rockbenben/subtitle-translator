@@ -508,6 +508,10 @@
     "textDiff": {
       "title": "Text Diff",
       "description": "İki metni veya dosyayı yan yana karşılaştırın ve ilk farkı bulun."
+    },
+    "braceExpander": {
+      "title": "Süslü Parantez Genişletici",
+      "description": "Tek bir şablonu tam listeye genişletin, bash brace sözdizimi"
     }
   },
   "navigation": {
@@ -527,11 +531,11 @@
   },
   "Metadata": {
     "title": "ToolsByAI - Geliştiriciler İçin Yapay Zeka ve Veri Araçları",
-    "description": "ToolsByAI: altyazı, Markdown, JSON i18n çevirisi ve metin/JSON toplu işleme için 19 ücretsiz açık kaynak araç. 30+ AI motoru.",
+    "description": "ToolsByAI: altyazı, Markdown, JSON i18n çevirisi ve metin/JSON toplu işleme için 20 ücretsiz açık kaynak araç. 30+ AI motoru.",
     "homeTitle": "ToolsByAI Paketi",
-    "homeDescription": "Çeviri, metin, JSON ve veri dönüşümü için 19 araç. Geliştirici ve yaratıcı verimliliğini artırın.",
+    "homeDescription": "Çeviri, metin, JSON ve veri dönüşümü için 20 araç. Geliştirici ve yaratıcı verimliliğini artırın.",
     "ogTitle": "ToolsByAI - Geliştiriciler İçin Yapay Zeka ve Veri Araçları",
-    "ogDescription": "ToolsByAI: altyazı, Markdown, JSON i18n çevirisi ve metin/JSON toplu işleme için 19 ücretsiz açık kaynak araç. 30+ AI motoru."
+    "ogDescription": "ToolsByAI: altyazı, Markdown, JSON i18n çevirisi ve metin/JSON toplu işleme için 20 ücretsiz açık kaynak araç. 30+ AI motoru."
   },
   "languages": {
     "auto": "Otomatik Algılama",

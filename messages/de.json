@@ -508,6 +508,10 @@
     "textDiff": {
       "title": "Text Diff",
       "description": "Vergleichen Sie zwei Texte oder Dateien nebeneinander und finden Sie den ersten Unterschied."
+    },
+    "braceExpander": {
+      "title": "Klammer-Expander",
+      "description": "Aus einer Vorlage die vollständige Liste erzeugen – Bash-Brace-Expansion"
     }
   },
   "navigation": {
@@ -527,11 +531,11 @@
   },
   "Metadata": {
     "title": "ToolsByAI | Kostenlose KI-Dev- & Übersetzungstools",
-    "description": "ToolsByAI: 19 Open-Source-Tools für Untertitel-, Markdown- und JSON-i18n-Übersetzung. Ohne Installation, im Browser.",
+    "description": "ToolsByAI: 20 Open-Source-Tools für Untertitel-, Markdown- und JSON-i18n-Übersetzung. Ohne Installation, im Browser.",
     "homeTitle": "ToolsByAI Werkzeugkasten",
-    "homeDescription": "19 Tools für Übersetzung, Text, JSON und Datenkonvertierung. Effizienzsteigerung für Entwickler und Creator.",
+    "homeDescription": "20 Tools für Übersetzung, Text, JSON und Datenkonvertierung. Effizienzsteigerung für Entwickler und Creator.",
     "ogTitle": "ToolsByAI | Kostenlose KI-Dev- & Übersetzungstools",
-    "ogDescription": "ToolsByAI: 19 Open-Source-Tools für Untertitel-, Markdown- und JSON-i18n-Übersetzung. Ohne Installation, im Browser."
+    "ogDescription": "ToolsByAI: 20 Open-Source-Tools für Untertitel-, Markdown- und JSON-i18n-Übersetzung. Ohne Installation, im Browser."
   },
   "languages": {
     "auto": "Automatisch",

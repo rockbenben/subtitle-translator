@@ -508,6 +508,10 @@
     "textDiff": {
       "title": "Text Diff",
       "description": "Confronta due testi o file affiancati e individua la prima differenza."
+    },
+    "braceExpander": {
+      "title": "Espansore di graffe",
+      "description": "Espandi un modello in un elenco completo, sintassi bash"
     }
   },
   "navigation": {
@@ -527,11 +531,11 @@
   },
   "Metadata": {
     "title": "ToolsByAI - Utility Sviluppatori & Traduzione IA Online",
-    "description": "ToolsByAI: 19 strumenti open source gratuiti per traduzione sottotitoli, Markdown, JSON i18n e elaborazione batch. 30+ motori IA.",
+    "description": "ToolsByAI: 20 strumenti open source gratuiti per traduzione sottotitoli, Markdown, JSON i18n e elaborazione batch. 30+ motori IA.",
     "homeTitle": "Suite ToolsByAI",
-    "homeDescription": "19 strumenti per traduzione, testo, JSON e conversione dati. Potenzia l'efficienza di sviluppatori e creatori.",
+    "homeDescription": "20 strumenti per traduzione, testo, JSON e conversione dati. Potenzia l'efficienza di sviluppatori e creatori.",
     "ogTitle": "ToolsByAI - Utility Sviluppatori & Traduzione IA Online",
-    "ogDescription": "ToolsByAI: 19 strumenti open source gratuiti per traduzione sottotitoli, Markdown, JSON i18n e elaborazione batch. 30+ motori IA."
+    "ogDescription": "ToolsByAI: 20 strumenti open source gratuiti per traduzione sottotitoli, Markdown, JSON i18n e elaborazione batch. 30+ motori IA."
   },
   "languages": {
     "auto": "Rilevamento Auto",
