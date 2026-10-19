@@ -23,7 +23,7 @@ interface UploadSourceCardProps {
   onClear?: () => void;
   /** 源被替换(拖入新文件 / 删文件)时连带清掉的产物。 */
   onSourceChange?: () => void;
-  /** 运行中锁定上传、编辑与清空(CLAUDE.md「运行中的设置锁」)。 */
+  /** 运行中锁定上传、编辑与清空(AGENTS.md「运行中的设置锁」)。 */
   locked?: boolean;
   rows?: number;
   textDirection?: ComponentProps<typeof SourceArea>["textDirection"];
@@ -36,7 +36,7 @@ interface UploadSourceCardProps {
  * 「输入区」卡片:拖拽上传 + 源文本框 + 清空按钮。曾经在 13 个工具页各手写一份
  * (约 50 行 × 13),文案一律取 common 命名空间。
  *
- * - `disabled={locked || undefined}`:与 CLAUDE.md 的 antd 陷阱 #2 一致,不锁时不发显式 false。
+ * - `disabled={locked || undefined}`:与 AGENTS.md 的 antd 陷阱 #2 一致,不锁时不发显式 false。
  * - `showUploadList` 传裸布尔:Upload 的 disabled 才会连带撤掉文件列表的删除 ✕(陷阱 #3)。
  * - 多文件模式下源文本框只在 `uploadMode === "single"` 时出现(单文件工具永远是 single)。
  */

@@ -617,7 +617,7 @@ type CueGroup = { firstIndex: number; indices: number[]; origs: string[]; trans:
 /**
  * 把内容行按【所属时间码行的行号】聚成 cue(Map 保留插入顺序)。key 用行号而非时间码文本:
  * 时间码逐字节相同的两个独立 cue 会被文本 key 错误合并(内容跨 cue"传送"、留下空壳)。
- * 「只出一半」的判据是 isSoftFilledHalf / isEmptiedSlot(CLAUDE.md),这里只做按 cue 的与聚合。
+ * 「只出一半」的判据是 isSoftFilledHalf / isEmptiedSlot(AGENTS.md),这里只做按 cue 的与聚合。
  * 曾在 buildVttBilingualSrt 与 assembleSubtitleOutput 的 SRT/VTT/SBV 分支各写一份。
  */
 const groupCues = (lines: string[], contentIndices: number[], translatedLines: string[], softFilled?: ReadonlySet<number>, emptied?: ReadonlySet<number>, timeRegex?: RegExp): Map<number, CueGroup> => {

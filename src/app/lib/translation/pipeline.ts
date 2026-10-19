@@ -34,7 +34,7 @@ import { getRetryConfig, rateLimitGate, abortableSleep, isAuthError, isRetryable
 // ⚠ 【直接用 URL_IS_PRIMARY_CRED，不另维一份名单】—— 这里曾经有个
 // LOCAL_TIMEOUT_HINT_METHODS，与它逐字相等：“哪几家是自托管”就是同一件事，
 // 两份名单分在两个文件里，下一个自托管 provider 志必只加一处，而漏掉这一
-// 处只会让错误提示退化（静默）。PREFLIGHT_PROBE_METHODS 同类，已记在 CLAUDE.md。
+// 处只会让错误提示退化（静默）。PREFLIGHT_PROBE_METHODS 同类，已记在 AGENTS.md。
 import { URL_IS_PRIMARY_CRED } from "./registry";
 import { extractTranslatedLinesWithNumbers, findAdjacentDuplicateSlots, buildContextPrompt, isBlankLine, prefillFromLineCache } from "./contextTranslation";
 import { isAbortError, formatErrorWithCause } from "@/app/utils/errorUtils";
