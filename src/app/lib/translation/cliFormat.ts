@@ -327,11 +327,12 @@ const jsonHandler: CliFormatHandler = {
       //    移进 textUtils),而 json5 是主仓依赖、子仓 package.json 不在同步范围,
       //    所以"把 jsonUtils 也同步过去"需要跨三个仓手工装依赖。
       //
-      // 2) 语义边界:preprocessJson 拿 null 当解析失败哨兵(`if (parsed !== null)
-      //    return parsed`),所以它【无法表示一个成功解析出的顶层 null】——
-      //    内容为 `null` 的文件会被改写成 `[null]` 并 exit 0;它还会给无外层
-      //    括号的片段自动补 {}/[]。对 CLI 这种产物直接进流水线的场景,静默改写
-      //    文档结构比"报错要求修文件"坏得多。
+      // 2) 语义边界:preprocessJson 还会给**没有外层括号的片段**自动补 {}/[]，
+      //    这是网页端「粘一半 JSON 也能用」的便利。对 CLI 这种产物直接进流水线的
+      //    场景，静默改写文档结构比"报错要求修文件"坏得多。
+      //    （它曾经还有第二个毛病 —— 拿 `null` 当解析失败哨兵，顶层 `null` 会被
+      //    改写成 `[null]`；2026-10-19 已在 utils/jsonUtils.ts 用 Symbol 哨兵修掉。
+      //    但 CLI 仍**不**改用它：上一条依赖边界与这条自动补括号都还成立。）
       //
       // 代价(已知并接受):带尾逗号/注释的手改 locale 文件在浏览器里能翻、在
       // CLI 上报 ✖ invalid JSON + exit 1。--help 里明写了这条。

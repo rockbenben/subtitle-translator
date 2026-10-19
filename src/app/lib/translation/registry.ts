@@ -840,8 +840,8 @@ export const PROVIDERS = {
       // K3 的 reasoning_effort 取值，官方逐字（platform.kimi.com/docs/models.md +
       // guide/use-reasoning-effort.md）：「K3 的顶层推理强度字段，支持 "low" / "high" /
       // "max"，默认 "max"」。下面 levels 只列 low/high 是【既有取舍】：我方
-      // ReasoningEffort 只有三档，max/xhigh 这类顶档要按型号裁剪才能开（见 CLAUDE.md
-      // 「加 max/xhigh 档时必须按型号裁剪」），不是漏项。
+      // ReasoningEffort 只有三档，max/xhigh 这类顶档要按型号裁剪才能开（见 AGENTS.md
+      // 「推理档位有两处硬编码」），不是漏项。
       // 官方在售另有 kimi-k2.7-code / kimi-k2.7-code-highspeed（thinking.type 仅 enabled，
       // 传 "disabled" 直接报错，且不支持 reasoning_effort）⇒ 它们【没有可用的关闭形态】，
       // 所以既不打 thinking 也不给档位控件；怎么收录 k2.7-code、为什么 -highspeed 不列，
@@ -2275,10 +2275,15 @@ export const PROVIDERS = {
     // useRelay: 中转对 Custom 是【自建才有意义】的一条路(subtitle-translator 的
     // CORS 反馈:网关在别的客户端里好好的,浏览器直连被 CORS 挡掉)。字段存在 =
     // 界面渲染中转开关(isRelayCapable 的判据),默认关 —— 直连能通时不该多一跳。
-    // ⚠ 内置公共中转【没有】llm 路由(见 BUILTIN_RELAY_PROVIDERS),所以「开中转
-    // + 空 relayBase」对 Custom 永远是直连;用户填自己的 relayBase 后同一根
-    // 开关才开始工作。两根轴的取舍都在 registry.relayWouldServe 一处,引擎与
-    // 界面文案共用 —— 别在这里替用户预判。
+    // 判定逐条地址、不逐 provider：芯片表里两枚固定公开端点(Together / Fireworks)
+    // 与 siliconflow 那批同型，【有】内置路由(/api/llm?endpoint=)；七枚本地运行时
+    // 是环回地址，远端够不着，永远直连；用户自填的任意网关地址不在内置中转声明的
+    // 集合里，同样直连(见 relayWouldServe)。用户填自己的 relayBase 时两根轴才各自
+    // 生效 —— 那台机器归他，allowlist 由他声明。
+    // ⚠ 这条线曾经被写成「内置公共中转没有 llm 路由」，而 worker 侧真按那句话把
+    // `/api/llm` 段名整个排除在派发之外 —— 表里有、清单里印着、派发回 400，
+    // workerParity 只比键集所以全绿。判据落在【转发目标】上的 workerRouting.test.ts
+    // 才是这条路的证人；改这里任何一侧前先看那份测试。
     defaults: { url: "", apiKey: "", model: "", temperature: 0.7, maxTokens: 0, sendSystemPrompt: true, useRelay: false, batchSize: 10, contextBatchSize: 1, contextWindow: 30 },
     // 每个芯片背后是一个独立产品，所以各带各的 docs —— provider 级的一条链接
     // 在这里没有意义（"Custom" 没有文档），而这条路恰恰最需要文档：用户得先照着
