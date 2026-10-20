@@ -217,13 +217,7 @@
     "errorHintRelay403": "API가 403 Forbidden을 반환했습니다. \"더 많은 Provider 설정\"에서 \"API 중계\"를 켜세요",
     "errorHintCors": "이 주소에 연결할 수 없습니다. 주소가 올바른지, 서비스가 교차 출처 요청(CORS)을 허용하는지 확인하세요. 자체 구축 게이트웨이와 로컬 모델은 직접 켜야 하며, 본인의 API 중계를 사용할 수도 있습니다",
     "errorHintGeminiKey": "Gemini에 연결할 수 없습니다. 먼저 네트워크를 확인하세요(일부 네트워크에서는 Google 서비스에 직접 연결할 수 없습니다). 네트워크가 정상이라면 2026년 6월 19일부터 Google이 무제한 API 키를 거부하고 있습니다. AI Studio에서 키를 다시 생성하거나(기본적으로 제한됨) Google Cloud 콘솔에서 기존 키에 Gemini API 제한을 추가하세요",
-    "rateLimitCooldown": "요청 한도 도달 — 잠시 멈춘 뒤 자동으로 재시도합니다",
-    "autoUpdateEnabled": "자동으로 업데이트 확인",
-    "autoUpdateEnabledTooltip": "끄면 업데이트 서버에 접속하지 않습니다. 직접 확인하는 것은 언제든지 가능합니다.",
-    "updateCheckNow": "업데이트 확인",
-    "updateUpToDate": "최신 버전입니다.",
-    "updateAvailable": "새 버전 {version}을(를) 사용할 수 있습니다.",
-    "updateCheckFailed": "업데이트를 확인하지 못했습니다: {reason}"
+    "rateLimitCooldown": "요청 한도 도달 — 잠시 멈춘 뒤 자동으로 재시도합니다"
   },
   "SubtitleTranslator": {
     "clientDescription": "자막 파일을 업로드하거나 내용을 붙여넣고 목표 언어를 선택하여 빠르게 번역하세요. 일괄 처리를 지원하며 타임라인을 자동 유지합니다.",

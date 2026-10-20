@@ -217,13 +217,7 @@
     "errorHintRelay403": "介面回傳 403 禁止存取，請在「更多 Provider 設定」中開啟「中轉 API」",
     "errorHintCors": "無法連線到該位址：請檢查位址是否正確，並確認服務已允許跨來源（CORS）。自建閘道與本機模型需要自行開啟，或改用你自己的中轉 API",
     "errorHintGeminiKey": "無法連線 Gemini：請先檢查網路（部分網路環境無法直連 Google 服務）。若網路正常，則可能是 Google 自 2026-06-19 起拒絕「無限制 API Key」——請在 AI Studio 重新產生金鑰（預設已限制），或在 Google Cloud 主控台為舊金鑰新增 Gemini API 限制",
-    "rateLimitCooldown": "請求過於頻繁，已自動暫停片刻後重試",
-    "autoUpdateEnabled": "自動檢查更新",
-    "autoUpdateEnabledTooltip": "關閉後應用程式不會連線更新伺服器；仍可隨時手動檢查更新。",
-    "updateCheckNow": "檢查更新",
-    "updateUpToDate": "目前已是最新版本。",
-    "updateAvailable": "發現新版本 {version}。",
-    "updateCheckFailed": "檢查更新失敗：{reason}"
+    "rateLimitCooldown": "請求過於頻繁，已自動暫停片刻後重試"
   },
   "SubtitleTranslator": {
     "clientDescription": "上傳字幕檔案或粘貼內容，選擇目標語言即可快速翻譯。支持批量處理，自動保留時間軸。",

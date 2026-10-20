@@ -217,13 +217,7 @@
     "errorHintRelay403": "API mengembalikan 403 Forbidden — aktifkan \"Relay API\" di \"Pengaturan Provider lain\"",
     "errorHintCors": "Tidak dapat terhubung ke alamat ini — periksa alamatnya dan pastikan layanan mengizinkan permintaan lintas-asal (CORS). Gateway mandiri dan model lokal harus mengaktifkannya sendiri, atau gunakan Relay API milik Anda",
     "errorHintGeminiKey": "Tidak dapat terhubung ke Gemini: periksa jaringan Anda terlebih dahulu (beberapa jaringan tidak dapat mengakses layanan Google secara langsung). Jika jaringan baik-baik saja, sejak 19 Juni 2026 Google menolak kunci API tanpa pembatasan — buat ulang kunci di AI Studio (dibatasi secara default) atau tambahkan pembatasan Gemini API pada kunci lama di Google Cloud Console",
-    "rateLimitCooldown": "Batas permintaan tercapai — jeda sejenak, akan dicoba ulang otomatis",
-    "autoUpdateEnabled": "Periksa pembaruan secara otomatis",
-    "autoUpdateEnabledTooltip": "Saat nonaktif, aplikasi tidak pernah menghubungi server pembaruan. Anda tetap dapat memeriksa secara manual.",
-    "updateCheckNow": "Periksa pembaruan",
-    "updateUpToDate": "Anda sudah memakai versi terbaru.",
-    "updateAvailable": "Versi {version} tersedia.",
-    "updateCheckFailed": "Gagal memeriksa pembaruan: {reason}"
+    "rateLimitCooldown": "Batas permintaan tercapai — jeda sejenak, akan dicoba ulang otomatis"
   },
   "SubtitleTranslator": {
     "clientDescription": "Unggah subtitle atau tempel konten. Pilih bahasa target untuk terjemahan cepat. Mendukung pemrosesan batch dan mempertahankan timeline.",

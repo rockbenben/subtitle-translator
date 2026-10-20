@@ -1,12 +1,13 @@
 "use client";
 import { useCallback, useState } from "react";
 import { App, Button, Flex, Switch } from "antd";
-import { useTranslations } from "next-intl";
+import { useLocale } from "next-intl";
 import { useLocalStorage } from "@/app/hooks/useLocalStorage";
 import { useMounted } from "@/app/hooks/useMounted";
 import ToggleRow from "@/app/components/styled/ToggleRow";
 import { isTauriRuntime } from "./externalLink";
 import { checkForUpdates, AUTO_UPDATE_ENABLED_KEY } from "./updater";
+import { getUpdaterStrings } from "./updaterI18n";
 import { useUpdatePrompt } from "./useAutoUpdate";
 
 /**
@@ -31,18 +32,25 @@ import { useUpdatePrompt } from "./useAutoUpdate";
  * 【失败怎么表现】自动检查那条路失败时保持安静（useAutoUpdate 里不弹任何东西）；
  * 手动检查是用户主动点的，失败必须说清原因 —— 静默失败等于没回答。
  * 无论哪条路，检查本身都不会把应用弄崩：插件调用包在 checkForUpdates 内部，
- * 这里再兜一层 unforeseen 的异常。
+ * 这里再兜一层意外。
  *
  * 【“跳过此版本”对手动检查不算数】跳过按钮静音的是【自动提醒】。用户手动问
  * “有没有新版”，答案里说有新版、却因为被跳过而不吭声，就是撒谎；所以手动这条
  * 路照常弹同一个安装弹窗（弹窗里仍可再点一次“跳过此版本”）。
+ *
+ * 【文案在哪儿】桌面端专属文案住在同目录的 ./updaterI18n（简中 / 繁中 / 英文，
+ * 其余 locale 回落英文），不进 messages/*.json —— 那些文件是上游 project_sync
+ * 按命名空间派生出来的产物，桌面专属的键下一次同步就会被抹掉。本组件是这些文案
+ * 的唯一消费方，而它在 src/app/desktop/ 里，所以挂载点（工具页）完全不必接触
+ * 文案本身：它只 import 这个组件。
  *
  * 【为什么这个文件在 src/app/desktop/】上游 project_sync 的 overwrite 模式会删掉
  * 目标目录里源目录没有的孤儿文件，桌面端专属文件放共享目录会被静默删掉；
  * src/app/desktop/ 不在任何同步规则范围内，是这块的安全区。
  */
 const UpdateSettings = () => {
-  const t = useTranslations("common");
+  const locale = useLocale();
+  const t = getUpdaterStrings(locale);
   const { message } = App.useApp();
   const [enabled, setEnabled] = useLocalStorage<boolean>(AUTO_UPDATE_ENABLED_KEY, false);
   const [checking, setChecking] = useState(false);
@@ -56,19 +64,19 @@ const UpdateSettings = () => {
     try {
       const r = await checkForUpdates();
       if (r.error) {
-        message.error(t("updateCheckFailed", { reason: r.error }));
+        message.error(t.checkFailed(r.error));
         return;
       }
       if (r.hasUpdate && r.update) {
-        message.info(t("updateAvailable", { version: r.update.version }));
+        message.info(t.available(r.update.version));
         confirm(r.update);
         return;
       }
-      message.success(t("updateUpToDate"));
+      message.success(t.upToDate);
     } catch (e) {
       // checkForUpdates 自己接住了插件抛的错；这一层只是不让任何意外掀翻设置面板。
       console.error("Update check failed:", e);
-      message.error(t("updateCheckFailed", { reason: String(e) }));
+      message.error(t.checkFailed(String(e)));
     } finally {
       setChecking(false);
     }
@@ -78,13 +86,13 @@ const UpdateSettings = () => {
 
   return (
     <Flex vertical gap="small">
-      <ToggleRow label={t("autoUpdateEnabled")} tooltip={t("autoUpdateEnabledTooltip")}>
-        <Switch size="small" checked={enabled} onChange={(checked) => setEnabled(checked)} aria-label={t("autoUpdateEnabled")} />
+      <ToggleRow label={t.autoUpdateLabel} tooltip={t.autoUpdateTooltip}>
+        <Switch size="small" checked={enabled} onChange={(checked) => setEnabled(checked)} aria-label={t.autoUpdateLabel} />
       </ToggleRow>
       {/* 按钮不跟开关挤在同一行：手动检查是一次性动作，与“要不要自动查”是两件事。 */}
       <div>
         <Button size="small" onClick={checkNow} loading={checking}>
-          {t("updateCheckNow")}
+          {t.checkNow}
         </Button>
       </div>
     </Flex>
