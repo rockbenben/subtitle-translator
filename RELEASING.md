@@ -25,6 +25,19 @@
      第二份并列应用;
    - 资产齐全、版本号正确。
 6. **Publish release**。这一步之后客户端才会在启动检查 / 24h 轮询时收到更新。
+7. **确认 `releases/latest` 真的指到了新版本**。发布草稿**不一定会**让
+   `releases/latest` 跟着挪——2026-10-20 在 rclone-deck 上撞到过一次:release 已经是
+   `draft=false`、`prerelease=false`、`published_at` 也填上了,`releases/latest` 却仍返回
+   旧版本,于是端点 `releases/latest/download/latest.json` 直接 404(旧 release 里根本没有
+   `latest.json`)。判据是**把端点本身拉下来看**里面的 `"version"`,不是看 release 的字段:
+
+   ```powershell
+   (Invoke-WebRequest 'https://github.com/rockbenben/subtitle-translator/releases/latest/download/latest.json').Content
+   ```
+
+   若还是旧版本号,把这条 release 显式标成 latest:
+   `PATCH /repos/rockbenben/subtitle-translator/releases/<id>` 带 `make_latest=true`。
+   标完之后 API 立刻改指;CDN 那层重定向还会再滞后几分钟,属正常。
 
 ## 更新链路须知
 
