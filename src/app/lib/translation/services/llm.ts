@@ -241,12 +241,14 @@ const qwenThinking: EffortShape = (e) => (e ? { enable_thinking: true, thinking_
 // Doc: api-docs.deepseek.com/zh-cn/guides/thinking_mode ("默认思考开关为 enabled").
 export const buildDeepseekExtraBody: EffortShape = (e) => (e ? { thinking: { type: "enabled" }, reasoning_effort: "high" } : { thinking: { type: "disabled" } });
 
-// MiniMax M3: first hosted SKU with a real toggle — `thinking:{type:"adaptive"|"disabled"}`,
-// server-default adaptive (ON) → off MUST send explicit disabled. M2.x stays
-// intrinsic/unclosable (untagged → gate omits; the only hosted knob there,
-// `reasoning_split`, just switches output FORMAT, it can't turn reasoning off).
+// Flash rejects disabled thinking; the UI's Lowest setting maps to low effort.
+// M3 keeps its explicit off switch. Unknown custom models keep the existing
+// on/off/auto contract, and saved M2.7 requests remain parameter-free below.
 // Doc: platform.minimax.io/docs/api-reference/text-chat-openai.
-const minimaxThinking: EffortShape = (e) => ({ thinking: { type: e ? "adaptive" : "disabled" } });
+const minimaxThinking: EffortShape = (e, model) =>
+  model === "MiniMax-M3.1-Flash"
+    ? { thinking: { type: "adaptive" }, reasoning_effort: pickThinkingLevel("minimax", model, e) }
+    : { thinking: { type: e ? "adaptive" : "disabled" } };
 
 // TokenHub deliberately has NO thinking builder — 不是"不能关",而是
 // "本来就是关的":TokenHub 文档(1823/135872)给 hy3 的 thinking.type 三个合法
@@ -297,7 +299,7 @@ const THINKING_BUILDERS: Partial<Record<OpenAICompatProviderKey, ExtraBodyBuilde
   // none/disabled 关闭值 ⇒ 关闭态发最低档，绝不发厂商没写的值。未打标的 SKU 由 gated 省略。
   stepfun: gated("stepfun", (e, model) => ({ reasoning_effort: pickThinkingLevel("stepfun", model!, e) })),
   mimo: gated("mimo", thinkingType),
-  // MiniMax M3: thinking:{type:"adaptive"|"disabled"} (server-default adaptive = ON)
+  // The registry preserves the former M2.7 quick pick's parameter-free behavior.
   minimax: gated("minimax", minimaxThinking),
   // Binary enable_thinking bool (server-default-ON)
   // ⚠ SiliconFlow 用的是【上游原生】形态(与 moonshot 等共用 thinkingType),不是
@@ -319,7 +321,9 @@ const THINKING_BUILDERS: Partial<Record<OpenAICompatProviderKey, ExtraBodyBuilde
   // 关闭态发 reasoning:{enabled:false},两种写法混用:文档只把统一对象列为推荐
   // 形态,顶层别名没有成文保证,一旦它不再被识别,开启态就静默失效(而关闭态
   // 照常工作),表现为"开了思考没反应"这种最难查的形态。
-  openrouter: gated("openrouter", (e) => ({ reasoning: e ? { effort: e } : { enabled: false } })),
+  openrouter: gated("openrouter", (e, model) => ({
+    reasoning: model === "minimax/minimax-m3.1-flash:free" ? { effort: pickThinkingLevel("openrouter", model, e) } : e ? { effort: e } : { enabled: false },
+  })),
   // Graded reasoning_effort, OMIT off (undisableable): Groq gpt-oss.
   groq: gated("groq", groqEffort),
   // Cerebras:两个公共模型的 reasoning_effort 取值【不同】,必须按 SKU 分流
