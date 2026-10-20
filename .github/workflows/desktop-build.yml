@@ -96,6 +96,12 @@ jobs:
           npx tsx scripts/languagePreference.check.ts
           npx tsx scripts/localeBoot.check.ts
 
+      # vitest 套件:字幕 cue 的解析不变量 + messages/*.json 的跨语言键集/占位符闸
+      # + 桌面端文案表的键集闸。仓库自 0c99ce8 起就有 vitest,但这道闸一直没接进
+      # 流水线 —— 加了测试而不跑它,等于没加。
+      - name: Tests
+        run: yarn test
+
       - name: Rust tests
         run: cargo test --locked --manifest-path src-tauri/Cargo.toml
 
