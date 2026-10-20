@@ -1049,9 +1049,35 @@ export const PROVIDERS = {
       { label: "Mainland (CN)", url: "https://api.minimaxi.com/v1/chat/completions" },
       { label: "International", url: "https://api.minimax.io/v1/chat/completions" },
     ],
-    // Stable model IDs and thinking contract verified against text-chat-openai.md.
-    // Flash always thinks: the existing Lowest/Low/Medium/High control uses a
-    // supported subset of its effort levels; M3 retains its real off switch.
+    // 型号清单按【官方 Model List 页】(platform.minimax.io/docs/faq/models)裁:该页把
+    // 「在售」与「已退役」分成两段,退役段就是本仓「任一渠道 pre-offline 即全面下线,
+    // 老模型不留」那条规则的事实来源(本仓已按它删过 M2.5)。
+    // ⚠ M2.7 已退役,故本条不再收它 —— 官方退役公告逐字:「October 19, 2026: These
+    //   models will no longer be available to new users」「November 18, 2026: These
+    //   models will be retired」;退役表里 MiniMax-M2.7 / M2.7-highspeed / M2.5 /
+    //   M2.1 / M2 逐条列明。⚠ 别被「老 id 还能请求」骗了:M Plan / Token Plan 用户
+    //   从 10-19 起请求 M2.5/M2.7 会被官方**自动路由到 M3.1 Flash** —— 能用 ≠ 在售。
+    //   (存量用户的请求形态由 isCustomModel 的 M2.7 特判保住,见那里。)
+    // 在售的 LLM 只有两条:MiniMax-M3.1-Flash / MiniMax-M3 —— 与本清单逐条一致。
+    //
+    // 默认 = M3.1 Flash(2026-10-20 起):当前代,价格是 M3 的一半($0.15/$0.60 vs
+    // $0.30/$1.20 每 M token),1M 上下文,且官方套餐自己把 M2.5/M2.7 路由到它。
+    // 想彻底关掉思考的用户选 M3 —— 它有真 off 开关(Flash 没有,见下)。
+    //
+    // ⚠ 思考形态【逐 SKU 不同】,不能一刀切(官方 OpenAPI 逐字):
+    //   · M3.1 Flash:thinking:{type:"adaptive"} 是它**唯一**接受的值,传 disabled
+    //     **返回 HTTP 400**。它强制思考,深度只能靠 reasoning_effort 调(low/medium/
+    //     high/xhigh/max,默认 max;none 不接受,传了 400)→ 声明 thinkingLevels
+    //     ["low","medium","high"](我们发不出 xhigh/max),界面最低档落到 low;
+    //     关闭态在 wire 上是「adaptive + low」,**不是** disabled —— 见 llm.ts。
+    //   · M3:adaptive 默认开,disabled 真能关(跳过 thinking 直接回答)→ 照旧打标签、
+    //     不声明 levels,关闭态发 thinking:{type:"disabled"}。
+    //   · M2.x:thinking 关不掉,传 disabled 会被接收但不生效(=静默思考静默计费)→
+    //     不打标签。手填 M2.x 旧 id 会落进 gated() 的 custom 分支,Off 态发的
+    //     disabled 被接收但不生效,按「不做向后兼容」接受,逃生口 = 思考档切 Auto。
+    // Doc: platform.minimax.io/docs/api-reference/text-chat-openai(国际站)/
+    //      platform.minimaxi.com/docs/api-reference/text-chat-openai(大陆站 —— 同一份
+    //      model enum、同一句 disabled→400,契约逐字相同)。
     models: [
       { label: "MiniMax M3.1 Flash", value: "MiniMax-M3.1-Flash", thinking: true, thinkingLevels: ["low", "medium", "high"] },
       { label: "MiniMax M3", value: "MiniMax-M3", thinking: true },

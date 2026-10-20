@@ -241,10 +241,17 @@ const qwenThinking: EffortShape = (e) => (e ? { enable_thinking: true, thinking_
 // Doc: api-docs.deepseek.com/zh-cn/guides/thinking_mode ("默认思考开关为 enabled").
 export const buildDeepseekExtraBody: EffortShape = (e) => (e ? { thinking: { type: "enabled" }, reasoning_effort: "high" } : { thinking: { type: "disabled" } });
 
-// Flash rejects disabled thinking; the UI's Lowest setting maps to low effort.
-// M3 keeps its explicit off switch. Unknown custom models keep the existing
-// on/off/auto contract, and saved M2.7 requests remain parameter-free below.
-// Doc: platform.minimax.io/docs/api-reference/text-chat-openai.
+// MiniMax 的思考形态【逐 SKU 不同】(官方 OpenAPI 逐字,platform.minimax.io/docs/
+// api-reference/text-chat-openai):
+//   · M3.1 Flash:thinking:{type:"adaptive"} 是它**唯一**接受的值,传 disabled
+//     **返回 HTTP 400** —— 强制思考,深度只能靠 reasoning_effort 调(low/medium/high/
+//     xhigh/max,默认 max;none 不接受,传了 400)。所以这里发 adaptive + reasoning_effort,
+//     **永不发 disabled**;界面最低档(它关不掉)落到 low。
+//   · M3:adaptive 默认开,disabled 真能关 → 二态照旧。
+//   · M2.x:关不掉,disabled 被接收但不生效 → 不打标、wire 省略;手填 M2.x 旧 id 走
+//     custom 分支(Off 态发 disabled,被接收但不生效),逃生口 = 思考档切 Auto。
+// ⚠ 别把 M3 的形态套到 Flash 上:一个 disabled 就是 400。
+// M2.7 存量请求保持无参数(见 registry.ts 的 isCustomModel 特判)。
 const minimaxThinking: EffortShape = (e, model) =>
   model === "MiniMax-M3.1-Flash"
     ? { thinking: { type: "adaptive" }, reasoning_effort: pickThinkingLevel("minimax", model, e) }
