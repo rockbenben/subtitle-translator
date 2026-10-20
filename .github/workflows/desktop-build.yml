@@ -1,9 +1,11 @@
-# Cross-platform Tauri build with signing, a draft release carrying latest.json,
+# Cross-platform Tauri build with signing, a release carrying latest.json,
 # and a portable Windows exe.
 #
 # Secrets required for auto-update: TAURI_SIGNING_PRIVATE_KEY (+ _PASSWORD if the key
-# has one — ours has none). GITHUB_TOKEN is built in. The release is a DRAFT —
-# un-draft it to actually roll the update out (releases/latest ignores drafts).
+# has one — ours has none). GITHUB_TOKEN is built in. The release is built as a
+# draft and published by the `publish` job at the end, which also points
+# releases/latest at it — the updater resolves releases/latest, which ignores
+# drafts, so publishing is what rolls the update out.
 #
 # The pushed tag MUST equal package.json version (v3.0.0 <-> "version": "3.0.0"):
 # tauri-action expands __VERSION__ from the app version and the portable-exe step
@@ -232,12 +234,11 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: gh release upload "v${APP_VERSION}" "SubtitleTranslator_${APP_VERSION}_x64_portable.exe" --clobber
 
-      # The pipeline ends in a manual step: the release is a DRAFT and the updater
-      # resolves `releases/latest`, which ignores drafts — so nothing reaches users until
-      # someone publishes it. Putting the link and that reminder in the run summary beats
-      # a note in a file nobody opens at the moment it matters. Skipped on manual runs,
+      # The release is published by the `publish` job at the end of this workflow, so
+      # there is nothing left to do by hand here. The link is still worth putting in the
+      # run summary: it is where you look right after tagging. Skipped on manual runs,
       # which create no release (the output is empty there).
-      - name: Link the draft release in the run summary
+      - name: Link the release in the run summary
         if: github.event_name == 'push' && steps.tauri.outputs.releaseHtmlUrl != ''
         shell: bash
         env:
@@ -245,10 +246,55 @@ jobs:
           APP_VERSION: ${{ steps.tauri.outputs.appVersion }}
         run: |
           {
-            echo "### Draft release v${APP_VERSION}"
+            echo "### Release v${APP_VERSION}"
             echo
-            echo "[Open the draft release]($RELEASE_URL)"
+            echo "[Open the release]($RELEASE_URL)"
             echo
-            echo 'This release is a **draft**. The updater resolves `releases/latest`, which'
-            echo 'ignores drafts — publish it or no client will ever be offered this version.'
+            echo 'This release is published by the `publish` job at the end of this run:'
+            echo 'it also points `releases/latest` at it, which is what the updater reads.'
           } >> "$GITHUB_STEP_SUMMARY"
+
+  # 把那条草稿发布出去，并显式把它标成 latest。
+  #
+  # 单独一条 job，不放在矩阵里：矩阵有四条腿（macOS 两条、Linux、Windows），
+  # 四条腿都去发布会打架。`needs: publish-tauri` 保证产物都进去了才轮到它。
+  publish:
+    name: 发布这个 release，并把 latest 指到它
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: publish-tauri
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      # ⚠️ **不能只发草稿了事**：草稿转成已发布时，GitHub **不会**重算
+      # `releases/latest` 指向谁——2026-10-20 在 rclone-deck 上撞到过一次：release 已经是
+      # `draft=false`、`prerelease=false`、`published_at` 也填上了，`releases/latest`
+      # 却仍返回旧版本，端点 `releases/latest/download/latest.json` 于是 **404**
+      # （旧 release 里没有 `latest.json`）。所以这里一次 PATCH 同时给
+      # `draft=false` 与 `make_latest=true`，不靠 GitHub 自己挪。
+      #
+      # 判据是**看 API 指到谁**，不是看 release 的字段：字段全对而指针没挪，端点照样 404。
+      # CDN 那层重定向还会再滞后几分钟，属正常——这里判 API，不判 CDN。
+      - name: 发布并把 latest 指到它
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag="${GITHUB_REF_NAME}"
+          # ⚠️ **不能用 `releases/tags/<tag>` 找这条 release**：那个端点**不返回草稿**。
+          # 草稿只能从 release 列表里捞——列表按创建时间倒序，新建的草稿总在第一页。
+          id="$(gh api "repos/${GITHUB_REPOSITORY}/releases?per_page=100" \
+                 --jq "first(.[] | select(.tag_name == \"${tag}\") | .id)")"
+          if [ -z "$id" ]; then
+            echo "::error::没找到 tag ${tag} 对应的 release"
+            exit 1
+          fi
+          gh api --method PATCH "repos/${GITHUB_REPOSITORY}/releases/${id}" \
+            -F draft=false -f make_latest=true > /dev/null
+          latest="$(gh api "repos/${GITHUB_REPOSITORY}/releases/latest" --jq .tag_name)"
+          if [ "$latest" != "$tag" ]; then
+            echo "::error::releases/latest 指着 ${latest}，不是 ${tag}"
+            exit 1
+          fi
+          echo "release ${tag} 已发布，releases/latest 指向它"
