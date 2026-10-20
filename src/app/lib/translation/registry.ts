@@ -1040,7 +1040,7 @@ export const PROVIDERS = {
     category: "llm",
     label: "MiniMax",
     endpoint: "https://api.minimaxi.com/v1/chat/completions",
-    defaultModel: "MiniMax-M3",
+    defaultModel: "MiniMax-M3.1-Flash",
     defaultTemperature: 0.7,
     docs: "https://platform.minimax.io/docs/api-reference/text-chat-openai",
     apiKeyUrl: "https://platform.minimax.io/console/access",
@@ -1049,40 +1049,12 @@ export const PROVIDERS = {
       { label: "Mainland (CN)", url: "https://api.minimaxi.com/v1/chat/completions" },
       { label: "International", url: "https://api.minimax.io/v1/chat/completions" },
     ],
-    // 核对渠道：curl platform.minimax.io/docs/llms.txt（文档索引，每条模型都有自己
-    // 的一行），M3 / M2.7 两条字面都在册。这条不是"能拉到就算"——它给的是【文档面】，
-    // 调用面仍以逐家 model 正文页为准（下方 M2.7 那条就是）。
+    // Stable model IDs and thinking contract verified against text-chat-openai.md.
+    // Flash always thinks: the existing Lowest/Low/Medium/High control uses a
+    // supported subset of its effort levels; M3 retains its real off switch.
     models: [
-      // M3 引入了真开关:`thinking:{type:"adaptive"|"disabled"}`(服务端默认
-      // adaptive = ON，可关)→ 打 thinking 标签，off 态发显式 disabled，否则
-      // 每次翻译都默默烧推理 token(DeepSeek「10M tokens」同款事故)。
-      // M2.x 仍是 intrinsic/unclosable(无 toggle 参数)→ 不打标签。See llm.ts.
+      { label: "MiniMax M3.1 Flash", value: "MiniMax-M3.1-Flash", thinking: true, thinkingLevels: ["low", "medium", "high"] },
       { label: "MiniMax M3", value: "MiniMax-M3", thinking: true },
-      // M2.7 收在官方正文「在售」区（非历史折叠区），仍按上面那条 M2.x 的判据
-      // 【不打标】—— 它 thinking 无法关闭，且传 disabled 会被接收但不生效（=静默思考静默计费），
-      // 比 M3 更糟，所以既不标也不发。-highspeed 是同代高速细分档，按「细分档不收」不列。
-      { label: "MiniMax M2.7", value: "MiniMax-M2.7" },
-      // ⚠ 【查到了但【不】收录】MiniMax-M3.1-Flash-Preview
-      //   (platform.minimax.io/docs/api-reference/text-chat-openai.md,页面顶部
-      //   「✨ New model — MiniMax-M3.1-Flash-Preview」,逐字摘录在下面)。
-      //   不收的两个理由,都不该靠猜:
-      //   ① 它是 Preview 档 —— 与「收型号的三条判据」①一致
-      //     (「preview 阶段的不收录,避免引导用户选随时可能下线的 SKU」,见 groq 条目)。
-      //   ② ⚠ 它的思考形态是【双参数】:文档全部示例同时带
-      //      `thinking:{type:"adaptive"}` 与 `reasoning_effort: max`,并逐字写
-      //      「Tune thinking depth via reasoning_effort, which accepts low, medium,
-      //      high, xhigh, and max; the default is max」「Thinking is on by default」。
-      //      —— 也就是说 M3.1 比 M3 【多了 reasoning_effort 档位】,而文档没有一处
-      //      说 `thinking:{type:"disabled"}` 在它身上被接受。现有 builder 只发
-      //      thinking:{type},关思考就是发 disabled;那在 M3.1 上是每请求 400
-      //      还是被忽略后静默计费,【文档答不了】。这正是 OpenAI astra/6.1-sol
-      //      那个坑的同一道选择题,拿不到逐字答案就不该收录 —— 与其上架一个
-      //      关闭态未验证的 SKU,不如等官方补了 disabled 的说法再收。
-      //   M3 / M2.7 两条本轮一并复核(同页 + llms.txt 索引):字面仍在册,形态未变。
-      // ⚠ 已删 SKU 的通用处置（M2.5 由 TokenHub pre-offline 实证后移除）：
-      // 规则 =【任一渠道 pre-offline 即全面下线】，老模型不留。代价：手填旧 id
-      // 落进 gated() 的 custom 分支，Off 态发的 thinking:{type:"disabled"} 对
-      // M2.x 可能 4xx —— 按「不做向后兼容」接受，逃生口 = 思考档切 Auto。
     ],
   },
   stepfun: {
@@ -1426,6 +1398,8 @@ export const PROVIDERS = {
       // laguna-s-2.1:free 同形），免费档数量不变。
       { label: "Laguna XS 2.1 (free)", value: "poolside/laguna-xs-2.1:free" },
       { label: "Nemotron 3.5 Lightning (free)", value: "nvidia/nemotron-3.5-lightning:free" },
+      // Verified live route: /api/v1/models/minimax/minimax-m3.1-flash:free/endpoints.
+      { label: "MiniMax M3.1 Flash (free)", value: "minimax/minimax-m3.1-flash:free", thinking: true, thinkingLevels: ["low", "medium", "high"] },
       // M3 上游默认 adaptive thinking(可关)→ 打标签让 off 态经 OpenRouter
       // 统一参数发 reasoning:{enabled:false},否则默认烧推理 token。
       { label: "MiniMax M3", value: "minimax/minimax-m3", thinking: true },
@@ -2775,6 +2749,8 @@ export const isThinkingCapableProvider = (service: string): boolean => {
  * no opt-in toggle. Empty model (→ provider default) also returns FALSE.
  */
 export const isCustomModel = (service: string, model: string): boolean => {
+  // Keep the former quick pick's parameter-free behavior for saved selections.
+  if (service === "minimax" && model === "MiniMax-M2.7") return false;
   if (!model) return false;
   const p = PROVIDERS[service as ProviderKey] as ProviderSpec | undefined;
   if (!p) return false;
@@ -2914,7 +2890,9 @@ export const canDisableThinking = (service: string): boolean => !getProviderMode
  */
 export const canDisableThinkingForModel = (service: string, model: string): boolean => {
   const declared = getProviderModels(service).find((m) => m.value === model);
-  const skusCanDisable = declared ? !declared.thinkingLevels?.length : canDisableThinking(service);
+  // Adding an always-thinking Flash quick pick must not relabel custom models'
+  // existing Off/On/Auto controls as Lowest/On/Auto.
+  const skusCanDisable = declared ? !declared.thinkingLevels?.length : service === "minimax" || service === "openrouter" || canDisableThinking(service);
   return skusCanDisable && !(service === "claude" && isAlwaysThinkingClaude(model));
 };
 
@@ -2985,7 +2963,8 @@ export const deriveThinkingParams = (method: string, config: TranslationConfig |
 // ⚠ zhipu 已移出：GLM-5.3 系官方有档位表（low/high/max），打标后 wire 是分级形态
 // （low/medium/high 三挡里 medium 由 pickThinkingLevel 降到 low），与"二元"声明矛盾;
 // 同 moonshot 的处置——给三档，折叠掉的那一档无害，反过来会把官方有的档位锁死。
-export const BINARY_EFFORT_VENDORS: ReadonlySet<string> = new Set(["deepseek", "doubao", "mimo", "siliconflow", "cohere", "qianfan", "mistral", "minimax", "volcengine", "alibaba"]);
+// MiniMax now includes Flash with graded effort; M3 still folds levels to on/off.
+export const BINARY_EFFORT_VENDORS: ReadonlySet<string> = new Set(["deepseek", "doubao", "mimo", "siliconflow", "cohere", "qianfan", "mistral", "volcengine", "alibaba"]);
 
 /**
  * Quick-pick endpoints for providers that surface multiple URL options (regional
