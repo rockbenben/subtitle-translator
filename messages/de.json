@@ -217,7 +217,13 @@
     "errorHintRelay403": "Die API hat 403 Forbidden zurückgegeben — aktivieren Sie „API-Relay“ unter „Weitere Provider-Einstellungen“",
     "errorHintCors": "Diese Adresse ist nicht erreichbar — prüfen Sie die Adresse und ob der Dienst Cross-Origin-Anfragen (CORS) erlaubt. Eigene Gateways und lokale Modelle müssen das selbst aktivieren, oder nutzen Sie Ihr eigenes API-Relay",
     "errorHintGeminiKey": "Gemini nicht erreichbar: Prüfen Sie zuerst Ihr Netzwerk (manche Netzwerke erreichen Google-Dienste nicht direkt). Ist das Netzwerk in Ordnung, lehnt Google seit dem 19.06.2026 uneingeschränkte API-Schlüssel ab — erstellen Sie Ihren Schlüssel in AI Studio neu (standardmäßig eingeschränkt) oder fügen Sie dem alten Schlüssel in der Google Cloud Console eine Gemini-API-Einschränkung hinzu",
-    "rateLimitCooldown": "Anfragelimit erreicht — kurze Pause, automatischer neuer Versuch"
+    "rateLimitCooldown": "Anfragelimit erreicht — kurze Pause, automatischer neuer Versuch",
+    "autoUpdateEnabled": "Automatisch nach Updates suchen",
+    "autoUpdateEnabledTooltip": "Ausgeschaltet greift die App nie auf den Update-Server zu. Du kannst weiterhin manuell nach Updates suchen.",
+    "updateCheckNow": "Nach Updates suchen",
+    "updateUpToDate": "Du bist auf dem neuesten Stand.",
+    "updateAvailable": "Version {version} ist verfügbar.",
+    "updateCheckFailed": "Update-Prüfung fehlgeschlagen: {reason}"
   },
   "SubtitleTranslator": {
     "clientDescription": "Untertiteldatei hochladen oder Inhalt einfügen, Zielsprache wählen für schnelle Übersetzung. Unterstützt Stapelverarbeitung und behält Zeitachse bei.",

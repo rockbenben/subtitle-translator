@@ -2,20 +2,27 @@
 import { useEffect, useRef, useCallback } from "react";
 import { useLocale } from "next-intl";
 import { App, Button, Flex } from "antd";
-import { checkForUpdates, PendingUpdate } from "./updater";
+import { useLocalStorage } from "@/app/hooks/useLocalStorage";
+import { checkForUpdates, PendingUpdate, AUTO_UPDATE_ENABLED_KEY } from "./updater";
 import { getUpdaterStrings } from "./updaterI18n";
 import { isTauri } from "./externalLink";
 
 const SKIPPED_KEY = "subtitle_translator_skipped_version";
 const TOAST_KEY = "updater-install";
 
-export const useAutoUpdate = ({ startupDelay = 3000, checkInterval = 24 * 60 * 60 * 1000 } = {}) => {
+/**
+ * 「发现新版本」弹窗 —— 自动检查与手动检查共用同一条路径：同一个弹窗、同一套
+ * 「稍后再说 / 跳过此版本 / 立即安装」按钮，下载同样只在用户确认之后才开始。
+ *
+ * 为什么抽成 hook：弹窗要用 antd <App> 的 modal / message，而这两条路径在组件
+ * 树上是两处 —— 自动检查住在 layout 里的副作用组件，手动检查住在工具页的设置面板。
+ * 各自建一套弹窗等于两处真相（文案、按钮语义、下载时机迟早会分叉）。
+ */
+export const useUpdatePrompt = () => {
   const { modal, message } = App.useApp();
   const locale = useLocale();
-  const checkedStartup = useRef(false);
-  const lastCheck = useRef(0);
 
-  const confirm = useCallback(
+  return useCallback(
     (update: PendingUpdate) => {
       const t = getUpdaterStrings(locale);
       const skipVersion = () => {
@@ -70,6 +77,23 @@ export const useAutoUpdate = ({ startupDelay = 3000, checkInterval = 24 * 60 * 6
     },
     [modal, message, locale],
   );
+};
+
+/**
+ * 自动检查更新 —— 【默认关着,用户开了才检查】。
+ *
+ * 开关存在 localStorage（与设置面板写的是同一个键），关着的时候两个 effect 都
+ * 干脆不挂定时器：不是「照常检查、拿到结果再丢掉」—— 那样「关掉」只是不再弹窗，
+ * 流量照走，等于没关。
+ *
+ * 开着时：启动后延迟一会儿查一次（每个会话只查这一次），之后每 24h 查一次；
+ * 查到什么只在【有新版可报】时才出声，检查失败保持安静（手动检查那条路才会报告）。
+ */
+export const useAutoUpdate = ({ startupDelay = 3000, checkInterval = 24 * 60 * 60 * 1000 } = {}) => {
+  const [enabled] = useLocalStorage<boolean>(AUTO_UPDATE_ENABLED_KEY, false);
+  const confirm = useUpdatePrompt();
+  const checkedStartup = useRef(false);
+  const lastCheck = useRef(0);
 
   const run = useCallback(async () => {
     if (!(await isTauri())) return;
@@ -88,17 +112,21 @@ export const useAutoUpdate = ({ startupDelay = 3000, checkInterval = 24 * 60 * 6
     }
   }, [confirm]);
 
+  // 开关中途打开也能生效:enabled 进了依赖,开的那一刻重新排一次启动检查。
+  // checkedStartup 保证「每个会话只查一次」—— 关着时不消费它,留给打开后那次。
   useEffect(() => {
+    if (!enabled) return;
     if (checkedStartup.current) return;
     const t = setTimeout(() => {
       checkedStartup.current = true;
       run();
     }, startupDelay);
     return () => clearTimeout(t);
-  }, [run, startupDelay]);
+  }, [run, startupDelay, enabled]);
 
   useEffect(() => {
+    if (!enabled) return;
     const id = setInterval(run, checkInterval);
     return () => clearInterval(id);
-  }, [run, checkInterval]);
+  }, [run, checkInterval, enabled]);
 };

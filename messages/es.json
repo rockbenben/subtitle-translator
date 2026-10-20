@@ -217,7 +217,13 @@
     "errorHintRelay403": "La API devolvió 403 Forbidden: active \"Relé API\" en «Más ajustes del Provider»",
     "errorHintCors": "No se puede conectar con esta dirección: compruebe la dirección y que el servicio permita solicitudes de origen cruzado (CORS). Las pasarelas autoalojadas y los modelos locales deben habilitarlo, o use su propio Relé API",
     "errorHintGeminiKey": "No se puede conectar con Gemini: compruebe primero su red (algunas redes no pueden acceder directamente a los servicios de Google). Si la red funciona, desde el 19 de junio de 2026 Google rechaza las claves API sin restricciones — regenere su clave en AI Studio (restringida por defecto) o añada una restricción de Gemini API a la clave antigua en la consola de Google Cloud",
-    "rateLimitCooldown": "Límite de solicitudes alcanzado — pausa breve, se reintentará automáticamente"
+    "rateLimitCooldown": "Límite de solicitudes alcanzado — pausa breve, se reintentará automáticamente",
+    "autoUpdateEnabled": "Buscar actualizaciones automáticamente",
+    "autoUpdateEnabledTooltip": "Cuando está desactivado, la aplicación nunca contacta con el servidor de actualizaciones. Puedes comprobarlo manualmente cuando quieras.",
+    "updateCheckNow": "Buscar actualizaciones",
+    "updateUpToDate": "Ya tienes la última versión.",
+    "updateAvailable": "La versión {version} está disponible.",
+    "updateCheckFailed": "No se pudo comprobar si hay actualizaciones: {reason}"
   },
   "SubtitleTranslator": {
     "clientDescription": "Sube subtítulos o pega contenido. Selecciona idioma destino para traducción rápida. Soporta procesamiento por lotes y conserva línea de tiempo.",

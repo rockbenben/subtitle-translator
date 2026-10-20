@@ -217,7 +217,13 @@
     "errorHintRelay403": "L'API ha restituito 403 Forbidden: attiva \"Relay API\" in «Altre impostazioni Provider»",
     "errorHintCors": "Impossibile raggiungere questo indirizzo: controlla l'indirizzo e che il servizio consenta richieste cross-origin (CORS). I gateway self-hosted e i modelli locali devono abilitarlo, oppure usa il tuo Relay API",
     "errorHintGeminiKey": "Impossibile raggiungere Gemini: controlla prima la rete (alcune reti non raggiungono direttamente i servizi Google). Se la rete funziona, dal 19 giugno 2026 Google rifiuta le chiavi API senza restrizioni — rigenera la chiave in AI Studio (limitata per impostazione predefinita) o aggiungi una restrizione Gemini API alla vecchia chiave nella console Google Cloud",
-    "rateLimitCooldown": "Limite di richieste raggiunto — breve pausa, nuovo tentativo automatico"
+    "rateLimitCooldown": "Limite di richieste raggiunto — breve pausa, nuovo tentativo automatico",
+    "autoUpdateEnabled": "Controlla automaticamente gli aggiornamenti",
+    "autoUpdateEnabledTooltip": "Se disattivato, l'app non contatta mai il server degli aggiornamenti. Puoi comunque controllare manualmente.",
+    "updateCheckNow": "Controlla aggiornamenti",
+    "updateUpToDate": "Sei già alla versione più recente.",
+    "updateAvailable": "La versione {version} è disponibile.",
+    "updateCheckFailed": "Impossibile controllare gli aggiornamenti: {reason}"
   },
   "SubtitleTranslator": {
     "clientDescription": "Carica sottotitoli o incolla contenuto. Seleziona lingua destinazione per traduzione rapida. Supporta elaborazione batch e preserva timeline.",

@@ -1,6 +1,13 @@
 "use client";
 import { isTauri } from "./externalLink";
 
+/**
+ * 「自动检查更新」开关键的 localStorage 键。设置界面写的与后台读的是同一个键 ——
+ * 开关在设置面板里、检查发生在 layout 的副作用组件里，两边必须看到同一个值。
+ * 键名沿用本仓既有的「工具前缀 + 驼峰」写法（subtitle-translator-exportMode 等）。
+ */
+export const AUTO_UPDATE_ENABLED_KEY = "subtitle-translator-autoUpdate";
+
 export type DownloadProgress = (downloaded: number, total: number | null) => void;
 
 export interface PendingUpdate {

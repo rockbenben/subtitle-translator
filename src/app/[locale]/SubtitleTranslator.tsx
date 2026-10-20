@@ -41,6 +41,7 @@ import ResultCard from "@/app/components/ResultCard";
 import Section from "@/app/components/styled/Section";
 import BilingualReviewPanel from "./BilingualReviewPanel";
 import AdvancedTranslationSettings from "@/app/components/AdvancedTranslationSettings";
+import UpdateSettings from "@/app/desktop/UpdateSettings";
 import TranslateFailurePanel from "@/app/components/TranslateFailurePanel";
 
 import MultiLanguageSettingsModal from "@/app/components/MultiLanguageSettingsModal";
@@ -700,7 +701,14 @@ const SubtitleTranslator = () => {
                       setUseCache={setUseCache}
                       singleFileMode={singleFileMode}
                       setSingleFileMode={setSingleFileMode}
-                    />
+                    >
+                      {/* 「应用更新」开关 + 手动检查（桌面端专属，网页版不渲染）。
+                          放在「进阶设置」这一屏而不是 API 设置抽屉：抽屉整个版面是
+                          翻译 API 的 provider / 密钥 / 端点，更新开关塞进去是串味的。
+                          AdvancedTranslationSettings 原本就留了一个 children 槽位
+                          （渲染在通用设置之前），挂这里不用改共享组件。 */}
+                      <UpdateSettings />
+                    </AdvancedTranslationSettings>
                   ),
                 },
               ]}
