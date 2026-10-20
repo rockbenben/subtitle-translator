@@ -275,7 +275,7 @@ jobs:
       #
       # 判据是**看 API 指到谁**，不是看 release 的字段：字段全对而指针没挪，端点照样 404。
       # CDN 那层重定向还会再滞后几分钟，属正常——这里判 API，不判 CDN。
-      - name: 发布并把 latest 指到它
+      - name: 发布这个 release，并把 latest 指到它
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
