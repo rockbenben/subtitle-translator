@@ -19,15 +19,25 @@ const TARGET_LANG_MAPPING: Record<string, string> = {
 const options = { maxRetries: 5, minTimeout: 60000 };
 
 export async function POST(req: NextRequest) {
-  let body: TranslationRequest;
+  let parsed: unknown;
   try {
-    body = (await req.json()) as TranslationRequest;
+    parsed = await req.json();
   } catch {
     // Must not fall through to the generic 500 below — the browser client's
     // isRetryableError retries every 5xx three times, and a body that failed to
     // parse fails identically on each attempt.
     return NextResponse.json({ error: "Invalid JSON in request body" }, { status: 400 });
   }
+
+  // `null` is a legal JSON document and `Request.json()` hands it straight
+  // back, so destructuring below threw a TypeError that the catch reported as
+  // 500 — same retry-storm the unparsable-body case above guards against, and
+  // it leaked the internal TypeError text to the caller. Numbers, strings and
+  // arrays are equally unusable as a request body.
+  if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
+    return NextResponse.json({ error: "Request body must be a JSON object" }, { status: 400 });
+  }
+  const body = parsed as TranslationRequest;
 
   try {
     const { text, source_lang, target_lang: rawTargetLang, authKey, tag_handling } = body;

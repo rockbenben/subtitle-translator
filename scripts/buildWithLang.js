@@ -20,7 +20,7 @@
 //   不装依赖、不读 lockfile，谁装的 node_modules 都不影响。
 // ⚠ 已知且【刻意不修】：next-sitemap.config.js 的 locales 取自 messages/*.json 而非
 //   routing.locales，所以单语言构建的 sitemap 里 <loc> 只有该语言（对），hreflang
-//   备用链接却仍列全 18 个。单语言产物的用途是离线/内网包，不发 sitemap；真要用于
+//   备用链接却仍列全 ALL_LOCALES 全集。单语言产物的用途是离线/内网包，不发 sitemap；真要用于
 //   公网部署再改那份配置。
 const { execSync } = require("child_process");
 const path = require("path");

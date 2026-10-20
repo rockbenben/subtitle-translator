@@ -142,11 +142,9 @@ function AntdConfigProvider({ children }: { children: ReactNode }) {
   const direction = getLangDir(locale);
 
   // SSR 直接 isDark=true 跟 defaultTheme="dark" 对齐,mount 后才相信 resolvedTheme。
-  // ⚠ 注释曾写「resolvedTheme 在 SSR + 首次 client render 都是 undefined」——
-  // 那个前提在 next-themes 0.4.6 上【已不成立】(库源码是
-  // `useState(() => getTheme(storageKey, defaultTheme))`,初始化函数在首次客户端
-  // 渲染就跑,那时它已经是 "light" 了;探针实测确认)。真正兜住 SSR 一致性的是下面
-  // 这个 mounted 闸,不是 resolvedTheme 恰好为空。
+  // ⚠ 别把它当成「防 resolvedTheme 首帧为空」——next-themes 的 useState 初始化器在
+  // 首次客户端渲染就跑,那时它已经是 "light" 了。真正兜住 SSR 一致性的就是下面
+  // 这个 mounted 闸。
   // useSyncExternalStore 而非 useState+useEffect: 后者会被 react-hooks 规则
   // (set-state-in-effect) 报错, 且 Navigation.tsx 已用同样写法做 SSR-safe
   // mounted 检测。

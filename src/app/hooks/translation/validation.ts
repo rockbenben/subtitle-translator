@@ -93,10 +93,9 @@ export const pingSignature = (method: string, config: (TranslationConfig & { rel
     url: config?.url ?? "",
     apiKey: config?.apiKey ?? "",
     model: config?.model ?? "",
-    // region / apiVersion(Azure)与 folderId(Yandex)决定这次探测【实际打到
+    // region(Azure)与 folderId(Yandex)决定这次探测【实际打到
     // 哪个租户/部署】—— 换了它们,旧探测的结论对新目标不成立。
     region: config?.region ?? "",
-    apiVersion: config?.apiVersion ?? "",
     folderId: config?.folderId ?? "",
     // useRelay 换掉整条 wire path,而且翻转它正是浏览器直连撞 CORS 时的官方
     // 修法 —— 用户照做之后,红色 failed 徽章绝不能还挂着。

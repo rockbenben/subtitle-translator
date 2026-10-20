@@ -10,10 +10,10 @@
 1. **改版本号**:只改 `package.json` 的 `version`(单一事实源)。
    CI 构建时会跑 `yarn update-version` 把它写进 `src-tauri/tauri.conf.json`,
    所以 `tauri.conf.json` 里的 version 不用手改、也不必提交。
-2. **推分支**:push 到 `main` / `feat/**`(或开 PR)会触发 `quality` 闸:
+2. **推分支**:push 到 `feat/tauri-desktop`(或开 PR)会触发应用分支上的 `quality` 闸:
    `lint` / `typecheck` / 三个跨仓契约 check / `cargo test` / `cargo clippy -D warnings`。
    必须全绿再发。
-3. **打 tag**:`git tag vX.Y.Z && git push origin vX.Y.Z`。
+3. **打 tag**:`git tag vX.Y.Z && git push origin vX.Y.Z`——**tag 打在 `main` 上**。发版工作流住在 main,构建时自己去 `feat/tauri-desktop` 取代码。
    tag **必须**等于 `v` + package.json version,流水线有强校验,不一致直接红。
 4. **等四个平台矩阵跑完**,会得到一条 release:
    - NSIS setup(`SubtitleTranslator_X.Y.Z_x64_setup.exe`)、MSI、

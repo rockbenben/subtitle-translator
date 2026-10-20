@@ -33,7 +33,7 @@ interface ToolPageProps {
 }
 
 /**
- * Interlingua tool-page shell — mono index crumb ("02 / 17 — 文本翻译"),
+ * Interlingua tool-page shell — mono index crumb ("NN / 总数 — 分组名"),
  * heavy grotesk title, Klein-blue accent rule, narrow description column.
  * Smaller scale than the home hero so it doesn't compete with the tool
  * surface below.
@@ -47,13 +47,12 @@ const ToolPage = ({ icon, toolKey, description, guideUrl, showExportFolder, chil
   const tNav = useTranslations("navigation");
   const { token } = theme.useToken();
 
-  // Registry index → "02 / 17" chapter marker. Tools not in the registry
+  // Registry index → 动态「NN / 工具总数」章节标记（总数取 TOOL_KEYS.length）。Tools not in the registry
   // (shouldn't happen — invariant-tested) just skip the crumb.
-  // 描述能拼成纯字符串时才有「展开」；调用方目前传的都是 t(...) 字符串，
-  // ReactNode 描述走下面的降级分支（只截断、无展开）。
+  // 描述能拼成纯字符串时才有「展开」；调用方传 ReactNode 时走下面的降级分支（只截断、无展开）。
   const descriptionText = typeof description === "string" ? description : null;
 
-  // ⚠ 页头【不放隐私说明】。它曾经在这里,19 个工具页一字不差,而其中 12 个
+  // ⚠ 页头【不放隐私说明】。它曾经在这里,每个工具页一字不差,而多数工具
   // (文本分割 / 文本对照 / 全部 JSON 工具)根本不收 API key —— 对它们那句
   // "您的 API 密钥…" 是句空话。它现在只有一份,挂在 TranslationSettings 里
   // apiKey 输入框的 Form.Item extra 上。别再往页头加回来。
@@ -83,7 +82,7 @@ const ToolPage = ({ icon, toolKey, description, guideUrl, showExportFolder, chil
   //
   // 想收窄的话只动这一处:给下面两个 Paragraph 加回 maxWidth 即可。
 
-  // 告诉写入路径「当前是哪个工具」—— downloadFile 在 37 个调用点深处，逐个传
+  // 告诉写入路径「当前是哪个工具」—— downloadFile 的调用点散在各工具页与组件里，逐个传
   // toolKey 不现实，而这里本来就拿着它。见 utils/exportDir.ts 的 setExportDirTool。
   useEffect(() => {
     setExportDirTool(toolKey);

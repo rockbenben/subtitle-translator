@@ -160,7 +160,7 @@ yarn cli -i movie.vtt -t de -m deepseek --api-key sk-xxx
 
 ## 自行部署
 
-需要 Node.js >= 20.9.0 与 Yarn（或 npm / pnpm）。
+需要 Node.js >= 24 与 Yarn（或 npm / pnpm）。
 
 ```bash
 git clone https://github.com/rockbenben/subtitle-translator.git

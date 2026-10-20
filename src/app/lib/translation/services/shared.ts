@@ -259,6 +259,112 @@ export const completeOpenAICompatUrl = (url: string): string => {
 };
 
 /**
+ * Azure OpenAI v1 GA：用户填的是【资源根】(https://<resource>.openai.azure.com，
+ * 官方文档明写 https://<resource>.services.ai.azure.com 同形也收)，固定路径
+ * /openai/v1/chat/completions 由我们拼。也接受用户直接贴 OpenAI 客户端示例里
+ * 的 base_url 形态 (…/openai/v1) 或完整 chat/completions 全地址 —— 后两者旧实现
+ * (裸字符串拼接)会拼出双份路径，这里顺带修正。APIM 网关等自定义前缀按旧行为
+ * 处理:整体当 base 再拼固定路径。
+ */
+export const completeAzureUrl = (url: string): string => {
+  const cleaned = url.trim().replace(/\/+$/, "");
+  if (!cleaned) return cleaned;
+  if (cleaned.endsWith("/chat/completions")) return cleaned;
+  if (cleaned.endsWith("/openai/v1")) return `${cleaned}/chat/completions`;
+  return `${cleaned}/openai/v1/chat/completions`;
+};
+
+/**
+ * IPv4 点分四段判内网。**只有**它管 127 / RFC1918 / 链路本地 / CGNAT 这几条,
+ * IPv6 那一支最终也要落回它 —— 别在两处各判一遍(IPv4-mapped 那条正是这么漏的)。
+ */
+const isPrivateIpv4 = (host: string): boolean => {
+  const m = host.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+  if (!m) return false;
+  const a = Number(m[1]);
+  const b = Number(m[2]);
+  if (a === 127) return true; // 环回
+  if (a === 10) return true; // RFC1918
+  if (a === 192 && b === 168) return true; // RFC1918
+  if (a === 172 && b >= 16 && b <= 31) return true; // RFC1918
+  if (a === 169 && b === 254) return true; // 链路本地,含 169.254.169.254 云元数据服务
+  if (a === 100 && b >= 64 && b <= 127) return true; // RFC6598 CGNAT —— Tailscale 就用这一段
+  return false;
+};
+
+/**
+ * 这个目标是不是「只有用户自己那台机器够得着」的地址 —— 环回 / RFC1918 内网 /
+ * 链路本地 / CGNAT / IPv6 ULA。
+ *
+ * ⚠ 存在的唯一理由:**中转结构上到不了那里**。127.0.0.1:11434(Ollama)这类地址,
+ * 只有用户自己的浏览器能打开 —— 远端 Worker 去 fetch 它,要么 502 连不上(它眼里
+ * 的 loopback 是它自己),要么就是把用户的请求变成一把探测 Worker 自身内网的
+ * SSRF 探针。所以 relayWouldServe 对这类目标一律退回直连,开不开开关都一样。
+ *
+ * 判据是【目标地址】,不是 provider:同一批本地运行时芯片同时挂在 llm /
+ * translategemma / milmmt 三个服务下,任何一家填了 127.0.0.1 都不该被中转。
+ *
+ * ⚠ 一律用 `new URL().hostname` 取主机名,别自己拆字符串 —— WHATWG 解析器已经
+ * 替我们消掉了两种绕过写法,而手写正则会漏:
+ *   · 十进制/十六进制 IP: `http://2130706433/`、`http://0x7f000001/` 都被规范化成
+ *     `127.0.0.1`。这是白捡的,拆字符串就全漏了。
+ *   · IPv4-mapped IPv6: `http://[::ffff:127.0.0.1]/` 被规范化成 `::ffff:7f00:1`
+ *     (十六进制两段)。⚠ 曾经这里写的是 `host === "::ffff:127.0.0.1"` —— 解析器
+ *     永远不产出那个形态,**那行是永不命中的死代码**,读起来却像处理了这条绕过;
+ *     而它保护的正是本函数最要紧的那一档(环回)。下面显式把内嵌 IPv4 取回来。
+ *
+ * ⚠ 解析不了的输入返回 false —— 「不是内网」与「是内网」不同,解析失败该由
+ * fetchJSON 抛出它自己更清楚的报错,不该在这里先编一个理由(历史上
+ * `no-host.example.com` 这类无协议裸主机就是这么被放行的,行为不变)。
+ *
+ * ⚠ 【已知不覆盖的三种 IPv6 内嵌 IPv4 形态】(2026-10-13 实测,判成公网):
+ *   · NAT64       `http://[64:ff9b::7f00:1]/`  (RFC6052 well-known prefix)
+ *   · 6to4        `http://[2002:7f00:1::]/`   (RFC3056,已由 RFC7526 废弃)
+ *   · IPv4-compat `http://[::7f00:1]/`       (RFC4291,已废弃)
+ *   故意不加,理由是危害只有【纵深防御】级别:内置公共 Worker 的 allowlist 是
+ *   精确匹配的,误判成公网的地址发过去也只会换一个 400,不会被转发;自建中转则是
+ *   用户自己那台机器。而 NAT64→127.0.0.1 这种配置本身病态(IPv6-only 网络里的
+ *   NAT64 网关再回环),6to4 与 IPv4-compat 是已废弃标准。
+ *   ⚔ 真要根治就别在这里继续枚举地址写法 —— 枚举永远漏得完,这已经是第三轮了
+ *   (IPv4-mapped、十进制/十六进制、现在这三类)。正解是把判据换成
+ *   「目标必须 ∈ 部署者声明的集合」,而不是猜地址长什么样。
+ */
+export const isPrivateEndpoint = (raw: string): boolean => {
+  let host: string;
+  try {
+    host = new URL(raw.trim()).hostname.toLowerCase();
+  } catch {
+    return false;
+  }
+  // IPv6 字面量在 URL.hostname 里带方括号 (http://[::1]:11434/…)
+  if (host.startsWith("[") && host.endsWith("]")) host = host.slice(1, -1);
+  if (!host) return false;
+  if (host === "localhost" || host.endsWith(".localhost")) return true;
+  if (host === "::1" || host === "::" || host === "0.0.0.0") return true;
+  // IPv6 ULA (fc00::/7) 与链路本地 (fe80::/10)
+  if (/^f[cd][0-9a-f]{2}:/.test(host) || host.startsWith("fe80:")) return true;
+
+  // IPv4-mapped IPv6 (::ffff:7f00:1 / ::ffff:c0a8:101 / ::ffff:a00:1)。
+  // 取回内嵌 IPv4 后交回 isPrivateIpv4 —— 环回、RFC1918 一起判掉。
+  // ⚔ 取不回来就【判内网】而不是判公网:本函数的两个出口是「直连」与「经中转」,
+  //   误判成公网的代价是地址被发给一台够不着它的机器(还可能带着 ?token=SECRET),
+  //   误判成内网的代价只是多一次直连 —— 不对称,所以宁可错向内网。
+  const mapped = /^::ffff:(.+)$/.exec(host)?.[1];
+  if (mapped) {
+    if (mapped.includes(".")) return isPrivateIpv4(mapped); // 少数实现原样保留点分四段
+    const groups = mapped.split(":");
+    if (groups.length === 2) {
+      const hi = Number.parseInt(groups[0], 16);
+      const lo = Number.parseInt(groups[1], 16);
+      if (Number.isFinite(hi) && Number.isFinite(lo)) return isPrivateIpv4(`${hi >> 8}.${hi & 0xff}.${lo >> 8}.${lo & 0xff}`);
+    }
+    return true;
+  }
+
+  return isPrivateIpv4(host);
+};
+
+/**
  * 「这个 relayBase 实际指向的是不是内置公共中转」。空 = 内置;⚠ 非空但写的就是
  * 内置地址【也是内置】—— 它是输入框的 placeholder,用户"把默认写明白"是最顺手
  * 的操作,把它当"自建"会绕过 registry.relayWouldServe 的保护:带密钥的自定义
@@ -335,7 +441,7 @@ export const requireUrl = (serviceName: string, url: string | undefined): string
 // 注意:这里【不再】拼接用户提示文案。每个状态码代表的可行动问题由展示层
 // 的 describeError(utils/errorUtils.ts)按错误对象的 .status 查 i18n 键
 // (common.errorHint*)生成 —— 纯 TS 的 service 层拿不到 locale,文案烤进
-// message 只能双语硬编码,搬到显示侧后 18 语种全覆盖。本函数只负责把
+// message 只能双语硬编码,搬到显示侧后由 i18n 覆盖全部 locale。本函数只负责把
 // 响应体里的真实错误信息提炼成 `[status] message` 形态。
 export const formatHttpError = (data: unknown, status: number): string => {
   const obj = data as Record<string, unknown> | null;

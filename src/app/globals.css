@@ -13,6 +13,11 @@
   --bg-dark: #121110;
   --bg-light: #f4f2ec;
   --accent: #1d35f5; /* Klein blue (light mode) */
+  /* 种子蓝，供【容器底上的小号强调色文字】使用：--accent 会被 AccentSync 同步成
+     antd 暗色算法的派生值，那个值压在卡片底上够不到 WCAG AA 的 4.5:1，种子值两个
+     主题都够。别拿它去填色——那会绕开 AccentSync 的「只有一个蓝」同步。
+     ⚠ 值须与 ThemesProvider 的 BLUE_LIGHT/BLUE_DARK 保持一致。 */
+  --accent-text: #1d35f5;
   --rule-dark: rgba(240, 237, 228, 0.1);
   --rule-light: rgba(20, 19, 16, 0.12);
 }
@@ -21,6 +26,7 @@ html.dark {
   color-scheme: dark;
   /* Periwinkle shift — pure Klein blue is illegible on ink. */
   --accent: #7a8cff;
+  --accent-text: #7a8cff;
 }
 html.light {
   color-scheme: light;
@@ -197,17 +203,23 @@ html.light body::before {
   }
 }
 
-/* Focus ring — the accent, not OS Highlight. Square, like everything else. */
-:focus-visible {
+/* Focus ring — the accent, not OS Highlight. Square, like everything else.
+   ⚠ 必须带 :root 前缀抬权重：antd 的 reset 注入 `a:focus-visible`、
+   `.ant-btn:focus-visible` 等规则（浅一档的 colorPrimaryBorder），平写同权重
+   会被后注入的 antd 盖掉 —— 与下面 `.font-mono.ant-typography` 那个坑同因。
+   antd 表单控件自己的 focus 规则权重更高，不受这条影响。 */
+:root :focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
-/* Skip-to-content link — visually hidden until keyboard-focused, then pinned
-   to the top-left so keyboard/SR users can jump past the nav to <main>. */
+/* Skip-to-content link — visually hidden until keyboard-focused, then pinned to
+   the inline-start corner so keyboard/SR users can jump past the nav to <main>.
+   Logical on purpose: on /ar the nav reads from the right, and a physical
+   `left` landed the link at the far end of the page from where focus starts. */
 .skip-link {
   position: absolute;
-  left: 8px;
+  inset-inline-start: 8px;
   top: -48px;
   z-index: 1000;
   padding: 8px 16px;
@@ -247,7 +259,7 @@ html.dark .skip-link {
 .related-card::after {
   content: "";
   position: absolute;
-  left: 0;
+  inset-inline-start: 0;
   bottom: 0;
   height: 2px;
   width: 100%;
@@ -255,6 +267,13 @@ html.dark .skip-link {
   transform: scaleX(0);
   transform-origin: left;
   transition: transform 0.3s cubic-bezier(0.65, 0, 0.35, 1);
+}
+/* The rule must draw in FROM the reading edge. `transform-origin` has no
+   logical keyword (and `transform` is physical regardless), so the mirror is
+   explicit — otherwise on /ar the accent sweeps in from the far side. */
+html[dir="rtl"] .ant-card.ant-card-hoverable::after,
+html[dir="rtl"] .related-card::after {
+  transform-origin: right;
 }
 .ant-card.ant-card-hoverable:hover,
 .related-card:hover {
@@ -308,11 +327,18 @@ kbd.ant-typography {
   --waline-dark-grey: var(--ant-color-text-secondary);
   --waline-light-grey: var(--ant-color-text-tertiary);
   --waline-info-color: var(--ant-color-text-tertiary);
+  /* 徽章（楼主/作者）字色：Waline 出厂是写死的 #3498db —— 系统里不该有第二个
+     蓝，且它压在纸底上够不到 WCAG AA。接种子蓝（两个主题都过 AA）。 */
+  --waline-badge-color: var(--accent-text);
   --waline-info-bg-color: var(--ant-color-fill-quaternary);
   --waline-disable-bg-color: var(--ant-color-fill-quaternary);
   --waline-disable-color: var(--ant-color-text-disabled);
   --waline-bq-color: var(--ant-color-border-secondary);
   --waline-code-bg-color: var(--ant-color-fill-quaternary);
+  /* 代码字色：Waline 出厂按它自己的深色代码底写死浅灰，而本站把代码底接到了
+     跟随主题的 fill-quaternary —— 亮色下浅灰压浅底完全不可读。字色改接正文色，
+     两个主题都够对比度。!important 同 Waline 其余写死样式的原因（它排在本文件后）。 */
+  --waline-code-color: var(--waline-color);
   --waline-avatar-radius: 0;
   --waline-box-shadow: none;
 }
@@ -321,6 +347,11 @@ kbd.ant-typography {
 [data-waline] a {
   max-width: 100%;
   overflow-wrap: anywhere;
+}
+/* 行内 code 的字色 Waline 不吃 --waline-code-color（pre 吃），仍写死按深色底
+   调的浅灰 —— 亮色下压在浅底上不可读。与圆角同理，!important 压平。 */
+[data-waline] .wl-content code {
+  color: var(--waline-color) !important;
 }
 /* 直角。Waline 的圆角写死在它自己的规则里（.wl-panel .75em、.wl-btn .5em、
    badge/meta 4px…），而它的样式表由组件 import、排在本文件之后，选择器权重

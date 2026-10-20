@@ -30,7 +30,6 @@ export interface TranslationSettings {
   // ⚠ useCache 【故意】不在这份文件里 —— 它已经落盘(translation-useCache),但那是
   // 本机的计费行为开关,不是"怎么连到服务商"。导入别人分享的设置文件时把对方的
   // 「关缓存」静默带过来,等于替用户改了计费方式,而导入成功的提示里一个字都不会提。
-  // (这行注释曾写着"默认使用缓存，不记忆" —— 落盘之后那句就成了假话。)
   retryCount?: number;
   requestTimeoutSec?: number;
   /** User's own relay origin; empty = built-in. Sanitized hard — see below. */
@@ -131,9 +130,8 @@ export const sanitizeSettings = (settings: TranslationSettings): TranslationSett
     }
   }
 
-  // per-provider 的数值同样要查。上面那段注释一直宣称「越界一律丢字段,不会流进
-  // pipeline」,但 translationConfigs 此前【整个没被看过】:migrateConfig 原样拷进
-  // PipelineRuntimeConfig,于是一份手改坏的设置文件配上 `yarn cli -s`,
+  // per-provider 的数值同样要查界 —— 它们和全局字段一样会原样进 PipelineRuntimeConfig。
+  // 不查界的后果是手改坏的设置文件直接放大成事故:
   // contextBatchSize: 1000 会直接 pLimit(1000) 打出一千个并发请求,把 key 顶成
   // 硬限流甚至封禁;delayTime: 1e9 让 abortableSleep 每行睡十一天,用户读到的是
   // 永久卡死。
@@ -179,10 +177,10 @@ export const sanitizeSettings = (settings: TranslationSettings): TranslationSett
     for (const [field, [min, max]] of Object.entries(CONFIG_NUMERIC_BOUNDS)) {
       const v = bag[field];
       if (v === undefined) continue;
-      // 非 number 一律【丢字段】而不是放行。原来这里是 `continue`,于是
-      // `contextBatchSize: "1000"`(字符串,手改或第三方设置文件)绕过了本模块
+      // 非 number 一律【丢字段】而不是放行。放行的话
+      // `contextBatchSize: "1000"`(字符串,手改或第三方设置文件)就绕过了本模块
       // 存在的全部意义:下游 Number("1000") 照样算出 1000 并 pLimit(1000) ——
-      // 正是上面注释声称已挡住的「一千个并发把 key 顶成硬限流甚至封禁」。
+      // 正是上面说的那类「一千个并发把 key 顶成硬限流甚至封禁」。
       // `chunkSize: "abc"` 更阴:truthy 字符串保留,NaN 比较恒假 → 整份文档
       // 当作一个 chunk 发出,撞上下文长度上限。
       if (typeof v !== "number") {

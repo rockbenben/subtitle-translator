@@ -218,7 +218,7 @@ const ApiStatusBlock = ({ disabled = false }: ApiStatusBlockProps) => {
         <Space size="small" wrap>
           <Button
             size="small"
-            icon={<ThunderboltOutlined />}
+            icon={<ThunderboltOutlined aria-hidden />}
             onClick={handleTest}
             loading={sessionStatus === "testing"}
             disabled={disabled || status === "needs-config" || status === "testing"}>

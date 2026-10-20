@@ -202,8 +202,11 @@ export const pickExportDir = async (toolKey: string): Promise<string | null> => 
 
   let handle: FileSystemDirectoryHandle;
   try {
-    // id 按工具分：Chrome 会分别记住每个工具上次选的位置
-    handle = await window.showDirectoryPicker!({ id: `tools-by-ai-export-${toolKey}`, mode: "readwrite" });
+    // id 按工具分：Chrome 会分别记住每个工具上次选的位置。
+    // ⚠ File System Access 规范把 identifier 限死 32 个 ASCII 字符，超了直接
+    // TypeError（旧前缀 tools-by-ai-export- 让 8 个长 toolKey 全炸）。
+    // 短前缀 + slice 双保险：以后再加更长的 key 也不会复发。
+    handle = await window.showDirectoryPicker!({ id: `tbai-${toolKey}`.slice(0, 32), mode: "readwrite" });
   } catch (error) {
     // AbortError = 用户取消 / 目录被 Chrome 拒；SecurityError = 手势失效（上面的
     // 补授权对话框停留超过 ~5s 就会烧掉 transient activation）。两者都不是故障，

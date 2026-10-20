@@ -191,7 +191,7 @@ fn navigation_allowed(url: &tauri::Url, dev: bool) -> bool {
 /// 「跳转前写盘会把偏好覆盖成入口 locale」那条不变量。
 const BOOT_LOCALES: &[&str] = &[
   "en", "zh", "zh-hant", "pt", "es", "hi", "ar", "fr", "de", "ja", "ko", "ru", "vi", "th",
-  "tr", "bn", "id", "it",
+  "tr", "bn", "id", "it", "hu",
 ];
 
 fn locale_boot_script() -> String {

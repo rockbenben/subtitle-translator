@@ -50,10 +50,14 @@ interface ResultCardProps {
    *   方向字符判定:字幕的时间码/序号行仍是 LTR,希伯来语/阿拉伯语正文行整行转 RTL,
    *   句尾的 ?!()「」这些中性字符才会落在句子真正的末尾 —— 默认的 "ltr" 会让它们按
    *   LTR 段落方向解析,跑到句子另一端(subtitle-translator#62)。
-   * - 装结构化文本的**什么都不传**(JSON / 书签 / IMGPrompt / CSV):缩进与列对齐本身
+   * - 装结构化文本的**什么都不传**(JSON / 书签 / IMGPrompt):缩进与列对齐本身
    *   是信息,逐行 auto 会把「首个强方向字符是 RTL」的那种行整行甩到右边、缩进消失 ——
    *   实测触发点是**裸数组元素**(`"בית",` 自成一行,i18n 里很常见)与 RTL 键;
    *   `"key": "RTL 值"` 由键锚成 LTR,不受影响。
+   *   ⚠ 但"甩到右边"是【对齐跟着方向走】的副作用,不是逐行判向躲不掉的代价:把对齐单独
+   *   钉住就能两全(text-diff 带行号槽的 CSV 面就这么做,几何钉 ltr + 正文逐行判向,
+   *   见它的 textDiff.module.css 里那条成对声明)。共享框没有要贴边的行号,所以这里
+   *   仍按"结构化→不传"走 —— 别把这句读成"auto 一定会弄坏排版"。
    * - `"rtl"`:整篇定向,只有 Markdown 正文用(逐行 auto 会让以拉丁链接开头的行判成
    *   LTR,而整篇本该是 RTL)。
    *
@@ -111,28 +115,28 @@ const ResultCard = ({
         <Space>
           {onFormat && (
             <Tooltip title={t("formatTooltip")}>
-              <Button type="text" icon={<ClearOutlined />} onClick={onFormat}>
+              <Button type="text" icon={<ClearOutlined aria-hidden />} onClick={onFormat}>
                 {t("format")}
               </Button>
             </Tooltip>
           )}
           {onMoveToSource && (
             <Tooltip title={t("resultToSourceTooltip")}>
-              <Button type="text" icon={<SwapOutlined />} onClick={onMoveToSource}>
+              <Button type="text" icon={<SwapOutlined aria-hidden />} onClick={onMoveToSource}>
                 {t("resultToSource")}
               </Button>
             </Tooltip>
           )}
-          <Button type="text" icon={<CopyOutlined />} onClick={onCopy}>
+          <Button type="text" icon={<CopyOutlined aria-hidden />} onClick={onCopy}>
             {t("copy")}
           </Button>
           {onCopyNode && copyNodeLabel && (
-            <Button type="text" icon={<CopyOutlined />} onClick={onCopyNode}>
+            <Button type="text" icon={<CopyOutlined aria-hidden />} onClick={onCopyNode}>
               {copyNodeLabel}
             </Button>
           )}
           {onExport && (
-            <Button type="primary" ghost icon={<DownloadOutlined />} onClick={onExport}>
+            <Button type="primary" ghost icon={<DownloadOutlined aria-hidden />} onClick={onExport}>
               {t("exportFile")}
             </Button>
           )}

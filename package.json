@@ -11,7 +11,7 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
-    "outdated": "ncu",
+    "outdated": "npx --yes npm-check-updates",
     "cli": "tsx scripts/cli.ts",
     "tauri": "tauri",
     "update-version": "node src-tauri/update-version.js"
@@ -28,13 +28,13 @@
     "idb": "^8.0.3",
     "idb-keyval": "^6.3.0",
     "jschardet": "^3.1.4",
-    "next": "16.3.4",
+    "next": "16.3.6",
     "next-intl": "^4",
     "next-themes": "^0.4.6",
-    "p-limit": "^7.3.2",
-    "p-retry": "^7.1.1",
-    "react": "19.2.8",
-    "react-dom": "19.2.8",
+    "p-limit": "^7.3.3",
+    "p-retry": "^8.0.1",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
     "rtl-detect": "^1.1.2",
     "spark-md5": "^3.0.2"
   },
@@ -42,7 +42,7 @@
     "@tailwindcss/postcss": "^4",
     "@tauri-apps/cli": "2.11.4",
     "@types/file-saver": "^2.0.7",
-    "@types/node": "^20",
+    "@types/node": "^24",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/rtl-detect": "^1.0.3",
@@ -50,14 +50,15 @@
     "babel-plugin-react-compiler": "^1.0.0",
     "cross-env": "10.1.0",
     "eslint": "^9",
-    "eslint-config-next": "16.3.4",
+    "eslint-config-next": "16.3.6",
     "tailwindcss": "^4",
-    "tsx": "^4.23.13",
+    "tsx": "^4.23.15",
     "typescript": "^5",
-    "vitest": "^3.2.4"
+    "vite": "^8.3.1",
+    "vitest": "^5.0.2"
   },
   "engines": {
-    "node": ">=20.9.0"
+    "node": ">=24"
   },
   "packageManager": "yarn@1.22.22"
 }

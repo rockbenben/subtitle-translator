@@ -18,7 +18,7 @@ export interface MarkdownOptions {
 /**
  * Markdown 翻译的默认值 —— 网页端(MDTranslator 的 useLocalStorage 初值)与
  * CLI(cliFormat 的 markdown handler,flag 只做显式覆盖)共用的单一来源。
- * 曾经两边各写一份、靠 CLAUDE.md 一句「要一起动」对齐 —— 改这里,两边一起变。
+ * 曾经两边各写一份、靠 AGENTS.md 一句「要一起动」对齐 —— 改这里,两边一起变。
  * contextAware 默认关:Markdown 结构化保护(占位符)与上下文批处理互斥,
  * 开上下文即隐含 raw,不该是默认。
  */

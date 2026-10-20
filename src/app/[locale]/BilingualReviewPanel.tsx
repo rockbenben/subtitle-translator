@@ -100,7 +100,7 @@ const BilingualReviewPanel = ({ sourceText, sourceFormat, translatedText, transl
       title={t("reviewTitle")}
       style={{ boxShadow: token.boxShadowTertiary }}
       extra={
-        <Button type="primary" size="small" icon={<DownloadOutlined />} onClick={handleApplyDownload} disabled={edits.size === 0}>
+        <Button type="primary" size="small" icon={<DownloadOutlined aria-hidden />} onClick={handleApplyDownload} disabled={edits.size === 0}>
           {t("reviewApplyDownload")}
         </Button>
       }>

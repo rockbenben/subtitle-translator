@@ -145,9 +145,9 @@ export const useTranslationProgress = () => {
   //
   // ⚠ 窗口按【到达序】取最近 MAX_LIVE_LINES 条,取完【再】按 index 排序显示。
   // 反过来(先按 index 排序、再 slice(-N))取的是"下标最大的 N 行",两者在
-  // 顺序翻译时碰巧一致,一旦有缓存补发就完全不同:续跑一份中间失败的 1000 行
-  // 字幕,补发的 ~950 行缓存把窗口钉死在 800-999,而本轮真正在翻的 400-450
-  // 永远进不了面板 —— 整轮静止,恰是这个面板要解决的问题的反面。
+  // 顺序翻译时碰巧一致,一旦有缓存补发就完全不同:续跑一份中间失败的文件时,
+  // 成批补发的缓存行会把窗口占满,本轮真正在翻的行永远进不了面板
+  // —— 整轮静止,恰是这个面板要解决的问题的反面。
   const flushLiveLines = () => {
     flushTimerRef.current = null;
     publishLiveLines(ordered(liveLinesRef.current));

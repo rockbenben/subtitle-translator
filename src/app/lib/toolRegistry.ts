@@ -42,6 +42,7 @@ const OG_LOCALE_MAP: Record<string, string> = {
   bn: "bn_BD",
   id: "id_ID",
   it: "it_IT",
+  hu: "hu_HU",
 };
 
 /** Convert internal locale to OpenGraph locale format (e.g. "zh" → "zh_CN") */
@@ -97,6 +98,7 @@ export const TOOL_REGISTRY = {
   jsonTranslate:        { path: "json-translate",         category: "DeveloperApplication",  group: "translate",  namespaces: ["JSON", "TranslationSettings", "TranslationGlossary"] },
   textSplitter:         { path: "text-splitter",          category: "UtilitiesApplication",  group: "textParser", namespaces: ["TextSplitter"] },
   textJoiner:           { path: "text-joiner",            category: "UtilitiesApplication",  group: "textParser", namespaces: ["TextJoiner"] },
+  braceExpander:     { path: "brace-expander",      category: "UtilitiesApplication",  group: "textParser", namespaces: ["BraceExpander"] },
   textDiff:             { path: "text-diff",              category: "DeveloperApplication",  group: "textParser", namespaces: ["TextDiff"] },
   chineseConversion:    { path: "chinese-conversion",     category: "UtilitiesApplication",  group: "textParser", namespaces: ["ChineseConversion", "ProtectedRuleManager"] },
   novelProcessor:       { path: "novel-processor",        category: "UtilitiesApplication",  group: "textParser", namespaces: ["NovelProcessor", "ProtectedRuleManager"] },
@@ -143,6 +145,7 @@ export const RELATED_TOOLS: Record<ToolKey, ToolKey[]> = {
   textDiff:             ["textToolbox", "dataBatch", "textSplitter"],
   dataBatch:            ["textToolbox", "jsonValueExtractor", "jsonTranslate"],
   textJoiner:           ["textSplitter", "dataBatch", "textToolbox"],
+  braceExpander:     ["textJoiner", "dataBatch", "textToolbox"],
   jsonValueExtractor:   ["jsonValueTransformer", "jsonNodeEdit", "jsonSortClassify"],
   jsonNodeEdit:         ["jsonNodeInserter", "jsonValueTransformer", "jsonValueSwapper"],
   jsonValueTransformer: ["jsonValueExtractor", "jsonValueSwapper", "jsonMatchUpdate"],

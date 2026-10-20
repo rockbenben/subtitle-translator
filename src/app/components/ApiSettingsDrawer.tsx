@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import dynamic from "next/dynamic";
 import { Drawer, Spin } from "antd";
 import { useTranslations } from "next-intl";
@@ -22,11 +23,16 @@ const TranslationSettings = dynamic(() => import("@/app/components/TranslationSe
  * previous "Advanced" Tab — main translation UI stays visible behind.
  *
  * destroyOnHidden=false: keep unsaved form edits across open/close cycles.
+ * hasOpened gate: avoids requesting TranslationSettings chunk on initial page load.
  */
 const ApiSettingsDrawer = () => {
   const t = useTranslations("common");
   const isMobile = useIsMobile();
   const { apiSettingsOpen, setApiSettingsOpen } = useTranslationContext();
+  const [hasOpened, setHasOpened] = useState(false);
+  if (apiSettingsOpen && !hasOpened) {
+    setHasOpened(true);
+  }
 
   return (
     <Drawer
@@ -37,7 +43,7 @@ const ApiSettingsDrawer = () => {
       // 留 10% 给主翻译界面。antd 6 的 size 接受任意 CSS 字符串原样透传。
       size={isMobile ? "100vw" : "min(1400px, 90vw)"}
       destroyOnHidden={false}>
-      <TranslationSettings />
+      {hasOpened && <TranslationSettings />}
     </Drawer>
   );
 };

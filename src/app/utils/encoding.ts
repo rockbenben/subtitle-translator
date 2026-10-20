@@ -137,13 +137,11 @@ export const decodeFileBytes = async (buffer: ArrayBuffer): Promise<string> => {
     // 解出似是而非的中文乱码。那比 U+FFFD 更坏 —— ��� 用户一眼看得见,
     // 像模像样的乱码会被当正文送去翻译、计费,再写进输出文件。
     //
-    // 抛出前【必须确认每个调用方的失败通路真的通】—— 上一版这里写着
-    // 「TextDiff 另有手动选编码的兜底」,是错的:那个选择器以 s.bytes 为渲染
-    // 条件,而 bytes 是在 await 之后才写进 state 的,抛出后压根没被设置。同期
-    // 设置导入的 createSettingsFileInput 只传了成功回调,Promise 永不 settle。
-    // 两处都已修好(TextDiff 在 catch 里保留 bytes;settings 接上 onError)。
-    // 现状:useFileUpload / 词汇表导入 / 保护规则导入 / TextDiff / CLI 五个
-    // 调用方各自有 try-catch 与用户可见提示,CLI 还会 hardFailures++ → exit 1。
+    // 抛出前【必须确认每个调用方的失败通路真的通】——「以为下游有兜底」是错的：
+    // 兜底 UI 可能以「已经拿到 bytes」为渲染条件，而 bytes 是在 await 之后才写进
+    // state 的，抛出后压根没被设置；只传成功回调的读取封装则让 Promise 永不 settle。
+    // 新增调用方必须自己接住 reject 并给出用户可见提示（CLI 还要 hardFailures++ → exit 1），
+    // 别假设别的层会替你显示。
     // "ascii" 是【自相矛盾】的结论,当作判不出来处理:UTF-8 fatal 已经失败,
     // 这份字节里确定有非 ASCII 内容。检测器却说纯 ASCII,只能是样本没覆盖到
     // (上面的定位采样已尽量避免,这里是第二道网)。放行的话它会被当作

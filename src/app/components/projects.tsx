@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  PartitionOutlined,
   BgColorsOutlined,
   DatabaseOutlined,
   ExperimentOutlined,
@@ -26,6 +27,7 @@ import {
   MessageOutlined,
   DiffOutlined,
   MergeCellsOutlined,
+  AppstoreOutlined,
 } from "@ant-design/icons";
 import Link from "next/link";
 import { useTranslations, useLocale } from "next-intl";
@@ -50,6 +52,7 @@ const TOOL_ICONS: Record<ToolKey, React.ReactNode> = {
   novelProcessor: <FontSizeOutlined />,
   textToolbox: <CodeOutlined />,
   textJoiner: <MergeCellsOutlined />,
+  braceExpander: <PartitionOutlined />,
   textDiff: <DiffOutlined />,
   dataBatch: <ProfileOutlined />,
   jsonValueExtractor: <FileSearchOutlined />,
@@ -78,7 +81,8 @@ const projectCategories = {
 } as const;
 
 interface ExternalTool {
-  title: string;
+  title?: string;
+  titleKey?: string;
   key: string;
   icon: React.ReactNode;
   chineseOnly?: boolean;
@@ -89,6 +93,7 @@ const externalTools: ExternalTool[] = [
   { title: "Legend Talk", key: "legendtalk", icon: <MessageOutlined /> },
   { title: "IMGPrompt", key: "imgprompt", icon: <BgColorsOutlined /> },
   { title: "LearnData 开源笔记", key: "learndata", icon: <BookOutlined />, chineseOnly: true },
+  { titleKey: "navigation.externalTools.hub365", key: "hub365", icon: <AppstoreOutlined /> },
 ];
 
 const getExternalHref = (key: string, locale: string): string => {
@@ -104,6 +109,9 @@ const getExternalHref = (key: string, locale: string): string => {
       return "https://talk.newzone.top";
     case "learndata":
       return "https://newzone.top/";
+    case "hub365":
+      // 365 站只有中/英两语（SPA）。语言优先级 ?lang= > localStorage > 浏览器语言；显式传参让落地语言跟随本站。
+      return `https://365.aishort.top/?lang=${locale === "zh" || locale === "zh-hant" ? "zh" : "en"}`;
     default:
       return "#";
   }
@@ -138,7 +146,7 @@ export const useAppMenu = () => {
     return {
       label: (
         <a href={getExternalHref(tool.key, locale)} target="_blank" rel="noopener noreferrer">
-          {tool.title}
+          {tool.titleKey ? t(tool.titleKey) : tool.title}
         </a>
       ),
       key: tool.key,
@@ -150,6 +158,11 @@ export const useAppMenu = () => {
 
   const currentToolKey = PATH_TO_KEY[CURRENT_TOOL_PATH];
 
+  // aria-hidden on every group icon: antd renders a submenu title as a
+  // div[role=menuitem] with no aria-label, so its accessible name is computed
+  // from its contents — the icon's built-in English glyph name landed in front of
+  // the translated label on every page ("global أدوات الترجمة"). The label already
+  // names the item; the icon is decoration.
   const menuItems = [
     {
       label: <Link href={`/${locale}`}>{currentToolKey ? t(`tools.${currentToolKey}.title`) : t("navigation.home")}</Link>,
@@ -162,31 +175,31 @@ export const useAppMenu = () => {
     {
       label: t("navigation.translate"),
       key: "translate",
-      icon: <GlobalOutlined />,
+      icon: <GlobalOutlined aria-hidden />,
       children: generateCategoryItems(projectCategories.translate),
     },
     {
       label: t("navigation.textParser"),
       key: "textParser",
-      icon: <FileTextOutlined />,
+      icon: <FileTextOutlined aria-hidden />,
       children: generateCategoryItems(projectCategories.textParser),
     },
     {
       label: t("navigation.jsonParser"),
       key: "jsonParser",
-      icon: <DatabaseOutlined />,
+      icon: <DatabaseOutlined aria-hidden />,
       children: generateCategoryItems(projectCategories.jsonParser),
     },
     {
       label: t("navigation.dataParser"),
       key: "dataParser",
-      icon: <FileSearchOutlined />,
+      icon: <FileSearchOutlined aria-hidden />,
       children: generateCategoryItems(projectCategories.dataParser),
     },
     {
       label: t("navigation.otherTools"),
       key: "otherTools",
-      icon: <ToolOutlined />,
+      icon: <ToolOutlined aria-hidden />,
       children: otherToolsItems,
     },
     {

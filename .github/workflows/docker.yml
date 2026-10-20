@@ -1,3 +1,12 @@
+# 多架构镜像：单 job 构建，builder 阶段固定在原生架构上只跑一次（见 Dockerfile）。
+#
+# 为什么不再让 arm64 重跑一遍构建：以前 Dockerfile 的 builder 没固定平台，
+# 多架构构建会让 arm64 在 QEMU 用户态模拟里重跑 yarn install / yarn build。
+# 那是最吃 CPU、syscall 与进程启动的一步，实测会从分钟级膨胀到小时级甚至卡死。
+# 现在 builder 用 --platform=$BUILDPLATFORM 固定在 amd64 原生执行，arm64 只多出
+# 一个 node:24-alpine 的 adduser/COPY；所以这里仍然需要 QEMU，但只用来跑那几步。
+#
+# 另一个让「卡住」变成「耗满 6 小时」的因素：job 没有超时。这里显式设 timeout-minutes。
 name: 🐳 Build and Push Docker Image
 
 on:
@@ -14,12 +23,16 @@ env:
 
 jobs:
   push_to_registry:
+    if: github.repository_owner == 'rockbenben' # fork 无对应 secrets，跳过以免 CI 报错
     name: Push Docker image to Docker Hub and GHCR
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - name: 🚚 Check out the repo
         uses: actions/checkout@v7
 
+      # builder 阶段已固定在 $BUILDPLATFORM，QEMU 现在只用于 runner 阶段的
+      # arm64 adduser / COPY，开销几秒钟。
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v4
 
@@ -45,6 +58,13 @@ jobs:
         env:
           OWNER: "${{ github.repository_owner }}"
 
+      - name: 📦 Read package.json version
+        id: pkg
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "Read version: ${VERSION}"
+
       - name: 🏷️ Extract metadata (tags, labels) for Docker
         id: meta
         uses: docker/metadata-action@v6
@@ -52,10 +72,13 @@ jobs:
           images: |
             ${{ vars.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}
             ghcr.io/${{ env.GH_OWNER_LC }}/${{ env.IMAGE_NAME }}
+          # value= 让 semver tag 取 package.json 的版本号而不是 git tag：
+          # 手动触发（workflow_dispatch，没有 tag）时也能打出 3.2.1 / 3.2 / 3，
+          # 否则那种情况下只会得到一个 latest。
           tags: |
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
+            type=semver,pattern={{version}},value=${{ steps.pkg.outputs.version }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ steps.pkg.outputs.version }}
+            type=semver,pattern={{major}},value=${{ steps.pkg.outputs.version }}
             type=raw,value=latest
 
       - name: Build and push Docker image

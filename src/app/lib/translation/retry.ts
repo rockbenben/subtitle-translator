@@ -70,7 +70,7 @@ export const isDefiniteAuthFailure = (error: unknown): boolean => {
 
 /**
  * Errors that retrying won't fix — bail out immediately so the user isn't stuck
- * at 0% for 30-60s of doomed retries. These are thrown by service layers when the
+ * at 0% through a long run of doomed retries. These are thrown by service layers when the
  * next attempt will fail the same way — notably the shared CORS → "enable API
  * Relay" rewrite (withNetworkHint in services/index.ts), which fires for EVERY
  * relay-capable provider (not just DeepSeek) on a network/CORS TypeError with
@@ -101,9 +101,8 @@ export const isRetryableError = (error: unknown): boolean => {
   // Aborts are non-recoverable by retry:
   //   - AbortError: per-request timeout fired (createTimeoutController's
   //     setTimeout → controller.abort). Next attempt has its own fresh
-  //     timeout but will hit the same upstream slowness — at 180s × 3
-  //     attempts that's 9 minutes of dead waiting before the user sees
-  //     anything. Fast-fail instead.
+  //     timeout but will hit the same upstream slowness — 最坏要等满
+  //     requestTimeout × 尝试次数 的乘积才见到失败，不如快失败。
   //   - "Translation aborted": shared abortControllerRef tripped (auth error
   //     in a peer). pRetry's pre-attempt guard would re-throw the same
   //     message — pointless retry loop.
@@ -213,8 +212,7 @@ export const abortableSleep = (ms: number, signal?: AbortSignal): Promise<void> 
 type GateState = { until: number; cooldownMs: number };
 const gateStates = new Map<string, GateState>();
 
-// 业界惯例对齐(Google API client / AWS SDK / OpenAI cookbook):base ~1s、
-// factor 2、cap 60s、优先尊重 Retry-After。1s 起步 = 快速试探恢复;真没
+// 通用指数退避形态：base ~1s、factor 2、cap 60s、优先尊重 Retry-After。1s 起步 = 快速试探恢复;真没
 // 恢复会沿 1→2→4→…→60s 自动爬升,不会反复轰炸。
 export const RATE_LIMIT_BASE_COOLDOWN_MS = 1_000;
 export const RATE_LIMIT_MAX_COOLDOWN_MS = 60_000;

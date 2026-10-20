@@ -57,12 +57,12 @@ const rawServices: Record<TranslationMethod, TranslationService> = {
   milmmt: traditional.milmmt,
 
   // LLM APIs — OpenAI-compatible services auto-registered from OPENAI_COMPAT_PROVIDERS
+  // (azureopenai 2026-09-26 起也在这批里：工厂服务 + requireUrl 守卫,见 llm.ts)
   ...llm.openAICompatServices,
 
   // LLM APIs — special-case providers that don't fit the OpenAI-compatible shape
   claude: llm.claude,
   gemini: llm.gemini,
-  azureopenai: llm.azureopenai,
   yandex: llm.yandex,
   nvidia: llm.nvidia,
   llm: llm.llm,

@@ -1,8 +1,28 @@
+# 依赖与构建产物
+node_modules
+.next
+out
+coverage
+build
+
+# 版本控制与 CI
 .git
 .github
-node_modules
-out
+
+# Tauri 桌面端：9GB+ 的 Rust 构建产物（target/），且含 app.key 签名私钥。
+# Web 镜像完全用不到它 —— 排除后构建上下文从 ~9.5GB 降到 ~20MB，
+# 同时避免私钥被 COPY 进 builder 层（cache-to: type=gha,mode=max 会连中间层
+# 一起存进 CI 缓存）。
+src-tauri
+
+# 编辑器 / 系统 / 日志
+.vscode
+.idea
 *.log
 .DS_Store
-coverage
-.next
+Thumbs.db
+
+# Docker 自身
+Dockerfile
+docker-compose.yml
+.dockerignore

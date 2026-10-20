@@ -53,8 +53,8 @@ const ContextTranslationBlock = ({ enabled, onEnabledChange, disabled = false }:
         <div
           style={{
             marginTop: token.marginSM,
-            paddingLeft: token.paddingSM,
-            borderLeft: `2px solid ${token.colorPrimaryBorder}`,
+            paddingInlineStart: token.paddingSM,
+            borderInlineStart: `2px solid ${token.colorPrimaryBorder}`,
           }}>
           {config?.contextWindow !== undefined && (
             <Form.Item label={tSettings("contextWindow")} className="!mb-2">

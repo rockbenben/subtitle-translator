@@ -98,9 +98,8 @@ export const prefillFromLineCache = async (
 /**
  * Single pre-compiled regex matches every `[TRANSLATE_N]…[/TRANSLATE_N]` (and
  * the `TRANSLTranslate` typo variant — see MARKER_CLEANUP_RE) in one pass.
- * Previously this used `new RegExp(...)` inside a loop of `expectedCount`
- * iterations: a 1000-line subtitle at batchSize=50 allocated 1000 RegExp
- * objects across the run. Now one shared instance handles all batches.
+ * 正则放在模块级预先编译、全批复用：放进逐批循环里就是每批重新编译一次，
+ * 白花钱却不改变结果。
  *
  * Capture groups:
  *   $1 — line number (matched against expectedCount to bucket into results)
