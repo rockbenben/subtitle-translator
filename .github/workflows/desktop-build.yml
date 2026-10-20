@@ -1,22 +1,60 @@
-# Cross-platform Tauri build with signing, a draft release carrying latest.json,
-# and a portable Windows exe.
+# Desktop release for the Tauri app.
+#
+# This file lives on main; the app code lives on feat/tauri-desktop. A tag is pushed to
+# main, this workflow checks out the app branch, and the release is built from
+# there.
+#
+# Why the split: a release definition that lives on a feature branch disappears with
+# that branch, and a second copy on the feature branch drifts from the one on main.
+# text-diff does the same thing — the workflow is the release hub on main, the code
+# stays on its branch.
 #
 # Secrets required for auto-update: TAURI_SIGNING_PRIVATE_KEY (+ _PASSWORD if the key
-# has one — ours has none). GITHUB_TOKEN is built in. The release is a DRAFT —
-# un-draft it to actually roll the update out (releases/latest ignores drafts, gotcha #6).
+# has one — ours has none). GITHUB_TOKEN is built in. The release is built as a
+# draft and published by the `publish` job at the end, which also points
+# releases/latest at it — the updater resolves releases/latest, which ignores
+# drafts, so publishing is what rolls the update out.
 #
-# The pushed tag MUST equal package.json version (v3.0.0 <-> "version": "3.0.0"):
-# tauri-action expands __VERSION__ from the app version and the portable-exe step
-# uploads to v${APP_VERSION}; a mismatch silently breaks the portable upload.
+# The pushed tag MUST equal the version in the app branch's package.json
+# (v3.0.0 <-> "version": "3.0.0"): tauri-action expands __VERSION__ from the app
+# version and the portable-exe step uploads to v${APP_VERSION}; a mismatch silently
+# breaks the portable upload.
+#
+# ---- tauri-action v1 (was v0) — what changed for THIS pipeline -----------------------
+#  * A draft run will not adopt a published release. With releaseDraft: true the action
+#    scans the release list for a DRAFT carrying this tag; on finding a published one it
+#    warns and falls through to CREATING a release for the same tag, which GitHub then
+#    rejects. Two consequences: re-running a tag you have already un-drafted needs the
+#    release deleted first, and the manual path below must not pass a tagName at all.
+#  * It rewrites an existing release's name and body only when that release is already
+#    PUBLISHED (updating a draft would move its tag and duplicate it). In the normal draft
+#    flow the first matrix job creates the draft and the other three only upload into it,
+#    so the generated notes are written once, not four times.
+#  * macOS `.app.tar.gz` assets now carry the version, like every other bundle.
+#  * latest.json download URLs now use the github.com url instead of the browser one.
+#
+# Asset names change with this release (releaseAssetNamePattern below):
+#   Subtitle.Translator_3.1.1_x64-setup.exe -> SubtitleTranslator_3.1.1_x64_setup.exe
+#   Subtitle.Translator_3.1.1_x64_en-US.msi -> SubtitleTranslator_3.1.1_x64.msi
+#   Subtitle.Translator_aarch64.app.tar.gz  -> SubtitleTranslator_3.1.1_aarch64.app.tar.gz
+#   SubtitleTranslator_3.1.1_portable.exe   -> SubtitleTranslator_3.1.1_x64_portable.exe
+# Already-published releases keep their old names and URLs; only new ones change.
+#
+# updaterJsonPreferNsis is ENABLED on purpose (input below). 3.1.0/3.1.1 的已发布用户
+# 都是用 NSIS setup.exe 装的;默认 false 让 latest.json 的 windows-x86_64 指向
+# .msi,MSI 与 NSIS 是两套独立安装布局,自更新喂 MSI 会在机器上留下并列的第二份
+# 安装。翻成 true 后更新包就是 NSIS setup,原地升级、单实例,也是 Tauri v2 的方向。
 name: Build Desktop App
 
 on:
   workflow_dispatch:
   push:
-    tags: ["v*"]
+    tags:
+      - "v*"
 
 jobs:
   publish-tauri:
+    if: ${{ github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/v') }}
     permissions:
       contents: write
     strategy:
@@ -33,7 +71,11 @@ jobs:
             args: ""
     runs-on: ${{ matrix.platform }}
     steps:
-      - uses: actions/checkout@v6.0.3
+      - uses: actions/checkout@v7
+        with:
+          # 桌面代码在 feat/tauri-desktop 分支上，main 只有 web 那一半。
+          # tag 打在 main，代码从这里取。
+          ref: feat/tauri-desktop
 
       - name: Install Linux dependencies
         if: matrix.platform == 'ubuntu-22.04'
@@ -42,9 +84,9 @@ jobs:
           sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf libgtk-3-dev wget file
 
       - name: Setup Node
-        uses: actions/setup-node@v6.4.0
+        uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version: lts/*
           cache: yarn
 
       - name: Install Rust toolchain
@@ -53,49 +95,158 @@ jobs:
           targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
 
       - name: Cache Rust build
-        uses: Swatinem/rust-cache@v2.9.1
+        uses: Swatinem/rust-cache@v2
         with:
           workspaces: "./src-tauri -> target"
+
+      # 必须在 yarn update-version 之前:比的是【提交进去的】package.json
+      # (workflow 顶部注释里那条 tag MUST equal version 约定,之前没有任何东西钉它)
+      - name: Verify tag matches package.json version
+        if: github.event_name == 'push'
+        shell: bash
+        run: |
+          expected="v$(node -p "require('./package.json').version")"
+          if [ "$GITHUB_REF_NAME" != "$expected" ]; then
+            echo "::error::Tag '$GITHUB_REF_NAME' does not match package.json version '$expected'"
+            exit 1
+          fi
 
       - name: Install frontend dependencies
         run: |
           yarn update-version
           yarn install --frozen-lockfile
 
-      - uses: tauri-apps/tauri-action@v0
+      - uses: tauri-apps/tauri-action@v1
+        id: tauri
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
-          tagName: v__VERSION__
-          releaseName: "Subtitle Translator v__VERSION__"
+          # Tag push -> create or fill the draft release. Manual run -> build only:
+          # with no tagName the action skips every upload (its README's "just build"
+          # mode), so testing the pipeline cannot touch a real release.
+          tagName: ${{ github.event_name == 'push' && 'v__VERSION__' || '' }}
+          releaseName: ${{ github.event_name == 'push' && 'Subtitle Translator v__VERSION__' || '' }}
+          # Prepended to GitHub's generated changelog (releaseName still wins for the title).
           releaseBody: "See the assets to download and install."
+          generateReleaseNotes: true
           releaseDraft: true
           prerelease: false
+          # A manual run uploads to no release, so the bundles are only reachable as
+          # workflow artifacts. On a tag push the release already carries them.
+          uploadWorkflowArtifacts: ${{ github.event_name != 'push' }}
+          # Four platforms uploading a dozen assets each; a single flaky upload used to
+          # cost a full re-run, which under v1's draft-matching rule is no longer free.
+          retryAttempts: 2
+          # One naming scheme for every asset. Without this Tauri's own names win, and a
+          # productName containing a space comes out dotted (Subtitle Translator ->
+          # Subtitle.Translator_3.1.1_x64-setup.exe) while the portable exe below, named
+          # from mainBinaryName, does not — three spellings of one app on one page.
+          # [ext] is multi-part aware (.app.tar.gz, .msi.sig), and latest.json resolves its
+          # download URLs through this same pattern, so the updater follows automatically.
+          # [_setup] is what separates the NSIS installer from the portable exe: both .exe.
+          # Drop this line to go back to the Tauri CLI's names.
+          releaseAssetNamePattern: "[mainBinaryName]_[version]_[arch][_setup][ext]"
+          # 已发布用户都是 NSIS 装的,自更新必须继续喂 NSIS setup 而不是 MSI
+          # (理由见文件头注释)。
+          updaterJsonPreferNsis: true
           args: ${{ matrix.args }}
 
       # Portable "green" exe (Windows only): the raw self-contained binary tauri
       # builds anyway. No installer; needs the WebView2 runtime; does NOT self-update.
+      #
+      # The version comes from the action's appVersion output, which is the version tauri
+      # actually built with (tauri.conf.json, written by `yarn update-version`). Reading
+      # package.json again here would name the file and pick the upload tag from a
+      # different source, so any drift between the two would land the asset on the wrong
+      # release instead of failing.
       - name: Stage portable Windows exe
         if: matrix.platform == 'windows-latest'
         shell: bash
+        env:
+          APP_VERSION: ${{ steps.tauri.outputs.appVersion }}
         run: |
-          VERSION=$(node -p "require('./package.json').version")
-          cp "src-tauri/target/release/SubtitleTranslator.exe" "SubtitleTranslator_${VERSION}_portable.exe"
-          echo "APP_VERSION=$VERSION" >> "$GITHUB_ENV"
+          test -n "$APP_VERSION"
+          cp "src-tauri/target/release/SubtitleTranslator.exe" "SubtitleTranslator_${APP_VERSION}_x64_portable.exe"
+          echo "APP_VERSION=$APP_VERSION" >> "$GITHUB_ENV"
 
       - name: Upload portable exe as workflow artifact
         if: matrix.platform == 'windows-latest'
-        uses: actions/upload-artifact@v7.0.1
+        uses: actions/upload-artifact@v7
         with:
           name: portable-windows
-          path: SubtitleTranslator_${{ env.APP_VERSION }}_portable.exe
+          path: SubtitleTranslator_${{ env.APP_VERSION }}_x64_portable.exe
           if-no-files-found: error
 
       - name: Attach portable exe to the release
-        if: matrix.platform == 'windows-latest'
+        if: matrix.platform == 'windows-latest' && github.event_name == 'push'
         shell: bash
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release upload "v${APP_VERSION}" "SubtitleTranslator_${APP_VERSION}_portable.exe" --clobber
+        run: gh release upload "v${APP_VERSION}" "SubtitleTranslator_${APP_VERSION}_x64_portable.exe" --clobber
+
+      # The release is published by the `publish` job at the end of this workflow, so
+      # there is nothing left to do by hand here. The link is still worth putting in the
+      # run summary: it is where you look right after tagging. Skipped on manual runs,
+      # which create no release (the output is empty there).
+      - name: Link the release in the run summary
+        if: github.event_name == 'push' && steps.tauri.outputs.releaseHtmlUrl != ''
+        shell: bash
+        env:
+          RELEASE_URL: ${{ steps.tauri.outputs.releaseHtmlUrl }}
+          APP_VERSION: ${{ steps.tauri.outputs.appVersion }}
+        run: |
+          {
+            echo "### Release v${APP_VERSION}"
+            echo
+            echo "[Open the release]($RELEASE_URL)"
+            echo
+            echo 'This release is published by the `publish` job at the end of this run:'
+            echo 'it also points `releases/latest` at it, which is what the updater reads.'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  # 把那条草稿发布出去，并显式把它标成 latest。
+  #
+  # 单独一条 job，不放在矩阵里：矩阵有四条腿（macOS 两条、Linux、Windows），
+  # 四条腿都去发布会打架。`needs: publish-tauri` 保证产物都进去了才轮到它。
+  publish:
+    name: 发布这个 release，并把 latest 指到它
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: publish-tauri
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      # ⚠️ **不能只发草稿了事**：草稿转成已发布时，GitHub **不会**重算
+      # `releases/latest` 指向谁——2026-10-20 在 rclone-deck 上撞到过一次：release 已经是
+      # `draft=false`、`prerelease=false`、`published_at` 也填上了，`releases/latest`
+      # 却仍返回旧版本，端点 `releases/latest/download/latest.json` 于是 **404**
+      # （旧 release 里没有 `latest.json`）。所以这里一次 PATCH 同时给
+      # `draft=false` 与 `make_latest=true`，不靠 GitHub 自己挪。
+      #
+      # 判据是**看 API 指到谁**，不是看 release 的字段：字段全对而指针没挪，端点照样 404。
+      # CDN 那层重定向还会再滞后几分钟，属正常——这里判 API，不判 CDN。
+      - name: 发布这个 release，并把 latest 指到它
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag="${GITHUB_REF_NAME}"
+          # ⚠️ **不能用 `releases/tags/<tag>` 找这条 release**：那个端点**不返回草稿**。
+          # 草稿只能从 release 列表里捞——列表按创建时间倒序，新建的草稿总在第一页。
+          id="$(gh api "repos/${GITHUB_REPOSITORY}/releases?per_page=100" \
+                 --jq "first(.[] | select(.tag_name == \"${tag}\") | .id)")"
+          if [ -z "$id" ]; then
+            echo "::error::没找到 tag ${tag} 对应的 release"
+            exit 1
+          fi
+          gh api --method PATCH "repos/${GITHUB_REPOSITORY}/releases/${id}" \
+            -F draft=false -f make_latest=true > /dev/null
+          latest="$(gh api "repos/${GITHUB_REPOSITORY}/releases/latest" --jq .tag_name)"
+          if [ "$latest" != "$tag" ]; then
+            echo "::error::releases/latest 指着 ${latest}，不是 ${tag}"
+            exit 1
+          fi
+          echo "release ${tag} 已发布，releases/latest 指向它"
