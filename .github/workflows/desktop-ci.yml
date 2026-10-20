@@ -1,0 +1,74 @@
+# Quality gate for the desktop app.
+#
+# The release path lives on main (the release hub); the app code lives on
+# feat/tauri-desktop. This file is the gate for the code: it runs the linters, the
+# cross-repository contract checks and the Rust tests on every push to that branch
+# and on every pull request that touches it.
+#
+# The image files take up 92% of src/**, so a broken interface upstream is worth
+# catching here rather than at packaging time (exportDirNative / languagePreference,
+# the two cross-repository contract checks, fail silently).
+name: Desktop CI
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches:
+      - "feat/tauri-desktop"
+
+jobs:
+  # 非发布事件的质量闸:tag 推送只跑发布矩阵,其余事件(push 到分支 / PR / 手动)
+  # 跑这一道。镜像文件占 src/** 的 92%,上游改坏接口要等打包才发现就太晚
+  # (exportDirNative / languagePreference 两个跨仓库契约 check 尤其容易静默失效)。
+  quality:
+    if: ${{ !startsWith(github.ref, 'refs/tags/') }}
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v7
+
+      # cargo test/clippy 要编译整棵 tauri 依赖树,webkit 开发包和发布矩阵同款
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf libgtk-3-dev
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: lts/*
+          cache: yarn
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+
+      - name: Cache Rust build
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: "./src-tauri -> target"
+
+      - name: Install frontend dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: ESLint
+        run: yarn lint
+
+      # next build 的 TS 阶段只盖 app graph,scripts/*.check.ts 这些不在其中
+      - name: TypeScript
+        run: yarn typecheck
+
+      - name: Cross-repo contract checks
+        shell: bash
+        run: |
+          npx tsx scripts/exportDirNative.check.ts
+          npx tsx scripts/languagePreference.check.ts
+          npx tsx scripts/localeBoot.check.ts
+
+      - name: Rust tests
+        run: cargo test --locked --manifest-path src-tauri/Cargo.toml
+
+      # 仓库刻意不跑 rustfmt(Rust 源码统一 2 空格,build.rs 同样),只卡 clippy
+      - name: Clippy
+        run: cargo clippy --locked --all-targets --manifest-path src-tauri/Cargo.toml -- -D warnings
