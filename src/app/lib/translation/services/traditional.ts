@@ -204,8 +204,10 @@ export const gtxFreeAPI: TranslationService = async (params) => {
 // ⚠ 已迁到此口：老的 `/translate/auth`（铸 10 分钟 JWT）→ api-edge 两步流【已被换掉】——
 //   auth 口四变体（Edg UA/无 UA/尾斜杠/POST）一律 404（是 404 而非 geo-403，像路由移除不是地域封锁），
 //   /translatetext 本机实测 200 直接回译文。此前"疑似 CN 地域不可达"的判断据此更正为接口更换。
-// ⚠ 已知差异：正文 emoji 会被翻成 `??`（`<tag>`、`\n` 原样保留、`&` 当普通词处理），是这口既有行为、
-//   非我们可控；字幕偶发 emoji 会丢，需要 emoji 原样的场景走别的 provider。
+// ⚠ 已知差异：emoji 本体原样保留（en→ja/th/ar/my/km/ne/si/am 逐条实测），但【由 ZWJ 拼成
+//   的连字族会被拆开】（`👨‍👩‍👧` → `👨 👩 👧`，插了空格）；`<tag>`、`\n` 原样保留、
+//   `&` 当普通词处理。这都不在我们可控范围内。（「emoji 翻成 `??`」那种降级已复现不出，
+//   gtx 与这口都一样。）
 const EDGE_TRANSLATE_ENDPOINT = "https://edge.microsoft.com/translate/translatetext";
 
 export const edgeFreeAPI: TranslationService = async (params) => {

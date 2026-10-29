@@ -248,7 +248,7 @@
     "bilingualFormatTooltip": "ASS : styles de police/couleur distincts pour l'original et la traduction. SRT : texte brut, lignes empilées dans la même séquence.",
     "translationFirst": "Traduction au-dessus",
     "originalFirst": "Traduction en dessous",
-    "unsupportedSub": "Format non reconnu. Assurez-vous que le fichier est SRT, ASS, VTT, SBV ou LRC.",
+    "unsupportedSub": "Format non reconnu. Assurez-vous que le fichier est SRT, ASS, SSA, VTT, SBV ou LRC.",
     "noFileUploaded": "Veuillez d'abord téléverser un fichier de sous-titres.",
     "noSourceText": "Veuillez téléverser un fichier ou coller du texte.",
     "noExtractedText": "Aucun contenu extrait, vérifiez le format du fichier.",
@@ -259,6 +259,7 @@
     "reviewColTarget": "Traduction",
     "reviewApplyDownload": "Appliquer et télécharger",
     "reviewDownloaded": "Sous-titre révisé téléchargé",
+    "reviewApplyFirst": "Les modifications de révision ne sont pas encore appliquées. Utilisez d’abord « Appliquer et télécharger ».",
     "assStyleButton": "Style ASS",
     "assStyleTooltip": "Personnalisez la police, la taille, la couleur et la position des sous-titres ASS bilingues",
     "assNativeModeSource": "Garder le style source",
@@ -387,13 +388,13 @@
   "tools": {
     "subtitleTranslator": {
       "title": "Traducteur Sous-titres",
-      "description": "Traduction par lot SRT, ASS, VTT, SBV, LRC. 120+ langues.",
+      "description": "Traduction par lot SRT, ASS, SSA, VTT, SBV, LRC. 120+ langues.",
       "metaTitle": "Traducteur sous-titres gratuit | SRT/VTT/ASS IA bilingue",
-      "metaDescription": "Traducteur IA sous-titres SRT, ASS, VTT, SBV, LRC. 30+ moteurs: DeepSeek, Claude, GPT, DeepL. 120+ langues, timecodes, bilingue.",
+      "metaDescription": "Traducteur IA sous-titres SRT, ASS, SSA, VTT, SBV, LRC. 30+ moteurs: DeepSeek, Claude, GPT, DeepL. 120+ langues, timecodes, bilingue.",
       "faq": [
         {
-          "q": "Quels formats de sous-titres sont pris en charge ? SRT, ASS, VTT, SBV et LRC peuvent-ils être traduits ?",
-          "a": "Cinq formats pris en charge : SRT, ASS, VTT, SBV et LRC. SRT/VTT pour YouTube, lecteurs HTML5 et tableaux de bord créateurs (export YouTube via yt-dlp) ; ASS/SSA pour Aegisub et fansubs anime, balises de position en début de ligne (\\\\an8) restaurées après traduction ; SBV est le format d'export natif de l'éditeur de sous-titres de YouTube Studio; LRC pour les fichiers de paroles. L'encodage (UTF-8 / UTF-16 / GBK / Shift-JIS) est détecté via jschardet. Les balises d'effets ASS inline complexes (couleurs, animations, karaoké) sont simplifiées pendant la traduction."
+          "q": "Quels formats de sous-titres sont pris en charge ? SRT, ASS, SSA, VTT, SBV et LRC peuvent-ils être traduits ?",
+          "a": "Six formats pris en charge : SRT, ASS, SSA, VTT, SBV et LRC. SRT/VTT pour YouTube, lecteurs HTML5 et tableaux de bord créateurs (export YouTube via yt-dlp) ; ASS/SSA pour Aegisub et fansubs anime, balises de position en début de ligne (\\\\an8) restaurées après traduction ; SBV est le format d'export natif de l'éditeur de sous-titres de YouTube Studio; LRC pour les fichiers de paroles. L'encodage (UTF-8 / UTF-16 / GBK / Shift-JIS) est détecté via jschardet. Les balises d'effets ASS inline complexes (couleurs, animations, karaoké) sont simplifiées pendant la traduction."
         },
         {
           "q": "Sous-titres : faut-il utiliser la traduction automatique ou la traduction IA?",
@@ -425,11 +426,11 @@
         },
         {
           "q": "Les fichiers de sous-titres sont-ils envoyés sur votre serveur ? Est-ce privé et sécurisé ?",
-          "a": "Entièrement côté client : la lecture, l'analyse et les requêtes de traduction des sous-titres se font dans votre navigateur — les contenus originaux ne touchent jamais nos serveurs. Les requêtes des moteurs LLM vont directement de votre navigateur à votre endpoint API configuré (OpenAI, DeepSeek, etc.), et les API keys sont stockées uniquement dans le localStorage local. Le cache de traduction utilise l'IndexedDB du navigateur et persiste entre les sessions. Le code source est ouvert sur GitHub (rockbenben/subtitle-translator) pour l'auto-hébergement ou l'audit."
+          "a": "Entièrement côté client : la lecture, l'analyse et les requêtes de traduction des sous-titres se font dans votre navigateur — les contenus originaux ne touchent jamais nos serveurs. Les requêtes des moteurs LLM vont directement de votre navigateur à votre endpoint API configuré (OpenAI, DeepSeek, etc.), et les API keys sont stockées uniquement dans le localStorage local. Le cache de traduction utilise l'IndexedDB du navigateur et persiste entre les sessions."
         }
       ],
       "features": [
-        "Supporte SRT, ASS, VTT, SBV, LRC, balises de position ASS (\\\\an8, etc.) préservées",
+        "Supporte SRT, ASS, SSA, VTT, SBV, LRC, balises de position ASS (\\\\an8, etc.) préservées",
         "Timecodes intouchés — seul le texte est traduit, timing original préservé",
         "Détection automatique d'encodage UTF-8/UTF-16/GBK",
         "Position des sous-titres bilingues : au-dessus (apprentissage) ou en-dessous (visionnage)",
@@ -499,7 +500,7 @@
     },
     "dataParserFlare": {
       "title": "Convertisseur Flare",
-      "description": "Conversion favoris navigateur et format Flare"
+      "description": "Favoris HTML vers Flare YAML (aplati)"
     },
     "dataParserImgPrompt": {
       "title": "Générateur Données IMGPrompt",

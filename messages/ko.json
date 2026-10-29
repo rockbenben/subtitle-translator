@@ -248,7 +248,7 @@
     "bilingualFormatTooltip": "ASS: 원문과 번역에 별도의 글꼴/색상 스타일 적용 가능. SRT: 일반 텍스트, 같은 큐에 겹쳐 표시.",
     "translationFirst": "번역문 위로",
     "originalFirst": "번역문 아래로",
-    "unsupportedSub": "자막 형식을 인식할 수 없습니다. 파일이 SRT, ASS, VTT, SBV 또는 LRC 형식인지 확인하세요.",
+    "unsupportedSub": "자막 형식을 인식할 수 없습니다. 파일이 SRT, ASS, SSA, VTT, SBV 또는 LRC 형식인지 확인하세요.",
     "noFileUploaded": "자막 파일을 먼저 업로드하세요.",
     "noSourceText": "자막 파일을 업로드하거나 텍스트를 붙여넣으세요.",
     "noExtractedText": "자막 내용이 추출되지 않았습니다. 파일 형식을 확인하세요.",
@@ -259,6 +259,7 @@
     "reviewColTarget": "번역",
     "reviewApplyDownload": "적용 후 다운로드",
     "reviewDownloaded": "검토된 자막을 다운로드했습니다",
+    "reviewApplyFirst": "검토 수정 사항이 아직 적용되지 않았습니다. 먼저 “적용 후 다운로드”를 클릭하세요.",
     "assStyleButton": "ASS 스타일",
     "assStyleTooltip": "이중 언어 ASS 자막의 글꼴, 크기, 색상, 위치 사용자 지정",
     "assNativeModeSource": "원본 스타일 유지",
@@ -387,13 +388,13 @@
   "tools": {
     "subtitleTranslator": {
       "title": "자막 번역기",
-      "description": "SRT, ASS, VTT, SBV, LRC 자막 일괄 번역, 120개 이상 언어 지원",
+      "description": "SRT, ASS, SSA, VTT, SBV, LRC 자막 일괄 번역, 120개 이상 언어 지원",
       "metaTitle": "자막 번역기 - SRT/ASS/VTT/SBV/LRC 일괄 AI 번역 및 이중 언어 자막 생성",
-      "metaDescription": "AI 자막 번역기, SRT/ASS/VTT/SBV/LRC 일괄 변환, DeepSeek/Claude/GPT 30+ 엔진, 타임코드 유지 이중 자막.",
+      "metaDescription": "AI 자막 번역기, SRT/ASS/SSA/VTT/SBV/LRC 일괄 변환, DeepSeek/Claude/GPT 30+ 엔진, 타임코드 유지 이중 자막.",
       "faq": [
         {
-          "q": "어떤 자막 형식을 지원하나요? SRT, ASS, VTT, SBV, LRC 모두 번역할 수 있나요?",
-          "a": "SRT, ASS, VTT, SBV, LRC 다섯 가지 형식을 지원합니다. SRT/VTT는 YouTube, HTML5 플레이어, 크리에이터 대시보드에 적합(YouTube 자막은 yt-dlp로 내보내기); ASS/SSA는 Aegisub와 애니메이션 자막 팀용으로, 행 시작 위치 태그(\\\\an8 등)는 번역 후 자동 복원; SBV는 YouTube 스튜디오 자막 편집기의 기본 내보내기 형식; LRC는 음악 가사 파일용. 파일 인코딩(UTF-8/UTF-16/GBK/Shift-JIS)은 jschardet으로 자동 감지. 복잡한 ASS 인라인 효과 태그(색상, 애니메이션, 가라오케)는 번역 중 단순화됩니다."
+          "q": "어떤 자막 형식을 지원하나요? SRT, ASS, SSA, VTT, SBV, LRC 모두 번역할 수 있나요?",
+          "a": "SRT, ASS, SSA, VTT, SBV, LRC 여섯 가지 형식을 지원합니다. SRT/VTT는 YouTube, HTML5 플레이어, 크리에이터 대시보드에 적합(YouTube 자막은 yt-dlp로 내보내기); ASS/SSA는 Aegisub와 애니메이션 자막 팀용으로, 행 시작 위치 태그(\\\\an8 등)는 번역 후 자동 복원; SBV는 YouTube 스튜디오 자막 편집기의 기본 내보내기 형식; LRC는 음악 가사 파일용. 파일 인코딩(UTF-8/UTF-16/GBK/Shift-JIS)은 jschardet으로 자동 감지. 복잡한 ASS 인라인 효과 태그(색상, 애니메이션, 가라오케)는 번역 중 단순화됩니다."
         },
         {
           "q": "자막 번역은 기계 번역과 AI 번역 중 무엇을 쓸까요? 어떤 게 품질이 좋고 어떤 게 저렴한가요?",
@@ -425,11 +426,11 @@
         },
         {
           "q": "자막 번역이 서버에 업로드되나요? 개인정보 보호는 안전한가요?",
-          "a": "완전 프론트엔드 처리: 자막 파일 읽기, 파싱, 번역 요청이 모두 브라우저 내에서 완료되며 원문은 당사 서버에 저장되지 않습니다. LLM 엔진 요청은 사용자의 브라우저에서 직접 구성된 API 엔드포인트(OpenAI, DeepSeek 등)로 전송되며 API Key는 로컬 localStorage에만 저장됩니다. 번역 캐시는 브라우저 IndexedDB를 사용하며 페이지를 닫아도 유지되어 다음에 동일한 내용을 번역하면 캐시가 적중됩니다. 오픈소스 코드는 GitHub에서 검토 가능합니다(rockbenben/subtitle-translator)."
+          "a": "완전 프론트엔드 처리: 자막 파일 읽기, 파싱, 번역 요청이 모두 브라우저 내에서 완료되며 원문은 당사 서버에 저장되지 않습니다. LLM 엔진 요청은 사용자의 브라우저에서 직접 구성된 API 엔드포인트(OpenAI, DeepSeek 등)로 전송되며 API Key는 로컬 localStorage에만 저장됩니다. 번역 캐시는 브라우저 IndexedDB를 사용하며 페이지를 닫아도 유지되어 다음에 동일한 내용을 번역하면 캐시가 적중됩니다."
         }
       ],
       "features": [
-        "SRT, ASS, VTT, SBV, LRC 자막 형식 지원, ASS 위치 태그(\\\\an8 등) 번역 후 유지",
+        "SRT, ASS, SSA, VTT, SBV, LRC 자막 형식 지원, ASS 위치 태그(\\\\an8 등) 번역 후 유지",
         "타임코드 보존 — 텍스트만 번역, 원본 타이밍 유지",
         "UTF-8/UTF-16/EUC-KR 인코딩 자동 감지",
         "이중 언어 번역 위치: 위(학습) 또는 아래(시청)",
@@ -499,7 +500,7 @@
     },
     "dataParserFlare": {
       "title": "Flare 북마크 변환",
-      "description": "브라우저 북마크와 Flare 형식 상호 변환"
+      "description": "북마크 HTML을 Flare YAML로 변환 (평면화)"
     },
     "dataParserImgPrompt": {
       "title": "IMGPrompt 생성기",

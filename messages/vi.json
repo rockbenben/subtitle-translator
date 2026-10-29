@@ -248,7 +248,7 @@
     "bilingualFormatTooltip": "ASS: định kiểu phông chữ/màu sắc riêng cho bản gốc và bản dịch. SRT: văn bản thuần, cả hai dòng xếp chồng trong cùng một cue.",
     "translationFirst": "Dịch ở trên",
     "originalFirst": "Dịch ở dưới",
-    "unsupportedSub": "Định dạng không được nhận dạng. Đảm bảo tệp là SRT, ASS, VTT, SBV hoặc LRC.",
+    "unsupportedSub": "Định dạng không được nhận dạng. Đảm bảo tệp là SRT, ASS, SSA, VTT, SBV hoặc LRC.",
     "noFileUploaded": "Vui lòng tải tệp phụ đề lên trước.",
     "noSourceText": "Vui lòng tải tệp hoặc dán văn bản.",
     "noExtractedText": "Không trích xuất được nội dung, kiểm tra định dạng tệp.",
@@ -259,6 +259,7 @@
     "reviewColTarget": "Bản dịch",
     "reviewApplyDownload": "Áp dụng & tải",
     "reviewDownloaded": "Đã tải phụ đề đã soát",
+    "reviewApplyFirst": "Các chỉnh sửa chưa được áp dụng. Hãy nhấn “Áp dụng & tải” trước.",
     "assStyleButton": "Kiểu ASS",
     "assStyleTooltip": "Tùy chỉnh phông chữ, kích cỡ, màu sắc và vị trí phụ đề ASS song ngữ",
     "assNativeModeSource": "Giữ kiểu nguồn",
@@ -387,13 +388,13 @@
   "tools": {
     "subtitleTranslator": {
       "title": "Trình Dịch Phụ Đề",
-      "description": "Dịch hàng loạt SRT, ASS, VTT, SBV, LRC. 120+ ngôn ngữ.",
+      "description": "Dịch hàng loạt SRT, ASS, SSA, VTT, SBV, LRC. 120+ ngôn ngữ.",
       "metaTitle": "Dịch Phụ Đề Miễn Phí | Hàng Loạt SRT/VTT/ASS + Song Ngữ",
-      "metaDescription": "Trình dịch phụ đề SRT, ASS, VTT, SBV, LRC. 30+ engine: DeepSeek, Claude, GPT, DeepL, Google. 120+ ngôn ngữ, timecode, song ngữ.",
+      "metaDescription": "Trình dịch phụ đề SRT, ASS, SSA, VTT, SBV, LRC. 30+ engine: DeepSeek, Claude, GPT, DeepL, Google. 120+ ngôn ngữ, timecode, song ngữ.",
       "faq": [
         {
-          "q": "Hỗ trợ những định dạng phụ đề nào? SRT, ASS, VTT, SBV và LRC đều dịch được chứ?",
-          "a": "Hỗ trợ năm định dạng: SRT, ASS, VTT, SBV và LRC. SRT/VTT phù hợp YouTube, trình phát HTML5 và bảng điều khiển nhà sáng tạo (xuất phụ đề YouTube qua yt-dlp); ASS/SSA phù hợp Aegisub và fansub anime, thẻ vị trí đầu dòng (\\\\an8) được khôi phục sau khi dịch; SBV là định dạng xuất gốc của trình chỉnh sửa phụ đề YouTube Studio; LRC phù hợp tệp lời bài hát. Mã hóa tệp (UTF-8 / UTF-16 / GBK / Shift-JIS) được tự động phát hiện qua jschardet. Các thẻ hiệu ứng inline ASS phức tạp (màu sắc, hoạt ảnh, karaoke) được đơn giản hóa trong quá trình dịch."
+          "q": "Hỗ trợ những định dạng phụ đề nào? SRT, ASS, SSA, VTT, SBV và LRC đều dịch được chứ?",
+          "a": "Hỗ trợ sáu định dạng: SRT, ASS, SSA, VTT, SBV và LRC. SRT/VTT phù hợp YouTube, trình phát HTML5 và bảng điều khiển nhà sáng tạo (xuất phụ đề YouTube qua yt-dlp); ASS/SSA phù hợp Aegisub và fansub anime, thẻ vị trí đầu dòng (\\\\an8) được khôi phục sau khi dịch; SBV là định dạng xuất gốc của trình chỉnh sửa phụ đề YouTube Studio; LRC phù hợp tệp lời bài hát. Mã hóa tệp (UTF-8 / UTF-16 / GBK / Shift-JIS) được tự động phát hiện qua jschardet. Các thẻ hiệu ứng inline ASS phức tạp (màu sắc, hoạt ảnh, karaoke) được đơn giản hóa trong quá trình dịch."
         },
         {
           "q": "Phụ đề: dùng dịch máy hay dịch AI/LLM? Cái nào chất lượng tốt nhất, cái nào rẻ nhất?",
@@ -425,11 +426,11 @@
         },
         {
           "q": "Tệp phụ đề có được tải lên máy chủ không? Có riêng tư và an toàn không?",
-          "a": "Hoàn toàn phía client: đọc tệp phụ đề, phân tích cú pháp và yêu cầu dịch đều diễn ra trong trình duyệt của bạn — nội dung gốc không bao giờ đi qua máy chủ của chúng tôi. Yêu cầu engine LLM đi thẳng từ trình duyệt đến endpoint API bạn đã cấu hình (OpenAI, DeepSeek, v.v.), và API Key chỉ lưu trong localStorage cục bộ. Bộ nhớ đệm dịch dùng IndexedDB của trình duyệt và duy trì giữa các phiên. Mã nguồn mở trên GitHub (rockbenben/subtitle-translator) để tự host hoặc kiểm tra."
+          "a": "Hoàn toàn phía client: đọc tệp phụ đề, phân tích cú pháp và yêu cầu dịch đều diễn ra trong trình duyệt của bạn — nội dung gốc không bao giờ đi qua máy chủ của chúng tôi. Yêu cầu engine LLM đi thẳng từ trình duyệt đến endpoint API bạn đã cấu hình (OpenAI, DeepSeek, v.v.), và API Key chỉ lưu trong localStorage cục bộ. Bộ nhớ đệm dịch dùng IndexedDB của trình duyệt và duy trì giữa các phiên."
         }
       ],
       "features": [
-        "Hỗ trợ SRT, ASS, VTT, SBV, LRC, thẻ vị trí ASS (\\\\an8 v.v.) được bảo toàn",
+        "Hỗ trợ SRT, ASS, SSA, VTT, SBV, LRC, thẻ vị trí ASS (\\\\an8 v.v.) được bảo toàn",
         "Timecode không đổi — chỉ dịch văn bản, thời gian gốc được bảo toàn",
         "Tự phát hiện mã hóa UTF-8/UTF-16/GBK",
         "Vị trí phụ đề song ngữ: trên (học) hoặc dưới (xem)",
@@ -499,7 +500,7 @@
     },
     "dataParserFlare": {
       "title": "Trình chuyển đổi Flare",
-      "description": "Chuyển đổi bookmark trình duyệt và định dạng Flare"
+      "description": "Bookmark HTML sang Flare YAML (làm phẳng)"
     },
     "dataParserImgPrompt": {
       "title": "Trình tạo dữ liệu IMGPrompt",

@@ -96,6 +96,18 @@ type BaseProvider = {
    */
   endpoints?: Array<{ label: string; url: string; docs?: string }>;
   /**
+   * 【手填型号】的档位表：用户自己敲的 SKU 不在 models[] 里，只能按这家厂商的
+   * 通用枚举来钳。绝大多数厂商通用三档(low/medium/high)就够，所以不声明；
+   * 有一家必须收窄 —— zhipu 的 GLM 系官方枚举只有 low/high（外加 max），
+   * 通用那份里的 medium 发出去是每请求 400（见 zhipu 条目注释）。
+   *
+   * ⚠ 这条是 provider 级兜底，而它以前只存在于【线格式一侧】（llm.ts 里的行内
+   *   字面量）—— 界面拿不到，于是界面显示 Medium、线上发 low：用户拨的档与实际
+   *   跑的档不是一档。数据挪到这儿之后，线格式与界面下拉读的是同一张表
+   *   （见 resolveLevelsTable）。
+   */
+  unlistedEffortLevels?: ReadonlyArray<EffortLevel>;
+  /**
    * Curated quick-pick model dropdown surfaced on the model input
    * (TranslationSettings → AutoComplete). Users can still type any value —
    * the list is a convenience, not a whitelist. Provider's `defaults.model`
@@ -116,6 +128,19 @@ type BaseProvider = {
   models?: ReadonlyArray<ProviderModel>;
 };
 
+/**
+ * 厂商逐型号表里的【合法档位】。比 `ReasoningEffort`(low|medium|high) 多一档 minimal ——
+ * 官方表里真的有它(gemini-3.5-flash-lite 的 thinkingLevels 就是
+ * ["minimal","low","medium","high"])，但【我们界面发不出】minimal(存档的
+ * ThinkingDirective 只有 low/medium/high/auto)。
+ *
+ * ⚠ 两个集合必须分开命名，否则就会出现「用 `as ReasoningEffort` 把 minimal 硬说成
+ * 我们的档位」那种空口断言：线上发 minimal 合法(厂商表里有)，但界面那个下拉
+ * 没有 minimal 这一项 —— 显示值与线上值就会分叉。厂商档位=EffortLevel，
+ * 我们发得出的=ReasoningEffort，钳位在两者的交集里做。
+ */
+export type EffortLevel = "minimal" | "low" | "medium" | "high";
+
 /** 一个可选模型条目。抽成具名类型:getProviderModels 的返回类型要带上 thinkingLevels。 */
 export type ProviderModel = {
   label: string;
@@ -127,7 +152,21 @@ export type ProviderModel = {
    * 同时是 canDisableThinking 的判据。发一个该 SKU 不收的档位是确定性 400。
    * 其余厂商要么全系同档、要么有真正的关闭值，不用声明。解析见 pickThinkingLevel。
    */
-  thinkingLevels?: ReadonlyArray<"minimal" | "low" | "medium" | "high">;
+  thinkingLevels?: ReadonlyArray<EffortLevel>;
+  /**
+   * 该 SKU 收哪些 effort（【不含】none —— 那是关闭值，由 thinkingWire 的 off 槽表达）。
+   * 与 thinkingLevels 分开，是因为那两件事要分开说：
+   *   · thinkingLevels = 「厂商没有关闭开关，最低档就是最关」（gemini / grok / groq /
+   *     zhipu / kimi-k3 / OpenRouter 的 mandatory 型号）—— 它同时是
+   *     canDisableThinking 的判据。
+   *   · effortLevels  = 「关得掉，但档位受限」（OpenRouter 的 deepseek-v4.1-flash
+   *     官方收 max/high/low/none，【没有 medium】；hy3 收 high/low/none；
+   *     nemotron-3-super 收 medium/low/none；kimi-k3 收 max/high/low/none）。
+   *     这几支声明了 effortLevels，界面就只列它真有的档位 —— 用户不会拨到一个
+   *     官方没有的 Medium（网关虽会「就近映射」，但那是【降级】不是【这一档】）。
+   * ⚠ 两者都不声明 = 该 SKU 收全部档位（走通用回落集合）。
+   */
+  effortLevels?: ReadonlyArray<EffortLevel>;
 };
 
 /** OpenAI-compatible providers driven by the shared chat-completions factory. */
@@ -226,6 +265,8 @@ export type OpenAICompatProviderSpec = BaseProvider & {
 // 判"id 是否还在被服务"最硬的一手，比读文档措辞强（2026-10-13 一轮里它直接证伪/证实了
 // 7 家：deepseek 2 条、groq 11、mimo 9、siliconflow 98、dashscope(qwen+qwen-mt) 175、
 // gemini 62、openrouter 459 —— 全部在册命中，0 个死 id）。
+// ⚠ 2026-10-21 复核:openrouter 的全量目录已涨到 **468 条**(合并前那次实测是 459),
+//   存量 id 仍全部命中;数字只说明"当时抽到多少条",别当常数。
 // key 从哪来：维护者本机浏览器里本站的 `translation-configs`（localStorage）。取法是
 // 让页面把那份 JSON POST 到 127.0.0.1 的一次性本地端口再落进 gitignored 的临时文件 ——
 // 【key 值全程不进对话、不进命令行、不进 commit】，用完即删。别再图省事把 key 打印出来。
@@ -340,7 +381,11 @@ export type ProviderSpec = OpenAICompatProviderSpec | CustomProviderSpec;
 // 跑起来”—— 而那正是这条路的第一道坑。链接 2026-08-22 实测。
 const LM_STUDIO = { label: "LM Studio", url: "http://127.0.0.1:1234/v1/chat/completions", docs: "https://lmstudio.ai/docs/developer/openai-compat" } as const;
 const OLLAMA = { label: "Ollama", url: "http://127.0.0.1:11434/v1/chat/completions", docs: "https://docs.ollama.com/api/openai-compatibility" } as const;
-const LLAMA_CPP = { label: "llama.cpp", url: "http://127.0.0.1:8080/v1/chat/completions", docs: "https://github.com/ggml-org/llama.cpp/tree/master/tools/server" } as const;
+const LLAMA_CPP = { label: "llama.cpp", url: "http://127.0.0.1:9931/v1/chat/completions", docs: "https://github.com/ggml-org/llama.cpp/tree/master/tools/server" } as const;
+// ⚠ 2026-10-21 复核更正:端口 8080 → 9931。上游默认端口已是 9931(源码 common/common.h
+//   `port = 9931`,README 的 --port 选项表同);8080 只出现在官方 Docker 示例里
+//   (docker run -p 8080:8080 … --port 8080)—— 照芯片点进去 = 连接被拒。
+//   ⚠ 这张表被 llm / translategemma / milmmt 三家共用,改一处三处生效。
 const KOBOLDCPP = { label: "koboldcpp", url: "http://127.0.0.1:5001/v1/chat/completions", docs: "https://github.com/LostRuins/koboldcpp/wiki" } as const;
 
 /** Custom (llm) —— 走 /v1/chat/completions，四个本地运行时都合适。 */
@@ -387,9 +432,12 @@ export const PROVIDERS = {
     //
     // ⚠ 这是本站【默认】服务，开箱就走它 ⇒ 改这条前要实测一次，不能只读文档。
     // 实测状态：两条芯片都通 —— translate-pa 的 /translateHtml 直接回译文（硬编码的
-    // 公共 X-Goog-API-Key 仍在放行）、`sl=auto` 照走检测语言；legacy 芯片的
-    // translate_a/single?client=gtx 也通。两个【已知形态缺陷】：正文 emoji 会被换成
-    // `？？`（与 Edge 免费口同一条降级），`<b>` 以 \u003c 形式原样带回。
+    // 公共 X-Goog-API-Key 仍在放行）、`sl=auto` 照回检测语言；legacy 芯片的
+    // translate_a/single?client=gtx 也通（那堵墙按 IP 信誉放行，不是所有人都撞得上）。
+    // ⚠ 【两个网关的形态差不是一回事】：正文里的 HTML 标签在默认的 translate-pa 上【被当
+    // 标记吞掉】（`This is <b>bold</b> text` → 「这是粗体文本」，标签没了、译文照给），
+    // legacy 却原样带回（`\u003cb\u003e` 形态）。emoji 两支都原样保留（16 个语种实测，旗帜、
+    // 肤色修饰符、ZWJ 连字族都没丢）—— 「emoji 会被换成 `？？`」那种降级复现不出，别再照它下结论。
     defaults: { url: "https://translate-pa.googleapis.com/v1/translateHtml", chunkSize: 5000, delayTime: 200, batchSize: 100 },
     endpoints: [
       { label: "Google translate-pa", url: "https://translate-pa.googleapis.com/v1/translateHtml" },
@@ -431,8 +479,13 @@ export const PROVIDERS = {
     // ⚠ 上面那个 docs 域名【只是文档站】，不提供公共实例（根路径 200 是文档，
     // GET /translate 404），别把它当可用 URL。契约面 = POST /translate {text, target_lang,
     // source_lang} → {data: string}，与 services/traditional.ts 的实现一致；内置兜底 URL
-    // (services/shared.ts 的 THIRD_PARTY_ENDPOINTS.deeplx) 实调 200 拿到译文。该兜底
-    // 实例仍回 alternatives 数组，而文档说 v1.2.0 起恒为 null —— 我们只读 data，不受影响。
+    // (services/shared.ts 的 THIRD_PARTY_ENDPOINTS.deeplx) 就只有这一个 `/translate` 面 ——
+    // 同机的 /jsonrpc 回 404，别照上游文档去探 JSONRPC 形状。
+    // ⚠ 这台是【所有人共用一个出口 IP】的免费实例，DeepL 按 IP 限流：实测常态是
+    // 429 `{code:429,msg:"…upstream IP has been temporarily rate-limited by DeepL"}`（string /
+    // array / 缺 source_lang / 小写码四种形状同回），夹杂 Cloudflare 的 500 页。那是这台实例
+    // 的固有抖动，既不代表镜像挂了、也不代表我们发错形状；429 由共享冷却闸接住。
+    // 该兜底实例仍回 alternatives 数组，而文档说 v1.2.0 起恒为 null —— 我们只读 data，不受影响。
     defaults: { url: "", chunkSize: 1000, delayTime: 200, batchSize: 10 },
   },
   azure: {
@@ -497,7 +550,7 @@ export const PROVIDERS = {
     // so LM Studio's UI default (typically 0.7-1.0) doesn't bleed in.
     //
     // `defaults.url` stays empty intentionally — same as Custom (OpenAI-compat).
-    // Users self-host on heterogeneous runtimes (LM Studio :1234, llama.cpp :8080,
+    // Users self-host on heterogeneous runtimes (LM Studio :1234, llama.cpp :9931,
     // koboldcpp :5001 —— 不含 Ollama，见 RAW_PROMPT_RUNTIME_ENDPOINTS); shipping any
     // one as the default would mislead users on the others. Empty default
     // → status starts as "needs-config" and forces
@@ -533,7 +586,7 @@ export const PROVIDERS = {
     label: "MiLMMT",
     docs: "https://huggingface.co/xiaomi-research/MiLMMT-46-12B-v1.0",
     // URL_IS_PRIMARY_CRED, empty by default — identical reasoning to
-    // translategemma: users self-host on LM Studio :1234 / llama.cpp :8080 /
+    // translategemma: users self-host on LM Studio :1234 / llama.cpp :9931 /
     // koboldcpp :5001 (不含 Ollama —— 见 RAW_PROMPT_RUNTIME_ENDPOINTS), and shipping
     // any one as the default would mislead everyone on the others.
     //
@@ -571,7 +624,19 @@ export const PROVIDERS = {
     // 旧模型名 deepseek-v4-flash 仍可调用，但已下线并路由到 V4.1 Flash；
     // deepseek-v4-pro 曾临时全部路由到 V4.1 Flash，该临时路由【已结束】——
     // 现直接服务 Pro 档，不再是挂着 Pro 名跑 Flash。
-    // 各模型均支持 thinking / non-thinking 两种模式 (docs.deepseek.com: "supporting both modes")。
+    // 各模型均支持 thinking / non-thinking 两种模式，【且思考是默认开的】
+    // (api-docs.deepseek.com/quick_start/pricing 逐字 "Supports both non-thinking and
+    // thinking (default) modes") ⇒ 关闭态必须【显式】发 thinking:{type:"disabled"}，
+    // 省略就等于让它默认思考（照常推理照常计费）。
+    // ⚠ 2026-10-21 复核更正:旧注释引的 docs.deepseek.com 这个域名不存在(实测不可解析),
+    //   真实域名是 api-docs.deepseek.com。
+    // ⚠ 官方 effort 枚举只有 low/high/max(无 medium),且官方映射表把 medium→high、
+    //   minimal→low、xhigh→high —— 将来若把 Medium 摆到界面上,它会被静默变成 high
+    //   (看着分级实则同档),那才是真坑 ⇒ 所以我们恒发 high,不摆分级。
+    // ⚠ 思考态下 temperature/presence_penalty/frequency_penalty 不生效(官方:"设置参数
+    //   不会报错,但也不会生效"),defaultTemperature 0.7 在思考态被忽略;非思考态正常。
+    // ⚠ top_p 逐型号不同:deepseek-flash 仅思考模式生效且有效范围 0.95–1.0(低于 0.95 按
+    //   0.95 处理);非思考模式下该参数恒为 1.0,传入的值被忽略。
     // ⚠ 换默认或加档前先拉 GET /v1/models（带 key）：它就回 deepseek-flash 与
     // deepseek-v4-pro 两条，与在册清单逐字一致，是这条清单最硬的一手——比读文档措辞
     // 强，别再从"旧名是否还能调"去推断。
@@ -598,10 +663,14 @@ export const PROVIDERS = {
     // 当前主推 GPT-6 家族三档：astra(旗舰) / sol(复杂工作) / luna(省钱,
     // 官方原文点名 cost-sensitive/high-volume → 翻译默认)。Featured 三档仍是
     // astra / 6.1-sol / luna。
-    // ⚠ gpt-6-sol 在【完整目录】里（"Built to power complex coding and agentic
-    // workflows"，且页内自陈「See GPT-6.1 Sol for the newer Sol model」）——
-    // 曾据总览的 Featured 区判它「已滚到 6.1-sol」而删掉，那是【看漏了 Featured 与
-    // 全目录的区别】，属于误删。判在售与否要看完整目录，别只看首页那个三档。
+    // ⚠ gpt-6-sol 已撤(2026-10-20):它仍在官方【完整目录】里("Built to power complex
+    // coding and agentic workflows")—— 当年据总览的 Featured 区判它「已滚到 6.1-sol」
+    // 而删掉,是【看漏了 Featured 与全目录的区别】,属于误删,所以当时又捡了回来。
+    // 这次撤它换的是【另一个理由】:官方逐字「See GPT-6.1 Sol for the newer Sol model」,
+    // 两者定价完全相同(都 $2/$10),而均衡档的官方定位已经给了 6.1 Sol
+    // ("Choose GPT-6.1 Sol to balance intelligence and cost")⇒ 「6 家族没有 terra 变体、
+    // 均衡档全靠 sol」这个留存理由已不成立,按本仓「同族旧代 / 同价旧代不收」撤。
+    //   判在售与否依然要看完整目录(它没退役),但【在售 ≠ 该进下拉】是另一条判据。
     // GPT-5.6 家族 (sol/terra/luna) 降为上一代，删出清单（未停用，手填仍可调;
     // 6 家族没有 terra 变体，均衡档由 sol 承担）。更早的 5.5 / 5.4-mini 同判删除。
     // ⚠ reasoning.effort 的取值集合【按型号不同】,官方原文 "Supported values are
@@ -622,9 +691,8 @@ export const PROVIDERS = {
       // alias，别名会随版本迁移，写死变体 ID 更稳。
       { label: "GPT-6 Astra", value: "gpt-6-astra", thinking: true, thinkingLevels: ["low", "medium", "high"] },
       { label: "GPT-6.1 Sol", value: "gpt-6.1-sol", thinking: true, thinkingLevels: ["low", "medium", "high"] },
-      // sol 是上一代但仍在官方全目录里、收 none(无需 thinkingLevels) —— 留着的
-      // 理由是 sol 档 6 家族没有 terra 变体,均衡档全靠它。
-      { label: "GPT-6 Sol", value: "gpt-6-sol", thinking: true },
+      // sol 的上一代已撤(理由见上面那段:同价同族旧代,均衡档归 6.1 Sol);它仍在官方
+      // 全目录里,手填仍可调。
       { label: "GPT-6 Luna", value: "gpt-6-luna", thinking: true },
     ],
   },
@@ -701,7 +769,7 @@ export const PROVIDERS = {
     kind: "custom",
     category: "llm",
     label: "Gemini",
-    docs: "https://ai.google.dev/gemini-api/docs/text-generation",
+    docs: "https://ai.google.dev/api/generate-content",
     apiKeyUrl: "https://aistudio.google.com/app/api-keys",
     // 无 temperature 字段 (同 translategemma 先例):Gemini 3.x 官方强烈建议
     // 保持默认值 1.0(<1.0 可能导致循环输出/推理退化，ai.google.dev
@@ -715,11 +783,13 @@ export const PROVIDERS = {
     // `generationConfig.thinkingConfig.thinkingLevel` 控制，默认开启且【没有关闭值】,
     // off 时传该 SKU 收得下的最低档;档位集合按 SKU 不同，就声明在下方每行的
     // thinkingLevels 里，解析统一走 pickThinkingLevel。
-    // 默认 3.8-flash:与 3.7 / 3.6 / 3.5-flash 同价($0.75/$3.75)，取最新那代；
-    // 3.5-flash 已被官方页降称 "previous-generation Flash model"。
+    // 默认 3.8-flash:与 3.7 / 3.6 同价($0.75/$3.75)，取最新那代。
+    // ⚠ 2026-10-21 复核:官方 models 页现在把 "previous-generation Flash model" 这句
+    //   标在 **3.6-flash** 身上(3.5-flash 已不在 models 页上,docs/deprecations 列它
+    //   "gemini-3.5-flash | May 19, 2026 | N/A | gemini-3.6-flash" ⇒ 路由到 3.6)。
     // thinkingLevels 抄自官方【逐模型表】(ai.google.dev/gemini-api/docs/thinking)，
-    // 在册三条的档位集合逐字未变：3.8-flash=low/medium/high、3.5-flash-lite 多一档 minimal、
-    // 3.1-pro-preview=low/medium/high，由低到高。加 SKU 时对着那张表补这一行 —— 别再用
+    // 在册三条的档位集合逐字未变：4-argon=low/medium/high、3.8-flash=low/medium/high、
+    // 3.5-flash-lite 多一档 minimal，由低到高。加 SKU 时对着那张表补这一行 —— 别再用
     // "名字里有 -pro 就只收 low/high" 这类正则近似：官方表里 3-pro-preview 确实
     // 只收 low/high,但 3.1-pro-preview 收 low/medium/high,按名字归并会把用户
     // 选的 Medium 静默降级成 Low(与 grok 全线钳 medium 同一类 bug)。
@@ -732,15 +802,21 @@ export const PROVIDERS = {
     // 表还顺手确认了 Default Thinking 全是 "On(...)"（没有关闭值这条规则的依据）。
     // ⚠ 3.8 一代【没有 pro】：docs/models 与 docs/thinking 两页里 `gemini-3.8-pro`
     // 均 0 命中，实拉 GET /v1beta/models（62 条）也证实 3.8 线只有 flash / flash-tts /
-    // flash-lite-tts / live / live-extended-thinking ⇒ 3.1-pro-preview 是唯一在册 pro。
-    // 别凭"应该出 3.8-pro 了"往目录里加死 id。
+    // flash-lite-tts / live / live-extended-thinking ⇒ 别凭"应该出 3.8-pro 了"往目录里
+    // 加死 id。
+    // ⚠ 2026-10-20：官方当前旗舰已是 **Gemini 4 Argon**(`gemini-4-argon`，官方
+    //   docs/models 标 "New Stable"、「Our flagship reasoning model with a unified 1M
+    //   context window」)，thinking 逐模型表里的档位是 low/medium/high、默认 On (medium)
+    //   ⇒ 补进清单。默认型号仍是 3.8-flash:它是"最聪明的 Flash"、$0.75/$3.75(Argon
+    //   $2/$10),字幕是高频短请求,性价比在那头。
+    // ⚠ 3.1-pro-preview 已撤:官方 docs/deprecations 把它列在 **Preview models** 分区
+    //   (非 retired),按「preview 阶段的不收录」不收;它的位置由 Argon 接管。
     models: [
-      // 3.7/3.6/3.5-flash 与 3.8 同价（$0.75/$3.75），留着只是让下拉变长 —— 只留 3.8。
       // ⚠ 3.8-flash 官方档位【恰好】= low/medium/high（docs/thinking 的
-      //   "Model / Default / Thinking Levels Supported" 表，与在册三条一致，不是"少给一档"的窄集）。
+      //   "Model / Default / Thinking Levels Supported" 表，不是"少给一档"的窄集）。
       //   别把相邻 3.6-flash / 3.5-flash 的 minimal 档抄过来 —— 发它不收的档是确定性 400
       //   （见 ProviderModel.thinkingLevels 的注释）。
-      { label: "Gemini 3.1 Pro (Preview)", value: "gemini-3.1-pro-preview", thinking: true, thinkingLevels: ["low", "medium", "high"] },
+      { label: "Gemini 4 Argon", value: "gemini-4-argon", thinking: true, thinkingLevels: ["low", "medium", "high"] },
       { label: "Gemini 3.8 Flash", value: "gemini-3.8-flash", thinking: true, thinkingLevels: ["low", "medium", "high"] },
       { label: "Gemini 3.5 Flash Lite", value: "gemini-3.5-flash-lite", thinking: true, thinkingLevels: ["minimal", "low", "medium", "high"] },
     ],
@@ -759,6 +835,11 @@ export const PROVIDERS = {
       { label: "Mainland (CN)", url: "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions" },
       { label: "International", url: "https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions" },
       { label: "US", url: "https://dashscope-us.aliyuncs.com/compatible-mode/v1/chat/completions" },
+      // 中国香港(2026-10-20 补):官方《Base URL 总览》「Dashscope 域名」表第四行,
+      // 同样支持跨业务空间 key。官方另有「业务空间专属域名」({WorkspaceId}.<region>.maas.
+      // aliyuncs.com,推荐生产用,含东京/法兰克福)与「试用域名」—— 前者要 WorkspaceId,
+      // 做不成通用快捷项,故不收。
+      { label: "Hong Kong", url: "https://cn-hongkong.dashscope.aliyuncs.com/compatible-mode/v1/chat/completions" },
     ],
     // https://help.aliyun.com/zh/model-studio/models (「选择模型」推荐页的三个头牌)
     // 全系混合思考模式、`enable_thinking` 可切换，且【默认开启思考】—— 所以在册各条
@@ -766,7 +847,9 @@ export const PROVIDERS = {
     // SERVER_DEFAULT_THINKING_ON 里)。
     // ⚠ 官方坑：思考模式下 max_tokens 有效范围收窄为 [1, 32768],超出直接 400。
     //
-    // 在列两款即「选择模型」推荐页头牌。目录实拉（175 条）里 3.8 线是
+    // 「选择模型」推荐页的文本生成表列【三支】(3.8-max / 3.7-plus / 3.8-flash),我们只收
+    // 3.8 线 —— 3.7-plus 是上一代,按「老型号不留」不收(同 3.8-max 之外的旧代)。
+    // 目录实拉（175 条）里 3.8 线是
     // max / max-0902 / flash / 27b / 2.4t-a95b / omni-flash(+realtime) / livetranslate-flash-realtime
     // —— 后三类是多模态/实时口，不是这条纯文本管线要的头牌，按现有判据不收。
     // 换代史一句话：3.7-max
@@ -797,6 +880,11 @@ export const PROVIDERS = {
     // 关，wire 上发的就是 thinking:{type:"disabled"}）。标 Min 而实际关掉了不骗人，
     // 标 Off 却关不掉才是计费的谎，所以这个方向可以接受。
     defaultModel: "kimi-k2.6",
+    // ⚠ 这一家的思考形态【默认是二元的】：k2.x 用扁平 thinking:{type}（只有开/关，
+    //   档位被丢掉），只有 k3 走顶层 reasoning_effort（真分级，它声明了档位表）。
+    //   档位下拉【按型号】给（2026-10-21 起四个仓同一口径）：k2.6 只给 [On/Off]，
+    //   k3 给 [低/高] —— 摆在 k2.6 面前的那三档，线上 body 完全相同（用户拨 Low
+    //   以为省了 token，实际拿到 K2.x 的默认思考 = 更多），所以那三行是摆设。
     // 无 defaultTemperature:kimi-k2.x 全系 temperature 锁定 (thinking 1.0 /
     // non-thinking 0.6),传其他值直接报错 (platform.kimi.ai 迁移指南原文
     // "any other value will result in an error",官方建议不传)。字段移除 →
@@ -887,8 +975,12 @@ export const PROVIDERS = {
     // 挂封号警告;GLM(/api/coding/paas/v4)、Kimi(api.kimi.com/coding)、火山
     // Agent Plan 等其他"按工作流卖额度"的端点仍不收，等有下游消费方时照此办理。
     endpoints: undefined,
-    // 清单以上方 docs 链接 (官方模型列表页) 的【推荐模型】栏为准 —— 该站对脚本抓取
-    // 不返回内容，必须用浏览器打开。
+    // 清单以上方 docs 链接 (官方模型列表页) 的【推荐模型】栏为准 —— 该站页面本体是 SPA，
+    // 脚本抓取只回外壳。
+    // ⚠ 2026-10-21 复核发现：不必开浏览器，官方有 JSON 取数口 ——
+    //   https://docs.volcengine.com/api/doc/getDocDetail?DocumentID=<id> 的
+    //   Result.MDContent 直接给纯 markdown（model-list=1330310、deep-thinking=1449737），
+    //   复核走这一条最省。
     // 官方把模型分「推荐 / 往期 / 即将下线」三层，我们只收【推荐】那一层：
     // 2.0 系列 (pro-260215、lite-260428 等) 已整体降为往期，同 zhipu 只留 5.x 的
     // 处置 —— 老型号对翻译没有不可替代价值，留着只是让下拉更长。
@@ -965,7 +1057,13 @@ export const PROVIDERS = {
     // state never silently burns reasoning tokens.
     // Doc: mimo.mi.com llms.txt → static/docs/api/chat/openai-api.md（逐参数核对：
     // v2.6 全系与 v2.5 同形态、同「default enabled」;thinking 态下 temperature/top_p 被
-    // 强制回默认 —— 与既有「思考态锁定参数」各家先例一致，不改发送逻辑）
+    // 强制回默认 —— 官方逐字「the actual effective values will be forcibly set by the
+    // model to its recommended default values of 1.0 and 0.95」，与既有「思考态锁定参数」
+    // 各家先例一致，不改发送逻辑）
+    // ⚠ 2026-10-21 复核补两条：① Chat API 文档里【没有任何 effort 档位】（effort 只出现在
+    //   Responses API 的示例里，而我们走 Chat API）⇒ 不声明档位表是对的，界面只给 Off/On。
+    //   ② 官方限流：v2.6-pro / v2.6-flash = 最大 RPM 100 / 最大 TPM 10M —— 逐行批量翻译
+    //   比豆包更容易撞 429（豆包那条我们记了限流，这条之前没记）。
     // ⚠ mimo-v2.5 与 mimo-v2.5-pro 已公告 2026-10-21 10:00 (北京) 正式退役 —— 按
     // 「默认不许挂着将死模型」整族换 v2.6 (flash/pro)。v2.5 手填在退役前仍可用
     // （目录实拉印证它确实还在服务）。同代的 pro-ultraspeed 不收：限流栏写
@@ -985,7 +1083,7 @@ export const PROVIDERS = {
     endpoint: "https://open.bigmodel.cn/api/paas/v4/chat/completions",
     defaultModel: "glm-5.3",
     defaultTemperature: 0.7,
-    docs: "https://docs.bigmodel.cn/cn/guide/start/introduction",
+    docs: "https://docs.bigmodel.cn/cn/guide/start/model-overview",
     // 模型总览里三条 Model Code（glm-5.3 / glm-5.3-flash / glm-5.3-flashx）全部在册，
     // 且表里没有 5.4 或 6 ⇒ 5.3 就是最新一代，5.2 及更早仍在售但属旧代（在册零条）。
     // 思考档位/关闭档口径见下方 models 注释。
@@ -1005,12 +1103,21 @@ export const PROVIDERS = {
     // models 处注释。已把 zhipu 移出 BINARY_EFFORT_VENDORS（否则 provider 级二元会把 medium 直接
     // 映射成 high，抹掉官方档位语义）。UI 上没有"真 Off"档（canDisableThinking=false），如实反映它关不掉。
     //
+    // ⚠ unlistedEffortLevels = 【手填型号】的档位表：GLM 系的官方枚举只有 low/high(外加 max)，
+    //   通用三档里的 medium 发出去是每请求 400。以前这条只写在 llm.ts 的行内字面量里
+    //   （线格式知道、界面不知道 ⇒ 界面显示 Medium、线上发 low）—— 现在两边读同一张表。
+    unlistedEffortLevels: ["low", "high"],
+    //
     // 默认 = 旗舰 5.3。原默认 5.2 与它【同价】($1.4/$4.4，OpenRouter
     // 公开价目核对)且更旧，旧代唯一的卖点是「能真正关掉思考」—— 而"能关思考"不构成选它
     // 的理由（思考已是各家的默认形态），故 5.2 删除、默认上移到 5.3。
-    // 5.3-Flash 便宜 15 倍($0.09/$0.30)但官方把它归在【多模态】档（文档路径
-    // /cn/guide/models/vlm/glm-5.3-flash，"原生理解图片视频"）—— 翻译是纯文本任务，
-    // 默认仍取文本旗舰，同 stepfun「3.5-flash 优于 3.7-flash」的判据。
+    // 5.3-Flash 官方价便宜 10 倍（¥0.8/¥2.8 vs 5.3 的 ¥8/¥28 —— 2026-10-20 按官方
+    // 价目表核对；此前这里写的是 OpenRouter 的美元价 $0.09/$0.30 与「15 倍」，两处口径
+    // 都不是官方价，数字与倍数一并更正）。
+    // ⚠ 但「Flash 归在多模态档 ⇒ 纯文本翻译不选它」这条推理【不成立】:Flash 的官方页
+    // 明写「文本参数与 GLM-5.3 保持一致，支持 1M 上下文」⇒ 输入模态是多模态，不等于
+    // 文本能力弱。默认仍取文本旗舰 5.3（旗舰质量），但理由从「多模态档」换成「旗舰 +
+    // 1M 上下文」—— 若哪天按性价比口径重挑，Flash（10× 便宜、文本参数一致）是那时的候选。
     //
     // ⚠ 【只收官方「推荐模型」表的文本款】：4.x 全系、5.2 与降进「全部模型」一般条目的
     // 5.1/5/5-Turbo 都不收（仍在售，要手填照样能填）。GLM-5.3-FlashX 入表时调用侧
@@ -1039,14 +1146,28 @@ export const PROVIDERS = {
     kind: "openai-compat",
     category: "llm",
     label: "MiniMax",
-    endpoint: "https://api.minimaxi.com/v1/chat/completions",
+    // ⚠ 大陆主机 2026-10-20 换成官方文档面:官方大陆站 OpenAPI 的 servers 是
+    //   https://api.minimax.cn(《文本生成》页 base_url 逐字「https://api.minimax.cn/v1」),
+    //   文档域 platform.minimaxi.com 也已 302 到 platform.minimax.cn ⇒ 旧主机
+    //   api.minimaxi.com 是【文档外主机】(实探仍回 401,不是死链)。
+    //   旧主机仍留在 endpoints[] 里(标 legacy):存量配置存的就是它,且内置中转的
+    //   allowlist 逐字匹配(workerParity.test.ts 钉住两边一致)⇒ 撤掉它等于让老用户
+    //   的中转请求吃 400 "Endpoint not allowed for provider minimax"。
+    endpoint: "https://api.minimax.cn/v1/chat/completions",
     defaultModel: "MiniMax-M3.1-Flash",
+    // ⚠ 这一家的思考形态【默认是二元的】：M3 只收 thinking:{type:"adaptive"|"disabled"}
+    //   （档位被丢掉），只有 M3.1-Flash 是真分级（它声明了档位表 + 官方强制思考）。
+    //   与 moonshot 同形 —— 同一个 provider 内两种形态，界面那档位下拉若按 provider
+    //   给三档，M3 上那三档就是摆设（用户拨 Low 以为省了，实际拿的是 adaptive 默认）。
     defaultTemperature: 0.7,
     docs: "https://platform.minimax.io/docs/api-reference/text-chat-openai",
     apiKeyUrl: "https://platform.minimax.io/console/access",
     defaultUseRelay: false,
     endpoints: [
-      { label: "Mainland (CN)", url: "https://api.minimaxi.com/v1/chat/completions" },
+      { label: "Mainland (CN)", url: "https://api.minimax.cn/v1/chat/completions" },
+      // 旧大陆主机:已不是文档面,但存量配置存的是它,且内置中转 allowlist 逐字匹配
+      // ⇒ 留着(见上面 endpoint 处的注释)。
+      { label: "Mainland (CN, legacy)", url: "https://api.minimaxi.com/v1/chat/completions" },
       { label: "International", url: "https://api.minimax.io/v1/chat/completions" },
     ],
     // 型号清单按【官方 Model List 页】(platform.minimax.io/docs/faq/models)裁:该页把
@@ -1103,6 +1224,8 @@ export const PROVIDERS = {
     // step-5-preview 另有一整页但按 ③ 的 preview 判据不收（理由见下）。
     apiKeyUrl: "https://platform.stepfun.com/interface-key",
     defaultUseRelay: false,
+    // 手填型号的兜底档位表（官方 2603 只收 low/high，见下面那条注释）。
+    unlistedEffortLevels: ["low", "high"],
     // 官方文本模型共三款（总览路径现 307 到最新型号子页，逐款有独立文档页;
     // 官方 llms.txt 可机读）：3.5-flash / 3.7-flash / step-5-preview。
     // **step-5-preview 不收**:编程/多模态向旗舰 + preview 滚动命名，翻译是纯文本
@@ -1116,6 +1239,12 @@ export const PROVIDERS = {
     //   （builder 见 services/llm.ts 的 stepfun 行）。
     //   3.5-flash 则不打：它的模型页没有任何 reasoning_effort 记载（官方两档写法只给了
     //   step-3.5-flash-2603），省略参数才是安全的一侧。
+    // ⚠ 手填型号的兜底档位表 = ["low","high"]（unlistedEffortLevels）：
+    //   官方逐字「`step-3.5-flash-2603` 兼容 `low`、`high` 两档」—— 2603 是官方在售
+    //   型号（Agent 优化向，按①专化档判据我们【不收】它进下拉，但用户手填它就在那儿）。
+    //   通用回落三档含 medium ⇒ 手填 2603 拨 Medium 就发出它不收的档 = 每请求 400。
+    //   收窄到 low/high 后：2603 安全（在集内），而手填的 3.7 快照顶多被钳到 high
+    //   （降级，不是 400）—— 与 zhipu 手填型号同一套处理。
     // ⚠ 不收 StepAudio(语音)、Step-1o Turbo Vision(视觉，32K)—— 非文本对话。
     models: [
       { label: "Step 3.5 Flash", value: "step-3.5-flash" },
@@ -1144,10 +1273,20 @@ export const PROVIDERS = {
       // ernie-5.0-thinking-latest …，`ernie-5.1` 是表内最新一档。
       // ⚠ 该页 0 处 `enable_thinking`，所以思考口径不能从这页得出 —— 打标要另找参数页，
       // 别拿"5.0 有 thinking 变体"推断 5.1 也能关/能开。
+      // ⚠ 2026-10-21 复核（官方参数页 cloud.baidu.com/doc/qianfan-docs/s/Wm95lyynv 把思考
+      //   开关分成【两张互不重叠的清单】）：
+      //   · `thinking:{type}` 清单：deepseek-v4-pro / deepseek-v4-flash / deepseek-v3.2 /
+      //     kimi-k2.5 / glm-5.3-flash（仅开启）/ glm-5.3（仅开启）/ glm-5.2-fast / glm-5.2 /
+      //     glm-5.1 / glm-5
+      //   · `enable_thinking` 清单：qwen3-32b/14b/8b、ernie-4.5-turbo-vl-preview、
+      //     ernie-4.5-turbo-vl-32k-preview、ernie-4.5-vl-28b-a3b、ernie-5.0-thinking-preview
+      //   · `thinking_budget` 清单：ernie-5.1、ernie-5.0-thinking-preview、deepseek-v3.2-think
+      //   ⇒ **ernie-5.1 两张开关清单都不在**（它只在 thinking_budget 清单里）⇒ 它【没有】
+      //     可用的思考开关 ⇒ 不打 thinking 标、线上一个思考参数都不发 = 唯一不会 400 的
+      //     选择（这条判断是复核后确认的，不是漏核）。
+      // ⚠ 官方 reasoning_effort 清单只有 deepseek-v4-pro / deepseek-v4-flash，且逐字
+      //   "low、medium 会映射为 high,xhigh 会映射为 max" ⇒ ernie-5.1 没有 effort 概念。
       { label: "ERNIE 5.1", value: "ernie-5.1" },
-      // ERNIE 5.0-Thinking server-defaults enable_thinking=true, but it's a hybrid
-      // SKU with a real toggle: `enable_thinking` boolean (binary → qianfan is in
-      // BINARY_EFFORT_VENDORS). Tagged so off-state sends explicit enable_thinking:false.
       // ⚠ ernie-x1.1 双条在官方【模型列表】页都标「即将下线」→ 按「老模型不留」不收。
       // 教训固化：核 model 入参一律以「模型列表」页为准（docs 已指向它），计费页只
       // 用来对价格 —— 计费页会漏行，据此判「id 不存在」曾得出过错误结论。
@@ -1192,9 +1331,6 @@ export const PROVIDERS = {
     // 【查到但没收录】`zai-glm-5-3`（1M 上下文、$1.4/$4.4、reasoning_effort 收 low|high|max）：
     // 那是 Mistral 代管的第三方 GLM，原生 zhipu 条目已有同一支，收进来只是把下拉变长，
     // 而且它不是 high|none 二元形态，跟本 provider 的 shape 不同 —— 要收得先按 SKU 分档。
-    // `mistral-large-latest` 保持不标 thinking：按上面的别名规则它会跟着跨代走（Large 4 上架后
-    // 很可能已经指向它，而 4 是推理模型），落在哪一代无 key 证不了 —— 不标就是永远不发
-    // reasoning_effort，两套落点都不 400。
     // ⚠ 别把 reasoning_effort 升格成多档：官方 reasoning 页对 Mistral 自家型号只描述 high
     // （带 thinking 块）与 none（不带）两种语义，本仓也只发这两种 —— UI 加档前
     // 先拿到该 SKU 那一档的枚举一手原文（zai-glm-5-3 就是反例：它收 low|high|max）。
@@ -1202,18 +1338,19 @@ export const PROVIDERS = {
     // ⚠ 二手源在这里是【落后的】，别拿它反证：models.dev 的 mistral 目录里没有
     // `mistral-medium-3-5` 这条（只有 mistral-medium-2508/2505 那些旧代），而官方模型卡与
     // reasoning 页两处都逐字写着 `mistral-medium-3-5` ⇒ 上面那两处改名按官方为准。
-    // 同一家把 `mistral-large-4` 标成 beta，与官方卡的 "Public Preview" 一致 ——
-    // 在册这条是【preview 档】，与本仓"preview 不进下拉"的一贯取向有张力（理由见下方
-    // Large 4 那两条的旧记录），要按取向撤它得先与维护者确认，别自动动。
+    // ⚠ 2026-10-20 撤两条（维护者已确认按本仓取向撤）：
+    //   · mistral-large-4-0:官方模型卡 Status = **Public Preview**(官方生命周期页对
+    //     Public Preview 的定义:"no guaranteed path to General Availability, and may
+    //     be retired before reaching it")⇒ 按「preview 不进下拉」撤。此前注释里
+    //     「要按取向撤它得先与维护者确认」这句的前提已满足(维护者 2026-10-20 确认)。
+    //   · mistral-large-latest:官方把 `-latest` 定义成【跨代取最新】("may expose you
+    //     to silent updates in model behavior and pricing")。这条不标 thinking 倒是 400
+    //     安全,但一旦别名跨到推理代(Large 4 是推理模型),用户就在一个没有思考开关的
+    //     档位上被静默计费 —— 与本仓「标称能力与真实行为要一致」冲突 ⇒ 撤。
+    //     要用 Large 3 手填 `mistral-large-2512`(官方 API names 里的 pinned 写法)。
     models: [
       { label: "Mistral Medium 3.5", value: "mistral-medium-3-5", thinking: true },
       { label: "Mistral Small 4", value: "mistral-small-latest", thinking: true },
-      { label: "Mistral Large 4", value: "mistral-large-4-0", thinking: true },
-      // label 不再写死 "Large 3"：官方生命周期文档把 -latest 定义为跨代取最新，
-      // Large 4 上架后它可能已经指向新一代 —— 界面宣称哪一代是我【核过】的事实，
-      // 不是这个别名的性质。写死代次就是拿一个可能已经不成立的断言当 UI 文案。
-      // 具体落在哪一代无 key 证不了（下次复核时按模型页标题确认即可）。
-      { label: "Mistral Large (latest alias)", value: "mistral-large-latest" },
       // 模型卡的 "API names" 行只列 `ministral-14b-2512` / `ministral-14b-latest`，
       // `ministral-3-14b-25-12` 那个写法只存在于 URL。同族 8B 的卡
       // （`ministral-8b-2512`）印证了这个命名形态 ⇒ 用官方列出的那条，不是"猜另一个能收"。
@@ -1278,8 +1415,22 @@ export const PROVIDERS = {
     // 文本）、`command-a-03-2025` / `command-r*`（同族旧代，按"老模型不留"不收）。
     // ⚠ 复查通道别退回 llms.txt：`docs.cohere.com/llms.txt` 只有两行站点摘要、
     // `llms-full.txt` 也是空壳，型号名只在 /docs/models 这一页。
+    // ⚠ 2026-10-21 复核【解掉了此前那个未解疑点】—— 默认档 command-a-plus-05-2026
+    //   【默认就在思考】,而 compat 端点正好有它的开关。三份一手原文:
+    //   · A+ 型号页 Capabilities 栏第一项就是「Reasoning」,正文逐字:「There's more to
+    //     be said about token budgets, enabling and disabling the `thinking` operation,
+    //     etc., which can be found in our dedicated Reasoning guide.」
+    //   · 《Reasoning Capabilities》页逐字:「For reasoning models, thinking is enabled by
+    //     default. To disable it, send ... thinking = {"type": "disabled"}」
+    //   · 《Compatibility API》页逐字:「`reasoning_effort` (Only "none" and "high" are
+    //     currently supported.)」+「These correspond to enabling or disabling thinking in
+    //     the Cohere Chat API.」—— 而这一页所有示例的 model 都是 command-a-plus-05-2026。
+    // ⇒ 之前「compat 文档是全局列该参数、不知 A+ 收不收」的顾虑不成立:A+ 是 compat
+    //   端点的示例型号,且自己声明了 Reasoning 能力 ⇒ 打标、关闭态发 none。
+    //   旧状态(不打标 ⇒ 一个参数都不发)等于默认档全程静默思考、界面没有开关 ——
+    //   与 DeepSeek「10M tokens」同款形态。
     models: [
-      { label: "Command A Plus", value: "command-a-plus-05-2026" },
+      { label: "Command A Plus", value: "command-a-plus-05-2026", thinking: true },
       { label: "Command A Reasoning", value: "command-a-reasoning-08-2025", thinking: true },
       // ⚠ Command A Translate 不收：AI provider 里不放专属翻译模型 —— 规则与落点
       // 见本文件头部「选品规则」。要 MT 质量请选 machine-translation 类。
@@ -1307,7 +1458,7 @@ export const PROVIDERS = {
     // the model field passes through verbatim (folderId then unused but still
     // required by validation — keeping status logic model-value-independent).
     docs: "https://aistudio.yandex.ru/en/docs/ai-studio/concepts/api",
-    // 清单以官方 "Common instance models" 表为准（真实浏览器逐条两轮对齐，9 条无遗漏/无失效）；
+    // 清单以官方 "Common instance models" 表为准（真实浏览器逐条对齐，在册各条全部命中）；
     // gpt-oss-120b/20b 标「available until October 30, 2026」，表内 qwen3-235b-a22b-fp8
     // 的 9-30 期限【已过】(不收)。
     // 免 key 探针证伪不了型号名（GET 回 400 "empty request body"、无 key POST 回 "Failed to parse
@@ -1324,14 +1475,18 @@ export const PROVIDERS = {
     endpoints: [{ label: "Yandex Cloud", url: "https://llm.api.cloud.yandex.net/v1/chat/completions" }],
     defaults: { url: "", apiKey: "", folderId: "", model: "yandexgpt-5.1", temperature: 0.7, batchSize: 20, contextBatchSize: 3, contextWindow: 50, useRelay: true },
     // Hosted SKUs per aistudio.yandex.ru/en/docs/ai-studio/concepts/generation/models
-    // （真实浏览器逐条核对，9 条与官方"Common instance models"表【完全一致】，无遗漏/无失效）。
-    // ⚠ gpt-oss-120b 与 gpt-oss-20b 各标「available until October 30, 2026」，
-    //   仍在售且非默认，先留并记退役日；过点按"退役不迁移"撤。表里另有
-    //   qwen3-235b-a22b-fp8(until 9-30，已到期不收)、fine-tuned yandexgpt-lite(微调占位非基础款，不收)。
+    // （真实浏览器逐条核对）。⚠ 官方在这张表里给两支挂上了同一个停服日 **2026-11-15**：
+    //   · `yandexgpt-5-lite`：「The model is deprecated and will be discontinued on November 15,
+    //     2026」，官方指路「要能力选 DeepSeek V4.1 Flash、要速度选 Qwen3.6 35B」—— 那两支都在册，
+    //     所以按「老型号不留」直接撤位，不留一个到期就 404 的选项。
+    //   · `deepseek-v4-flash`：同一条停服日 + 逐字「Use DeepSeek V4.1 Flash instead」⇒ 换成
+    //     `deepseek-v4.1-flash`（同 1M 上下文、同列 OpenAI-compatible APIs）。
+    // 表里另有 qwen3-235b-a22b-fp8(until 9-30，已到期不收)、fine-tuned yandexgpt-lite(微调占位非基础款，不收)。
     // ⚠ 该站对脚本抓取返回验证码页，只能用浏览器打开核对 —— 别因为 curl/WebFetch
     //   拿不到内容就以为它下线了。
     // Yandex 的退役模式是【先替换、再给一个月宽限】(Release Notes:V3.2→V4 Flash、
     // Qwen3.5→Qwen3.6 都是这个节奏),所以盯 Release Notes 比盯模型表更早发现变动。
+    //   这一节奏又应验一次：v4-flash → v4.1-flash 就是「先替换」已经落地、宽限期写着 11-15。
     // 全部不标 thinking。⚠ 别用"OpenAI 兼容面没文档化任何 reasoning 开关"当理由 ——
     // 那条已被官方 Reasoning mode 页推翻，逐字：
     //   "you can manage the reasoning mode via … the reasoning_effort parameter in the
@@ -1352,10 +1507,9 @@ export const PROVIDERS = {
     models: [
       { label: "YandexGPT Pro 5.1", value: "yandexgpt-5.1" },
       { label: "YandexGPT Pro 5", value: "yandexgpt-5-pro" },
-      { label: "YandexGPT Lite 5", value: "yandexgpt-5-lite" },
       { label: "Alice AI LLM", value: "aliceai-llm" },
       { label: "Alice AI LLM Flash", value: "aliceai-llm-flash" },
-      { label: "DeepSeek V4 Flash", value: "deepseek-v4-flash" },
+      { label: "DeepSeek V4.1 Flash", value: "deepseek-v4.1-flash" },
       { label: "Qwen3.6 35B", value: "qwen3.6-35b-a3b" },
       { label: "GPT-OSS 120B", value: "gpt-oss-120b" },
       { label: "GPT-OSS 20B", value: "gpt-oss-20b" },
@@ -1368,9 +1522,21 @@ export const PROVIDERS = {
     category: "aggregator",
     label: "OpenRouter",
     endpoint: "https://openrouter.ai/api/v1/chat/completions",
-    defaultModel: "nvidia/nemotron-3-super-120b-a12b:free",
+    // ⚠ 默认档 2026-10-21 从 nvidia/nemotron-3-super-120b-a12b:free 换成
+    //   minimax/minimax-m3.1-flash:free:前者的【唯一】provider 槽位 status=-5
+    //   (实测 GET /api/v1/models/{slug}/endpoints),而抽样的 25 个 slug(官方全部
+    //   :free 档 + 我们在册的)里只有 4 个「有 endpoint 却一个 status=0 都没有」——
+    //   它是其中之一 ⇒ 那个免费档眼下【没有健康 provider 可路由】。
+    //   官方没定义 -5 是什么(OpenAPI 只给 EndpointStatus: [0,-1,-2,-3,-5,-10]),
+    //   但它【逐槽位】成立:健康模型(kimi-k3 28 个 endpoint)里 -5 与 status 0 并存
+    //   ⇒ -5 = 某个槽位降级;槽位只有它一个时就没有可路由的了。
+    //   换的这支:1 个 endpoint 且 status=0 ✓、1M 上下文、官方档位 max/xhigh/high/
+    //   medium/low(我们的三档 low/medium/high 全部原样命中,不用钳)。
+    //   ⚠ 免费档天然单点(本仓老教训:「单点供应 = 随时归零」)—— 这支同样只有 1 个
+    //   provider,哪天归零就换下一支,别默认它稳。
+    defaultModel: "minimax/minimax-m3.1-flash:free",
     defaultTemperature: 0.7,
-    docs: "https://openrouter.ai/models?q=free",
+    docs: "https://openrouter.ai/docs/use-cases/reasoning-tokens",
     apiKeyUrl: "https://openrouter.ai/settings/keys",
     defaultUseRelay: false,
     extraHeaders: { "HTTP-Referer": "https://aishort.top", "X-Title": "AIShort" },
@@ -1382,49 +1548,84 @@ export const PROVIDERS = {
     // ⚠ slug 写法不统一，逐个以 /api/v1/models/{slug}/endpoints 实拉为准：
     // Claude 新代是 `anthropic/claude-opus-5`(无小数点),而 `claude-opus-5.5` 又带
     // 小数点、旧的 opus 4.8 也是小数点 —— 别按一个规律推另一个。
-    // ⚠ 「model 存在」≠「能调用」:poolside/laguna-m.1:free 的 model 对象仍在，但
-    // endpoints 数组为【空】(0 个 provider)= 实际不可调用，已换成 laguna-s-2.1:free
-    // (1 endpoint, prompt $0, 262k 上下文)。核 free SKU 必须打 endpoints 端点，
-    // /api/v1/models 全量 JSON 太大会被截断，据它判「不存在」会误删。
-    // 在册 17 条在【带 key 实拉的全量目录 459 条】里逐条命中。上面那条坑的边界要分清：
-    // 会截断的是【按文本读的工具输出】，不是 fetch 拿到的响应体 ——
-    // 用脚本解析整份 JSON 再比集合，判"在册"是可靠的；判"不存在"仍要走 endpoints。
+    // ⚠ 「model 存在」≠「能调用」:poolside/laguna-m.1:free 曾经 model 对象还在、但
+    // endpoints 数组为【空】(0 个 provider)= 实际不可调用,那时换成了 laguna-s-2.1:free。
+    // ⚠ 2026-10-21 复测:laguna-m.1:free 已从 /api/v1/models 整条消失(endpoints 仍 0);
+    //   而下面删掉的那两条 free 档【各有 1 个活 endpoint】(status 0)—— 删它们的理由是
+    //   expiration_date,不是「不可调用」,这两件事别混。
+    // 核 free SKU 必须打 endpoints 端点(路径别 URL 编码:%2F 会 404),
+    // /api/v1/models 全量 JSON 太大会被截断,据它判「不存在」会误删。
+    // 在册 16 条在【带 key 实拉的全量目录 468 条】(2026-10-21)里逐条命中。上面那条坑的
+    // 边界要分清:会截断的是【按文本读的工具输出】,不是 fetch 拿到的响应体 ——
+    // 用脚本解析整份 JSON 再比集合,判"在册"是可靠的;判"不存在"仍要走 endpoints。
     models: [
-      { label: "Nemotron 3 Super 120B (free)", value: "nvidia/nemotron-3-super-120b-a12b:free" },
-      { label: "Laguna S 2.1 (free)", value: "poolside/laguna-s-2.1:free" },
-      { label: "DeepSeek V4.1 Flash", value: "deepseek/deepseek-v4.1-flash", thinking: true },
+      // ⚠ 2026-10-20 按官方逐模型表(GET /api/v1/models 的 reasoning 对象)重排:
+      //   该对象带三个字段 —— supported_efforts(这一支收哪些 effort)、mandatory
+      //   (true = 思考【关不掉】)、default_enabled(不传参数时默认就在推理)。
+      //   我们原来只有一个统一形态(关闭态一律 reasoning:{enabled:false}),于是三处
+      //   与官方表冲突,现按表逐条改:
+      //   · mandatory:true 的那几支(官方明写 reasoning cannot be disabled)→ 声明档位表,
+      //     关闭态改发【最低档 effort】而不是禁用请求(发禁用 = 每请求 400)。
+      //   · default_enabled:true 且 mandatory:false 的 → 打 thinking 标(它确实在推理,
+      //     只是没接上开关),关闭态发 reasoning:{enabled:false} 是合法的。
+      //   逐条 supported_efforts 见注释;xhigh/max 我们发不出(UI 只有三档),按既有取舍不列。
+      // ⚠ effortLevels(逐型号 effort 清单,2026-10-20):官方 supported_efforts 逐型号不同,
+      //   声明它 = 界面只列该型号真有的档位 —— 用户不会拨到一个官方没有的档。
+      //   官方原句(逐型号 supported_efforts):
+      //     deepseek/deepseek-v4.1-flash = max,high,low,none   → 我们的三档里没有 medium
+      //     tencent/hy3                   = high,low,none        → 同上
+      //     nvidia/nemotron-3-super-120b-a12b:free = medium,low,none → 没有 high
+      //     moonshotai/kimi-k3            = max,high,low,none    → 没有 medium
+      //   其余几支要么收 none(关得掉)、要么 mandatory(关不掉,已用 thinkingLevels 表达)。
+      { label: "Nemotron 3 Super 120B (free)", value: "nvidia/nemotron-3-super-120b-a12b:free", thinking: true, effortLevels: ["low", "medium"] },
+      // ⚠ poolside Laguna 全家 4 条(付费+free)在官方目录里的 expiration_date 都是
+      //   2026-10-31(官方 schema 逐字:"The date after which the model may be removed")
+      //   ⇒ 两条 free 档按「到点即撤」删掉;官方没有替代的 poolside 型号。
+      //   ⚠ 2026-10-21 复测:这两条【各有 1 个活 endpoint】(status 0)—— 撤它们靠的是
+      //   expiration_date(10 天后),不是「现在调不了」;真判「调不了」看的是 endpoints=0。
+      //   免费档因此从 4 条降到 3 条(新补的 minimax-m3.1-flash:free 抵掉一条)。
+      // 官方 supported_efforts = high/low/none(无 medium)→ effortLevels 只给 low/high。
+      { label: "DeepSeek V4.1 Flash", value: "deepseek/deepseek-v4.1-flash", thinking: true, effortLevels: ["low", "high"] },
       // Hy3 正式版（8-31 到期前就从 hy3-preview 换了过来 —— 教训：单点供应的
       // preview 就是随时归零的形态，核 free/curated SKU 要数健康 provider）。
-      { label: "Hy3", value: "tencent/hy3", thinking: true },
+      // 官方 supported_efforts = high/low/none(无 medium)→ effortLevels 只给 low/high。
+      { label: "Hy3", value: "tencent/hy3", thinking: true, effortLevels: ["low", "high"] },
+      // supported_efforts = max/xhigh/high/medium/low/none → 收 none,关闭态合法。
       { label: "Claude Sonnet 5", value: "anthropic/claude-sonnet-5", thinking: true },
       // ⚠ anthropic/* 一律【留着】—— 判据见头部「收型号的三条判据」里的地域那条。
       // endpoints 实拉增补:sonnet-5.5(8 个 provider;k3 见下)、
       // nemotron-3.5-lightning:free(1 个 provider —— 与 laguna-s-2.1/qwen3.8-27b
       // 两个免费项同形,单点供应的归零风险按既有先例接受,不作默认即可)。
-      { label: "Claude Sonnet 5.5", value: "anthropic/claude-sonnet-5.5", thinking: true },
-      { label: "Claude Opus 5.5", value: "anthropic/claude-opus-5.5", thinking: true },
-      { label: "Gemini 3.8 Flash", value: "google/gemini-3.8-flash", thinking: true },
-      { label: "GPT-6 Astra", value: "openai/gpt-6-astra", thinking: true },
+      // mandatory:true(关不掉)→ 声明档位表,关闭态发最低档 effort。
+      { label: "Claude Sonnet 5.5", value: "anthropic/claude-sonnet-5.5", thinking: true, thinkingLevels: ["low", "medium", "high"] },
+      { label: "Claude Opus 5.5", value: "anthropic/claude-opus-5.5", thinking: true, thinkingLevels: ["low", "medium", "high"] },
+      // mandatory:true → 同上(官方 supported_efforts = high/medium/low)。
+      { label: "Gemini 3.8 Flash", value: "google/gemini-3.8-flash", thinking: true, thinkingLevels: ["low", "medium", "high"] },
+      // mandatory:true → 同上(官方 supported_efforts = max/xhigh/high/medium/low)。
+      { label: "GPT-6 Astra", value: "openai/gpt-6-astra", thinking: true, thinkingLevels: ["low", "medium", "high"] },
+      // mandatory:false 且 supported_efforts 含 none → 关闭态合法,不打档位表。
       { label: "GPT-6 Luna", value: "openai/gpt-6-luna", thinking: true },
-      // glm-5.3 不打 thinking:上游强制思考、不可禁用，打了标签 off 态会经 OpenRouter
-      // 统一参数发 reasoning:{enabled:false},对它是非法请求。同原生 zhipu 的处理。
-      { label: "GLM-5.3", value: "z-ai/glm-5.3" },
-      { label: "Grok 4.7", value: "x-ai/grok-4.7" },
+      // ⚠ glm-5.3 原先不打 thinking 的理由是「上游强制思考、不可禁用,打了标签 off 态会
+      // 发 reasoning:{enabled:false} = 非法请求」—— 这条判据在【官方表】上仍然成立
+      // (mandatory:true),但解法不是【不打标】而是【声明档位表】:声明后关闭态发
+      // 最低档 effort(官方 supported_efforts = max/high/low),既合法又不撒谎。
+      { label: "GLM-5.3", value: "z-ai/glm-5.3", thinking: true, thinkingLevels: ["low", "high"] },
+      // 同样 mandatory:true(supported_efforts = xhigh/high/medium/low)→ 声明档位表。
+      { label: "Grok 4.7", value: "x-ai/grok-4.7", thinking: true, thinkingLevels: ["low", "medium", "high"] },
       { label: "Kimi K2.6", value: "moonshotai/kimi-k2.6", thinking: true },
-      // ⚠ kimi-k3 不打 thinking:k3 仅思考、不收关闭参数(见原生 moonshot 条目),
-      // 打了标签 off 态会经 OpenRouter 统一参数发禁用请求 —— 同 GLM-5.3 那条的判据。
-      { label: "Kimi K3", value: "moonshotai/kimi-k3" },
+      // ⚠ kimi-k3 原先不打 thinking 的理由是「k3 仅思考、不收关闭参数」—— 官方逐模型表
+      // 与它冲突:mandatory:false 且 supported_efforts 含 none ⇒ 关得掉。按表改。
+      // effortLevels = low/high(官方 supported_efforts = max/high/low/none,没有 medium)。
+      { label: "Kimi K3", value: "moonshotai/kimi-k3", thinking: true, effortLevels: ["low", "high"] },
       // ⚠ qwen3.8-27b:free 已撤 —— endpoints 实拉【0 个 provider】= 实际
       // 不可调用，正是本条上方「model 存在 ≠ 能调用」那条判据的第二次应验。
       // 同批实拉 13 个免费档，绝大多数已归零（gemma-3-30b-it 直接 404；
       // llama-3.3-70b / gpt-oss-120b / deepseek-r1-0528 / qwen3-30b-a3b /
       // qwen3-235b-a22b / tencent-hy3 全是 0 endpoints）⇒ 免费池收缩很快，
       // 「在免费榜上」根本不能当可用性证据，只能打 endpoints 端点。
-      // 换入 laguna-xs-2.1:free（同族更小档，1 endpoint、262k，与在列的
-      // laguna-s-2.1:free 同形），免费档数量不变。
-      { label: "Laguna XS 2.1 (free)", value: "poolside/laguna-xs-2.1:free" },
       { label: "Nemotron 3.5 Lightning (free)", value: "nvidia/nemotron-3.5-lightning:free" },
       // Verified live route: /api/v1/models/minimax/minimax-m3.1-flash:free/endpoints.
+      // mandatory:true(关不掉)→ 声明档位表,关闭态发最低档 effort。
       { label: "MiniMax M3.1 Flash (free)", value: "minimax/minimax-m3.1-flash:free", thinking: true, thinkingLevels: ["low", "medium", "high"] },
       // M3 上游默认 adaptive thinking(可关)→ 打标签让 off 态经 OpenRouter
       // 统一参数发 reasoning:{enabled:false},否则默认烧推理 token。
@@ -1448,8 +1649,11 @@ export const PROVIDERS = {
     // 何况计费形态不同 —— 合并后总有一份清单对当前端点是错的(见 opencodeGo 条目)。
     // ⚠ 需要 apiKey。**匿名这条路已被上游关掉**（实测、复测稳定）：
     //   无 key → 403 FreeTierError「OpenCode's free tier can only be used from
-    //   within OpenCode」；带【任意】key（哪怕是假 key）→ 过闸，变成 401 AuthError。
-    // 即门槛是【凭证】而不是客户端 —— 这比"匿名能用但容易 429"的旧说法更硬，
+    //   within OpenCode」；带【任意】key（哪怕是假 key）→ **付费档**才过闸变 401
+    //   AuthError（"Invalid credential"），**免费档仍是 403** ——
+    //   ⚠ 2026-10-21 复测更正:免费闸在【凭证校验之前】触发，所以「带 key 就过闸」
+    //   只对付费档成立；免费档对任何外部客户端都回 403（= 本工具用不了那条线）。
+    //   即门槛既是客户端也是凭证 —— 这比"匿名能用但容易 429"的旧说法更硬，
     // 也因此退出 NO_CRED_REQUIRED。理由详见该集合的注释。
     //
     // 「需要 key」≠「要花钱」,别把这两件事混起来 (否则下一个人会觉得这里
@@ -1464,11 +1668,21 @@ export const PROVIDERS = {
     // 【故意不给 CLI 开后门】:开后门要在 registry 里按平台或按 useRelay 分叉
     // 凭证判定，把「这个服务要不要凭证」从一条规则切成两条 —— 代价大于收益，
     // 而 CLI 用户填 key 的成本只是 `--api-key` 或 `-s settings.json`。
-    // 默认 space-bunny-free:原默认 deepseek-v4-flash-free 免 key
-    // 探针恒 400 server_error「Model is unavailable」（目录仍在册但打不通 —— 正是头部
-    // 「收型号的三条判据」③说的"默认烂掉=开箱即坏"）。space-bunny-free
-    // 是目录内唯一实测匿名打通并回 completion 的免费档（见下方免费档注释）。
-    defaultModel: "space-bunny-free",
+    // ⚠ 默认改成 deepseek-v4.1-flash(2026-10-21):原默认 minimax-m3.1-flash-free 是
+    //   【免费档】,而免费档对【任何外部客户端】都回 403 FreeTierError —— ⚠ 2026-10-21
+    //   复测更正了旧结论:免费闸在【凭证校验之前】触发,所以「带任意 key 就过闸」只对
+    //   【付费档】成立(付费档带假 key → 401 "Invalid credential")。免费档带(假)key
+    //   仍是 403 ⇒ 「默认烂掉 = 开箱即坏」(本文件判据③)。
+    //   换付费档的另一个理由:它是官方 Zen 型号表/计费表都在册的 DeepSeek V4.1 Flash
+    //   (输入价 $0.14/1M,付费档里最便宜的一档),与姊妹产品 opencodeGo 的默认
+    //   (mimo-v2.6-flash,同为 flash 档)同类。
+    //   ⚠ 免费档仍留在清单里(官方在售,本仓规则是「没证伪就不撤」),但它们对
+    //   本工具一律 403 —— 想用免费档请在 OpenCode 客户端里用。
+    // ⚠ 同时更正一条旧事实:「space-bunny-free 是唯一实测匿名打通的免费档」已不成立 ——
+    // 2026-10-20 复测,12 条 *-free 档探针**全部 403 FreeTierError**(官方口径:
+    // 「OpenCode's free tier can only be used from within OpenCode」)⇒ 匿名可用性归零,
+    // 换谁都要 key。默认档与「匿名能不能用」这条判据就此脱钩。
+    defaultModel: "deepseek-v4.1-flash",
     defaultTemperature: 0.7,
     docs: "https://opencode.ai/docs/zen/",
     apiKeyUrl: "https://opencode.ai/auth",
@@ -1553,25 +1767,27 @@ export const PROVIDERS = {
     // 而 nemotron-3-ultra-free 探针 403 = 照样能路由。
     // ⇒ 目录缺失既可能是下架也可能是漏列，一律回到探针。
     models: [
-      // 免费档（6 条；条款见上第 ④ 条。space-bunny 是
-      // 唯一【匿名也能打通】的免费档 —— 免 key 探针直接返回了 completion，其余都要
-      // key。它同时是本 provider 的默认档，原因见 defaultModel 上方注释）
-      { label: "Space Bunny (free)", value: "space-bunny-free" },
-      // ⚠ deepseek-v4-flash-free 已删：曾暂留的理由是「探针恒 400
-      // Model is unavailable，但目录仍在册」，当时判为上游通道故障；实拉
-      // /v1/models 后该 id 已【不在目录里】⇒ 通道故障的猜测落空，是真的下架。
-      // 教训照旧：只拉目录看不出弃用，但目录消失就是硬证据，
-      // 别把「暂时打不通」和「已下架」混着留 —— 后者没有任何理由留在清单里。
-      // （space-bunny-free 是当前唯一实测匿名可打通的，仍居默认位。）
+      // 免费档（条款见上第 ④ 条。⚠ 2026-10-20 复测：全部 *-free 档探针都是
+      // 403 FreeTierError —— 官方口径「free tier can only be used from within
+      // OpenCode」⇒ 匿名一个都打不通，别再拿「匿名可打通」当收录理由。）
+      // ⚠ space-bunny-free 已删：探针回 410 ModelDeprecated（官方指定替代
+      // minimax-m3.1-flash-free），且官方型号表/计费表都已无它 —— 与前面 deepseek-v4-flash-free
+      // 那条同判据：目录里查不到 + 探针有明确弃用响应 = 硬证据，不留。
       { label: "Big Pickle (free)", value: "big-pickle" },
       { label: "MiMo V2.6 Flash (free)", value: "mimo-v2.6-flash-free" },
-      // ling-3.0-flash-fin-free 换 3.1：探针 400 "Model is unavailable"（乱写
-      // 的 id 回同一条 = 查无此模型），docs 免费档表也已把它换成 Ling 3.1 Flash Free。
-      { label: "Ling 3.1 Flash (free)", value: "ling-3.1-flash-free" },
+      // ⚠ 本 provider 的默认档(2026-10-20):space-bunny-free 被上游弃用(410)后,
+      //   官方在 410 响应里点名的替代品就是它 —— 官方型号表/计费表/Free models 段
+      //   都在册,探针 403(= 档在、仅匿名被拒)。
+      { label: "MiniMax M3.1 Flash (free)", value: "minimax-m3.1-flash-free" },
+      // ⚠ ling-3.1-flash-free 已删：探针 400 "Model is unavailable"（乱写的 id 回同一条
+      // = 查无此模型），官方 Zen 型号表也 0 命中。官方免费档里现在是「LL Alpha Free」
+      // (ll-alpha-free)，但它探针同样 410 ModelDeprecated ⇒ 也不收。
       { label: "Nemotron 3 Ultra (free)", value: "nemotron-3-ultra-free" },
       { label: "Nemotron 3.5 Lightning (free)", value: "nemotron-3.5-lightning-free" },
       // 付费档，输入价升序（$0.14 → $4.00 / 1M，Zen 价格页核对）
-      { label: "DeepSeek V4 Flash", value: "deepseek-v4-flash" },
+      // ⚠ deepseek-v4-flash → deepseek-v4.1-flash(2026-10-20)：旧的 v4 在官方 Zen
+      // 型号表与计费表里都已查不到（只剩 v4.1），探针 401 = 还能调，属于【旧代残留】。
+      { label: "DeepSeek V4.1 Flash", value: "deepseek-v4.1-flash" },
       { label: "Qwen3.8 Flash", value: "qwen3.8-flash" },
       { label: "GLM 5.3 Flash", value: "glm-5.3-flash" },
       { label: "MiniMax M3", value: "minimax-m3" },
@@ -1766,13 +1982,16 @@ export const PROVIDERS = {
       { label: "Qwen3.7 Plus", value: "qwen3.7-plus" },
       { label: "MiMo V2.6 Pro", value: "mimo-v2.6-pro" },
       { label: "DeepSeek V4 Pro", value: "deepseek-v4-pro" },
-      // ⚠ 二手源说这条【已弃用】，一手材料三条都不认：models.dev 给
-      // opencode-go 的 kimi-k2.6 标了 `status: "deprecated"`，但 Go 页的模型表、月限额表、
-      // Endpoints 表都还列着它（`/inference/go/v1/chat/completions` @ai-sdk/openai-compatible），
-      // Zen 页的 "Deprecated models" 表里也没有它（那张表列的是 K2 / K2 Thinking / K2.5 这些），
-      // /zen/go/v1/models 实拉在册、探针回 401 档闸（不是 400 查无）。
-      // ⇒ 留着，并把分歧记在这儿：按仓库口径 models.dev 只能【起疑】，不能定厂商事实。
-      { label: "Kimi K2.6", value: "kimi-k2.6" },
+      // ⚠ kimi-k2.6 已删(2026-10-20):当年留下它是因为 models.dev 给 opencode-go 的
+      // kimi-k2.6 标了 `status: "deprecated"`,而 Go 页的模型表、月限额表、Endpoints 表
+      // 都还列着它 ⇒ 按「二手源只能起疑、不能定厂商事实」留着,并把分歧记在下面。
+      // 2026-10-20 复核:【那三张一手表现在都不列它了】(docs/go 全文 kimi-k2.6 0 命中,
+      // 价目表列的是 Kimi K3 与 Kimi K2.7 Code)⇒ 留存理由的前提已消失,按同一条判据撤。
+      // 探针仍回 401(= 网关还认这个 id),但 /zen/go/v1/models 那份目录里【同时】还挂着
+      // 7 条同样「不在 Go 表」的 id(glm-5.1 / grok-4.6 / omen-alpha / minimax-m2.5 /
+      // minimax-m2.7 / qwen3.6-plus / qwen3.7-max),其中 6 条当年已按同一判据删掉 ——
+      // kimi-k2.6 当时是唯一漏网的。目录 ≠ 在售清单,判在售仍以官方型号表为准。
+      // (想用 Kimi 那档:清单里已有 Kimi K3;Go 表里的 Kimi K2.7 Code 不在册,手填可试。)
       { label: "GLM 5.3", value: "glm-5.3" },
       { label: "Qwen3.8 Max", value: "qwen3.8-max" },
       { label: "Kimi K3", value: "kimi-k3" },
@@ -1869,28 +2088,42 @@ export const PROVIDERS = {
     // step-5-preview(preview 判据，同各家网关一贯做法)、
     // 带日期的 deepseek-v4-*-2026xx(裸 id 已在)。
     //
-    // ⚠ 全部【不打 thinking 标签】,同 atlascloud 的处理：这是个混合上游的网关，
-    // 「能不能关思考」逐个模型不同 —— TokenHub 模型支持表里 hy3 默认 disabled,
-    // 而 Kimi-K2.7-Code / MiniMax-M2.7 明确标「enabled(不支持关闭)」。没有逐个
-    // 核实之前，统一发 thinking:{type:"disabled"} 会打到不支持关闭的那些型号上。
-    // 代价要说清楚：选 deepseek-v4 / glm-5.3 / kimi-k3 这类服务端默认开推理的型号，
-    // 在这里会按它自己的默认推理 (比一手 provider 多烧 token)—— 要精确控制思考，
-    // 用本表里对应的一手 provider。
-    // 将来要在这里做开关的话：网关级字段是 thinking:{type:"enabled"|"disabled"|
-    // "adaptive"}(文档 1823/135872),需要先核出【每个型号】支不支持 disabled。
+    // ── 思考形态(2026-10-21,官方逐型号表) ─────────────────────────────────
+    // 取证通道:curl.exe --compressed -A "Googlebot" cloud.tencent.com/document/
+    // product/1823/<id>(这站是 SSR,普通 UA 只拿得到 gzip 壳)。三份一手:
+    // ① 1823/131208《深度思考》两张逐型号表:
+    //    「开启/关闭深度思考」默认值列:hy3 / hy4-preview / deepseek-v4-pro /
+    //      kimi-k2.6 =「enabled」(可关);glm-5.3 / kimi-k3 =「enabled(不支持关闭)」;
+    //      minimax-m3 =「adaptive」。
+    //    「推理深度配置」列:hy3「默认 high，支持 low、high、none」;
+    //      deepseek-v4-pro「默认 high，支持 low、high、max」;
+    //      glm-5.3 / kimi-k3「默认 max，支持 low、high、max」。
+    // ② 1823/135872 字段说明逐字:「thinking.type 的三个取值并非所有模型都支持。
+    //    例如 minimax-m3 仅接受 "adaptive" 与 "disabled"，传入 "enabled" 会返回 400；
+    //    另有部分模型即使传入 "disabled" 仍可能返回思维链内容。接入前建议针对所用
+    //    模型实测确认。」⚠ 最后这半句是【官方自己承认】关不掉是常态 —— 别当它不存在。
+    // ③ 1823/132248《DeepSeek 调用指南》逐字:「可开关(默认开启)」。
+    //    同页另一处:「思考模式开启时(deepseek-v4-* 等模型默认开启)，该取值及指定函数
+    //    对象会返回 400，需显式传入 thinking: {"type": "disabled"} 后使用。」
+    //    —— 「需显式传入 disabled 后使用」正是本条改动的依据。
     //
-    // Not thinking-tagged，但理由跟别处不同 —— 不是"不能关",而是"本来就是关的"。
-    // 官方《OpenAI Chat Completions 协议字段说明》(1823/135872) 对 hy3 原文：
-    // 「默认关闭思考，默认推理强度 `low`」,`thinking.type` 合法取值三个：
-    // `enabled` / `disabled` / `adaptive`。
-    // 既然服务端默认就是关的，省略参数 = 不推理 = 翻译要的行为，不打标签最省事，
-    // 也不会像 SERVER_DEFAULT_THINKING_ON 那几家一样偷烧推理 token。
+    // ⚠ 旧注释整段是错的:它说 hy3「默认关闭思考」「只列了 low/medium/high」——
+    //   这两句在 135872 上已经查不到。真相:hy3 默认 enabled + 默认 high ⇒ 旧行为
+    //   (不发参)＝全程按高强度推理跑翻译(DeepSeek「10M tokens」同款形态)。
     //
-    // 要加思考开关是可行的 (三个取值都合法),代价是三处:models 里给 hy3 打
-    // `thinking: true`、THINKING_BUILDERS 加一条 `gated("tokenhub", thinkingType)`、
-    // 把 tokenhub 放进 BINARY_EFFORT_VENDORS;另外 thinking.test.ts 里
-    // 「tokenhub & minimax M2.x send no thinking body」那条断言要跟着改。
-    // ⚠ 别用 `reasoning_effort:"none"` —— TokenHub 只列了 low/medium/high。
+    // ⇒ 现在按型号分三种形态(线格式见 llm.ts 的 tokenhubThinking):
+    //   · 关得掉(多数型号):thinking:{type:"enabled"|"disabled"}。
+    //   · 关不掉(glm-5.3 / kimi-k3,官方 enabled(不支持关闭)):关闭态只能发官方
+    //     最低档 reasoning_effort(同 zhipu 的 glm-5.3)—— 发 disabled 是不收的值。
+    //   · minimax-m3:官方只收 adaptive / disabled(发 enabled 直接 400)。
+    // ⚠ 档位下拉只给【关不掉】那两支(glm-5.3 / kimi-k3):它们没有关闭值,只能靠
+    //   官方最低档表达「最关」。其余型号一律 Off/On —— hy3 / deepseek-v4-pro 的官方
+    //   档位表虽在 131208 上有(hy3 {low,high,none}),但分级档位是【新增能力】而不是
+    //   这次要修的缺陷,先不做;官方没写档位表的(hy4-preview / kimi-k2.6)更不能摆
+    //   三档 —— 那是摆设(线上三档 body 相同,用户拨 Low 以为省了 token)。
+    // ⚠ deepseek-v4.1-flash / mimo-v2.6-pro:官方三处都没有 ⇒ 形态查不到 ⇒ 不打标、
+    //   不发参(省略 = 跟服务端默认;它们在 130051 标着「深度思考」⇒ 默认就是在想的,
+    //   要精确控制请用对应的一手 provider)。
     // 清单以 `GET /v1/models` 实拉为准 (带 `status` 字段，比翻文档准):只收
     // status="online" 的文本对话模型，"pre-offline" 的一律不收 —— 历次删掉的
     // 同代 id（k2.5 / minimax-m2.5 / qwen3.5 系 / deepseek-v3.2 / hy3-preview）
@@ -1907,14 +2140,24 @@ export const PROVIDERS = {
       // ⚠ hy4-preview 例外收：「无名 preview 不收」排的是转售线，hy 自研线是例外 ——
       // hy3 当初也是从 preview 长出来的（1M 上下文）。滚动
       // 换代的风险同 doubao evolving 那条（缓存会命中旧代），所以只进下拉、不作默认。
-      { label: "Hunyuan hy4 Preview", value: "hy4-preview" },
-      { label: "Hunyuan hy3", value: "hy3" },
+      // ⚠ minimax-m3.1-flash(130051 在册,1M/512k) 按「细分档不收」不列 —— 它是 M3 家族的
+      //   Flash 档,与本仓 minimax 条目「MiniMax M3.1 Flash / MiniMax M3 两支都在」
+      //   的口径一致(旗舰 + Flash 是两个产品,不是同族新旧代);且它的思考形态在
+      //   131208 两张表里都没有(表里只有 minimax-m3)⇒ 真要收也是无档位表的二元那一支。
+      //
+      // 思考标签与逐型号档位表:依据见上面的 131208/135872/132248 三份一手。
+      // 官方三处都没有形态的(deepseek-v4.1-flash / mimo-v2.6-pro)【不打标】——
+      // gated() 对未标型号省略参数 = 跟服务端默认,那是「查不到」时唯一不撒谎的姿态。
+      { label: "Hunyuan hy4 Preview", value: "hy4-preview", thinking: true },
+      { label: "Hunyuan hy3", value: "hy3", thinking: true },
       { label: "DeepSeek V4.1 Flash", value: "deepseek-v4.1-flash" },
-      { label: "DeepSeek V4 Pro", value: "deepseek-v4-pro" },
-      { label: "GLM-5.3", value: "glm-5.3" },
-      { label: "Kimi K3", value: "kimi-k3" },
-      { label: "Kimi K2.6", value: "kimi-k2.6" },
-      { label: "MiniMax M3", value: "minimax-m3" },
+      { label: "DeepSeek V4 Pro", value: "deepseek-v4-pro", thinking: true },
+      // 关不掉的两支:thinkingLevels = 官方 low/high/max 里我们发得出的两档,
+      // 关闭态发最低档 low(发 disabled 是那族不收的值)。
+      { label: "GLM-5.3", value: "glm-5.3", thinking: true, thinkingLevels: ["low", "high"] },
+      { label: "Kimi K3", value: "kimi-k3", thinking: true, thinkingLevels: ["low", "high"] },
+      { label: "Kimi K2.6", value: "kimi-k2.6", thinking: true },
+      { label: "MiniMax M3", value: "minimax-m3", thinking: true },
       { label: "MiMo V2.6 Pro", value: "mimo-v2.6-pro" },
     ],
   },
@@ -1948,11 +2191,16 @@ export const PROVIDERS = {
       // ⚠ 曾经关闭态【省略】该参数 —— 那是落到服务端默认 (未文档化,gpt-oss
       // 惯例是 medium),用户点了"关"却按中档推理计费,方向正好反了。
       // ⚠⚠ 别看到 docs/reasoning 那张表的枚举里有 none/default 就给 gpt-oss 加上
-      //   (逐字):「`none` and `default` are only supported by Qwen 3.8 27B.
-      //   `low`, `medium`, and `high` are only supported by GPT-OSS 20B, GPT-OSS 120B,
-      //   and Qwen 3.8 27B.」—— 同一张表里,`none` 属于**另一支**。给 gpt-oss 发 none
+      //   —— 同一张表里,`none` 属于**另一支**(Qwen 3.8 27B)。给 gpt-oss 发 none
       //   与 OpenAI 那个 astra/6.1-sol 的坑同款(见 services/llm.ts 的 openaiEffort):
       //   每请求 400,或被忽略后按服务端默认静默计费。
+      // ⚠ 2026-10-21 复核:那一页已改版为【逐型号小节】,上面那句原文在今天的页面上
+      //   已经不存在(结论仍成立,证据要换成当前的)。当前逐字(console.groq.com/docs/reasoning):
+      //   「The `reasoning_effort` parameter controls the level of effort the model will put
+      //   into reasoning. This is only supported by GPT-OSS 20B and GPT-OSS 120B.」
+      //   GPT-OSS 那一节的档位表 = low / medium / high(无 none)。
+      //   另注:该页现在多了一支 muse-spark-open(Preview + Enterprise,其档位含 xhigh),
+      //   两层都不满足收录判据,且 xhigh 我们发不出 ⇒ 不收。
       { label: "GPT-OSS 20B", value: "openai/gpt-oss-20b", thinking: true, thinkingLevels: ["low", "medium", "high"] },
       { label: "GPT-OSS 120B", value: "openai/gpt-oss-120b", thinking: true, thinkingLevels: ["low", "medium", "high"] },
     ],
@@ -2033,13 +2281,24 @@ export const PROVIDERS = {
     //   - GLM-4.7 已下架，移除
     // MiniMax-M3、Qwen3.8 在 pricing 页在册。是否收编仍按成本梯度与代际判:Qwen3.8 旗舰收，MiniMax-M3 暂不搬
     // (登录侧档位未核)。别家在售 ≠ 这里必收，但也别再写「核过不在」的死断言。
-    // ⚠ 默认是 deepseek-ai/DeepSeek-V4-Flash 【V4，不是 V4.1】—— 这条是被实拉纠正过的：
-    // 带 key 实拉 /v1/models（98 条全量）显示线上根本没有 `DeepSeek-V4.1-Flash`，
-    // 而它一度是【默认型号】，即"选这个 provider 开箱即 404"（同 nvidia 条目那类事故）。
-    // ⚠ 公开页与登录侧目录不一致时，这种只能靠实拉定，判据见头部「实拉服务目录」那条。
+      // ⚠ 默认是 deepseek-ai/DeepSeek-V4-Flash 【V4，不是 V4.1】—— 这条是被实拉纠正过的：
+      // 带 key 实拉 /v1/models（98 条全量）显示线上根本没有 `DeepSeek-V4.1-Flash`，
+      // 而它一度是【默认型号】，即"选这个 provider 开箱即 404"（同 nvidia 条目那类事故）。
+      // ⚠ 公开页与登录侧目录不一致时，这种只能靠实拉定，判据见头部「实拉服务目录」那条。
+      // ⚠ 2026-10-21 复核又碰上一次同一个坑的另一个版本：官方【.cn 价目表】
+      //   (www.siliconflow.cn/pricing) 里确实列着 `deepseek-ai/DeepSeek-V4.1-Flash`，
+      //   看着像"该收回来还该换默认"—— 但带 key 实拉 /v1/models 里没有它 ⇒
+      //   **价目表 ≠ 线上可调清单**，别按价目表改回来（那正是当初开箱即 404 的成因）。
+      //   同理 .com 与 .cn 是【两个平台、两套目录】(.com 有 moonshotai/Kimi-K3 与
+      //   Qwen/Qwen3.8-2.4T-A95B，.cn 有 Qwen/Qwen3.8-27B 而无 Kimi-K3) ⇒ 复核
+      //   一律对 .cn，别拿 .com 的 id 往回加。
     // 同轮一并清掉另外三条已下线的(逐条见下面 models 的注释)。
     models: [
       // ⚠ 以下为【线上字面】(带 key 实拉核对),不要凭公开页改回来。
+      // ⚠ 2026-10-21 复核：思考开关改发【SiliconFlow 自家的 enable_thinking 布尔】
+      //   （见 llm.ts 那行注释：官方 API 参考与逐型号 schema 里只有 enable_thinking /
+      //   thinking_budget / reasoning_effort，**没有 thinking 对象** ⇒ 以前那个参数名
+      //   不被认 = 开关空操作 = 用户以为关了、实际按思考价计费）。
       { label: "DeepSeek V4 Flash", value: "deepseek-ai/DeepSeek-V4-Flash", thinking: true },
       { label: "DeepSeek V4 Pro", value: "deepseek-ai/DeepSeek-V4-Pro", thinking: true },
       // ⚠ Kimi-K3 下线:线上无 `moonshotai/Kimi-K3`,该家族只剩 `Kimi-K2.7-Code`
@@ -2051,9 +2310,14 @@ export const PROVIDERS = {
       //    保留原判据不动,本轮只处理"线上已无"。）⚠ 5.3 本体在册 ✓
       { label: "GLM-5.3", value: "zai-org/GLM-5.3" },
       // ⚠ Qwen3.8-2.4T-A95B 线上已无;该代线上只剩 `Qwen/Qwen3.8-27B`(27B,不是 2.4T)。
-      //   不打 thinking:本条的注入是【上游原生 thinking:{type} 透传】,而 Qwen 侧收的是
-      //   另一套 enable_thinking(见原生 qwen 条目),两者不可混用 —— 没实拉验证过 Qwen3.8-27B
-      //   在这家收哪种形态之前,不打标签 = 整个参数不发,请求一定合法。
+      //   ⚠ 这一支【两条免 key 通道都给不出信号】：pricing 页 0 命中,公开 model 卡按
+      //   GLM-5.3 → `glm-5-3`、Kimi-K2.6 → `kimi-k2-6` 那套构词去拼 `qwen3-8-27b` 也 404
+      //   (同页 DeepSeek-V4-Flash / GLM-5.3 / Kimi-K2.6 / MiniMax-M3 全有卡)。按本条目既有
+      //   口径「公开页缺行 ≠ 下架」【不构成】撤除证据 —— 但下次带 key 实拉 /v1/models 时
+      //   第一个确认它,别把这条注释当成"核过在售"。
+      //   不打 thinking:我们发的是【SiliconFlow 自家的 enable_thinking 布尔】,而这一支
+      //   线上是否认它没实拉验证过(公开逐型号 schema 出现过 qwen3-6-27b,但那是另一支)
+      //   —— 没验证过就不打标签 = 整个参数不发,请求一定合法。
       { label: "Qwen3.8 27B", value: "Qwen/Qwen3.8-27B" },
     ],
   },
@@ -2154,10 +2418,21 @@ export const PROVIDERS = {
     //
     // 本 provider 【有】thinking 模型：deepseek-v4.1-flash（此前 v4-pro 移除后一度为零，
     // 故 defaults 里的 thinkingEffort 也删过 —— 现已随上架恢复）。注入走 service 内联的
-    // buildNvidiaThinkingParams（chat_template_kwargs
-    // 嵌套，那条实现一直留着没删）。NIM 服务端默认【关】思考（opt-in），省略 = 关，
+    // buildNvidiaThinkingParams（chat_template_kwargs 嵌套）。
+    // NIM 服务端默认【关】思考（opt-in），省略 = 关，
     // 所以它不进 SERVER_DEFAULT_THINKING_ON、off 态无需显式 disable。
     // 要 thinking 也可走原生 DeepSeek provider;新 SKU 的实际效果未逐档实测。
+    // ⚠ 2026-10-21 复核：NIM 官方卡片上【没有】任何思考旋钮（chat_template_kwargs /
+    //   enable_thinking / "thinking" 三个词在整张卡片里 0 命中；对照组
+    //   qwen3-235b-a22b 的卡片 chat_template_kwargs 28 命中 ⇒ 抓取方法有效），
+    //   而且官方示例代码把顶层的 reasoning_effort 翻译成 enable_thinking/medium_effort
+    //   那些键、**从不**把它嵌进 chat_template_kwargs ⇒ 我们以前嵌的那一层等于
+    //   发一个官方不认的键（被静默忽略 = 档位没生效，界面却在给三档）。
+    //   现在：形态只发 {chat_template_kwargs:{thinking:true}}（DeepSeek 模板自己的
+    //   thinking 开关），档位在 NIM 侧无处安放 ⇒ 本 provider 在【二元集合】里
+    //   （BINARY_EFFORT_VENDORS），界面只给 [Off/On]，不摆一个发不出去的档位。
+    //   ⚠ 这个形状是【推断 + 未带 key 实测】—— 下次带 key 实测出可用的形态后，
+    //   按实测同时改 llm.ts 的形态与这里的行（形态 + 档位表）。
     models: [
       { label: "Nemotron 3 Ultra 550B", value: "nvidia/nemotron-3-ultra-550b-a55b" },
       // gpt-oss / kimi / glm / nemotron 都不打 thinking:nvidia 的注入是 DeepSeek 专属
@@ -2167,10 +2442,20 @@ export const PROVIDERS = {
       { label: "Gemma 4 31B IT", value: "google/gemma-4-31b-it" },
       { label: "Nemotron Super 120B", value: "nvidia/nemotron-3-super-120b-a12b" },
       { label: "Nemotron 3.5 Lightning 30B", value: "nvidia/nemotron-3.5-lightning-30b-a3b" },
-      { label: "Kimi K3", value: "moonshotai/kimi-k3" },
+      // ⚠ 2026-10-20 实拉 NIM 官方型号清单(GET https://integrate.api.nvidia.com/v1/models,
+      //   免 key,81 条)逐条对过:上面七条在册,唯独 Kimi 那条写错了 —— NIM 只提供
+      //   moonshotai/kimi-k2.6,**没有 kimi-k3**(k3 只在 NIM 之外的线上有)。
+      //   原先写的 moonshotai/kimi-k3 选下去必然取不到模型 ⇒ 改为官方在册的 k2.6。
+      { label: "Kimi K2.6", value: "moonshotai/kimi-k2.6" },
       { label: "GLM-5.3 Flash", value: "z-ai/glm-5.3-flash" },
       // NIM 上唯一在册的 DeepSeek 对话新代，
       // 打 thinking 标签（NIM 默认关思考，见上面那段）。
+      // ⚠ NIM 侧【表达不了档位】：官方卡片只提到参考实现的 1~100 数字档，而
+      //   chat_template_kwargs 里没有档位那个字段（我们以前把 reasoning_effort 塞
+      //   进去，官方示例代码从不这么放 ⇒ 那个键被模板静默忽略 = 界面给三档而档位
+      //   压根没生效）。所以 nvidia 在【二元集合】里，界面只给 [Off/On]，
+      //   线格式只发 {chat_template_kwargs:{thinking:true}}。
+      //   ⚠ 那个形状是【推断 + 未带 key 实测】（卡片本身零旋钮）。
       { label: "DeepSeek V4.1 Flash", value: "deepseek-ai/deepseek-v4.1-flash", thinking: true },
     ],
   },
@@ -2190,10 +2475,17 @@ export const PROVIDERS = {
     // 无 defaultTemperature = 永不下发 temperature：微软官方把 temperature 列入
     // reasoning 模型 Not Supported 清单 (GPT-5 全系，learn.microsoft.com/azure/
     // ai-foundry/openai/how-to/reasoning),运行时证据为 400;统一 provider 级不发。
-    defaultModel: "gpt-5.4-mini",
+    defaultModel: "gpt-6.1-sol",
+    // ⚠ 2026-10-21 复核更正默认档的【理由】：原注释写「官方原文『Some quota tiers
+    //   require quota requests for gpt-5.6 to deploy this model…』—— 默认保持 gpt-5.4-mini」。
+    //   官方准入表逐字否掉了这条推论：配额门槛只挡 gpt-6-astra 与 5.6 三支，
+    //   `gpt-6.1-sol` 与 `gpt-6-luna` 都是「No access request needed.」
+    //   ⇒ 默认没跟上更新一代。改用 gpt-6.1-sol（更新代 + 无需申请）。
     // GPT-5 系列全部支持 reasoning(OpenAI 原生 + Azure 镜像同行为)。
-    // ⚠ 例外是 gpt-chat-latest(5.5 Instant 别名,Preview 且滚动更新 —— 近期快照
-    // 把上下文从 128k 提到 400k，选它要接受行为随时变)。官方原文:
+    // ⚠ 例外是 gpt-chat-latest(Preview 且滚动更新 —— 官方页逐字「In the OpenAI API,
+    //   this model is referred to as `chat-latest`. In Microsoft Foundry, the product
+    //   name is `gpt-chat-latest`」;上下文快照 128k(2026-06-24) → 400k(2026-08-06) →
+    //   128k(2026-10-07，最新一版又回到 128k)，选它要接受行为随时变)。官方原文:
     // 「gpt-chat-latest uses a fixed, nonzero reasoning level... Unlike other
     // reasoning models, **you can't configure this level with the `reasoning_effort`
     // parameter**」—— 它【收不了 reasoning_effort】，所以下面那条不打 thinking 标签。
@@ -2305,7 +2597,10 @@ export const PROVIDERS = {
       // 模型名各自填：9Router 形如 `cc/claude-opus-4-6`（前缀/模型），OmniRoute 可用 `auto` 走零配置路由。
       { label: "9Router", url: "http://127.0.0.1:20127/v1/chat/completions", docs: "https://github.com/decolua/9router" },
       { label: "OmniRoute", url: "http://127.0.0.1:20128/v1/chat/completions", docs: "https://github.com/diegosouzapw/OmniRoute" },
-      { label: "Together AI", url: "https://api.together.xyz/v1/chat/completions", docs: "https://docs.together.ai/docs/inference/openai-compatibility" },
+      // ⚠ 2026-10-21 复核更正:主机 api.together.xyz → api.together.ai。官方 OpenAI 兼容页逐字
+      //   「base_url to https://api.together.ai/v1」,docs/together.ai/llms.txt 全文 0 次提 .xyz;
+      //   .xyz 实测仍活着(401 = 主机在),但已非官方主机,随时可能停 ⇒ 用官方那个。
+      { label: "Together AI", url: "https://api.together.ai/v1/chat/completions", docs: "https://docs.together.ai/docs/inference/openai-compatibility" },
       { label: "Fireworks AI", url: "https://api.fireworks.ai/inference/v1/chat/completions", docs: "https://docs.fireworks.ai/tools-sdks/openai-compatibility" },
     ],
   },
@@ -2363,9 +2658,14 @@ export const PROVIDERS = {
     defaultTemperature: 0.7,
     docs: "https://docs.volcengine.com/docs/ark/coding-plan-personal-get-started",
     // 《Coding Plan 个人版 · 快速开始》(真实浏览器读；curl 只得 SPA 壳) 的
-    // 「支持配置的 Model Name」13 项与目录逐字一致（doubao-seed-evolving / 2.1-pro / 2.1-lite /
-    // 2.0-mini / minimax-m3 / glm-5.3 / glm-5.3-flash / deepseek-v4.1-flash / deepseek-v4-flash /
-    // deepseek-v4-pro / kimi-k2.7-code / kimi-k2.8-preview / kimi-k3，另有「Model Name 不支持配置为 Auto」）。
+    // 「支持配置的 Model Name」表现在是 **12 项**：doubao-seed-evolving / 2.1-pro / 2.1-lite /
+    // 2.0-mini / glm-5.3 (glm-latest) / glm-5.3-flash / deepseek-v4.1-flash /
+    // deepseek-v4.1-flash-economy / deepseek-v4-flash / deepseek-v4-pro / kimi-k2.8-preview /
+    // kimi-k3，另有「Model Name 不支持配置为 Auto」。
+    // ⚠ `minimax-m3` 与 `kimi-k2.7-code` 已从这张表消失 ⇒ 一并从下面清单撤除。套餐别名空间是
+    //   火山自己划的：这两支在按量线、TokenHub 别家仍在售，都救不了【这个端点】——
+    //   留着一个套餐不认的 Model Name，等于在下拉里摆一个必失败的选项。
+    //   `-economy` 是同族的成本细分档，按头部判据①不收。
     // 形态双轨的原句也在这页：「配置 Model Name 时，支持使用全小写格式，同时也支持直接复制开通管理
     // 页面中的模型名称」——所以点号 vs 带日期连字体的差【不是】漂移，别拿它当证据。
     apiKeyUrl: "https://console.volcengine.com/ark/region:ark+cn-beijing/apiKey",
@@ -2373,8 +2673,9 @@ export const PROVIDERS = {
     // ⚠ 改完需要重新部署 scripts/llm-proxy-worker.js(workerParity 钉着路由)。
     defaultUseRelay: true,
     models: [
-      // 套餐页 Model Name 表的核对结论：13 个型号与该表一致、同序。该表换过一轮血
-      // （turbo/2.0-lite 下架，新列 pro/lite/2.0-mini/v4.1-flash/k2.8-preview），
+      // 套餐页 Model Name 表的核对结论：12 个型号与该表一致、同序。该表换过一轮血
+      // （turbo/2.0-lite 下架，新列 pro/lite/2.0-mini/v4.1-flash/k2.8-preview；再后来
+      // minimax-m3 与 kimi-k2.7-code 也被移出，见条目头段），
       // 官方公告坐实了时间线（2.1-pro / 2.1-lite / 2.0-mini 上线，2.1-turbo / 2.0-lite
       // 于 10-09 正式下线、即日起不再向新用户服务）
       // —— 目录里那两支本就没有，别因为按量端点还能调 turbo 就把它加回套餐清单。
@@ -2386,20 +2687,15 @@ export const PROVIDERS = {
       // (Ark 先鉴权后校验模型,三种写法同回 AuthenticationError),故按文档一手字面
       // 改收点号。thinking 统一走套餐 FAQ 的
       // {"thinking":{"type":...}} 开关;doubao / deepseek 家族在方舟「深度思考」
-      // 文档里逐型号在册（deepseek 三款原话「支持手动关闭」），minimax-m3 依套餐 FAQ 的
-      // 通用机制标注 —— 若实测某家不收 disabled，
+      // 文档里逐型号在册（deepseek 三款原话「支持手动关闭」）—— 若实测某家不收 disabled，
       // 把该条的 thinking 撤掉 (撤了 = gated 省略参数 = 用模型默认，安全的另一半;
       // 留着的代价见下面 glm-5.3/k3 两条：概览页原话「默认开启思考，不支持关闭
       // 思考」,对它们发 disabled 是确定性 400)。
-      // ⚠ kimi-k2.7-code 按同一条判据撤标：深度思考页把它列在
-      // 「仅思考模式：kimi-k3、kimi-k2.7-code、kimi-k2-thinking」（百炼部署与月之暗面
-      // 部署两行同判），它没有可用的关闭值、也不接受 reasoning_effort。
       // k2.8-preview 协议未逐档核过 → 不打标(gated 对未标模型省略参数)。
       { label: "Doubao Seed Evolving", value: "doubao-seed-evolving", thinking: true },
       { label: "Doubao Seed 2.1 Pro", value: "doubao-seed-2.1-pro", thinking: true },
       { label: "Doubao Seed 2.1 Lite", value: "doubao-seed-2.1-lite", thinking: true },
       { label: "Doubao Seed 2.0 Mini", value: "doubao-seed-2.0-mini", thinking: true },
-      { label: "MiniMax M3", value: "minimax-m3", thinking: true },
       // glm-5.3 同时接受别名 glm-latest;开通管理页复制出来的是带日期的全名。
       // 撤 thinking 标:概览页原文「默认开启思考，不支持关闭思考」。
       { label: "GLM-5.3 (glm-latest)", value: "glm-5.3" },
@@ -2409,11 +2705,6 @@ export const PROVIDERS = {
       { label: "DeepSeek V4.1 Flash", value: "deepseek-v4.1-flash", thinking: true },
       { label: "DeepSeek V4 Flash", value: "deepseek-v4-flash", thinking: true },
       { label: "DeepSeek V4 Pro", value: "deepseek-v4-pro", thinking: true },
-      // ⚠ 撤标依据：上游官方（platform.kimi.com/docs/guide/use-thinking-models.md）逐字
-      // 「thinking.type | 仅 "enabled"，始终思考，传 "disabled" 报错」，且这支【不支持】
-      // reasoning_effort —— 打标后关闭态会发 disabled，就是 400。火山是否透传这套约束未经
-      // 带 key 实测，所以先整个省略 thinking 字段（不打标），比发一个会被拒的形态安全。
-      { label: "Kimi K2.7 Code", value: "kimi-k2.7-code" },
       { label: "Kimi K2.8 Preview", value: "kimi-k2.8-preview" },
       // 撤 thinking 标:火山概览页原文「默认开启思考，不支持关闭思考」。
       // 证据分歧留痕:阿里直供文档称其 kimi-k3 可传 enable_thinking false ——
@@ -2430,18 +2721,39 @@ export const PROVIDERS = {
     // compatible-mode，取代原 Coding Plan;区别于 qwen 的按量线
     // dashscope.aliyuncs.com/compatible-mode)。API Key 仍是 sk-sp- 开头，
     // 在 Token Plan 控制台「我的订阅」页生成。
+    // base URL 的官方出处(2026-10-21 补上,此前只有"host 是对的"没有出处):
+    // 《Cursor》配置页(help.aliyun.com/zh/model-studio/cursor)的「Token Plan 个人版」
+    // 表逐字——「Base URL | https://token-plan.cn-beijing.maas.aliyuncs.com/compatible-mode/v1」;
+    // 我们在它后面接 /chat/completions。同页 Anthropic 口径是
+    // https://token-plan.cn-beijing.maas.aliyuncs.com/apps/anthropic(本工具走 OpenAI 兼容,不用它)。
+    // ⚠ 同一张表里还有一句「部分模型名称需调整:glm-5.3 写为 glm-5-3」—— 那是 Cursor
+    //   自己的模型名字段要求,【不是 API 的】:qwen-code / codex / opencode 三个工具页
+    //   给的模型 id 都还是带点的 "glm-5.3" ⇒ 目录里的 id 保持带点,别照 Cursor 那句改。
     // 思考开关：百炼 OpenAI 兼容文档 (qwen-api-via-openai-chat-completions) 载明
     // 裸 enable_thinking 布尔适用于 Qwen3.7/3.6/3.5 系列、GLM 系列 (阿里直供)、
     // 以及 DeepSeek-V4.1-Flash、DeepSeek-V4-Pro/V4-Flash 系列 (阿里云直供) ——
-    // v4.1-flash 在列，deepseek-v4.1-flash 补标 (开/关走 enable_thinking；它的
-    // reasoning_effort 是 1~100 整数，两个参数并存不矛盾)。
+    // v4.1-flash 在列，deepseek-v4.1-flash 补标 (开/关走 enable_thinking)。
+    // ⚠ 2026-10-21 复核更正两处：① 百炼侧 deepseek-v4.1-flash 的 reasoning_effort 是
+    //   【字符串枚举】{max, high(默认), low}，不是 1~100 整数（那是 DeepSeek 原生 API 的
+    //   口径）；② thinking_budget 的适用句只列 Qwen/GLM/Kimi 系列，**不含 DeepSeek** ⇒
+    //   「两个参数并存不矛盾」的前提也不成立。
     // ⚠ qwen3.8-max/flash 也补标：深度思考页把两型明列为「混合思考模式，默认开启思考模式」
     // 并给出对 qwen3.8-max 传 enable_thinking 的兼容示例。另一页的适用句只列到
     // 3.7/3.6/3.5/3，那是枚举没跟着 3.8 更新，【不是】排除条款 ⇒ 不打标 = 省略 =
     // 服务端默认开着想（静默计费）。逐字依据见 models 那两条。
-    // ⚠ glm-5.3 不打标:官方 GLM 页(help.aliyun/zh/model-studio/glm)逐字「glm-5.3 仅支持思考模式，
-    // 不支持关闭思考」+「传入 enable_thinking = false 不会生效」—— 是【被忽略】不是报错。故不打标
-    // (打了对它 off 态发的 enable_thinking:false 也关不掉、思考照开)。别写成"false 会导致请求失败"。
+    // ⚠ glm-5.3 系(「仅思考模式」,关不掉):官方**两页**对「enable_thinking=false 会怎样」
+    //   口径互相矛盾(2026-10-21 两份原文都取到了):
+    //   · 《OpenAI兼容-Chat》逐字:「glm-5.3 系列模型始终开启思考，`enable_thinking`
+    //     仅支持 `true`，传入 `false` 会导致 API 请求失败」
+    //   · 《GLM》模型页逐字:「glm-5.3 不支持关闭思考，传入 `enable_thinking`=`false`
+    //     不会生效」
+    //   ⇒ 一页说【会失败】、一页说【不生效】;两种口径下唯一安全的动作相同:【别发 false】。
+    //   ⇒ 这一族走「关不掉」那条路:关闭态发官方最低档 reasoning_effort(同 zhipu 的
+    //     glm-5.3)。推理强度取值《GLM》页的表逐字「low、high、max（最高）」,同页
+    //     明写「传入不支持的取值会返回 `invalid_parameter_error` 错误」⇒ 我们发得出
+    //     low/high(发 medium 是每请求 400,不是就近映射)。
+    //   ⚠ 旧注释「在册条目不打标是对的」只解决了①(在册不发参=合法),没解决②(手填
+    //   glm-5.3 走 custom 分支会发 enable_thinking:false)。2026-10-21 两条一起修。
     endpoint: "https://token-plan.cn-beijing.maas.aliyuncs.com/compatible-mode/v1/chat/completions",
     defaultModel: "qwen3.8-flash",
     defaultTemperature: 0.7,
@@ -2486,8 +2798,13 @@ export const PROVIDERS = {
       { label: "DeepSeek V4 Pro 0813", value: "deepseek-v4-pro-0813", thinking: true },
       { label: "DeepSeek V4 Flash 0731", value: "deepseek-v4-flash-0731", thinking: true },
       // glm-5.3 官方模型表里有；5.2 已按「同价旧代不留」删掉。
-      // ⚠ 不打 thinking：5.3 系列强制思考、不可禁用。
-      { label: "GLM-5.3", value: "glm-5.3" },
+      // ⚠ 2026-10-21:从「不打标」改成【打标 + 关不掉】—— 这一族是「仅思考模式」,
+      //   关不掉(官方两页都这么说),但官方给了推理强度档位(low/high/max)⇒ 关闭态
+      //   发最低档 low(与 zhipu 的 glm-5.3 同一处理),绝不发 enable_thinking:false
+      //   (官方两页对 false 的后果口径不一:一页说会失败、一页说不会生效)。
+      //   不打标的话用户没有任何旋钮,只能吃服务端默认(max)—— 那是「关不掉却
+      //   连最低档都给不了」,比标成 Min 更糟。
+      { label: "GLM-5.3", value: "glm-5.3", thinking: true, thinkingLevels: ["low", "high"] },
     ],
   },
 } as const satisfies Record<string, ProviderSpec>;
@@ -2835,14 +3152,137 @@ export const isAlwaysThinkingClaude = (model: string): boolean => ALWAYS_THINKIN
 export const BETWEEN_TOOLS_OFF_CLAUDE_RE = /claude-sonnet-5-5/;
 export const isBetweenToolsOffClaude = (model: string): boolean => BETWEEN_TOOLS_OFF_CLAUDE_RE.test(model);
 
-const THINKING_LEVEL_ORDER = ["minimal", "low", "medium", "high"] as const;
-type ThinkingLevel = (typeof THINKING_LEVEL_ORDER)[number];
+/**
+ * 「关不掉思考」的两族(官方标 enabled(不支持关闭)):GLM-5.3 系与 Kimi K3 ——
+ * 关闭态只能发官方最低档 reasoning_effort,发 thinking.type:"disabled" 是不收的值。
+ * 原文与通道见 tokenhub / alibaba 条目注释。⚠ 正则与 THINKING_SHAPE_RULES 共用同一份,
+ * 别在 builder 里另抄一份 —— 抄一份就是两份真相,目录与运行时各判各的正是本仓要消灭的漂移。
+ */
+export const GLM_5_3_ALWAYS_THINKING_RE = /glm-5\.3/;
+export const TOKENHUB_ALWAYS_THINKING_RE = /glm-5\.3|kimi-k3/;
+/** TokenHub 的 minimax-m3 族:官方只接受 adaptive / disabled(发 enabled 直接 400)。 */
+export const TOKENHUB_ADAPTIVE_RE = /minimax-m3/;
+
+/**
+ * 【思考形态按名字分代】的有序规则。手填的快照 id（`claude-sonnet-5-5-20261101` 这种）不在
+ * 任何 models[] 清单里，只能按名字判代 —— 而发错一代的关闭值就是【每请求 400】。
+ * 三个消费方，所以这张表只能有一份：
+ *   · scripts/sync-provider-catalog.ts 按它下发 thinkingWireIf；
+ *   · services/__tests__/thinking.test.ts 断言「按顺序取首个匹配解出的形态 == 运行时对
+ *     同一个 id 真正发出的形态」；
+ *   · registry 自己的档位表解析（tableModel：这一代的档位表挂在哪个在册型号上）——
+ *     以及 runtime 侧的形态分流（services/llm.ts 的 moonshot 行读同一张表，不再自己
+ *     抄一份 /kimi-k3/：抄一份就是两份真相，目录与运行时各判各的正是本仓要消灭的漂移）。
+ * ⚠ 顺序即优先级，而且它不是审美问题，是由【哪个正则是谁的子集】决定的：always-on 的正则是
+ * adaptive 的子集，反过来排 fable-5/mythos 会先命中 adaptive、拿到它们 400 的 disabled；
+ * between_tools 同理必须排在 adaptive 之前（sonnet-5-5 两条都命中，adaptive 那条的关闭值是
+ * disabled）。这一条曾经就是漏发的形态：目录只带两形态时，手填的 sonnet-5-5 快照拿到 disabled。
+ * sentinel 是【故意不在册】的假 id，只用来取该代的真实形态（走运行时同一个 builder）。
+ * ⚠ tableModel 只在「这一代的档位表挂在某个在册型号上」时才有（moonshot 的 k3 族）——
+ *   claude 那三条只管关闭形态，档位不由它们决定。
+ */
+export const THINKING_SHAPE_RULES: ReadonlyArray<{ provider: string; pattern: RegExp; sentinel: string; tableModel?: string }> = [
+  { provider: "claude", pattern: ALWAYS_THINKING_CLAUDE_RE, sentinel: "claude-fable-5-__unlisted__" },
+  { provider: "claude", pattern: BETWEEN_TOOLS_OFF_CLAUDE_RE, sentinel: "claude-sonnet-5-5-__unlisted__" },
+  { provider: "claude", pattern: ADAPTIVE_THINKING_CLAUDE_RE, sentinel: "claude-opus-5-__unlisted__" },
+  // moonshot 只有一条：k3 吃顶层 reasoning_effort、不吃 thinking:{type}，K2.x 正好反过来。
+  // tableModel：k3 那一族的档位表挂在在册的 "kimi-k3" 上（low/high）—— 手填的 k3 快照
+  // 按族名归到它那张表，否则会掉进通用回落集合（含 medium）发出 k3 不收的档。
+  { provider: "moonshot", pattern: /kimi-k3/, sentinel: "kimi-k3-__unlisted__", tableModel: "kimi-k3" },
+  // cerebras:gpt-oss 族【没有 none 关闭值】(官方逐模型表 inference-docs.cerebras.ai/
+  // capabilities/reasoning 逐字「gpt-oss-120b | medium | low, medium, high | Not
+  // supported」—— 第三列就是 none 那一档,写的是 Not supported)。
+  // 手填的 gpt-oss 快照 id 落进 custom 分支时,旧判据只查【在册清单】⇒ 查不到 ⇒ 走
+  // reasoningEffortOrNone 发 none ⇒ gpt-oss 不收 none = 每请求 400。
+  // tableModel 让它按族名归到 gpt-oss-120b 的表(low/medium/high)⇒ 关闭态发最低档 low。
+  { provider: "cerebras", pattern: /gpt-oss/, sentinel: "gpt-oss-120b-__unlisted__", tableModel: "gpt-oss-120b" },
+  // alibaba:glm-5.3 系是「仅思考模式」(关不掉)⇒ 关闭态发官方最低档 reasoning_effort,
+  // 绝不发 enable_thinking:false(官方两页对 false 的后果口径不一,见 alibaba 条目注释)。
+  // tableModel 让手填的 glm-5.3-xxx 快照按族名归到在册 glm-5.3 的那张表(low/high)。
+  { provider: "alibaba", pattern: GLM_5_3_ALWAYS_THINKING_RE, sentinel: "glm-5.3-__unlisted__", tableModel: "glm-5.3" },
+  // TokenHub 两条(官方逐型号表,2026-10-21):
+  //   · minimax-m3 族:只收 adaptive / disabled(发 enabled 直接 400)⇒ 形态自适应。
+  //   · glm-5.3 / kimi-k3 族:官方「enabled(不支持关闭)」⇒ 关闭态发最低档 effort,
+  //     不发 thinking 参数。两族档位表相同(官方 low/high/max)⇒ 共用 glm-5.3 那张表。
+  // tableModel 给的是「这一族的手填快照 id 该用哪张档位表」—— 族名不是 id:手填的
+  // glm-5.3-2026xxxx 不在清单里,按族名归到代表型号的表,否则会掉进通用回落集合
+  // (含 medium)发出这两族不收的档。
+  { provider: "tokenhub", pattern: TOKENHUB_ADAPTIVE_RE, sentinel: "minimax-m3-__unlisted__" },
+  { provider: "tokenhub", pattern: TOKENHUB_ALWAYS_THINKING_RE, sentinel: "glm-5.3-__unlisted__", tableModel: "glm-5.3" },
+];
+
+/** 按【顺序取首个匹配】解出该 id 命中的那条规则；不匹配 = undefined（走 provider 级兜底）。 */
+export const resolveThinkingShapeRule = (provider: string, model: string): (typeof THINKING_SHAPE_RULES)[number] | undefined =>
+  THINKING_SHAPE_RULES.find((r) => r.provider === provider && r.pattern.test(model));
+
+/** 按【顺序取首个匹配】解出该 id 该走的 sentinel；都不匹配 = undefined（走 provider 级兜底）。 */
+export const resolveThinkingShapeSentinel = (provider: string, model: string): string | undefined =>
+  resolveThinkingShapeRule(provider, model)?.sentinel;
+
+/**
+ * 这个 id 是不是【某个按名字认出来的世代】—— runtime 侧的形态分流用它，
+ * 别在 builder 里另抄一份正则（目录与运行时各判各的 = 本仓要消灭的那种漂移）。
+ */
+export const matchesThinkingGeneration = (provider: string, model: string): boolean => !!resolveThinkingShapeRule(provider, model);
+
+const THINKING_LEVEL_ORDER: ReadonlyArray<EffortLevel> = ["minimal", "low", "medium", "high"];
 /**
  * 未列出的 SKU(用户手填)的回落档位。三家的官方表里在列模型都收这三档,所以
  * 是同一个默认值 —— 曾经给每家包了一个只是换服务名的 helper,三份完全一样。
  * 哪家将来出现不同的回落集合,给它单独传 fallback 即可。
  */
-const DEFAULT_THINKING_LEVELS: ReadonlyArray<ThinkingLevel> = ["low", "medium", "high"];
+const DEFAULT_THINKING_LEVELS: ReadonlyArray<EffortLevel> = ["low", "medium", "high"];
+
+/**
+ * 【档位表按名字分族】—— 复用 THINKING_SHAPE_RULES 的 tableModel 字段，不另开一张表：
+ * 「这个 id 属于哪一代」是同一个判断，形态与档位表都是它的下游。
+ * ⚠ 族名用 /kimi-k3/ 而不是传入的 id：按 id 查会掉进通用回落集合（含 medium）
+ *   ⇒ 发出 k3 不收的 medium = 每请求 400。
+ */
+
+/**
+ * 【这一支的档位表从哪来】—— 三级优先，线格式与界面下拉共用这一个判据：
+ *   ① 在册型号自己声明的表（effortLevels ?? thinkingLevels）；
+ *   ② 按名字分族（THINKING_LEVEL_TABLE_RULES）→ 族代表型号的表；
+ *   ③ provider 级兜底（spec.unlistedEffortLevels ?? 通用三档）。
+ *
+ * ⚠ ② 与 ③ 是【手填型号】才走到的分支，而它们以前只存在于线格式一侧：zhipu 的
+ *   ["low","high"] 是 llm.ts 里的行内字面量、moonshot 的族名查找写在 builder 里。
+ *   界面拿不到 ⇒ 界面显示 Medium、线上发 low（用户拨的档与实际跑的档不是一档）。
+ *   数据挪进 registry 之后，两边读的是同一张表。
+ */
+export const resolveLevelsTable = (service: string, model: string): ReadonlyArray<EffortLevel> => {
+  const entry = getProviderModels(service).find((m) => m.value === model);
+  const own = entry?.effortLevels ?? entry?.thinkingLevels;
+  if (own?.length) return own;
+  // ② 按名字分族 → 族代表型号的表（THINKING_SHAPE_RULES 的 tableModel）
+  const rule = resolveThinkingShapeRule(service, model);
+  if (rule?.tableModel) {
+    const rep = getProviderModels(service).find((m) => m.value === rule.tableModel);
+    const table = rep?.effortLevels ?? rep?.thinkingLevels;
+    if (table?.length) return table;
+  }
+  return getUnlistedEffortLevels(service);
+};
+
+/** provider 级兜底表：手填型号（不在 models[] 里的 SKU）用的那一套档位。 */
+const getUnlistedEffortLevels = (service: string): ReadonlyArray<EffortLevel> =>
+  (PROVIDERS[service as ProviderKey] as ProviderSpec | undefined)?.unlistedEffortLevels ?? DEFAULT_THINKING_LEVELS;
+
+/**
+ * 在【给定档位集】里取「不高于 want 的最高档」；want 就在集内则原样返回。
+ * 泛型 L 让调用方拿到自己那一层的类型（厂商档位 EffortLevel / 我们发得出的
+ * ReasoningEffort），不用在外面再 `as` 一次。
+ */
+const clampToLevels = <L extends EffortLevel>(levels: ReadonlyArray<L>, want: ReasoningEffort): L => {
+  // ⚠ 用 find 而不是 levels.includes(want)：includes 只能把 want 留在 ReasoningEffort，
+  //   交不回去（levels 可能是更窄的子类型）；find 的 type predicate 保住 L。
+  const exact = levels.find((l): l is L => l === want);
+  if (exact !== undefined) return exact;
+  const wantIdx = THINKING_LEVEL_ORDER.indexOf(want);
+  const lower = levels.filter((l) => THINKING_LEVEL_ORDER.indexOf(l) <= wantIdx);
+  return lower.length ? lower[lower.length - 1] : levels[0];
+};
 
 /**
  * 按【逐 SKU 档位表】解析该发哪个思考档位。表在 models[].thinkingLevels(抄自
@@ -2862,20 +3302,47 @@ const DEFAULT_THINKING_LEVELS: ReadonlyArray<ThinkingLevel> = ["low", "medium", 
  *     的高档位静默计费 —— DeepSeek「10M tokens」事故就是这个形态)。
  *   · want 给了但该 SKU 不收 → 降到它收的、不高于 want 的最高档。
  *
- * ⚠ 未列出的 SKU(用户手填) 用调用方给的 fallback，不硬降用户显式选的档位
- * (选了 custom 自己负责)。
+ * ⚠ 返回的是【厂商档位 EffortLevel】而不是 ReasoningEffort:关闭态取的就是厂商表里
+ *   的最低档,而那可能是一档我们界面发不出的 minimal(gemini-3.5-flash-lite 就是
+ *   ["minimal","low","medium","high"])—— 线上发 minimal 合法,把它硬说成
+ *   ReasoningEffort 只会逼着调用方在外面 `as` 一次,那个断言迟早骗人。
+ *   要「我们发得出的那一档」请用 resolveEffortForModel(它在交集里钳)。
+ * ⚠ 未列出的 SKU(用户手填) 走 resolveLevelsTable 的 ②③ 分支：按名字分族，或用
+ *   provider 级兜底集合(unlistedEffortLevels)。⚠ 那条收窄【不是】"硬降用户显式选的
+ *   档位"——厂商枚举里真没有那一档(发出去是每请求 400)，所以是必要的；
+ *   界面那一侧读的是同一张表，用户看到的与发出去的是一档。
  * ⚠ 曾用正则近似这些表 (按名字判 -pro / 硬编码 grok-4.3),两个毛病：按名字归并
  * 会把合法档位静默降级 (gemini 3.1-pro 的 medium 官方接受，却被降成 low);而且
  * 其中一个词边界转义在搬迁中被写成了不可见控制字符，那个分支从此静默失效。
  * 表就在数据里，别再回到正则。
  */
-export const pickThinkingLevel = (service: string, model: string, want?: ReasoningEffort, fallback: ReadonlyArray<ThinkingLevel> = DEFAULT_THINKING_LEVELS): string => {
-  const levels = getProviderModels(service).find((m) => m.value === model)?.thinkingLevels ?? fallback;
+export const pickThinkingLevel = (service: string, model: string, want?: ReasoningEffort): EffortLevel => {
+  const levels = resolveLevelsTable(service, model);
   if (!want) return levels[0];
-  if (levels.includes(want)) return want;
-  const wantIdx = THINKING_LEVEL_ORDER.indexOf(want);
-  const lower = levels.filter((l) => THINKING_LEVEL_ORDER.indexOf(l) <= wantIdx);
-  return lower.length ? lower[lower.length - 1] : levels[0];
+  return clampToLevels(levels, want);
+};
+
+/**
+ * 该 SKU 【实际能收到】的 effort：声明了档位表(effortLevels 或 thinkingLevels)就钳到表内
+ * (取不高于所求档的那一档)，没声明就原样 —— 线格式与界面下拉【共用这一个判据】。
+ *
+ * 为什么要有这个而不是各自调 pickThinkingLevel：后者在没声明表时回落到通用三档，而通用三档
+ * 是「我们发得出什么」，不是「这一支收不收」。钳位这件事只有一处真相才有意义 ——
+ * 下拉按表收窄、请求按原值发出去，网关就把越界档【就近映射】(OpenRouter 文档口径)，
+ * 用户看到 High、跑的是别的档。
+ *
+ * ⚠ 钳位的目标是【厂商收 ∩ 我们发得出】：用户只拨得出 low/medium/high，而厂商表里
+ *   可能多一档 minimal(gemini-3.5-flash-lite)。所以只在交集里钳，返回值必然是
+ *   ReasoningEffort —— 界面拿它当显示值、线上拿它当要发的档，两边同一件事。
+ *   交集为空(厂商只收 minimal 这类我们发不出的档)时【不钳】：原样发，让网关就近映射
+ *   —— 那里没有更好的选择,也不能假装我们发得准。
+ */
+export const resolveEffortForModel = (service: string, model: string, want?: ReasoningEffort): ReasoningEffort | undefined => {
+  if (!want) return want;
+  const levels = resolveLevelsTable(service, model);
+  const sendable = levels.filter((l): l is ReasoningEffort => l !== "minimal");
+  if (!sendable.length) return want;
+  return clampToLevels(sendable, want);
 };
 
 /**
@@ -2976,10 +3443,11 @@ export const deriveThinkingParams = (method: string, config: TranslationConfig |
  * 分级，medium 原样发 —— 见 pickThinkingLevel。
  */
 // ⚠ moonshot 已移出：收录 kimi-k3 后它【同时】有二元 SKU(K2.x 的 thinking:{type})
-// 与真分级 SKU(k3 的 reasoning_effort low/high)。集合是 provider 级的，而 UI 的
-// 档位选择器也是 provider 级 —— 给出三档，对 K2.x 是三档折叠成开/关 (无害，
-// 只是 Medium 与 High 同效),对 k3 是必需。反过来只给 Off/On 则 k3 的 high
-// 永远选不到。thinking.test 的「三档形态 ↔ 声明一致」不变量抓住了这次矛盾。
+// 与真分级 SKU(k3 的 reasoning_effort low/high)。集合是 provider 级的，但
+// **档位下拉已经按型号给了**（2026-10-21，四个仓同一口径）：k2.x 给 [On/Off]
+// （三档折叠成开/关 —— Medium 与 High 同效，摆出来是摆设），k3 给 [低/高]
+// （反过来只给 Off/On 则 k3 的 high 永远选不到）。thinking.test 的「三档形态 ↔
+// 声明一致」不变量抓住了这次矛盾。
 // volcengine(方舟 Coding Plan)= 扁平 thinking:{type},alibaba(百炼 Token Plan)
 // = 裸 enable_thinking，都是二元形态;两家是 hidden provider，登记规则不变。
 // ⚠ alibaba 并非每个在册 SKU 都打 thinking 标:glm-5.3 因官方 GLM 页明写「不支持关闭思考、传
@@ -2990,7 +3458,113 @@ export const deriveThinkingParams = (method: string, config: TranslationConfig |
 // （low/medium/high 三挡里 medium 由 pickThinkingLevel 降到 low），与"二元"声明矛盾;
 // 同 moonshot 的处置——给三档，折叠掉的那一档无害，反过来会把官方有的档位锁死。
 // MiniMax now includes Flash with graded effort; M3 still folds levels to on/off.
-export const BINARY_EFFORT_VENDORS: ReadonlySet<string> = new Set(["deepseek", "doubao", "mimo", "siliconflow", "cohere", "qianfan", "mistral", "volcengine", "alibaba"]);
+// ⚠ doubao 已移出（2026-10-20）：三档现在真分开了 —— 官方 Chat API 的顶层
+// reasoning_effort，low/medium/high 发出去是三个不同值。二元声明会让界面只给
+// Off/On，那是把官方真有的档位锁死（同 qwen —— 它本来就分级，没在二元集合里）。
+//
+// ⚠ 2026-10-21：集合的【语义】改窄了一层 —— 它现在说的是「这一家【没有档位表的
+// 型号】只有开/关」，不再是「整家折叠成开/关」。因为同一个 provider 里可以有两种
+// 形态（moonshot：k3 有表 ⇒ 分级 / K2.x 没表 ⇒ 二元；minimax：M3.1-Flash 有表 ⇒
+// 分级 / M3 没表 ⇒ 二元；nvidia：chat_template_kwargs 形态表达不了档位 ⇒ 二元），
+// 而「整家二元」这个说法对它们不成立。**有档位表的型号一律分级**（表优先）。
+// ⇒ 集合 = 「没表 ⇒ 二元」的 provider 名单；不在集合里的 provider，没表的型号走
+//   通用三档（openrouter 的 claude-sonnet-5/openai 的 gpt-6-luna 等就是这一类）。
+// ⚠ 危害不是「白给一个选项」：二元的那支摆出 Low/Medium/High 三档是**摆设** ——
+//   线上三档发出去的 body 完全相同（档位被丢掉），用户拨 Low 以为省了 token，实际
+//   拿到的是模型的默认思考（比 Low 多）。界面声称的档位与真实状态不一致，正是本仓
+//   要消灭的那种撒谎。
+export const BINARY_EFFORT_VENDORS: ReadonlySet<string> = new Set([
+  "deepseek",
+  "mimo",
+  "siliconflow",
+  "cohere",
+  "qianfan",
+  "mistral",
+  "volcengine",
+  "alibaba",
+  // 同一 provider 内两种形态的：没表的那支是二元的。
+  "minimax",
+  "moonshot",
+  // TokenHub：hy3 / deepseek-v4-pro 有逐型号档位表(分级)，hy4-preview / kimi-k2.6 /
+  // minimax-m3 没有(官方推理深度表里没列)⇒ 二元。同一家两种形态,表优先。
+  "tokenhub",
+  // NIM 的思考形态只表达开关（chat_template_kwargs 里没有档位那个字段）。
+  "nvidia",
+]);
+
+/**
+ * 这一支有没有【自己的】档位表（在册声明的，或按名字分族到某个族代表的）：
+ * 有 = 分级形态（线格式会带上 effort，档位是真的能调）；没有 = 走 provider 级默认形态。
+ *
+ * ⚠ 线格式侧也要用它：手填的快照 id 按族名归到代表型号的表(THINKING_SHAPE_RULES 的
+ *   tableModel)时，档位表存在但【不在 models[] 里】—— 只查 models[] 会判成"没表"
+ *   ⇒ 发出去的 body 三档相同(看着像二元)或漏掉档位。
+ */
+export const hasOwnLevelsTable = (service: string, model: string): boolean => {
+  const entry = getProviderModels(service).find((m) => m.value === model);
+  if (entry?.effortLevels?.length || entry?.thinkingLevels?.length) return true;
+  return !!resolveThinkingShapeRule(service, model)?.tableModel;
+};
+
+/**
+ * 这一支的思考形态是【二元的】吗（二元 = 只有开/关，没有档位可选）。
+ *
+ * 判据两行，与 resolveLevelsTable 同一套来源：
+ *   ① 这一支有自己的档位表（在册声明的，或按名字分族到某个族代表的）⇒ 分级，不是；
+ *   ② 没有 ⇒ 看 provider：BINARY_EFFORT_VENDORS 里的 ⇒ 二元；其余 ⇒ 通用三档。
+ *
+ * ⚠ 为什么要有这个：界面的档位下拉本来是 provider 级的，而同一个 provider 里
+ *   可以有两种形态（moonshot：k3 分级 / K2.x 二元；minimax：M3.1-Flash 分级 / M3 二元；
+ *   nvidia：形态只表达开关）。二元的那支摆出 Low/Medium/High 三档是【摆设】——
+ *   线上三档发出去的 body 完全相同（档位被丢掉），用户拨 Low 以为省了 token，
+ *   实际拿到模型的默认思考（比 Low 多）。
+ */
+export const isBinaryThinking = (service: string, model: string): boolean =>
+  hasOwnLevelsTable(service, model) ? false : BINARY_EFFORT_VENDORS.has(service);
+
+/**
+ * 界面上思考档位下拉【可以拨到的档位】。与该型号的档位表同源，所以用户拨不到
+ * 官方没有的档（网关虽会「就近映射」，那是降级不是那一档）。
+ *
+ * ⚠ 两个表都收窄：effortLevels（关得掉但档位受限）与 thinkingLevels（没有关闭值、
+ *   档位也受限）—— 少看一个就是让用户在 glm-5.3 / kimi-k3 上拨出一个官方不收的
+ *   Medium（那支只收 low/high）。
+ * ⚠ minimal 不在里面：厂商表里有（gemini-3.5-flash-lite），但【我们发不出】——
+ *   存档的 ThinkingDirective 只有 low/medium/high/auto，界面存不下它。
+ * ⚠ 二元 provider（BINARY_EFFORT_VENDORS）不在这里渲染：厂商层面就是把三档折叠成
+ *   开/关，界面给 [On] 才不谎报粒度。
+ */
+export const getSelectableThinkingLevels = (service: string, model: string): ReadonlyArray<ReasoningEffort> => {
+  const levels = resolveLevelsTable(service, model);
+  return levels.filter((l): l is ReasoningEffort => l !== "minimal");
+};
+
+/**
+ * 界面上思考档位下拉的【显示值】。判据只有一条：显示的必须与【线上真正会发的那一档】
+ * 一致 —— 界面声称的状态必须与真实状态一致。
+ *
+ * 为什么不自己判一遍 "auto"，而要过 deriveThinkingParams：线上真正用的是哪一个，
+ * 只有那个函数说了算，两种情况在线上 body 完全不同：
+ *   · 在册型号存了 "auto" ⇒ deriveThinkingParams 把它归一成 undefined ⇒ 线上发【禁用】
+ *     ⇒ 显示必须是 Off（显示 Auto 会让用户以为「参数被省略」，那是另一种状态）。
+ *   · 手填型号存了 "auto" ⇒ 透传 ⇒ 线上【省略思考参数】、跟服务端默认走
+ *     ⇒ 显示必须是 Auto —— 省略 ≠ 禁用，很多厂商的省略就是「默认在想、照常计费」。
+ *
+ * ⚠ 别把 "auto" 当成「没有值」直接丢掉：那样手填型号的 Auto 会显示成 Off，而线上
+ *   仍在思考并计费 —— 正是本仓要消灭的那种撒谎。
+ */
+export const resolveThinkingSelectValue = (service: string, model: string, stored?: ThinkingDirective): "auto" | "off" | "on" | ReasoningEffort => {
+  // 线上真正会用的指令 = deriveThinkingParams 的判据（唯一真相源）。造一份只带
+  // 这两个字段的 config：那个函数只读 model 与 thinkingEffort。
+  const effective = deriveThinkingParams(service, { model, thinkingEffort: stored ? { [model]: stored } : undefined });
+  if (effective === undefined) return "off";
+  if (effective === "auto") return "auto";
+  // 二元形态（厂商把档位折叠成开/关，线上不带走 effort）：界面只给 On/Off ——
+  // 低/中/高在这里没有意义，界面给三档就是摆设（用户拨 Low 以为省了 token）。
+  if (isBinaryThinking(service, model)) return "on";
+  // 分级：显示值过一遍档位表钳位，与线上发的那一档同源。
+  return resolveEffortForModel(service, model, effective) ?? "off";
+};
 
 /**
  * Quick-pick endpoints for providers that surface multiple URL options (regional

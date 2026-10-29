@@ -248,7 +248,7 @@
     "bilingualFormatTooltip": "ASS：原文と訳文に別々のフォント/色を適用可能。SRT：プレーンテキスト、同じキューに重ねて表示。",
     "translationFirst": "訳文を上に",
     "originalFirst": "訳文を下に",
-    "unsupportedSub": "字幕形式を認識できません。ファイルがSRT、ASS、VTT、SBV、またはLRC形式であることを確認してください。",
+    "unsupportedSub": "字幕形式を認識できません。ファイルがSRT、ASS、SSA、VTT、SBV、またはLRC形式であることを確認してください。",
     "noFileUploaded": "先に字幕ファイルをアップロードしてください。",
     "noSourceText": "字幕ファイルをアップロードするか、テキストを貼り付けてください。",
     "noExtractedText": "字幕内容が抽出されませんでした。ファイル形式を確認してください。",
@@ -259,6 +259,7 @@
     "reviewColTarget": "訳文",
     "reviewApplyDownload": "適用してダウンロード",
     "reviewDownloaded": "レビュー済み字幕をダウンロードしました",
+    "reviewApplyFirst": "校正内容はまだ適用されていません。先に「適用してダウンロード」をクリックしてください。",
     "assStyleButton": "ASSスタイル",
     "assStyleTooltip": "バイリンガルASSの字幕フォント・サイズ・色・位置をカスタマイズ",
     "assNativeModeSource": "元のスタイルを維持",
@@ -387,13 +388,13 @@
   "tools": {
     "subtitleTranslator": {
       "title": "字幕翻訳機",
-      "description": "SRT、ASS、VTT、SBV、LRC字幕を一括翻訳、120以上の言語に対応",
+      "description": "SRT、ASS、SSA、VTT、SBV、LRC字幕を一括翻訳、120以上の言語に対応",
       "metaTitle": "字幕翻訳 - SRT/ASS/VTT/SBV/LRC一括 AI翻訳・バイリンガル",
-      "metaDescription": "AI 字幕翻訳、SRT/ASS/VTT/SBV/LRC 一括変換、DeepSeek/Claude/GPT 30+ エンジン、タイムコード保持で二言語字幕。",
+      "metaDescription": "AI 字幕翻訳、SRT/ASS/SSA/VTT/SBV/LRC 一括変換、DeepSeek/Claude/GPT 30+ エンジン、タイムコード保持で二言語字幕。",
       "faq": [
         {
-          "q": "対応している字幕フォーマットは？SRT、ASS、VTT、SBV、LRC すべて翻訳できますか？",
-          "a": "SRT、ASS、VTT、SBV、LRC の 5 形式に対応。SRT/VTT は YouTube、HTML5 プレイヤー、クリエイターダッシュボード向け（YouTube 字幕は yt-dlp でエクスポート）；ASS/SSA は Aegisub とアニメ字幕グループ向けで、行頭の位置タグ（\\\\an8 など）は翻訳後に自動復元；SBV は YouTube Studio の字幕エディタが書き出すネイティブ形式；LRC は音楽歌詞ファイル向け。ファイルエンコーディング（UTF-8/UTF-16/GBK/Shift-JIS）は jschardet で自動判定。複雑な ASS インライン特効タグ（色、アニメーション、カラオケ）は簡略化されます。"
+          "q": "対応している字幕フォーマットは？SRT、ASS、SSA、VTT、SBV、LRC すべて翻訳できますか？",
+          "a": "SRT、ASS、SSA、VTT、SBV、LRC の 6 形式に対応。SRT/VTT は YouTube、HTML5 プレイヤー、クリエイターダッシュボード向け（YouTube 字幕は yt-dlp でエクスポート）；ASS/SSA は Aegisub とアニメ字幕グループ向けで、行頭の位置タグ（\\\\an8 など）は翻訳後に自動復元；SBV は YouTube Studio の字幕エディタが書き出すネイティブ形式；LRC は音楽歌詞ファイル向け。ファイルエンコーディング（UTF-8/UTF-16/GBK/Shift-JIS）は jschardet で自動判定。複雑な ASS インライン特効タグ（色、アニメーション、カラオケ）は簡略化されます。"
         },
         {
           "q": "字幕翻訳には機械翻訳と AI 翻訳のどちらを使う？品質と価格はどう違う？",
@@ -425,11 +426,11 @@
         },
         {
           "q": "字幕翻訳はサーバーにアップロードされますか？プライバシーは安全ですか？",
-          "a": "完全にフロントエンドで処理：字幕ファイルの読み込み・解析・翻訳リクエストはすべてブラウザ内で完結し、原文は当方のサーバーに保存されません。LLM エンジンへのリクエストはあなたのブラウザから直接、設定した API エンドポイント（OpenAI、DeepSeek など）に送信され、API Key はローカルの localStorage のみに保存されます。翻訳キャッシュはブラウザの IndexedDB を使用し、ページを閉じても保持されるため、次回同じ内容を翻訳するとキャッシュにヒットします。ソースコードは GitHub（rockbenben/subtitle-translator）で公開されており、自由に監査できます。"
+          "a": "完全にフロントエンドで処理：字幕ファイルの読み込み・解析・翻訳リクエストはすべてブラウザ内で完結し、原文は当方のサーバーに保存されません。LLM エンジンへのリクエストはあなたのブラウザから直接、設定した API エンドポイント（OpenAI、DeepSeek など）に送信され、API Key はローカルの localStorage のみに保存されます。翻訳キャッシュはブラウザの IndexedDB を使用し、ページを閉じても保持されるため、次回同じ内容を翻訳するとキャッシュにヒットします。"
         }
       ],
       "features": [
-        "SRT、ASS、VTT、SBV、LRC 5 形式対応、ASS 位置タグ（\\\\an8 等）を翻訳後も保持",
+        "SRT、ASS、SSA、VTT、SBV、LRC 6 形式対応、ASS 位置タグ（\\\\an8 等）を翻訳後も保持",
         "タイムコード無変更 — テキストのみ翻訳、元の時間情報を完全保持",
         "UTF-8/UTF-16/Shift-JIS 自動エンコード検出",
         "バイリンガル訳文位置：上（学習）または下（視聴）",
@@ -499,7 +500,7 @@
     },
     "dataParserFlare": {
       "title": "Flareブックマーク変換",
-      "description": "ブラウザブックマークとFlare形式の相互変換"
+      "description": "ブックマーク HTML を Flare YAML に変換（フラット化）"
     },
     "dataParserImgPrompt": {
       "title": "IMGPromptデータ生成",

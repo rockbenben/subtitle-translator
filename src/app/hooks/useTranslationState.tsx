@@ -104,6 +104,15 @@ const useTranslationState = () => {
   // it under the run-snapshot rule (mid-run edits can't affect the live run).
   const [relayBase, setRelayBase] = useLocalStorage<string>("translation-relayBase", "");
   const [translatedText, setTranslatedText] = useState<string>("");
+  // 语言配置【真的变了】的次数。预览译文由本 hook 自己清(见 handleLanguageChange
+  // 等),但工具层可能还存着自己的派生产物 —— JSON 翻译器的 i18n 合并结果就是
+  // 一例(combined 里内嵌了全部语种,移除一个语种后必须跟着作废)。
+  //
+  // 为什么是计数器而不是让工具层自己判断"变了没有":两边各判一次就会有两套
+  // 判据,漂移出两种坏结果 —— 「没改也清」(导出入口消失,只能重跑整轮 N 语种
+  // 翻译才能拿回来)与「改了没清」(导出含已移除语种的旧 combined)。
+  // 判据只此一处:hook 决定变了就 +1,工具层跟着这个号走。
+  const [languageConfigVersion, setLanguageConfigVersion] = useState(0);
   // Line-level soft-failure: lines still failing after retries exhaust.
   // UI shows Alert with retry button; cache hits skip re-translation.
   const [failedCount, setFailedCount] = useState<number>(0);
@@ -300,10 +309,26 @@ const useTranslationState = () => {
       // 发到哪台机器),到这里的值要么合法要么不存在。
       if (settings.relayBase !== undefined) setRelayBase(settings.relayBase);
       if (settings.removeChars !== undefined) setRemoveChars(settings.removeChars);
+      // 导入的源/目标语言或模式变化后，屏幕上的旧译文不再对应当前设置。
+      // 这里原来直接写 state，绕过了 handleLanguageChange / 目标语言 wrapper，
+      // 会留下旧结果与旧进度；只对语言相关设置复位，纯服务商/密钥导入保留结果。
+      if (
+        settings.sourceLanguage !== undefined ||
+        settings.targetLanguage !== undefined ||
+        settings.targetLanguages !== undefined ||
+        settings.multiLanguageMode !== undefined
+      ) {
+        setTranslatedText("");
+        resetRunStateForLanguageChange();
+        // 导入是直接写 state 的(绕过了下面的 handleLanguageChange),所以这里
+        // 自己报一次"语言配置变了" —— 工具层的派生产物要跟着作废。
+        markLanguageConfigChanged();
+      }
       message.success(t("importSettingSuccess"));
-    }).catch((error) => {
+    }).then(() => true).catch((error) => {
       console.error("Import settings error:", error);
       message.error(t("importSettingError"));
+      return false;
     });
   };
 
@@ -374,14 +399,20 @@ const useTranslationState = () => {
         message.error(`${t("sameLanguageSource")} ${tLanguages("auto")}`);
       }
       setTranslatedText("");
+      resetRunStateForLanguageChange();
+      markLanguageConfigChanged();
       return;
     }
     if (type === "source" && value !== sourceLanguage) {
       setSourceLanguage(value);
       setTranslatedText("");
+      resetRunStateForLanguageChange();
+      markLanguageConfigChanged();
     } else if (type === "target" && value !== targetLanguage) {
       setTargetLanguage(value);
       setTranslatedText("");
+      resetRunStateForLanguageChange();
+      markLanguageConfigChanged();
     }
   };
 
@@ -394,6 +425,8 @@ const useTranslationState = () => {
     setSourceLanguage(targetLanguage);
     setTargetLanguage(previousSource);
     setTranslatedText("");
+    resetRunStateForLanguageChange();
+    markLanguageConfigChanged();
   };
 
   // Validation — 设计要点(踩坑后留,改之前先理解):
@@ -685,6 +718,35 @@ const useTranslationState = () => {
     if (!retryTargetLangsRef.current) attemptedLangsRef.current = new Set();
   };
 
+  // 语言配置变了，上一轮的完成/失败状态就不再对应当前设置。单语言切换由
+  // handleLanguageChange 清结果，这里补上进度条与失败面板（也覆盖多语言目标
+  // 列表的增删）——否则结果已经清空，界面还顶着「DONE 100%」或旧语种的失败面板。
+  const resetRunStateForLanguageChange = () => {
+    resetProgress();
+    clearFailures();
+  };
+  // 「语言配置真的变了」的唯一出口。谁改的语言(单选、弹层、导入)都走这里报一次,
+  // 工具层据此作废自己的派生产物 —— 判据只有这一处。
+  const markLanguageConfigChanged = () => setLanguageConfigVersion((v) => v + 1);
+  const handleTargetLanguagesChange = (langs: string[]) => {
+    // 弹层里点「应用」但选择没变时不该作废屏幕上的译文（新数组只是引用不同）。
+    if (langs.length === targetLanguages.length && langs.every((lang, i) => lang === targetLanguages[i])) return;
+    setTargetLanguages(langs);
+    // 目标语言集合变了，translatedText 可能是旧预览语种；留着会让「选英文却看到
+    // 中文结果」这种状态继续显示。清掉预览，用户重新点击翻译即可。
+    setTranslatedText("");
+    resetRunStateForLanguageChange();
+    markLanguageConfigChanged();
+  };
+  const handleMultiLanguageModeChange = (value: boolean) => {
+    if (value === multiLanguageMode) return;
+    setMultiLanguageMode(value);
+    // 单/多语言模式切换同样会改变“当前结果代表哪种选择”，不能保留旧预览。
+    setTranslatedText("");
+    resetRunStateForLanguageChange();
+    markLanguageConfigChanged();
+  };
+
   // Let a component-level performTranslation flag a HARD failure it handled itself
   // (e.g. a whole target language threw — see MD/Subtitle per-lang catch). The hook's
   // line-level soft-fail sites set runHadFailuresRef directly; this covers the rest so
@@ -948,9 +1010,11 @@ const useTranslationState = () => {
     sourceLanguage,
     targetLanguage,
     targetLanguages,
-    setTargetLanguages,
+    setTargetLanguages: handleTargetLanguagesChange,
     multiLanguageMode,
-    setMultiLanguageMode,
+    setMultiLanguageMode: handleMultiLanguageModeChange,
+    // 语言配置变更的版本号:工具层自己的派生产物(i18n 合并结果)靠它判断要不要作废。
+    languageConfigVersion,
     translatedText,
     setTranslatedText,
     failedCount,

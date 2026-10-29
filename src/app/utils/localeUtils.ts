@@ -22,3 +22,11 @@ export const getDocUrl = (path: string, locale: string): string => {
   const langPrefix = isChineseLocale(locale) ? "" : "en/";
   return `https://docs.newzone.top/${langPrefix}${path}`;
 };
+
+/**
+ * 「目标语言数：」+ N。
+ * 全角冒号（zh/ja）或已有空白之后不再补空格；其余（en/ar/de 的 ASCII 冒号、
+ * 无标点的文案）补一个空格，避免按钮读作 "Target languages:2"。
+ */
+export const joinLanguageCount = (label: string, count: number): string =>
+  `${label}${/[：\s]$/.test(label) ? "" : " "}${count}`;

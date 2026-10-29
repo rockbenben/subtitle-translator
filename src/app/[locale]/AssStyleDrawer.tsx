@@ -167,9 +167,9 @@ const AssStyleDrawer = ({ open, onClose, config, preset, customStyle, onChange, 
             </Form.Item>
           </Col>
         </Row>
-        <Form.Item label={t("assAutoWrap")} tooltip={t("assAutoWrapTooltip")} style={{ marginBottom: 8 }}>
+        <Form.Item label={t("assAutoWrap")} tooltip={t("assAutoWrapTooltip")} htmlFor="ass-auto-wrap" style={{ marginBottom: 8 }}>
           <Row align="middle" justify="space-between">
-            <Switch checked={autoWrap} onChange={onAutoWrapChange} />
+            <Switch id="ass-auto-wrap" checked={autoWrap} onChange={onAutoWrapChange} aria-label={t("assAutoWrap")} />
             {/* 与换行引擎共用同一公式(assCharsPerLine),字号一动容量跟着变 */}
             <Text type="secondary">{t("assAutoWrapCapacity", { trans: assCharsPerLine(config.translation.fontSize), orig: assCharsPerLine(config.original.fontSize) })}</Text>
           </Row>

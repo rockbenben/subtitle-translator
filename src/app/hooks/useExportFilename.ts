@@ -12,7 +12,7 @@ interface ExportFilenameConfig {
    * @param originalFileName - Original filename (can include extension)
    * @param langCode - Target language code
    * @param defaultExt - Force extension (e.g., 'ass' for bilingual subtitles), undefined to keep original
-   * @param disambiguateLang - true in multi-language mode: inject `_{lang}` before the
+   * @param disambiguateLang - true in multi-language mode: inject `.{lang}` before the
    *   extension when the pattern doesn't already vary by {lang}, so N target languages
    *   don't collide into one filename. Single-language exports stay clean ({name}.{ext}).
    */
@@ -35,7 +35,7 @@ export const useExportFilename = (toolKey: string = "default"): ExportFilenameCo
   const storageKey = `${toolKey}-exportFileName`;
   // Default is the CLEAN `{name}.{ext}` — most exports are single-language and
   // users expect the original name. Multi-language collisions are handled by the
-  // `disambiguateLang` arg (auto-injects _{lang}), NOT by baking {lang} into the
+  // `disambiguateLang` arg (auto-injects .{lang}), NOT by baking {lang} into the
   // default (which made every single-language export needlessly verbose).
   const [customFileName, setCustomFileName] = useLocalStorage<string>(storageKey, "{name}.{ext}");
 
@@ -88,12 +88,14 @@ export const useExportFilename = (toolKey: string = "default"): ExportFilenameCo
 
     // Multi-language collision guard: when several target languages are exported
     // from ONE source, their names would otherwise be identical (browser appends
-    // " (1)"/" (2)"). Inject _{lang} before the extension — but ONLY when the
+    // " (1)"/" (2)"). Inject .{lang} before the extension — but ONLY when the
     // pattern doesn't already carry {lang} (else double-tag), so a user who wrote
     // their own {lang} pattern, and every single-language export, are untouched.
+    // ⚠ 分隔符必须是点号:MKVToolNix / Plex / Jellyfin 都按点分语言后缀识别语种,
+    // 下划线不在 MKVToolNix 的分界字符集([](){}.+-=#)里,name_en.srt 会被认成 und。
     if (disambiguateLang && !/\{lang\}/i.test(pattern)) {
       const dot = result.lastIndexOf(".");
-      result = dot > 0 ? `${result.slice(0, dot)}_${langCode}${result.slice(dot)}` : `${result}_${langCode}`;
+      result = dot > 0 ? `${result.slice(0, dot)}.${langCode}${result.slice(dot)}` : `${result}.${langCode}`;
     }
 
     return result;

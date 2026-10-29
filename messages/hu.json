@@ -248,7 +248,7 @@
     "bilingualFormatTooltip": "ASS: külön betűtípus/szín stílus az eredetihez és a fordításhoz. SRT: sima szöveg, mindkét sor egymás alatt ugyanabban a blokkban.",
     "translationFirst": "A fordítás felül",
     "originalFirst": "A fordítás alul",
-    "unsupportedSub": "Ismeretlen formátum. Kérjük, győződj meg róla, hogy a fájl SRT, ASS, VTT, SBV vagy LRC formátumú.",
+    "unsupportedSub": "Ismeretlen formátum. Kérjük, győződj meg róla, hogy a fájl SRT, ASS, SSA, VTT, SBV vagy LRC formátumú.",
     "noFileUploaded": "Kérjük, először tölts fel egy feliratfájlt.",
     "noSourceText": "Kérjük, tölts fel egy feliratfájlt vagy illessz be szöveget.",
     "noExtractedText": "Nem sikerült felirattartalmat kinyerni, kérjük ellenőrizd a fájlformátumot.",
@@ -259,6 +259,7 @@
     "reviewColTarget": "Fordítás",
     "reviewApplyDownload": "Alkalmazás és letöltés",
     "reviewDownloaded": "Az ellenőrzött felirat letöltve",
+    "reviewApplyFirst": "Az ellenőrzési módosítások még nincsenek alkalmazva. Először kattints az „Alkalmazás és letöltés” gombra.",
     "assStyleButton": "ASS stílus",
     "assStyleTooltip": "A kétnyelvű ASS felirat betűtípusának, méretének, színének és pozíciójának testreszabása",
     "assNativeModeSource": "Eredeti stílus megtartása",
@@ -387,13 +388,13 @@
   "tools": {
     "subtitleTranslator": {
       "title": "Feliratfordító",
-      "description": "SRT, ASS, VTT, SBV, LRC feliratok kötegelt fordítása. 120+ nyelv.",
+      "description": "SRT, ASS, SSA, VTT, SBV, LRC feliratok kötegelt fordítása. 120+ nyelv.",
       "metaTitle": "Ingyenes Feliratfordító | Kötegelt SRT/VTT/ASS + Kétnyelvű",
-      "metaDescription": "AI feliratfordító SRT, ASS, VTT, SBV, LRC. 30+ motor: DeepSeek, Claude, GPT, DeepL. 120+ nyelv, időbélyegek, kétnyelvű.",
+      "metaDescription": "AI feliratfordító SRT, ASS, SSA, VTT, SBV, LRC. 30+ motor: DeepSeek, Claude, GPT, DeepL. 120+ nyelv, időbélyegek, kétnyelvű.",
       "faq": [
         {
-          "q": "Milyen feliratformátumok támogatottak? Lehet SRT, ASS, VTT, SBV és LRC feliratokat fordítani?",
-          "a": "Öt formátum támogatott: SRT, ASS, VTT, SBV és LRC. Az SRT/VTT alkalmas a YouTube-hoz, HTML5 lejátszókhoz és készítői irányítópultokhoz (YouTube feliratok exportálása yt-dlp-vel); az ASS/SSA az Aegisubhoz és anime rajongói feliratokhoz illeszkedik, a sor eleji pozícionáló címkékkel (pl. \\\\an8) fordítás után automatikusan visszaállítva; az SBV a YouTube Stúdió feliratszerkesztőjének natív exportformátuma; az LRC a zeneszövegekhez illik. A fájl kódolását (UTF-8 / UTF-16 / GBK / Shift-JIS) a jschardet automatikusan felismeri. Az összetett beágyazott ASS effekttagok (színek, animáció, karaoke) fordítás közben egyszerűsödnek."
+          "q": "Milyen feliratformátumok támogatottak? Lehet SRT, ASS, SSA, VTT, SBV és LRC feliratokat fordítani?",
+          "a": "Hat formátum támogatott: SRT, ASS, SSA, VTT, SBV és LRC. Az SRT/VTT alkalmas a YouTube-hoz, HTML5 lejátszókhoz és készítői irányítópultokhoz (YouTube feliratok exportálása yt-dlp-vel); az ASS/SSA az Aegisubhoz és anime rajongói feliratokhoz illeszkedik, a sor eleji pozícionáló címkékkel (pl. \\\\an8) fordítás után automatikusan visszaállítva; az SBV a YouTube Stúdió feliratszerkesztőjének natív exportformátuma; az LRC a zeneszövegekhez illik. A fájl kódolását (UTF-8 / UTF-16 / GBK / Shift-JIS) a jschardet automatikusan felismeri. Az összetett beágyazott ASS effekttagok (színek, animáció, karaoke) fordítás közben egyszerűsödnek."
         },
         {
           "q": "Gépi fordítást vagy AI/LLM fordítást használjak a feliratokhoz? Melyiknek a legjobb a minősége, melyik a legolcsóbb?",
@@ -425,11 +426,11 @@
         },
         {
           "q": "Felkerülnek a feliratfájlok a szerveretekre? Privát és biztonságos?",
-          "a": "Teljesen kliensoldali: a feliratfájlok olvasása, elemzése és a fordítási kérések mind a böngésződben történnek — az eredeti tartalom soha nem éri el a szervereinket. Az LLM motor kérései közvetlenül a böngésződből mennek a konfigurált API-végpontodra (OpenAI, DeepSeek stb.), és az API-kulcsok csak a helyi böngészőtárban tárolódnak. A fordítási gyorsítótár böngésző IndexedDB-t használ, és munkameneteken átívelően megmarad. A forráskód nyílt forráskódú a GitHubon (rockbenben/subtitle-translator) önálló üzemeltetéshez vagy ellenőrzéshez."
+          "a": "Teljesen kliensoldali: a feliratfájlok olvasása, elemzése és a fordítási kérések mind a böngésződben történnek — az eredeti tartalom soha nem éri el a szervereinket. Az LLM motor kérései közvetlenül a böngésződből mennek a konfigurált API-végpontodra (OpenAI, DeepSeek stb.), és az API-kulcsok csak a helyi böngészőtárban tárolódnak. A fordítási gyorsítótár böngésző IndexedDB-t használ, és munkameneteken átívelően megmarad."
         }
       ],
       "features": [
-        "Támogatja az SRT, ASS, VTT, SBV, LRC feliratformátumokat, megőrizve az ASS pozíciócímkéket (\\\\an8 stb.) a fordítás után",
+        "Támogatja az SRT, ASS, SSA, VTT, SBV, LRC feliratformátumokat, megőrizve az ASS pozíciócímkéket (\\\\an8 stb.) a fordítás után",
         "Az időbélyegek érintetlenek maradnak — az eszköz csak a szöveget fordítja, az eredeti időzítés megmarad",
         "UTF-8 / UTF-16 / GBK kódolás automatikus felismerése",
         "Kétnyelvű felirat pozíciója: felül (tanulás) vagy alul (megtekintés)",
@@ -499,7 +500,7 @@
     },
     "dataParserFlare": {
       "title": "Flare könyvjelző-konverter",
-      "description": "Könyvjelzők konvertálása Flare formátumba és abból vissza"
+      "description": "Könyvjelző HTML-ből Flare YAML (lapos)"
     },
     "dataParserImgPrompt": {
       "title": "IMGPrompt adatgenerátor",

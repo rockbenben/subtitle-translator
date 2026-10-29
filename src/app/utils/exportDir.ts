@@ -3,17 +3,17 @@ import { createStore, get, set, del } from "idb-keyval";
 /**
  * 「导出目录」—— 让导出落进用户指定的文件夹，而不是浏览器的下载目录。
  *
- * 【能力边界】只有 Chromium 桌面（Chrome / Edge / Opera 86+）有 File System
+ * 【能力边界】只有 Chromium 内核（Chrome / Edge / Opera / Electron）有 File System
  * Access API。Firefox、Safari、全部移动端 supportsExportDir() 为 false，
- * downloadFile 原样走 file-saver。桌面外壳（Tauri / Electron）不走这条路 ——
- * 它们注入自己的原生实现，见 setNativeExportDir。
+ * downloadFile 原样走 file-saver。Tauri 等没有这套 API 的 WebView 外壳才注入
+ * 原生实现（见 setNativeExportDir）；Electron 直接走这条 Web 路径，不要为它注入。
  *
  * 【存储走 idb-keyval】目录句柄只能结构化克隆，存不进 localStorage，躲不开
  * IndexedDB；而这里要的只是一个库、一个 store、一个 key 的 get/set/del —— 正是
  * idb-keyval 的全部。它的 `set` 等的是 **事务提交**（`promisifyRequest(store.transaction)`）
  * 而不是请求成功，这条正是我们要的语义：回报「已保存」而事务随后 abort，等于弹了
  * 绿字却什么也没存。
- * ⚠ 它随 src/app/utils 整目录同步给【全部】子项目，所以那 8 个仓库的 package.json
+ * ⚠ 它随 src/app/utils 整目录同步给【全部】子项目，所以那 9 个仓库的 package.json
  * 也必须有 idb-keyval（与翻译缓存用的 `idb` 是两个包），否则构建期 Module not found。
  *
  * 【只认已授权的目录】权限不跨浏览器会话：重启后 queryPermission 回 "prompt"。
@@ -36,7 +36,7 @@ const STORE = "handles";
 const keyFor = (toolKey: string) => `exportDir:${toolKey}`;
 
 /**
- * 当前页面的工具键。写入路径（`downloadFile` → `writeToExportDir`）在 37 个调用点
+ * 当前页面的工具键。写入路径（`downloadFile` → `writeToExportDir`）在各工具页的调用点
  * 深处，逐个传 toolKey 不现实；而页面容器 `ToolPage` 本来就拿着它 —— 由它在挂载时
  * 告知一次即可。UI 那一侧走显式 prop（渲染期就要正确，子组件的 effect 早于父组件），
  * 两条路的值同源于 ToolPage 的 toolKey，不会分叉。
@@ -47,17 +47,19 @@ export const setExportDirTool = (toolKey: string | null) => {
 };
 
 /**
- * 【桌面外壳的原生实现注入口】Tauri / Electron 里没有 File System Access
- * （WKWebView、WebKitGTK 根本没有，WebView2 有没有不该由这里赌），但外壳本来就有
- * 原生目录选择器、也有自己的落盘钩子。注入之后本模块的四个出口全部改走原生实现，
+ * 【无 FSA 外壳的原生实现注入口】Tauri / WKWebView / WebKitGTK 没有
+ * File System Access（WebView2 有没有不该由这里赌），但外壳本来就有原生目录
+ * 选择器、也有自己的落盘钩子。注入之后本模块的四个出口全部改走原生实现，
  * 下面那套 File System Access + IndexedDB 一行都不会执行。
+ * ⚠ Electron 不属于这一类：它的 renderer 是 Chromium，`app://` 注册成
+ * secure/standard 后 `showDirectoryPicker` 等直接可用，走 Web 路径，不要注入。
  *
  * 【为什么是运行时注入，而不是让桌面分支各自改这个文件】本文件与
  * components/ExportFolder.tsx、components/styled/ToolPage.tsx 都由
- * scripts/project_sync.py 铺给全部子项目（后者还是 overwrite 模式）。桌面分支直接改
- * 这三个文件的话，每次同步都被覆盖一遍 —— 那正是各子项目 src/app/desktop/ 这个目录
- * 存在的理由：分歧只许待在同步范围之外。所以这里只留一个口子，实现放在桌面分支
- * 自己的目录里，两边谁也不用改对方。
+ * scripts/project_sync.py 铺给全部子项目（后者还是 overwrite 模式）。子项目的桌面
+ * 分支直接改这三个文件的话，每次同步都被覆盖一遍 —— 那正是各子项目
+ * src/app/desktop/ 这个目录存在的理由：分歧只许待在同步范围之外。所以这里只留一个
+ * 口子，实现放在桌面分支自己的目录里，两边谁也不用改对方。
  *
  * 【落盘两条路,外壳自己选】注入了可选 write 的,writeToExportDir 把字节直接交给
  * 外壳、由它返回真实落点(同名让路后的名字也回得来,toast 照实报);没注入 write
@@ -204,7 +206,7 @@ export const pickExportDir = async (toolKey: string): Promise<string | null> => 
   try {
     // id 按工具分：Chrome 会分别记住每个工具上次选的位置。
     // ⚠ File System Access 规范把 identifier 限死 32 个 ASCII 字符，超了直接
-    // TypeError（旧前缀 tools-by-ai-export- 让 8 个长 toolKey 全炸）。
+    // TypeError（旧前缀 tools-by-ai-export- 让 10 个长 toolKey 全炸）。
     // 短前缀 + slice 双保险：以后再加更长的 key 也不会复发。
     handle = await window.showDirectoryPicker!({ id: `tbai-${toolKey}`.slice(0, 32), mode: "readwrite" });
   } catch (error) {

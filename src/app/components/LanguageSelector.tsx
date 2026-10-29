@@ -346,10 +346,9 @@ const LanguageSelector = ({ sourceLanguage, targetLanguage, targetLanguages, mul
               checked={multiLanguageMode}
               onChange={(checked) => {
                 // 切到多语言模式时把当前 targetLanguage 也带进 targetLanguages,
-                // 避免「target=en + 开多语言 → 实际只翻 zh」的反直觉行为。这里 inline
-                // 处理 (而非 wrap setMultiLanguageMode) 是为了避开 closure 陷阱:
-                // MultiLanguageSettingsModal Apply 路径会同 tick 先 setTargetLanguages
-                // 再 setMultiLanguageMode,若全局 wrap 会读到旧 closure 覆盖用户选择。
+                // 避免「target=en + 开多语言 → 实际只翻 zh」的反直觉行为。模式包装器
+                // 只清旧预览/进度、不读取 targetLanguages，因此不会覆盖同一 tick 里
+                // MultiLanguageSettingsModal 刚写入的选择。
                 if (checked && !targetLanguages.includes(targetLanguage)) {
                   setTargetLanguages([...targetLanguages, targetLanguage]);
                 }

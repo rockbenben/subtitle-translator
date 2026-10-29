@@ -254,15 +254,21 @@ const joinBilingualHalves = (allOrig: string, allTrans: string, isOriginalFirst:
 export type BilingualFormat = "ass" | "srt";
 
 /** "both" 模式下双语文件名后缀,插在扩展名前避免跟 translatedOnly 同名 */
-const BILINGUAL_FILENAME_SUFFIX = "_bilingual";
+const BILINGUAL_FILENAME_SUFFIX = ".bilingual";
 
 /**
- * 在文件名扩展名前插入 _bilingual 后缀。
+ * 在文件名扩展名前插入 .bilingual 后缀。
  * 用于 exportMode="both" 时区分两份文件(ASS/LRC 源、SRT+format=srt 三种场景下
  * translatedOnly 和 bilingual 扩展名相同,不加后缀会被浏览器覆盖下载)。
- * - "subtitle.srt" → "subtitle_bilingual.srt"
- * - "my.video.srt" → "my.video_bilingual.srt"(只替换最后一段)
- * - "noext" → "noext_bilingual"(无扩展名时直接追加,边界防御)
+ * - "subtitle.srt" → "subtitle.bilingual.srt"
+ * - "my.video.zh.srt" → "my.video.zh.bilingual.srt"(只替换最后一段)
+ * - "noext" → "noext.bilingual"(无扩展名时直接追加,边界防御)
+ * ⚠ 用点号而非下划线:MKVToolNix 从右往左找点分语言段,`zh.bilingual` 仍能认出 zh;
+ * `zh_bilingual` 是一整段,认不出来(下划线不在它的分界字符集里)。
+ * `bilingual` 本身不是 Plex/Jellyfin/Kodi 的标准 flag(它们只认 forced/foreign、
+ * default、cc/hi/sdh 这一族),放在语言码后面相当于 Emby/Jellyfin 的 "other names":
+ * 语言仍取前面的码,这一段只当 track title。别改成 `.dual`——同样不是标准 flag,
+ * 还容易被读成"两条独立字幕轨"。
  */
 export const appendBilingualSuffix = (filename: string): string => {
   // dotIndex<=0 覆盖"无点"和"点在首位"(.gitignore 这种隐藏文件 → 无扩展可插)两种边界

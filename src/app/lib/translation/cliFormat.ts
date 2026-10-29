@@ -69,7 +69,7 @@ export interface CliFormatContext {
 export type CliFormatResult = {
   content: string;
   ext: string;
-  /** true 时输出文件名插入 _bilingual 后缀(双语字幕与仅译文同扩展名时防覆盖)。 */
+  /** true 时输出文件名插入 .bilingual 后缀(双语字幕与仅译文同扩展名时防覆盖)。 */
   bilingualSuffix?: boolean;
 } | null;
 

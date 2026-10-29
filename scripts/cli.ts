@@ -719,8 +719,9 @@ const main = async (): Promise<number> => {
       // 【翻译前】拦住"输出会覆盖本轮某个输入"。精确文件名要等 handler 跑完才
       // 知道(扩展名由内容决定),但输出形状只有两种,都以 `${stem}.${lang}` 打头:
       //   普通  stem.lang.ext
-      //   双语  stem.lang_bilingual.ext   (appendBilingualSuffix 插在最后一个点前)
+      //   双语  stem.lang.bilingual.ext   (appendBilingualSuffix 插在最后一个点前)
       // 所以判到分隔符为止即可 —— 只比 `stem.lang` 会误伤 clip.zhh.srt。
+      // `_` 分支保留:目标目录里的输入文件可能还是旧命名 stem.lang_bilingual.ext。
       // 放在翻译后的话,整份文件已经翻完(--no-cache / 换 provider 时是真实计费)
       // 才被丢弃,用户还要等一轮翻译才看到这条错误。
       // 前缀在回调【外】算一次:它对每个候选都一样,放进回调就是每扫一个元素

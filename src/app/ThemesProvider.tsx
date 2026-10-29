@@ -77,6 +77,9 @@ const sharedTokens = {
 
   // Square corners everywhere — the Swiss signature. Hairlines do the
   // separating, not rounded boxes.
+  // ⚠ antd v6 的 radius 家族就这五个：borderRadius / XS / SM / LG / Outer
+  // （themes/shared/genRadius.js）——【没有 borderRadiusXL】，而这五个在
+  // radiusBase = 0 时全部推导出 0（含 Outer），所以「每个尺寸都是直角」成立。
   borderRadius: 0,
   borderRadiusLG: 0,
   borderRadiusSM: 0,
@@ -91,6 +94,11 @@ const sharedTokens = {
   boxShadow: "none" as const,
   boxShadowSecondary: "0 6px 24px rgba(20, 19, 16, 0.10)",
   boxShadowTertiary: "none" as const,
+  // boxShadowCard 是 antd 给【hoverable 卡片悬停】用的那层阴影（由 colorShadow
+  // 派生，alias.js:156）。不覆盖它，悬停时卡片会浮起来 —— 与「Hover 用强调线
+  // 表示、颜色才是动效、不做抬升」的设计语言相反。alias token 可以在
+  // theme.token 里直接覆盖（alias.js 末尾把 overrideTokens 再合一次）。
+  boxShadowCard: "none" as const,
   wireframe: false,
 };
 

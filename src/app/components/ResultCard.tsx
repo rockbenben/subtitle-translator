@@ -61,7 +61,7 @@ interface ResultCardProps {
    * - `"rtl"`:整篇定向,只有 Markdown 正文用(逐行 auto 会让以拉丁链接开头的行判成
    *   LTR,而整篇本该是 RTL)。
    *
-   * 默认取 "ltr" 而不是 "auto":32 个调用点里结构化的是多数,且漏传时的表现是「跟改动
+   * 默认取 "ltr" 而不是 "auto":多数调用点装的是结构化文本,且漏传时的表现是「跟改动
    * 前一样」,而不是静默换一种排版。
    */
   textDirection?: "ltr" | "rtl" | "auto";
@@ -148,7 +148,7 @@ const ResultCard = ({
         dir={textDirection}
         rows={rows}
         readOnly={!effectiveOnChange}
-        aria-label={typeof title === "string" ? title : t("translationResult")}
+        aria-label={typeof displayTitle === "string" ? displayTitle : t("result")}
       />
       {showStats && stats && <StatsFooter charCount={stats.charCount} lineCount={stats.lineCount} isReadOnly={forcedReadOnly} />}
     </Card>

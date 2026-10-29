@@ -288,9 +288,9 @@ const UNSUPPORTED_LANGS: Record<string, Set<string>> = {
   // returned real translations for all of them except `an`, which 400s with
   // "invalid argument". Note Google DOES translate Wolof (`wo`) despite older
   // sources attributing it to Meta NLLB only.
-  // 复核（同一把扫法全量重跑 translate-pa，免 key）：结果一字
-  // 未变 —— 只有 `an` 回 400。顺带确认这口今天仍然活着、`sl=auto` 照样回检测语言，
-  // 而正文里的 emoji 会被换成 `？？`（与 edgeFreeAPI 同一条已知降级，`<tag>`/`{占位}` 原样）。
+  // 免 key 全量重跑 translate-pa 后结论一字未变 —— 只有 `an` 回 400；这口活着、`sl=auto`
+  // 照样回检测语言。emoji【原样保留】（16 个语种实测：旗帜、肤色修饰符、ZWJ 连字族都在），
+  // 此前这里记的「emoji 被换成 `？？`」已经不成立，两条免费口都不再出现那种降级。
   //
   // `prs` (Dari) is NOT denied — Google's code for it is `fa-AF`;
   // services/traditional.ts remaps before sending
@@ -460,7 +460,7 @@ export const LANGUAGE_GROUP_BY_CODE: Record<string, string> = Object.fromEntries
 // `languages` array order (enforced by test). Cross-group picks may deviate by
 // geographic intent (e.g. indianSubcontinent appends middleEast's ur after the
 // southAsia block). So adding a code is a single insertion at its master
-// position, not a re-sort across 4 presets + 18 locale files.
+// position, not a re-sort across 4 presets + 19 locale files.
 // ════════════════════════════════════════════════════════════════════════════
 export const LANGUAGE_PRESETS: ReadonlyArray<{ key: string; labelKey: string; codes: readonly string[] }> = [
   {

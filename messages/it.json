@@ -248,7 +248,7 @@
     "bilingualFormatTooltip": "ASS: stili di font/colore separati per originale e traduzione. SRT: testo semplice, entrambe le righe nella stessa porzione.",
     "translationFirst": "Traduzione Sopra",
     "originalFirst": "Traduzione Sotto",
-    "unsupportedSub": "Formato non riconosciuto. Assicurati che il file sia SRT, ASS, VTT, SBV o LRC.",
+    "unsupportedSub": "Formato non riconosciuto. Assicurati che il file sia SRT, ASS, SSA, VTT, SBV o LRC.",
     "noFileUploaded": "Per favore carica prima un file di sottotitoli.",
     "noSourceText": "Per favore carica file o incolla testo.",
     "noExtractedText": "Nessun contenuto estratto, verifica formato file.",
@@ -259,6 +259,7 @@
     "reviewColTarget": "Traduzione",
     "reviewApplyDownload": "Applica e scarica",
     "reviewDownloaded": "Sottotitolo revisionato scaricato",
+    "reviewApplyFirst": "Le modifiche della revisione non sono ancora state applicate. Fai prima clic su “Applica e scarica”.",
     "assStyleButton": "Stile ASS",
     "assStyleTooltip": "Personalizza font, dimensione, colore e posizione dei sottotitoli ASS bilingui",
     "assNativeModeSource": "Mantieni stile originale",
@@ -387,13 +388,13 @@
   "tools": {
     "subtitleTranslator": {
       "title": "Traduttore Sottotitoli",
-      "description": "Traduzione in batch SRT, ASS, VTT, SBV, LRC. 120+ lingue.",
+      "description": "Traduzione in batch SRT, ASS, SSA, VTT, SBV, LRC. 120+ lingue.",
       "metaTitle": "Traduttore sottotitoli gratis | SRT/VTT/ASS IA bilingue",
-      "metaDescription": "Traduttore IA sottotitoli SRT, ASS, VTT, SBV, LRC. 30+ motori: DeepSeek, Claude, GPT, DeepL. 120+ lingue, timecode, bilingue.",
+      "metaDescription": "Traduttore IA sottotitoli SRT, ASS, SSA, VTT, SBV, LRC. 30+ motori: DeepSeek, Claude, GPT, DeepL. 120+ lingue, timecode, bilingue.",
       "faq": [
         {
-          "q": "Quali formati di sottotitoli sono supportati? È possibile tradurre SRT, ASS, VTT, SBV e LRC?",
-          "a": "Cinque formati supportati: SRT, ASS, VTT, SBV e LRC. SRT/VTT per YouTube, player HTML5 e piattaforme per creator (esporta sottotitoli YouTube con yt-dlp); ASS/SSA per Aegisub e fansub anime, tag di posizione a inizio riga (\\\\an8) ripristinati dopo la traduzione; SBV è il formato di esportazione nativo dell'editor di sottotitoli di YouTube Studio; LRC per testi musicali. La codifica del file (UTF-8 / UTF-16 / GBK / Shift-JIS) viene rilevata automaticamente via jschardet. I tag inline di effetti ASS complessi (colori, animazioni, karaoke) vengono semplificati durante la traduzione."
+          "q": "Quali formati di sottotitoli sono supportati? È possibile tradurre SRT, ASS, SSA, VTT, SBV e LRC?",
+          "a": "Sei formati supportati: SRT, ASS, SSA, VTT, SBV e LRC. SRT/VTT per YouTube, player HTML5 e piattaforme per creator (esporta sottotitoli YouTube con yt-dlp); ASS/SSA per Aegisub e fansub anime, tag di posizione a inizio riga (\\\\an8) ripristinati dopo la traduzione; SBV è il formato di esportazione nativo dell'editor di sottotitoli di YouTube Studio; LRC per testi musicali. La codifica del file (UTF-8 / UTF-16 / GBK / Shift-JIS) viene rilevata automaticamente via jschardet. I tag inline di effetti ASS complessi (colori, animazioni, karaoke) vengono semplificati durante la traduzione."
         },
         {
           "q": "Sottotitoli: usare traduzione automatica o traduzione IA/LLM? Qual è la migliore qualità, quale la più economica?",
@@ -425,11 +426,11 @@
         },
         {
           "q": "I file di sottotitoli vengono caricati sul vostro server? È privato e sicuro?",
-          "a": "Completamente lato client: la lettura, parsing e richieste di traduzione dei sottotitoli avvengono nel tuo browser — il contenuto originale non tocca mai i nostri server. Le richieste del motore LLM vanno direttamente dal tuo browser al tuo endpoint API configurato (OpenAI, DeepSeek, ecc.), e le API key sono memorizzate solo nel localStorage locale. La cache di traduzione usa IndexedDB del browser e persiste tra sessioni. Il codice sorgente è aperto su GitHub (rockbenben/subtitle-translator) per self-hosting o audit."
+          "a": "Completamente lato client: la lettura, parsing e richieste di traduzione dei sottotitoli avvengono nel tuo browser — il contenuto originale non tocca mai i nostri server. Le richieste del motore LLM vanno direttamente dal tuo browser al tuo endpoint API configurato (OpenAI, DeepSeek, ecc.), e le API key sono memorizzate solo nel localStorage locale. La cache di traduzione usa IndexedDB del browser e persiste tra sessioni."
         }
       ],
       "features": [
-        "Supporta SRT, ASS, VTT, SBV, LRC, tag di posizione ASS (\\\\an8 ecc.) preservati",
+        "Supporta SRT, ASS, SSA, VTT, SBV, LRC, tag di posizione ASS (\\\\an8 ecc.) preservati",
         "Timecode intatti — solo il testo viene tradotto, timing originale preservato",
         "Rilevamento automatico codifica UTF-8/UTF-16/GBK",
         "Posizione sottotitoli bilingue: sopra (apprendimento) o sotto (visualizzazione)",
@@ -499,7 +500,7 @@
     },
     "dataParserFlare": {
       "title": "Convertitore Flare",
-      "description": "Conversione preferiti browser e formato Flare"
+      "description": "Segnalibri HTML in Flare YAML (appiattito)"
     },
     "dataParserImgPrompt": {
       "title": "Generatore Dati IMGPrompt",

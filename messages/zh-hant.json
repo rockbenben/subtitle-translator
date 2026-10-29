@@ -248,7 +248,7 @@
     "bilingualFormatTooltip": "ASS：原文與譯文可分別設定字體/顏色樣式。SRT：純文字，原文與譯文疊在同一時間段。",
     "translationFirst": "譯文在上",
     "originalFirst": "譯文在下",
-    "unsupportedSub": "無法識別字幕格式，請確保檔案為 SRT、ASS、VTT、SBV 或 LRC 格式。",
+    "unsupportedSub": "無法識別字幕格式，請確保檔案為 SRT、ASS、SSA、VTT、SBV 或 LRC 格式。",
     "noFileUploaded": "請先上傳字幕檔案。",
     "noSourceText": "請上傳字幕檔案或貼上文字。",
     "noExtractedText": "未提取到字幕內容，請檢查檔案格式。",
@@ -259,6 +259,7 @@
     "reviewColTarget": "譯文",
     "reviewApplyDownload": "套用並下載",
     "reviewDownloaded": "已下載校對後字幕",
+    "reviewApplyFirst": "校對修改尚未套用，請先點「套用並下載」。",
     "assStyleButton": "ASS 樣式",
     "assStyleTooltip": "自訂雙語 ASS 字幕的字體、字號、顏色與位置",
     "assNativeModeSource": "沿用原樣式",
@@ -387,13 +388,13 @@
   "tools": {
     "subtitleTranslator": {
       "title": "字幕翻譯器",
-      "description": "批次翻譯 SRT、ASS、VTT、SBV、LRC 字幕，支援 120+ 語言",
+      "description": "批次翻譯 SRT、ASS、SSA、VTT、SBV、LRC 字幕，支援 120+ 語言",
       "metaTitle": "字幕翻譯器 - SRT/ASS/VTT/SBV/LRC 批次 AI 翻譯與雙語字幕產生",
-      "metaDescription": "AI 字幕翻譯，SRT/ASS/VTT/SBV/LRC 批次互轉，接入 DeepSeek、Claude、GPT 等 30+ 引擎，保留時間軸一鍵匯出雙語字幕。",
+      "metaDescription": "AI 字幕翻譯，SRT/ASS/SSA/VTT/SBV/LRC 批次互轉，接入 DeepSeek、Claude、GPT 等 30+ 引擎，保留時間軸一鍵匯出雙語字幕。",
       "faq": [
         {
-          "q": "支援哪些字幕格式？SRT、ASS、VTT、SBV、LRC 都能翻譯嗎？",
-          "a": "支援 SRT、ASS、VTT、SBV、LRC 五種格式。SRT/VTT 適配 YouTube、B 站、HTML5 播放器（YouTube 用 yt-dlp 匯出、B 站在創作中心下載）；ASS/SSA 適配 Aegisub 與動漫字幕組，行首位置標籤（如 \\\\an8）翻譯後自動還原；SBV 適配 YouTube 字幕後台（創作者字幕編輯器的匯出格式）；LRC 適配音樂歌詞檔案。檔案編碼（UTF-8/UTF-16/GBK/Shift-JIS）透過 jschardet 自動識別。複雜的 ASS 行內特效標籤（顏色、動畫、卡拉 OK）會被簡化。"
+          "q": "支援哪些字幕格式？SRT、ASS、SSA、VTT、SBV、LRC 都能翻譯嗎？",
+          "a": "支援 SRT、ASS、SSA、VTT、SBV、LRC 六種格式。SRT/VTT 適配 YouTube、B 站、HTML5 播放器（YouTube 用 yt-dlp 匯出、B 站在創作中心下載）；ASS/SSA 適配 Aegisub 與動漫字幕組，行首位置標籤（如 \\\\an8）翻譯後自動還原；SBV 適配 YouTube 字幕後台（創作者字幕編輯器的匯出格式）；LRC 適配音樂歌詞檔案。檔案編碼（UTF-8/UTF-16/GBK/Shift-JIS）透過 jschardet 自動識別。複雜的 ASS 行內特效標籤（顏色、動畫、卡拉 OK）會被簡化。"
         },
         {
           "q": "字幕翻譯用機器翻譯還是 AI 翻譯？哪個品質好、哪個便宜？",
@@ -425,11 +426,11 @@
         },
         {
           "q": "字幕翻譯會上傳到伺服器嗎？隱私安全嗎？",
-          "a": "完全前端處理：字幕檔案讀取、解析、翻譯請求都在瀏覽器內完成，原文不經過我們的伺服器儲存。LLM 引擎的請求直接從你的瀏覽器發往你設定的 API 端點（OpenAI、DeepSeek 等），API Key 僅儲存在本地 localStorage。翻譯快取使用瀏覽器 IndexedDB，關閉頁面也保留，下次翻譯同樣內容直接命中快取。開源程式碼可在 GitHub 審查（rockbenben/subtitle-translator）。"
+          "a": "完全前端處理：字幕檔案讀取、解析、翻譯請求都在瀏覽器內完成，原文不經過我們的伺服器儲存。LLM 引擎的請求直接從你的瀏覽器發往你設定的 API 端點（OpenAI、DeepSeek 等），API Key 僅儲存在本地 localStorage。翻譯快取使用瀏覽器 IndexedDB，關閉頁面也保留，下次翻譯同樣內容直接命中快取。"
         }
       ],
       "features": [
-        "支援 SRT、ASS、VTT、SBV、LRC 五種字幕格式，ASS 位置標籤（\\\\an8 等）翻譯後保留",
+        "支援 SRT、ASS、SSA、VTT、SBV、LRC 六種字幕格式，ASS 位置標籤（\\\\an8 等）翻譯後保留",
         "時間軸零修改（僅翻譯文字，時間碼原樣保留）",
         "UTF-8/UTF-16/GBK 編碼自動偵測",
         "雙語字幕譯文位置可選（上方學習 / 下方觀看）",
@@ -499,7 +500,7 @@
     },
     "dataParserFlare": {
       "title": "Flare 書籤轉換",
-      "description": "瀏覽器書籤與 Flare 格式互轉"
+      "description": "瀏覽器書籤轉 Flare YAML（扁平化匯入）"
     },
     "dataParserImgPrompt": {
       "title": "IMGPrompt 資料產生",

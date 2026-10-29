@@ -8,7 +8,7 @@ import { supportsExportDir, isNativeExportDir, getExportDirName, pickExportDir, 
 
 /**
  * 「导出目录」—— 让导出落进用户指定的文件夹。后端见 utils/exportDir.ts；
- * 只有 Chromium 桌面有 File System Access API，其余浏览器整个控件不出现。
+ * 只有 Chromium 内核（Chrome / Edge / Electron）有 File System Access API，其余浏览器整个控件不出现。
  *
  * 【一个工具一个目录，控件住在 ToolPage 的标题行】目录按 toolKey 分开存（见
  * utils/exportDir.ts），所以这个控件天然是页面级的：它只显示、也只影响当前工具。

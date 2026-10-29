@@ -10,8 +10,9 @@ import { useResetOnSourceChange } from "@/app/hooks/useResetOnSourceChange";
 import { useLocalStorage } from "@/app/hooks/useLocalStorage";
 import { useTextStats } from "@/app/hooks/useTextStats";
 import { useExportFilename } from "@/app/hooks/useExportFilename";
+import { useRevealResult } from "@/app/hooks/useRevealResult";
 
-import { splitTextIntoLines, downloadFile, applyRemoveCharsToLines, describeError, getFileTypePresetConfig } from "@/app/utils";
+import { splitTextIntoLines, downloadFile, applyRemoveCharsToLines, describeError, getFileTypePresetConfig, joinLanguageCount } from "@/app/utils";
 import {
   detectSubtitleFormat,
   normalizeSrtVariantTimecodes,
@@ -32,6 +33,7 @@ import { LLM_MODELS } from "@/app/lib/translation";
 import { transformSkippingSoftFilled, collectEmptiedSlots } from "@/app/lib/translation/softFill";
 import { delay } from "@/app/lib/translation/retry";
 import LanguageSelector from "@/app/components/LanguageSelector";
+import { useLanguageOptions } from "@/app/components/languages";
 import ApiStatusBlock from "@/app/components/ApiStatusBlock";
 import ContextTranslationBlock from "@/app/components/ContextTranslationBlock";
 import TranslationProgressStrip from "@/app/components/TranslationProgressStrip";
@@ -130,17 +132,32 @@ const SubtitleTranslator = () => {
     noteFileFailure,
   } = useTranslationContext();
 
-  // 运行中锁住页面级「导出目录」入口:写入是每个文件现读句柄,跑到一半改目录
-  // 会把同一批产物劈进两个文件夹。控件在 ToolPage 里,prop 传不上去,故用环境锁。
   useLockExportFolder(isTranslating);
+  const { targetOptions } = useLanguageOptions();
   const { message } = App.useApp();
   const exportFile = useFileExport();
   const { token } = theme.useToken();
 
   const sourceStats = useTextStats(sourceText);
   const resultStats = useTextStats(translatedText);
+  const [reviewDirty, setReviewDirty] = useState(false);
+  // 多语言 >1 时【下载调用成功】的语种（浏览器是否真正落盘不可观测；异常会走
+  // catch，不会记录）。不能用 failedLangs 反推：runTranslation 在 validate 之前
+  // 就 clearFailures()，重试卡在校验时会把上一轮的失败语种“洗白”，于是页面会
+  // 宣称全部导出、而那个语言的稿子从没写出来。
+  const [exportedLangs, setExportedLangs] = useState<string[]>([]);
+  const hasVisibleResult = Boolean(translatedText && !(multiLanguageMode && targetLanguages.length > 1));
+  // 多语言 >1 时不显示单语结果卡（避免把一种语言冒充全部），但产物已自动下载。
+  // 没有这行汇总，页面上只剩「对照校对 - 某一种语言」，用户不知道另一种去了哪。
+  // 只列下载成功的语种；预览语言失败时 translatedText 为空，但汇总仍要出现。
+  // 与当前目标集求交集：移除一个语种后，它的旧文件不该继续出现在汇总里。
+  const exportedSummaryLangs = multiLanguageMode && targetLanguages.length > 1 ? targetLanguages.filter((code) => exportedLangs.includes(code)) : [];
+  const showExportedSummary = Boolean(!isTranslating && !isCancelRequested() && exportedSummaryLangs.length > 0);
+  // 有失败时不自动滚到结果：失败面板在结果上方，滚过去会把「哪几行失败 / 重试」
+  // 挤出视野，让一次部分失败看起来像全成功。
+  // 取消后保留进度条作为续跑凭据，不把用户带到可能存在的半成品结果上。
+  const resultRef = useRevealResult(isTranslating, (hasVisibleResult || showExportedSummary) && !(failedCount > 0 || failedLangs.length > 0 || runHadFailures) && !isCancelRequested());
 
-  // Export mode: 'translatedOnly' | 'bilingual' | 'both'
   const [exportMode, setExportMode] = useLocalStorage<"translatedOnly" | "bilingual" | "both">("subtitle-translator-exportMode", "translatedOnly");
   // bilingualOrder 标识双语拼接顺序:谁先呈现(SRT/VTT/ASS 多行 = 在上;LRC 行内 = 在前)
   // 默认译文在上:符合中外双语惯例(译文为主、较大、在上;原文较小在下)。
@@ -207,7 +224,7 @@ const SubtitleTranslator = () => {
   // 记录最近一次写入 translatedText 时使用的扩展名,导出按钮按它生成文件名;
   // 避免用户翻译后改 exportMode/bilingualFormat,再点导出时扩展名跟内容错位
   const [translatedTextExt, setTranslatedTextExt] = useState<string | null>(null);
-  // 标记 translatedText 是否是 exportMode="both" 的 bilingual 版本(需要 _bilingual 后缀);
+  // 标记 translatedText 是否是 exportMode="both" 的 bilingual 版本(需要 .bilingual 后缀);
   // both 模式下同时下载两份文件,如果两份 ext 相同(LRC/ASS/SRT+format=srt)文件名会冲突
   const [needsBilingualSuffix, setNeedsBilingualSuffix] = useState(false);
   // 记录 translatedText 是否含原文(双语产物)。校对面板不能只看【当前】
@@ -215,18 +232,24 @@ const SubtitleTranslator = () => {
   // translatedText 里(改设置不清结果,见上),按 index 与源配对必错位
   // (format=ass 时是 2N 条 Dialogue)。
   const [translatedTextBilingual, setTranslatedTextBilingual] = useState(false);
-  // 记录 translatedText 对应的目标语种,handleExportFile 用它生成文件名;
-  // 多语言模式下 translatedText 是 previewLang(常规跑 = targetLangs[0];scoped
-  // 重试时保持上一次预览的语种)而非主 targetLanguage,不记录的话导出文件名会
-  // 标错语种(主 targetLanguage 跟 translatedText 内容不匹配)
+  // 多语言下 translatedText 是预览语种而非主 targetLanguage，不记的话导出文件名会标错语种
   const [translatedTextLang, setTranslatedTextLang] = useState<string | null>(null);
+  const reviewLangCode = translatedTextLang ?? targetLanguages[0] ?? targetLanguage;
+  const reviewLanguageLabel = multiLanguageMode && targetLanguages.length > 1 ? targetOptions.find((option) => option.value === reviewLangCode)?.label : undefined;
   const { customFileName, setCustomFileName, generateFileName } = useExportFilename("subtitle-translator");
 
-  // 源文本变化时只复位"源派生"的本地预览(extractedText)。译文结果及其元数据
-  // (translatedText / translatedTextExt / needsBilingualSuffix / translatedTextLang)保留——
-  // 和 JSON 翻译一致:改源后旧结果不清,直到重新翻译。既符合"保留旧结果",又不必在 render
-  // 阶段去 set 共享 context 的 translatedText(那会更新 TranslationProvider → setState-in-render 警告)。
-  useResetOnSourceChange(sourceText, () => setExtractedText(""));
+  // 源文一变，上一轮的「已导出」就不再属于当前内容（哪怕只是粘贴了新台词）；
+  // 汇总必须跟着消失，否则它会在新源文上宣称旧文件已导出。
+  useResetOnSourceChange(sourceText, () => {
+    setExtractedText("");
+    setExportedLangs([]);
+  });
+
+  const recordExportedLang = (lang: string) => {
+    // 汇总只覆盖单文件多语言；批量路径的「哪些文件成功了」由现有失败面板/汇总负责。
+    if (multipleFiles.length > 1) return;
+    setExportedLangs((prev) => (prev.includes(lang) ? prev : [...prev, lang]));
+  };
 
   const performTranslation = async (sourceText: string, fileNameSet?: string, fileIndex?: number, totalFiles?: number) => {
     const rawLines = splitTextIntoLines(sourceText);
@@ -251,8 +274,6 @@ const SubtitleTranslator = () => {
       return;
     }
 
-    // On a failure-panel retry (runRetry) this is narrowed to the langs still
-    // needing work — successful languages aren't re-walked/re-downloaded.
     const targetLangs = getActiveTargetLangs();
 
     if (multiLanguageMode && targetLangs.length === 0) {
@@ -354,13 +375,14 @@ const SubtitleTranslator = () => {
           const bilingualExt = fileType === "ass" && assNativeRebuild ? "ass" : getOutputFileExtension(fileType, true, bilingualFormat, sourceExt);
 
           const translatedOnlyFileName = generateFileName(fileName, langLabel, translatedOnlyExt, multiLanguageMode);
-          // bilingual 文件在扩展名前插 _bilingual 后缀,避免跟 translatedOnly 文件同名冲突
+          // bilingual 文件在扩展名前插 .bilingual 后缀,避免跟 translatedOnly 文件同名冲突
           // (ASS/LRC 源、SRT+format=srt 三种场景下两个 ext 相同,不区分会被浏览器覆盖下载)
           const bilingualFileName = appendBilingualSuffix(generateFileName(fileName, langLabel, bilingualExt, multiLanguageMode));
 
           // 记下实际写入名:导出目录下重跑会让路成 `x (1).srt`,toast 必须照实报
           const writtenOnly = await downloadFile(translatedOnlySubtitle, translatedOnlyFileName);
           const writtenBilingual = await downloadFile(bilingualSubtitle, bilingualFileName);
+          recordExportedLang(currentTargetLang);
 
           // Show success message for single file mode — 行级软失败时降级,
           // 不跟失败面板唱反调
@@ -388,6 +410,7 @@ const SubtitleTranslator = () => {
           // Always download in multi-language mode
           if (multiLanguageMode || multipleFiles.length > 1) {
             await downloadFile(finalSubtitle, downloadFileName);
+            recordExportedLang(currentTargetLang);
           }
 
           if (currentTargetLang === previewLang) {
@@ -417,9 +440,14 @@ const SubtitleTranslator = () => {
     // 不设 length > 1 门槛:多语言模式必自动下载(哪怕只剩 1 个语言 —— 单语言
     // scoped 重试就是这个形态),没有 toast 的话用户只看到面板消失 + 一次静默
     // 下载,会误判重试没生效。
-    if (multiLanguageMode && multipleFiles.length <= 1 && !hasFailedLang && !isDisposed() && !isCancelRequested()) {
+    // 行级软失败也要挡住绿色成功：失败面板同屏说着「N 行没译出」，顶部再报
+    // 「翻译完成」就是对冲。both 分支早已用 !hadRunFailures()，这里此前只挡了
+    // 语言级失败。
+    if (multiLanguageMode && multipleFiles.length <= 1 && !hasFailedLang && !hadRunFailures() && !isDisposed() && !isCancelRequested()) {
       const fileCount = exportMode === "both" ? targetLangs.length * 2 : targetLangs.length;
-      message.success(`${t("translationExported")} (${fileCount} ${t("exportedFile")})`);
+      // 计数不能直接拼在「已导出」前面：zh 会读成「2 已导出」。用语言无关的
+      // ×N 后缀说明多份产物；只有 1 份时不显示（那时括号里的数字没有信息量）。
+      message.success(fileCount > 1 ? `${t("translationExported")} × ${fileCount}` : t("translationExported"));
     }
   };
 
@@ -432,7 +460,7 @@ const SubtitleTranslator = () => {
 
     // Use custom filename if set, otherwise use default pattern
     let fileName = generateFileName(uploadFileName, langLabel, fileExt, multiLanguageMode);
-    // both 模式下的 bilingual 预览要加 _bilingual 后缀,跟翻译时下载的 bilingual 文件名一致
+    // both 模式下的 bilingual 预览要加 .bilingual 后缀,跟翻译时下载的 bilingual 文件名一致
     if (needsBilingualSuffix) {
       fileName = appendBilingualSuffix(fileName);
     }
@@ -475,6 +503,7 @@ const SubtitleTranslator = () => {
     setNeedsBilingualSuffix(false);
     setTranslatedTextBilingual(false);
     setTranslatedTextLang(null);
+    setExportedLangs([]);
     clearLiveLines();
     clearFailures();
   };
@@ -494,10 +523,14 @@ const SubtitleTranslator = () => {
                 size="large"
                 icon={<GlobalOutlined spin={isTranslating} aria-hidden />}
                 className="flex-1"
-                onClick={() => (uploadMode === "single" ? runTranslation(performTranslation, sourceText, contextAware ? "subtitle" : undefined) : runBatchTranslation(performTranslation, multipleFiles, readFile, tSubtitle("noFileUploaded")))}
+                style={{ whiteSpace: "normal", height: "auto", minHeight: 40 }}
+                onClick={() => {
+                  setExportedLangs([]);
+                  return uploadMode === "single" ? runTranslation(performTranslation, sourceText, contextAware ? "subtitle" : undefined) : runBatchTranslation(performTranslation, multipleFiles, readFile, tSubtitle("noFileUploaded"));
+                }}
                 disabled={isTranslating}
                 loading={isTranslating}>
-                {multiLanguageMode ? `${t("translate")} (${targetLanguages.length})` : t("translate")}
+                {multiLanguageMode ? `${t("translate")} | ${joinLanguageCount(t("totalLanguages"), targetLanguages.length || 0)}` : t("translate")}
               </Button>
 
               {uploadMode === "single" && sourceText && (
@@ -729,8 +762,8 @@ const SubtitleTranslator = () => {
       />
 
       {/* Results Section */}
-      {uploadMode === "single" && (translatedText || extractedText) && (
-        <div className="mt-6">
+      {uploadMode === "single" && (translatedText || extractedText || showExportedSummary) && (
+        <div className="mt-6" ref={resultRef}>
           <Row gutter={[24, 24]}>
             {translatedText && !(multiLanguageMode && targetLanguages.length > 1) && (
               <Col xs={24} lg={extractedText ? 12 : 24}>
@@ -739,9 +772,29 @@ const SubtitleTranslator = () => {
                   title={t("translationResult")}
                   content={translatedText}
                   stats={resultStats}
-                  onCopy={() => copyToClipboard(translatedText)}
-                  onExport={handleExportFile}
+                  onCopy={() => {
+                    if (reviewDirty) {
+                      message.warning(tSubtitle("reviewApplyFirst"));
+                      return;
+                    }
+                    copyToClipboard(translatedText);
+                  }}
+                  onExport={() => {
+                    if (reviewDirty) {
+                      message.warning(tSubtitle("reviewApplyFirst"));
+                      return;
+                    }
+                    void handleExportFile();
+                  }}
                 />
+              </Col>
+            )}
+
+            {showExportedSummary && (
+              <Col xs={24}>
+                <Text type="secondary">
+                  {`${t("exportedFile")}: ${exportedSummaryLangs.map((code) => targetOptions.find((option) => option.value === code)?.label ?? code).join(", ")}`}
+                </Text>
               </Col>
             )}
 
@@ -759,7 +812,7 @@ const SubtitleTranslator = () => {
           只看当前 exportMode 不够:双语翻译后切回 translatedOnly,旧双语产物
           仍在 translatedText 里,含原文(ASS 双 Dialogue → 2N cue),与源配对会错位 */}
       {uploadMode === "single" && translatedText && exportMode === "translatedOnly" && !translatedTextBilingual && failedCount === 0 && (
-        <BilingualReviewPanel sourceText={sourceText} sourceFormat={sourceFileType} translatedText={translatedText} translatedFormat={translatedTextExt} />
+        <BilingualReviewPanel sourceText={sourceText} sourceFormat={sourceFileType} translatedText={translatedText} translatedFormat={translatedTextExt} onApply={setTranslatedText} languageLabel={reviewLanguageLabel} languageCode={reviewLanguageLabel ? reviewLangCode : undefined} onDirtyChange={setReviewDirty} />
       )}
 
       {multiLangModalOpen && (

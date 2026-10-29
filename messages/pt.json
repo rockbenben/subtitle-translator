@@ -248,7 +248,7 @@
     "bilingualFormatTooltip": "ASS: estilos de fonte/cor separados para original e tradução. SRT: texto simples, ambas as linhas empilhadas na mesma cue.",
     "translationFirst": "Tradução Acima",
     "originalFirst": "Tradução Abaixo",
-    "unsupportedSub": "Formato não reconhecido. Certifique-se de que o arquivo seja SRT, ASS, VTT, SBV ou LRC.",
+    "unsupportedSub": "Formato não reconhecido. Certifique-se de que o arquivo seja SRT, ASS, SSA, VTT, SBV ou LRC.",
     "noFileUploaded": "Por favor, envie um arquivo de legenda primeiro.",
     "noSourceText": "Por favor, envie arquivo ou cole texto.",
     "noExtractedText": "Nenhum conteúdo extraído, verifique o formato do arquivo.",
@@ -259,6 +259,7 @@
     "reviewColTarget": "Tradução",
     "reviewApplyDownload": "Aplicar e baixar",
     "reviewDownloaded": "Legenda revisada baixada",
+    "reviewApplyFirst": "As alterações de revisão ainda não foram aplicadas. Use “Aplicar e baixar” primeiro.",
     "assStyleButton": "Estilo ASS",
     "assStyleTooltip": "Personalize fonte, tamanho, cor e posição das legendas ASS bilíngues",
     "assNativeModeSource": "Manter estilo da fonte",
@@ -387,13 +388,13 @@
   "tools": {
     "subtitleTranslator": {
       "title": "Tradutor Legendas",
-      "description": "Tradução em lote SRT, ASS, VTT, SBV, LRC. 120+ idiomas.",
+      "description": "Tradução em lote SRT, ASS, SSA, VTT, SBV, LRC. 120+ idiomas.",
       "metaTitle": "Tradutor de Legendas | Lote SRT/VTT/ASS + Bilíngue",
-      "metaDescription": "Tradutor IA de legendas SRT, ASS, VTT, SBV, LRC. 30+ motores: DeepSeek, Claude, GPT, DeepL. 120+ idiomas, timecodes, bilíngue.",
+      "metaDescription": "Tradutor IA de legendas SRT, ASS, SSA, VTT, SBV, LRC. 30+ motores: DeepSeek, Claude, GPT, DeepL. 120+ idiomas, timecodes, bilíngue.",
       "faq": [
         {
-          "q": "Quais formatos de legenda são suportados? É possível traduzir SRT, ASS, VTT, SBV e LRC?",
-          "a": "Cinco formatos suportados: SRT, ASS, VTT, SBV e LRC. SRT/VTT para YouTube, players HTML5 e painéis de criadores (exporte legendas do YouTube com yt-dlp); ASS/SSA para Aegisub e fansubs de anime, tags de posição no início de linha (\\\\an8) restauradas após a tradução; SBV é o formato de exportação nativo do editor de legendas do YouTube Studio; LRC para letras musicais. A codificação do arquivo (UTF-8 / UTF-16 / GBK / Shift-JIS) é detectada automaticamente via jschardet. Tags inline complexas de efeitos ASS (cores, animação, karaokê) são simplificadas durante a tradução."
+          "q": "Quais formatos de legenda são suportados? É possível traduzir SRT, ASS, SSA, VTT, SBV e LRC?",
+          "a": "Seis formatos suportados: SRT, ASS, SSA, VTT, SBV e LRC. SRT/VTT para YouTube, players HTML5 e painéis de criadores (exporte legendas do YouTube com yt-dlp); ASS/SSA para Aegisub e fansubs de anime, tags de posição no início de linha (\\\\an8) restauradas após a tradução; SBV é o formato de exportação nativo do editor de legendas do YouTube Studio; LRC para letras musicais. A codificação do arquivo (UTF-8 / UTF-16 / GBK / Shift-JIS) é detectada automaticamente via jschardet. Tags inline complexas de efeitos ASS (cores, animação, karaokê) são simplificadas durante a tradução."
         },
         {
           "q": "Legendas: usar tradução automática ou tradução IA/LLM? Qual a melhor qualidade, qual a mais barata?",
@@ -425,11 +426,11 @@
         },
         {
           "q": "Os arquivos de legenda são enviados ao servidor? É privado e seguro?",
-          "a": "Totalmente client-side: leitura, parsing e requisições de tradução acontecem no seu navegador — o conteúdo original nunca passa pelos nossos servidores. As requisições aos motores LLM vão direto do seu navegador para o endpoint de API que você configurou (OpenAI, DeepSeek, etc.), e as API Keys ficam apenas no localStorage local. O cache de tradução usa IndexedDB do navegador e persiste entre sessões. Código aberto no GitHub (rockbenben/subtitle-translator) para self-hosting ou auditoria."
+          "a": "Totalmente client-side: leitura, parsing e requisições de tradução acontecem no seu navegador — o conteúdo original nunca passa pelos nossos servidores. As requisições aos motores LLM vão direto do seu navegador para o endpoint de API que você configurou (OpenAI, DeepSeek, etc.), e as API Keys ficam apenas no localStorage local. O cache de tradução usa IndexedDB do navegador e persiste entre sessões."
         }
       ],
       "features": [
-        "Compatível com SRT, ASS, VTT, SBV, LRC, tags de posição ASS (\\\\an8 etc.) preservadas",
+        "Compatível com SRT, ASS, SSA, VTT, SBV, LRC, tags de posição ASS (\\\\an8 etc.) preservadas",
         "Timecodes intactos — apenas o texto é traduzido, timing original preservado",
         "Detecção automática de codificação UTF-8/UTF-16/GBK",
         "Posição de legenda bilíngue: acima (aprendizado) ou abaixo (visualização)",
@@ -499,7 +500,7 @@
     },
     "dataParserFlare": {
       "title": "Conversor Flare",
-      "description": "Conversão favoritos navegador e formato Flare"
+      "description": "Favoritos HTML para Flare YAML (achatado)"
     },
     "dataParserImgPrompt": {
       "title": "Gerador Dados IMGPrompt",

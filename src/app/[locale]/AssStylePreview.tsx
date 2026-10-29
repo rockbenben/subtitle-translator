@@ -3,6 +3,7 @@
 import React from "react";
 import { useTranslations } from "next-intl";
 import { resolveBilingualFonts, sampleForLang, type AssStyleConfig, type AssLineStyle } from "@/app/lib/translation/formats/subtitle";
+import styles from "./assStylePreview.module.css";
 
 
 // 预览画布按此高度等比缩放 ASS 字号(ASS 基于 PlayResY=1080)。
@@ -56,10 +57,9 @@ const AssStylePreview = ({ config, isOriginalFirst, sourceLang, targetLang }: { 
 
   return (
     <div
+      className={styles.canvas}
       style={{
         height: PREVIEW_HEIGHT,
-        borderRadius: 8,
-        background: "linear-gradient(135deg, #2b3a4a 0%, #1a2330 100%)",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",

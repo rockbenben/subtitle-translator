@@ -1,0 +1,14 @@
+/* 字幕样式预览画布 —— 【刻意不随明暗主题变】。
+   它画的是「用户自己的 ASS 样式落在一段视频底色上」的样子，不是本站主题的
+   表面：跟着主题翻反而会让预览失真（预览的职责是尽量贴近播放器里的效果）。
+   底色是模拟视频的固定深蓝渐变，所以不走 antd token、也不进 globals.css
+   的调色板 —— 但仍要落在 CSS 里：TSX 里不写颜色字面量（docs/design-system.md
+   A3「Banned in TSX」），这条是本仓唯一的例外，现在收回去了。
+
+   画布高度与 SCALE 由 TSX 的 PREVIEW_HEIGHT 决定（改一处就够，别在这里
+   再写一份 180px —— 那会变成第二份真相）。 */
+
+.canvas {
+  border-radius: 8px;
+  background: linear-gradient(135deg, #2b3a4a 0%, #1a2330 100%);
+}

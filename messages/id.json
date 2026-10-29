@@ -248,7 +248,7 @@
     "bilingualFormatTooltip": "ASS: gaya font/warna terpisah untuk teks asli dan terjemahan. SRT: teks polos, kedua baris ditumpuk dalam cue yang sama.",
     "translationFirst": "Terjemahan di Atas",
     "originalFirst": "Terjemahan di Bawah",
-    "unsupportedSub": "Format tidak dikenali. Pastikan file adalah SRT, ASS, VTT, SBV, atau LRC.",
+    "unsupportedSub": "Format tidak dikenali. Pastikan file adalah SRT, ASS, SSA, VTT, SBV, atau LRC.",
     "noFileUploaded": "Silakan unggah file subtitle terlebih dahulu.",
     "noSourceText": "Silakan unggah file atau tempel teks.",
     "noExtractedText": "Tidak ada konten yang diekstrak, periksa format file.",
@@ -259,6 +259,7 @@
     "reviewColTarget": "Terjemahan",
     "reviewApplyDownload": "Terapkan & unduh",
     "reviewDownloaded": "Subtitle hasil tinjauan diunduh",
+    "reviewApplyFirst": "Perubahan hasil tinjauan belum diterapkan. Klik “Terapkan & unduh” terlebih dahulu.",
     "assStyleButton": "Gaya ASS",
     "assStyleTooltip": "Sesuaikan font, ukuran, warna, dan posisi subtitle ASS dua bahasa",
     "assNativeModeSource": "Pertahankan gaya sumber",
@@ -387,13 +388,13 @@
   "tools": {
     "subtitleTranslator": {
       "title": "Penerjemah Subtitle",
-      "description": "Terjemahan batch SRT, ASS, VTT, SBV, LRC. 120+ bahasa.",
+      "description": "Terjemahan batch SRT, ASS, SSA, VTT, SBV, LRC. 120+ bahasa.",
       "metaTitle": "Penerjemah Subtitle Gratis | Batch SRT/VTT/ASS + Dwibahasa",
-      "metaDescription": "Penerjemah subtitle SRT, ASS, VTT, SBV, LRC. 30+ mesin: DeepSeek, Claude, GPT, DeepL, Google. 120+ bahasa, timecode, dwibahasa.",
+      "metaDescription": "Penerjemah subtitle SRT, ASS, SSA, VTT, SBV, LRC. 30+ mesin: DeepSeek, Claude, GPT, DeepL, Google. 120+ bahasa, timecode, dwibahasa.",
       "faq": [
         {
-          "q": "Format subtitle apa saja yang didukung? Bisa menerjemahkan SRT, ASS, VTT, SBV, dan LRC?",
-          "a": "Lima format didukung: SRT, ASS, VTT, SBV, dan LRC. SRT/VTT untuk YouTube, pemutar HTML5, dan dasbor kreator (ekspor subtitle YouTube dengan yt-dlp); ASS/SSA untuk Aegisub dan fansub anime, tag posisi di awal baris (\\\\an8) dipulihkan setelah terjemahan; SBV adalah format ekspor bawaan editor subtitle YouTube Studio; LRC untuk lirik musik. Encoding file (UTF-8 / UTF-16 / GBK / Shift-JIS) dideteksi otomatis via jschardet. Tag inline efek ASS yang kompleks (warna, animasi, karaoke) disederhanakan selama terjemahan."
+          "q": "Format subtitle apa saja yang didukung? Bisa menerjemahkan SRT, ASS, SSA, VTT, SBV, dan LRC?",
+          "a": "Enam format didukung: SRT, ASS, SSA, VTT, SBV, dan LRC. SRT/VTT untuk YouTube, pemutar HTML5, dan dasbor kreator (ekspor subtitle YouTube dengan yt-dlp); ASS/SSA untuk Aegisub dan fansub anime, tag posisi di awal baris (\\\\an8) dipulihkan setelah terjemahan; SBV adalah format ekspor bawaan editor subtitle YouTube Studio; LRC untuk lirik musik. Encoding file (UTF-8 / UTF-16 / GBK / Shift-JIS) dideteksi otomatis via jschardet. Tag inline efek ASS yang kompleks (warna, animasi, karaoke) disederhanakan selama terjemahan."
         },
         {
           "q": "Subtitle: pakai mesin terjemahan atau terjemahan AI/LLM? Mana kualitas terbaik, mana paling murah?",
@@ -425,11 +426,11 @@
         },
         {
           "q": "Apakah file subtitle diunggah ke server Anda? Apakah privat dan aman?",
-          "a": "Sepenuhnya sisi-klien: pembacaan file subtitle, parsing, dan permintaan terjemahan semua terjadi di browser Anda — konten asli tidak pernah menyentuh server kami. Permintaan mesin LLM dikirim langsung dari browser Anda ke endpoint API yang Anda konfigurasi (OpenAI, DeepSeek, dll.), dan API Key disimpan hanya di localStorage browser lokal. Cache terjemahan menggunakan IndexedDB browser dan tetap ada di seluruh sesi. Kode sumber terbuka di GitHub (rockbenben/subtitle-translator) untuk self-hosting atau audit."
+          "a": "Sepenuhnya sisi-klien: pembacaan file subtitle, parsing, dan permintaan terjemahan semua terjadi di browser Anda — konten asli tidak pernah menyentuh server kami. Permintaan mesin LLM dikirim langsung dari browser Anda ke endpoint API yang Anda konfigurasi (OpenAI, DeepSeek, dll.), dan API Key disimpan hanya di localStorage browser lokal. Cache terjemahan menggunakan IndexedDB browser dan tetap ada di seluruh sesi."
         }
       ],
       "features": [
-        "Mendukung SRT, ASS, VTT, SBV, LRC, tag posisi ASS (\\\\an8 dll.) dipertahankan",
+        "Mendukung SRT, ASS, SSA, VTT, SBV, LRC, tag posisi ASS (\\\\an8 dll.) dipertahankan",
         "Timecode tidak diubah — hanya teks diterjemahkan, waktu asli dipertahankan",
         "Deteksi pengkodean otomatis UTF-8/UTF-16/GBK",
         "Posisi subtitle dwibahasa: atas (belajar) atau bawah (menonton)",
@@ -499,7 +500,7 @@
     },
     "dataParserFlare": {
       "title": "Konverter Flare",
-      "description": "Konversi bookmark browser dan format Flare"
+      "description": "Bookmark HTML ke Flare YAML (rata)"
     },
     "dataParserImgPrompt": {
       "title": "Generator Data IMGPrompt",

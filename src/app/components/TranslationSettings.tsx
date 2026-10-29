@@ -6,7 +6,6 @@ import { SaveOutlined, PlusOutlined, DeleteOutlined, InfoCircleOutlined, LockOut
 import {
   TRANSLATION_PROVIDERS,
   LLM_MODELS,
-  BINARY_EFFORT_VENDORS,
   URL_IS_PRIMARY_CRED,
   getConfigStatus,
   isApiKeyOptional,
@@ -15,8 +14,11 @@ import {
   isThinkingModel,
   isThinkingCapableProvider,
   isCustomModel,
+  isBinaryThinking,
   getProviderEndpoints,
   getProviderModels,
+  getSelectableThinkingLevels,
+  resolveThinkingSelectValue,
   canDisableThinkingForModel,
   classifyEndpointUrl,
   migrateConfig,
@@ -129,14 +131,26 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
   const isModelThinkingTagged = isThinkingModel(service, currentModel);
   const showThinkingControl = isModelThinkingTagged || (isThinkingCapableProvider(service) && isCustomModel(service, currentModel));
   const customThinking = showThinkingControl && !isModelThinkingTagged;
-  const isBinaryEffort = BINARY_EFFORT_VENDORS.has(service);
+  const isBinaryEffort = isBinaryThinking(service, currentModel);
   const canOffThisModel = canDisableThinkingForModel(service, currentModel);
   const thinkingEffortRecord = config?.thinkingEffort ?? {};
   const currentModelEffort = thinkingEffortRecord[currentModel];
+  // 该型号真有的档位（两个表取其一，判据在 registry.getSelectableThinkingLevels）：
+  //   · effortLevels = 关得掉但档位受限（OpenRouter 的逐型号清单：官方
+  //     supported_efforts 逐型号不同，有的没有 medium）。
+  //   · thinkingLevels = 没有关闭值、档位也受限（glm-5.3 / kimi-k3 只收 low/high）。
+  // 两个都收窄：用户不会拨到一个官方没有的档（网关虽会「就近映射」，那是降级不是那一档）。
+  // 没有声明 = 该 SKU 收全部档位 ⇒ 退回 provider 级的三档。
+  const effortOptions: { value: "on" | ReasoningEffort; label: string }[] = isBinaryEffort
+    ? [{ value: "on", label: "On" }]
+    : getSelectableThinkingLevels(service, currentModel).map((l) => ({ value: l, label: l === "low" ? "Low" : l === "medium" ? "Medium" : "High" }));
   // Stored directive → Select value. Unified across tagged/custom: tagged never stores
   // "auto" (its 2-state UI can't produce it), so that branch is simply dead there.
   // absence → "off" (default); "auto" → "auto"; effort → "on" (binary) or the literal.
-  const thinkingSelectValue = isBinaryEffort ? (currentModelEffort === "auto" ? "auto" : currentModelEffort ? "on" : "off") : (currentModelEffort ?? "off");
+  // ⚠ 显示值走 registry.resolveThinkingSelectValue：它是【线上真正会发的那一档】——
+  //   「auto」在两种情况下的线上 body 完全不同（在册型号归一成禁用、手填型号省略参数），
+  //   所以显示值必须跟着线格式走，不能在界面另判一遍（少判一次就是界面在撒谎）。
+  const thinkingSelectValue = resolveThinkingSelectValue(service, currentModel, currentModelEffort);
 
   const llmPresetIsEmpty = llmPresets.length === 0;
   const llmPresetPlaceholder = llmPresetIsEmpty ? t("presetEmptyHint") : t("presetSelect");
@@ -742,13 +756,7 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
                     // 前者发最低档、后者发空由服务端定,对用户是同一句话:关不掉、照常计费。
                     // 标签直接改,不走 i18n —— 这几个档位名本来就是硬编码英文。
                     { value: "off" as const, label: canOffThisModel ? "Off" : "Min" },
-                    ...(isBinaryEffort
-                      ? [{ value: "on" as const, label: "On" }]
-                      : [
-                          { value: "low" as const, label: "Low" },
-                          { value: "medium" as const, label: "Medium" },
-                          { value: "high" as const, label: "High" },
-                        ]),
+                    ...effortOptions,
                     ...(customThinking ? [{ value: "auto" as const, label: "Auto" }] : []),
                   ]}
                   aria-label={t("reasoningEffort")}
@@ -968,8 +976,11 @@ const TranslationSettings = () => {
           避免在顶部跟主服务选择器争夺视觉焦点 —— 这是低频 opt-in,不该
           抢顶部黄金位置。 */}
       <Space size="small" wrap>
-        <Switch size="small" checked={showHiddenProviders} onChange={setShowHiddenProviders} aria-label={t("showCodingPlans")} />
-        <Text type="secondary">{t("showCodingPlans")}</Text>
+        {/* info 图标留在 label 外：它是说明入口，不是开关 */}
+        <Flex component="label" className="cursor-pointer" align="center" gap="small">
+          <Switch size="small" checked={showHiddenProviders} onChange={setShowHiddenProviders} aria-label={t("showCodingPlans")} />
+          <Text type="secondary">{t("showCodingPlans")}</Text>
+        </Flex>
         <Tooltip title={t("showCodingPlansHelp")}>
           <InfoCircleOutlined />
         </Tooltip>

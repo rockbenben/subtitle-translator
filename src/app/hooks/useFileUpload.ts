@@ -10,7 +10,7 @@ import type { UploadFile, UploadProps } from "antd";
 const isDuplicateFile = (a: { name: string; size?: number }, b: { name: string; size?: number }): boolean => a.name === b.name && a.size === b.size;
 
 // toolKey = 调用方的工具 slug,只用来给 singleFileMode 分键(同 useExportFilename)。
-// 18 个调用方里只有 4 个渲染那个开关,其余传不传都一样。
+// 16 个调用方里只有 4 个渲染那个开关,其余传不传都一样。
 const useFileUpload = (toolKey?: string) => {
   const { message } = App.useApp();
   const t = useTranslations("common");
