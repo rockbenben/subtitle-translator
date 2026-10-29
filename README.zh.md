@@ -135,7 +135,7 @@ yarn cli -i movie.ass -t zh -m llm --url http://localhost:11434/v1 --model qwen3
 yarn cli -i movie.vtt -t de -m deepseek --api-key sk-xxx
 ```
 
-产物默认写在输入文件旁边（或 `-o <dir>`），命名为 `movie.zh.srt`。双语会追加 `_bilingual`；`.srt` / `.vtt` 源的双语默认导出为原文、译文分样式的 ASS（`movie.zh_bilingual.ass`），加 `--bilingual-format srt` 可保持 SRT。
+产物默认写在输入文件旁边（或 `-o <dir>`），命名为 `movie.zh.srt`。双语会在扩展名前追加 `.bilingual`；`.srt` / `.vtt` 源的双语默认导出为原文、译文分样式的 ASS（`movie.zh.bilingual.ass`），加 `--bilingual-format srt` 可保持 SRT。
 
 | 选项                                                          | 说明 |
 | ------------------------------------------------------------- | --- |

@@ -135,7 +135,7 @@ yarn cli -i movie.ass -t zh -m llm --url http://localhost:11434/v1 --model qwen3
 yarn cli -i movie.vtt -t de -m deepseek --api-key sk-xxx
 ```
 
-Output lands beside the input (or in `-o <dir>`) as `movie.zh.srt`. Bilingual runs add `_bilingual`, and for `.srt` / `.vtt` sources they default to ASS with separate styles per line — `movie.zh_bilingual.ass`. Pass `--bilingual-format srt` to stay in SRT.
+Output lands beside the input (or in `-o <dir>`) as `movie.zh.srt`. Bilingual runs add `.bilingual` before the extension, and for `.srt` / `.vtt` sources they default to ASS with separate styles per line — `movie.zh.bilingual.ass`. Pass `--bilingual-format srt` to stay in SRT.
 
 | Option                                                        | Meaning |
 | ------------------------------------------------------------- | --- |
