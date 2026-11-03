@@ -42,7 +42,7 @@ const getAzureRegion = (region: string | undefined): string => {
 
 // Azure Translator uses non-standard codes for some languages. Our master list
 // (languages-data.ts) uses BCP-47 / ISO-639 conventions; remap before sending.
-//   ckb (Central Kurdish / Sorani) → Azure uses `ku`
+//   ckb (Kurdish/Sorani) → Azure uses `ku`
 // See https://learn.microsoft.com/zh-cn/azure/ai-services/translator/language-support
 // for the canonical Azure code table.
 const AZURE_LANG_MAP: Record<string, string> = {
@@ -406,11 +406,11 @@ export const qwenMt: TranslationService = async (params) => {
 // null 原型:语言代码是外部输入(CLI 参数/导入的设置文件),字面量对象会让
 // `TRANSLATEGEMMA_OVERRIDES["constructor"]` 返回 Object 函数而不是 undefined。
 const TRANSLATEGEMMA_OVERRIDES: Record<string, { code?: string; name?: string }> = Object.assign(Object.create(null), {
-  zh: { code: "zh-Hans", name: "Chinese" }, // ours: "Simplified Chinese"
-  "zh-hant": { code: "zh-Hant", name: "Chinese" }, // ours: "Traditional Chinese"
+  zh: { code: "zh-Hans", name: "Chinese" }, // ours: "Chinese (Simplified)"
+  "zh-hant": { code: "zh-Hant", name: "Chinese" }, // ours: "Chinese (Traditional)"
   "pt-br": { code: "pt-BR", name: "Portuguese" }, // ours: "Portuguese (Brazil)"
   "pt-pt": { code: "pt-PT", name: "Portuguese" }, // ours: "Portuguese (Portugal)"
-  fil: { code: "fil-PH", name: "Filipino" }, // ours: "Filipino(Tagalog)"
+  fil: { code: "fil-PH", name: "Filipino" }, // ours: "Filipino (Tagalog)"
 });
 
 // Defense-in-depth: validate 已按 UNSUPPORTED_LANGS.translategemma 整表拦掉不支持的
@@ -671,12 +671,9 @@ export const translategemma: TranslationService = async (params) => {
 // 语言代码来自 CLI 参数/导入的设置文件,是外部输入,不能当自家键名用。
 // TRANSLATEGEMMA_OVERRIDES 同理(见那边)。
 const MILMMT_LANG_NAMES: Record<string, string> = Object.assign(Object.create(null), {
-  zh: "Chinese (Simplified)", // ours: "Simplified Chinese"
-  "zh-hant": "Chinese (Traditional)", // ours: "Traditional Chinese"
   "pt-br": "Portuguese", // the card lists one undifferentiated "Portuguese"
   "pt-pt": "Portuguese",
-  nb: "Norwegian", // ours: "Norwegian Bokmål"
-  fil: "Tagalog", // ours: "Filipino(Tagalog)"
+  fil: "Tagalog", // ours: "Filipino (Tagalog)"
 });
 
 // Defense-in-depth, same as TranslateGemma: validate already blocks `auto` and

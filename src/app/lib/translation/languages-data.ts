@@ -14,8 +14,8 @@ export const languages: LanguageOption[] = [
 
   // ── Common (16) ──
   { value: "en", name: "English", nativelabel: "English" },
-  { value: "zh", name: "Simplified Chinese", nativelabel: "简体" },
-  { value: "zh-hant", name: "Traditional Chinese", nativelabel: "繁體" },
+  { value: "zh", name: "Chinese (Simplified)", nativelabel: "简体" },
+  { value: "zh-hant", name: "Chinese (Traditional)", nativelabel: "繁體" },
   { value: "es", name: "Spanish", nativelabel: "Español" },
   { value: "fr", name: "French", nativelabel: "Français" },
   { value: "de", name: "German", nativelabel: "Deutsch" },
@@ -47,7 +47,7 @@ export const languages: LanguageOption[] = [
   { value: "da", name: "Danish", nativelabel: "Dansk" },
   { value: "sq", name: "Albanian", nativelabel: "Shqip" },
   { value: "fi", name: "Finnish", nativelabel: "Suomi" },
-  { value: "nb", name: "Norwegian Bokmål", nativelabel: "Norsk bokmål" },
+  { value: "nb", name: "Norwegian", nativelabel: "Norsk bokmål" },
   { value: "sk", name: "Slovak", nativelabel: "Slovenčina" },
   { value: "hr", name: "Croatian", nativelabel: "Hrvatski" },
   { value: "be", name: "Belarusian", nativelabel: "Беларуская" },
@@ -81,8 +81,8 @@ export const languages: LanguageOption[] = [
   { value: "ur", name: "Urdu", nativelabel: "اردو" },
   { value: "ps", name: "Pashto", nativelabel: "پښتو" },
   { value: "prs", name: "Dari", nativelabel: "دری" },
-  { value: "ckb", name: "Central Kurdish", nativelabel: "کوردی" },
-  { value: "kmr", name: "Northern Kurdish", nativelabel: "Kurdî" },
+  { value: "ckb", name: "Kurdish (Sorani)", nativelabel: "کوردی" },
+  { value: "kmr", name: "Kurdish (Kurmanji)", nativelabel: "Kurdî" },
 
   // ── CentralAsia (10) ──
   { value: "uz", name: "Uzbek", nativelabel: "Oʻzbekcha" },
@@ -119,12 +119,12 @@ export const languages: LanguageOption[] = [
   { value: "my", name: "Burmese", nativelabel: "မြန်မာ" },
   { value: "km", name: "Khmer", nativelabel: "ខ្មែរ" },
   { value: "ms", name: "Malay", nativelabel: "Bahasa Melayu" },
-  { value: "fil", name: "Filipino(Tagalog)", nativelabel: "Tagalog" },
+  { value: "fil", name: "Filipino (Tagalog)", nativelabel: "Tagalog" },
   { value: "jv", name: "Javanese", nativelabel: "Basa Jawa" },
   { value: "su", name: "Sundanese", nativelabel: "Basa Sunda" },
   { value: "ace", name: "Acehnese", nativelabel: "Acèh" },
   { value: "pag", name: "Pangasinan", nativelabel: "Salitan Pangasinan" },
-  { value: "pam", name: "Pampangan", nativelabel: "Kapampangan" },
+  { value: "pam", name: "Kapampangan", nativelabel: "Kapampangan" },
   { value: "ceb", name: "Cebuano", nativelabel: "Cebuano" },
 
   // ── Africa (14) ──
@@ -180,7 +180,7 @@ export const languages: LanguageOption[] = [
 //                    and not separately tracked here.
 //   Azure Translator https://learn.microsoft.com/zh-cn/azure/ai-services/translator/language-support
 //                    Comprehensive — see denylist for the few gaps.
-//                    NOTE: Azure uses `ku` for Central Kurdish; our master code
+//                    NOTE: Azure uses `ku` for Kurdish (Sorani); our master code
 //                    is `ckb` (BCP-47). Mapping lives in services/traditional.ts
 //                    as AZURE_LANG_MAP. Beware of the Transliterate-only entries
 //                    (be / tg) — they look supported in the docs but the Text
@@ -496,4 +496,13 @@ export const LANGUAGE_PRESETS: ReadonlyArray<{ key: string; labelKey: string; co
  */
 export function isMethodSupportedForLanguage(method: string, lang: string): boolean {
   return !UNSUPPORTED_LANGS[method]?.has(lang);
+}
+
+/**
+ * 当前服务可作为目标语言的全部代码（不含 auto）。「全选可用」按钮用：
+ * 判据与 checkLanguageSupport 同源，否则用户会把该服务不支持的语言选进来，
+ * 点翻译时整单被 validate 拒绝。
+ */
+export function getSupportedTargetCodes(method: string): string[] {
+  return languages.filter((l) => l.value !== "auto" && isMethodSupportedForLanguage(method, l.value)).map((l) => l.value);
 }
