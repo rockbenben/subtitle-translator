@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { Flex, Card, Button, Typography, Form, Space, App, Tooltip, Segmented, Spin, Row, Col, Divider, Collapse, Alert, theme } from "antd";
+import { Flex, Card, Button, Typography, Form, Space, App, Tooltip, Segmented, Spin, Row, Col, Divider, Collapse, Alert, Switch, theme } from "antd";
 import { SettingOutlined, FileTextOutlined, FormatPainterOutlined, GlobalOutlined, ImportOutlined, SaveOutlined, ControlOutlined } from "@ant-design/icons";
 import { useTranslations } from "next-intl";
 import { useCopyToClipboard } from "@/app/hooks/useCopyToClipboard";
@@ -12,7 +12,7 @@ import { useTextStats } from "@/app/hooks/useTextStats";
 import { useExportFilename } from "@/app/hooks/useExportFilename";
 import { useRevealResult } from "@/app/hooks/useRevealResult";
 
-import { splitTextIntoLines, downloadFile, applyRemoveCharsToLines, describeError, getFileTypePresetConfig, joinLanguageCount } from "@/app/utils";
+import { splitTextIntoLines, downloadFile, applyRemoveCharsToLines, describeError, describeExport, getFileTypePresetConfig, joinLanguageCount } from "@/app/utils";
 import {
   detectSubtitleFormat,
   normalizeSrtVariantTimecodes,
@@ -40,13 +40,15 @@ import TranslationProgressStrip from "@/app/components/TranslationProgressStrip"
 import { useTranslationContext } from "@/app/components/TranslationContext";
 import ResultCard from "@/app/components/ResultCard";
 import Section from "@/app/components/styled/Section";
+import ToggleRow from "@/app/components/styled/ToggleRow";
 import AdvancedTranslationSettings from "@/app/components/AdvancedTranslationSettings";
+import { estimateZipBytes, finalizeBatchZip, ZIP_MAX_ESTIMATED_BYTES, type ZipEntry } from "@/app/hooks/translation/batchZip";
 import TranslateFailurePanel from "@/app/components/TranslateFailurePanel";
 
 import UploadSourceCard from "@/app/components/UploadSourceCard";
 
 import dynamic from "next/dynamic";
-import { useFileExport, describeExport } from "@/app/hooks/useFileExport";
+import { useFileExport } from "@/app/hooks/useFileExport";
 import { useLockExportFolder } from "@/app/components/ExportFolder";
 const AssStyleDrawer = dynamic(() => import("./AssStyleDrawer"), { ssr: false });
 // Deferred panels: only mounted behind interaction gates (isTranslating /
@@ -213,6 +215,9 @@ const SubtitleTranslator = () => {
   // 「ASS 样式」可调:SRT/VTT 转 ASS,或 原生 ASS + 重新排版。
   const showAssStyle = (showBilingualFormatChoice && bilingualFormat === "ass") || (showNativeRebuildChoice && assNativeRebuild);
   const [contextAware, setContextAware] = useLocalStorage("subtitle-translator-contextAware", SUBTITLE_DEFAULTS.contextAware); // 上下文感知翻译开关,默认值与 CLI 共用
+  // 默认关：媒体服务器（Plex/Jellyfin/MKVToolNix）要的是散装文件，自动打包会
+  // 直接破坏那条用法；ZIP 是给「一跑上百个语种、浏览器会拦连续下载」的场景用的。
+  const [zipMultiLanguage, setZipMultiLanguage] = useLocalStorage<boolean>("subtitle-translator-zipMultiLanguage", false);
   // 面板 key 必须与下方 Collapse items 的 key("subtitle"/"advanced")一致 ——
   // 旧默认值 "SubtitleTranslator" 不匹配任何面板,导出控件永远默认收起。
   const [collapseKeys, setCollapseKeys] = useLocalStorage<string[]>("subtitle-translator-collapseKeys", ["subtitle"]);
@@ -280,6 +285,26 @@ const SubtitleTranslator = () => {
       message.error(t("noTargetLanguage"));
       noteFileFailure();
       return;
+    }
+
+    // ZIP 是可选项，不能替掉逐文件导出：媒体服务器（Plex/Jellyfin/MKVToolNix）
+    // 要的是散装文件。这里在发请求前按体积决定本轮落盘方式 —— 跑完十分钟才发现
+    // 装不下，缓存也救不回那段等待。
+    const zipWanted = zipMultiLanguage && multiLanguageMode && targetLangs.length > 1;
+    const zipProfile = exportMode === "both" ? "subtitle-both" : exportMode === "bilingual" ? "subtitle-bilingual" : "subtitle-translatedOnly";
+    const estimatedZipBytes = zipWanted ? estimateZipBytes(sourceText, targetLangs.length, zipProfile) : 0;
+    const zipActive = zipWanted && estimatedZipBytes <= ZIP_MAX_ESTIMATED_BYTES;
+    const zipEntries: ZipEntry[] = [];
+    // 收进 ZIP 的语种:记账等 ZIP 真的落盘后再补（见下方 finalizeBatchZip）。
+    const zipLangs: string[] = [];
+    if (zipWanted && !zipActive) {
+      message.warning(
+        t("zipTooLarge", {
+          size: Math.ceil(estimatedZipBytes / (1024 * 1024)),
+          limit: Math.ceil(ZIP_MAX_ESTIMATED_BYTES / (1024 * 1024)),
+        }),
+        10,
+      );
     }
 
     // 预览语言:常规跑 = 本轮第一个语言(旧行为);多语言 scoped 重试 = 保持
@@ -379,20 +404,27 @@ const SubtitleTranslator = () => {
           // (ASS/LRC 源、SRT+format=srt 三种场景下两个 ext 相同,不区分会被浏览器覆盖下载)
           const bilingualFileName = appendBilingualSuffix(generateFileName(fileName, langLabel, bilingualExt, multiLanguageMode));
 
-          // 记下实际写入名:导出目录下重跑会让路成 `x (1).srt`,toast 必须照实报
-          const writtenOnly = await downloadFile(translatedOnlySubtitle, translatedOnlyFileName);
-          const writtenBilingual = await downloadFile(bilingualSubtitle, bilingualFileName);
-          recordExportedLang(currentTargetLang);
+          if (zipActive) {
+            zipEntries.push({ name: translatedOnlyFileName, content: translatedOnlySubtitle }, { name: bilingualFileName, content: bilingualSubtitle });
+            // ZIP 路径的记账推迟到【落盘成功】之后（见下方 finalizeBatchZip）——
+            // 打包失败时若现在就记，「已导出：xx、yy」会与「ZIP 打包失败」同屏对冲。
+            zipLangs.push(currentTargetLang);
+          } else {
+            // 记下实际写入名:导出目录下重跑会让路成 `x (1).srt`,toast 必须照实报
+            const writtenOnly = await downloadFile(translatedOnlySubtitle, translatedOnlyFileName);
+            const writtenBilingual = await downloadFile(bilingualSubtitle, bilingualFileName);
 
-          // Show success message for single file mode — 行级软失败时降级,
-          // 不跟失败面板唱反调
-          if (!multiLanguageMode && multipleFiles.length <= 1 && !hadRunFailures()) {
-            // 两个文件同一目录,合成一条:报的是实际写入名(可能带让路后缀)
-            message.success(describeExport(t, { fileName: `${writtenOnly.fileName}, ${writtenBilingual.fileName}`, dir: writtenOnly.dir }));
+            // Show success message for single file mode — 行级软失败时降级,
+            // 不跟失败面板唱反调
+            if (!multiLanguageMode && multipleFiles.length <= 1 && !hadRunFailures()) {
+              // 两个文件同一目录,合成一条:报的是实际写入名(可能带让路后缀)
+              message.success(describeExport(t, { fileName: `${writtenOnly.fileName}, ${writtenBilingual.fileName}`, dir: writtenOnly.dir }));
+            }
+            recordExportedLang(currentTargetLang);
           }
 
           // 多语言模式下只把 previewLang(常规跑 = 第一个语言)写入 translatedText
-          // 作 UI 预览;其它语言已通过 downloadFile 自动落盘,UI 不再重复展示
+          // 作 UI 预览;其它语言已落盘(或收进 zipEntries),UI 不再重复展示
           if (currentTargetLang === previewLang) {
             setTranslatedText(bilingualSubtitle);
             setTranslatedTextExt(bilingualExt);
@@ -409,8 +441,13 @@ const SubtitleTranslator = () => {
 
           // Always download in multi-language mode
           if (multiLanguageMode || multipleFiles.length > 1) {
-            await downloadFile(finalSubtitle, downloadFileName);
-            recordExportedLang(currentTargetLang);
+            if (zipActive) {
+              zipEntries.push({ name: downloadFileName, content: finalSubtitle });
+              zipLangs.push(currentTargetLang);
+            } else {
+              await downloadFile(finalSubtitle, downloadFileName);
+              recordExportedLang(currentTargetLang);
+            }
           }
 
           if (currentTargetLang === previewLang) {
@@ -433,6 +470,22 @@ const SubtitleTranslator = () => {
 
     if (hasFailedLang) noteFileFailure();
 
+    if (zipActive && zipEntries.length > 0 && !isDisposed()) {
+      // 取消/有失败时仍把已完成部分导出（逐文件模式也是这个行为），但不用绿色
+      // 成功跟失败面板对冲。
+      const zipWritten = await finalizeBatchZip({
+        entries: zipEntries,
+        sourceFileName: fileName,
+        isRetry: isScopedRetry(),
+        hasFailures: isCancelRequested() || hasFailedLang || hadRunFailures(),
+        t,
+        message,
+      });
+      // 记账放在【落盘成功】之后：打包失败时「已导出：xx、yy」不该与
+      // 「ZIP 打包失败」同屏出现（界面声称的状态必须与真实状态一致）。
+      if (zipWritten) zipLangs.forEach((lang) => recordExportedLang(lang));
+    }
+
     // Show success message after all languages completed (for single file multi-language mode);
     // 有任何 lang 失败时跳过此消息(per-lang error toast 已显示,避免红+绿对冲)
     // isDisposed:中途导航离开时每个 lang 都按级联静默 continue,hasFailedLang
@@ -443,7 +496,7 @@ const SubtitleTranslator = () => {
     // 行级软失败也要挡住绿色成功：失败面板同屏说着「N 行没译出」，顶部再报
     // 「翻译完成」就是对冲。both 分支早已用 !hadRunFailures()，这里此前只挡了
     // 语言级失败。
-    if (multiLanguageMode && multipleFiles.length <= 1 && !hasFailedLang && !hadRunFailures() && !isDisposed() && !isCancelRequested()) {
+    if (!zipActive && multiLanguageMode && multipleFiles.length <= 1 && !hasFailedLang && !hadRunFailures() && !isDisposed() && !isCancelRequested()) {
       const fileCount = exportMode === "both" ? targetLangs.length * 2 : targetLangs.length;
       // 计数不能直接拼在「已导出」前面：zh 会读成「2 已导出」。用语言无关的
       // ×N 后缀说明多份产物；只有 1 份时不显示（那时括号里的数字没有信息量）。
@@ -609,6 +662,7 @@ const SubtitleTranslator = () => {
                 handleSwapLanguages={handleSwapLanguages}
                 setTargetLanguages={setTargetLanguages}
                 setMultiLanguageMode={setMultiLanguageMode}
+                translationMethod={translationMethod}
                 disabled={isTranslating}
               />
             </Form>
@@ -661,6 +715,12 @@ const SubtitleTranslator = () => {
                           },
                         ]}
                       />
+
+                      {multiLanguageMode && (
+                        <ToggleRow label={t("zipMultiLanguage")} tooltip={t("zipMultiLanguageTooltip")}>
+                          <Switch size="small" checked={zipMultiLanguage} onChange={setZipMultiLanguage} disabled={isTranslating} aria-label={t("zipMultiLanguage")} />
+                        </ToggleRow>
+                      )}
 
                       {needsBilingual && (
                         <Segmented
@@ -822,6 +882,7 @@ const SubtitleTranslator = () => {
           targetLanguages={targetLanguages}
           setTargetLanguages={setTargetLanguages}
           setMultiLanguageMode={setMultiLanguageMode}
+          sourceLanguage={sourceLanguage}
         />
       )}
 

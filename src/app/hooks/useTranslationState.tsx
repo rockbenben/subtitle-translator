@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import { App } from "antd";
 import { useLocalStorage } from "@/app/hooks/useLocalStorage";
 import { useLlmPresets } from "@/app/hooks/useLlmPresets";
@@ -34,6 +34,7 @@ import { validateTranslationInputs, pingSignature } from "@/app/hooks/translatio
 import { DEFAULT_RETRY_COUNT, DEFAULT_RETRY_TIMEOUT, delay, isRetryableError, isDefiniteAuthFailure } from "@/app/lib/translation/retry";
 import { type TranslationSettings } from "@/app/lib/translation/settingsSchema";
 import { describeError, isAbortError, isCascadedAbort, isNetworkError } from "@/app/utils/errorUtils";
+import { collidesWithSource, withoutSourceLanguage } from "@/app/utils/sourceLanguageRule";
 import { useLanguageOptions } from "@/app/components/languages";
 import { useTranslations } from "next-intl";
 
@@ -82,11 +83,30 @@ const useTranslationState = () => {
   const [translationConfigs, setTranslationConfigs] = useLocalStorage<TranslationConfigs>("translation-configs", defaultConfigs as TranslationConfigs);
   const [systemPrompt, setSystemPrompt] = useLocalStorage<string>("translation-systemPrompt", DEFAULT_SYSTEM_PROMPT);
   const [userPrompt, setUserPrompt] = useLocalStorage<string>("translation-userPrompt", DEFAULT_USER_PROMPT);
-  const [sourceLanguage, setSourceLanguage] = useLocalStorage<string>("translation-sourceLanguage", "auto");
+  const [storedSourceLanguage, setSourceLanguage] = useLocalStorage<string>("translation-sourceLanguage", "auto");
   const [targetLanguage, setTargetLanguage] = useLocalStorage<string>("translation-targetLanguage", "zh");
-  const [targetLanguages, setTargetLanguages] = useLocalStorage<string[]>("translation-targetLanguages", ["zh"]);
+  const [storedTargetLanguages, setStoredTargetLanguages] = useLocalStorage<string[]>("translation-targetLanguages", ["zh"]);
   const [removeChars, setRemoveChars] = useLocalStorage<string>("translation-removeChars", "");
   const [multiLanguageMode, setMultiLanguageMode] = useLocalStorage<boolean>("translation-multiLanguageMode", false);
+
+  // 盘上的源语言就是唯一真相 —— 显示层、写路径、跑之前的校验与导出读的都是它。
+  // ⚠ 这里【不】派生第二份「生效值」:曾经派生过(撞上单选目标时显示成
+  // "auto"),盘上却留着用户自己选的那个码 —— 显示层按 auto 放行、写路径按
+  // 具体码剔除,同一件事两套真相。理由见 utils/sourceLanguageRule 的文件头。
+  const sourceLanguage = storedSourceLanguage;
+  // 多语言目标列表同步剔除源语言，保证读边界绝对干净，无需 1 帧延迟的 useEffect 归一。
+  const targetLanguages = withoutSourceLanguage(storedTargetLanguages, sourceLanguage);
+
+  const setTargetLanguages = useCallback(
+    (langs: string[] | ((prev: string[]) => string[])) => {
+      if (typeof langs === "function") {
+        setStoredTargetLanguages((prev) => withoutSourceLanguage(langs(prev), sourceLanguage));
+      } else {
+        setStoredTargetLanguages(withoutSourceLanguage(langs, sourceLanguage));
+      }
+    },
+    [setStoredTargetLanguages, sourceLanguage],
+  );
   const [retryCount, setRetryCount] = useLocalStorage<number>("translation-retryCount", DEFAULT_RETRY_COUNT);
   // Session memo of probe-validated config signatures (pingSignature). Lets
   // validate() skip re-probing a config it already reachability-checked this
@@ -263,6 +283,9 @@ const useTranslationState = () => {
         systemPrompt: effectiveSystemPrompt,
         userPrompt: effectiveUserPrompt,
         translationMethod,
+        // 导出的是盘上那份源语言 —— 也就是界面上显示的那一份。
+        // ⚠ 别在这里「修正」成什么别的值:导出的是用户自己的选择,带着它走
+        // 才回得去(目标也是原样,那对自相矛盾的组合也会原样带过去)。
         sourceLanguage,
         targetLanguage,
         targetLanguages,
@@ -292,9 +315,39 @@ const useTranslationState = () => {
       if (settings.systemPrompt !== undefined) setSystemPrompt(settings.systemPrompt);
       if (settings.userPrompt !== undefined) setUserPrompt(settings.userPrompt);
       if (settings.translationMethod !== undefined) setTranslationMethod(settings.translationMethod);
-      if (settings.sourceLanguage !== undefined) setSourceLanguage(settings.sourceLanguage);
-      if (settings.targetLanguage !== undefined) setTargetLanguage(settings.targetLanguage);
-      if (settings.targetLanguages !== undefined) setTargetLanguages(settings.targetLanguages);
+      // 源/目标语言照文件写进存储 —— 但撞上时源语言要退成 "auto"(自动识别),
+      // 与交互里那条分支同一个取向(目标保留、源退让)。否则这份设置自己就
+      // 带着一个「译文 = 原文」的语种,跑出来的是一份与原文一模一样的文件,
+      // 还被记成成功导出。
+      //
+      // ⚠【退让只在单选目标真会被用到时发生】:多语模式跑的是目标列表,那个
+      // 单选目标压根不参与翻译 —— 拿它当判据是拿一个不出场的东西说话,于是
+      // 多语模式的设置文件一导入,用户的源语言就被改掉了(源语言在多语模式
+      // 下是要真译的,换成自动识别会改变产物)。
+      // ⚠ 而且只在【文件自己给了源语言】时才退:文件没提源语言,那是盘上
+      // 用户自己的选择,导入不该顺手改它(哪怕它此刻与目标撞上了 —— 那由跑
+      // 之前的校验明确拒绝,见 validateTranslationInputs)。
+      // ⚠ 文件里的源语言若是空串,当 "auto"(自动识别)处理 —— 空串不是语言码,
+      // 存进去之后每一轮都会被 checkLanguageSupport 挡下(一句英文的
+      // "Invalid language code provided"),而没有哪条 UI 路径能把它修回来。
+      const importedSource = settings.sourceLanguage === undefined ? storedSourceLanguage : settings.sourceLanguage || "auto";
+      // 目标位放不下空串(目标必须是具体语种),空串按「这份文件没提目标」处理。
+      const importedTarget = settings.targetLanguage === undefined || !settings.targetLanguage ? targetLanguage : settings.targetLanguage;
+      // 这份设置自己的模式说了算(文件没写就沿用当前的)—— 判据是「这一轮真会
+      // 译进去的目标集合」,不是界面此刻处于哪个模式。
+      const importedMultiMode = settings.multiLanguageMode ?? multiLanguageMode;
+      const importedSourceCollides = !importedMultiMode && settings.sourceLanguage !== undefined && collidesWithSource(importedTarget, importedSource);
+      if (settings.sourceLanguage !== undefined || importedSourceCollides) setSourceLanguage(importedSourceCollides ? "auto" : importedSource);
+      if (settings.targetLanguage !== undefined && settings.targetLanguage) setTargetLanguage(settings.targetLanguage);
+      // 导入的目标列表要照导入后的【具体】源语言过一遍 —— 源语言不许同时当
+      // 目标(见 withoutSourceLanguage),否则这份设置自己就带着一个
+      // 「译文 = 原文」的语种。
+      if (settings.targetLanguages !== undefined) {
+        setStoredTargetLanguages(withoutSourceLanguage(settings.targetLanguages, importedSource));
+      } else {
+        // 文件没带列表也要过一遍 —— 盘上那份列表可能含导入后的源语言。
+        setStoredTargetLanguages((prev) => withoutSourceLanguage(prev, importedSource));
+      }
       if (settings.multiLanguageMode !== undefined) setMultiLanguageMode(settings.multiLanguageMode);
       if (settings.llmPresets !== undefined) setLlmPresets(settings.llmPresets);
       if (settings.activeLlmPresetId !== undefined) setActiveLlmPresetId(settings.activeLlmPresetId);
@@ -386,12 +439,17 @@ const useTranslationState = () => {
   // 任何 source/target 变化都会让 translatedText invalidate——避免用户改了语言
   // 但屏幕上还显示旧译文,误以为切换没生效。
   const handleLanguageChange = (type: "source" | "target", value: string) => {
-    const otherValue = type === "source" ? targetLanguage : sourceLanguage;
-    if (value === otherValue) {
+    // 多语言模式下跑的是目标列表,那个单选目标压根不参与翻译 —— 拿它跟源语言
+    // 比是拿一个不出场的东西当判据:曾经会因此弹一句「源语言与目标语言相同」
+    // (并不存在这回事)、把那个隐藏的目标顺手改掉、还把预览清空。多语模式下
+    // 按列表判 —— 列表剔源语言由 withoutSourceLanguage 负责。
+    const sameLanguageOther = multiLanguageMode ? undefined : type === "source" ? targetLanguage : sourceLanguage;
+    if (sameLanguageOther !== undefined && value === sameLanguageOther) {
       if (type === "source") {
         const newTargetValue = value === "zh" ? "en" : "zh";
         setSourceLanguage(value);
         setTargetLanguage(newTargetValue);
+        setStoredTargetLanguages((prev) => withoutSourceLanguage(prev, value));
         message.error(`${t("sameLanguageTarget")} ${newTargetValue === "zh" ? tLanguages("zh") : tLanguages("en")}`);
       } else {
         setTargetLanguage(value);
@@ -405,6 +463,7 @@ const useTranslationState = () => {
     }
     if (type === "source" && value !== sourceLanguage) {
       setSourceLanguage(value);
+      setStoredTargetLanguages((prev) => withoutSourceLanguage(prev, value));
       setTranslatedText("");
       resetRunStateForLanguageChange();
       markLanguageConfigChanged();
@@ -421,9 +480,12 @@ const useTranslationState = () => {
   // the UI when sourceLanguage === "auto" (can't move "detect" to target) or
   // multiLanguageMode === true (no single target to swap against).
   const handleSwapLanguages = () => {
+    // 交换的是盘上那一份:源语言是 "auto"(自动识别)时没法交换 —— 目标位
+    // 只放得下具体语种,把 "auto" 塞进去会造出一个连引擎都认不出的目标。
     const previousSource = sourceLanguage;
     setSourceLanguage(targetLanguage);
     setTargetLanguage(previousSource);
+    setStoredTargetLanguages((prev) => withoutSourceLanguage(prev, targetLanguage));
     setTranslatedText("");
     resetRunStateForLanguageChange();
     markLanguageConfigChanged();
@@ -727,11 +789,14 @@ const useTranslationState = () => {
   };
   // 「语言配置真的变了」的唯一出口。谁改的语言(单选、弹层、导入)都走这里报一次,
   // 工具层据此作废自己的派生产物 —— 判据只有这一处。
-  const markLanguageConfigChanged = () => setLanguageConfigVersion((v) => v + 1);
+  const markLanguageConfigChanged = useCallback(() => setLanguageConfigVersion((v) => v + 1), []);
   const handleTargetLanguagesChange = (langs: string[]) => {
+    // 源语言不许留在目标列表里(见 withoutSourceLanguage)。剔的是盘上那一个
+    // 源语言 —— 与显示层、导出、跑之前那几层同源。
+    const next = withoutSourceLanguage(langs, sourceLanguage);
     // 弹层里点「应用」但选择没变时不该作废屏幕上的译文（新数组只是引用不同）。
-    if (langs.length === targetLanguages.length && langs.every((lang, i) => lang === targetLanguages[i])) return;
-    setTargetLanguages(langs);
+    if (next.length === targetLanguages.length && next.every((lang, i) => lang === targetLanguages[i])) return;
+    setTargetLanguages(next);
     // 目标语言集合变了，translatedText 可能是旧预览语种；留着会让「选英文却看到
     // 中文结果」这种状态继续显示。清掉预览，用户重新点击翻译即可。
     setTranslatedText("");

@@ -6,9 +6,10 @@ import type { SelectProps } from "antd";
 import { SearchOutlined, SwapOutlined, CaretRightOutlined, CaretDownOutlined } from "@ant-design/icons";
 import { useTranslations } from "next-intl";
 import { useLanguageOptions, filterLanguageOption } from "@/app/components/languages";
-import { LANGUAGE_GROUPS, LANGUAGE_PRESETS } from "@/app/lib/translation";
+import { LANGUAGE_GROUPS, LANGUAGE_PRESETS, getSupportedTargetCodes } from "@/app/lib/translation";
 import { useIsMobile } from "@/app/hooks/useIsMobile";
 import { useLocalStorage } from "@/app/hooks/useLocalStorage";
+import { collidesWithSource } from "@/app/utils/sourceLanguageRule";
 
 const { Text } = Typography;
 
@@ -23,6 +24,8 @@ interface LanguageSelectorProps {
   handleSwapLanguages?: () => void;
   setTargetLanguages: (value: string[]) => void;
   setMultiLanguageMode: (value: boolean) => void;
+  /** 当前翻译服务：决定「全选可用」的可用集合（不同服务支持的语言不同）。 */
+  translationMethod: string;
   /**
    * 翻译进行中整块禁用。语言在点「翻译」那一刻就被闭包快照定死,运行中改只会
    * 让控件翻转而产物纹丝不动 —— 想换语言,先取消(缓存即断点),改完再跑。
@@ -42,7 +45,7 @@ interface LanguageSelectorProps {
  *   selected chips above the grid let user see + remove individual picks;
  *   mobile single-column grid so long native labels don't overflow.
  */
-const LanguageSelector = ({ sourceLanguage, targetLanguage, targetLanguages, multiLanguageMode, handleLanguageChange, handleSwapLanguages, setTargetLanguages, setMultiLanguageMode, disabled = false }: LanguageSelectorProps) => {
+const LanguageSelector = ({ sourceLanguage, targetLanguage, targetLanguages, multiLanguageMode, handleLanguageChange, handleSwapLanguages, setTargetLanguages, setMultiLanguageMode, translationMethod, disabled = false }: LanguageSelectorProps) => {
   const t = useTranslations("common");
   const { sourceOptions, targetOptions } = useLanguageOptions();
   const isMobile = useIsMobile();
@@ -95,16 +98,23 @@ const LanguageSelector = ({ sourceLanguage, targetLanguage, targetLanguages, mul
   // Filter groups + their codes based on search. Empty groups disappear so
   // the popup shrinks to just matches. Comparison uses the same predicate
   // as the single-select search (label / name / value).
+  //
+  // 源语言先剔掉:源语言不能同时当目标(translateCore 遇到 source === target
+  // 直接原文短路,lib/translation/pipeline.ts)。网格里摆出来就是邀请用户选它。
+  // 判据用共享的那一份(utils/sourceLanguageRule)—— 显示层与写入口同源。
   const visibleGroups = useMemo(() => {
-    if (!searchValue.trim()) return LANGUAGE_GROUPS.map((g) => ({ ...g, codes: [...g.codes] }));
-    return LANGUAGE_GROUPS.map((g) => ({
-      ...g,
-      codes: g.codes.filter((c) => {
-        const opt = targetByCode.get(c);
-        return opt ? filterLanguageOption({ input: searchValue, option: opt }) : false;
-      }),
-    })).filter((g) => g.codes.length > 0);
-  }, [searchValue, targetByCode]);
+    const groups = LANGUAGE_GROUPS.map((g) => ({ ...g, codes: g.codes.filter((c) => !collidesWithSource(c, sourceLanguage)) }));
+    if (!searchValue.trim()) return groups.filter((g) => g.codes.length > 0);
+    return groups
+      .map((g) => ({
+        ...g,
+        codes: g.codes.filter((c) => {
+          const opt = targetByCode.get(c);
+          return opt ? filterLanguageOption({ input: searchValue, option: opt }) : false;
+        }),
+      }))
+      .filter((g) => g.codes.length > 0);
+  }, [searchValue, targetByCode, sourceLanguage]);
 
   const isExpanded = (key: string) => (searchValue.trim() ? true : !!expandedGroups[key]);
   const toggleGroup = (key: string) => {
@@ -118,12 +128,19 @@ const LanguageSelector = ({ sourceLanguage, targetLanguage, targetLanguages, mul
   };
 
   const applyPreset = (codes: readonly string[]) => {
-    setTargetLanguages([...new Set([...targetLanguages, ...codes])]);
+    // 预设里也可能含源语言(「Top 10 World」这类清单是写死的)—— 一并剔掉。
+    setTargetLanguages([...new Set([...targetLanguages, ...codes.filter((c) => !collidesWithSource(c, sourceLanguage))])]);
   };
 
   const handleClearAll = () => setTargetLanguages([]);
 
-  const selectedSet = useMemo(() => new Set(targetLanguages), [targetLanguages]);
+  const supportedTargetCodes = useMemo(() => getSupportedTargetCodes(translationMethod), [translationMethod]);
+  // 源语言不能同时当目标:translateCore 遇到 source === target 直接原文短路
+  // (lib/translation/pipeline.ts),选进去只会产出一份「译文 = 原文」的文件,
+  // 还被当成功计进导出条数。源语言是 auto 时它本就不在目标表里。
+  const selectableTargetCodes = useMemo(() => supportedTargetCodes.filter((code) => !collidesWithSource(code, sourceLanguage)), [supportedTargetCodes, sourceLanguage]);
+
+  const selectedSet = new Set(targetLanguages);
 
   const popupRender = () => (
     <div
@@ -148,6 +165,11 @@ const LanguageSelector = ({ sourceLanguage, targetLanguage, targetLanguages, mul
             {t(p.labelKey)}
           </Button>
         ))}
+        {/* 替换而非合并：之前用别的服务选过、当前服务不支持的语言必须一起清掉，
+            否则点「翻译」会被 validate 整单拒绝（多语言模式逐个校验，命中一个就停）。 */}
+        <Button size="small" onClick={() => setTargetLanguages(selectableTargetCodes)} disabled={selectableTargetCodes.length === 0 || undefined}>
+          {t("selectAllSupported", { count: selectableTargetCodes.length })}
+        </Button>
         <Button size="small" onClick={handleClearAll} disabled={targetLanguages.length === 0 || undefined}>
           {t("clearAll")}
         </Button>
