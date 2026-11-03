@@ -1,5 +1,6 @@
 "use client";
 
+import { languages } from "@/app/lib/translation/languages-data";
 import { useLocalStorage } from "./useLocalStorage";
 
 interface ExportFilenameConfig {
@@ -13,8 +14,8 @@ interface ExportFilenameConfig {
    * @param langCode - Target language code
    * @param defaultExt - Force extension (e.g., 'ass' for bilingual subtitles), undefined to keep original
    * @param disambiguateLang - true in multi-language mode: inject `.{lang}` before the
-   *   extension when the pattern doesn't already vary by {lang}, so N target languages
-   *   don't collide into one filename. Single-language exports stay clean ({name}.{ext}).
+   *   extension when the pattern doesn't already vary by {lang}/{langName}, so N target
+   *   languages don't collide into one filename. Single-language exports stay clean ({name}.{ext}).
    */
   generateFileName: (originalFileName: string, langCode: string, defaultExt?: string, disambiguateLang?: boolean) => string;
 }
@@ -27,6 +28,7 @@ interface ExportFilenameConfig {
  * Supports placeholders:
  * - {name} - original filename without extension
  * - {lang} - target language code
+ * - {langName} - target language name (spaces and parentheses become underscores)
  * - {ext} - file extension (can be forced via defaultExt)
  * - {date} - current date (YYYY-MM-DD)
  * - {time} - current time (HHMMss)
@@ -70,8 +72,14 @@ export const useExportFilename = (toolKey: string = "default"): ExportFilenameCo
     // 文件名本身含 "{lang}"/"{date}"(i18n 模板文件 strings_{lang}.json、
     // 媒体名 "Movie {2023}")时 {name} 展开出的 token 被二次替换,下载名被改写。
     const pattern = customFileName.trim() || "{name}.{ext}";
-    const tokens: Record<string, string> = { name: baseName, lang: langCode, ext, date: dateStr, time: timeStr };
-    let result = pattern.replace(/\{(name|lang|ext|date|time)\}/gi, (_, p: string) => tokens[p.toLowerCase()]);
+    // 语言名固定取 master 的 name（稳定英文），不取 i18n languages.{code}：
+    // 后者随界面语言变，同一个文件在不同界面语言下会得到不同文件名。
+    // master 的 name 保持 Google 风格（Chinese (Simplified)），供 prompt / 搜索 /
+    // 错误提示使用；{langName} 是文件名段，把空格与括号折成下划线（Chinese_Simplified）。
+    const langName = languages.find((l) => l.value === langCode)?.name ?? langCode;
+    const langNameFile = langName.replace(/[\s()]+/g, "_").replace(/^_+|_+$/g, "");
+    const tokens: Record<string, string> = { name: baseName, langname: langNameFile, lang: langCode, ext, date: dateStr, time: timeStr };
+    let result = pattern.replace(/\{(name|langName|lang|ext|date|time)\}/gi, (_, p: string) => tokens[p.toLowerCase()]);
 
     // Ensure the result has an extension. 是否"已带扩展名"必须基于【用户的
     // pattern】判断,而不是展开后的结果末段:{name} 展开出的点分基名尾段
@@ -93,9 +101,17 @@ export const useExportFilename = (toolKey: string = "default"): ExportFilenameCo
     // their own {lang} pattern, and every single-language export, are untouched.
     // ⚠ 分隔符必须是点号:MKVToolNix / Plex / Jellyfin 都按点分语言后缀识别语种,
     // 下划线不在 MKVToolNix 的分界字符集([](){}.+-=#)里,name_en.srt 会被认成 und。
-    if (disambiguateLang && !/\{lang\}/i.test(pattern)) {
+    // ⚠ 幂等:最后一段已经是 .{lang} 就不再叠 —— 源文件名自带语言段
+    // (movie.zh.srt 再导成 zh)、或字面 pattern 写了 .i18n 时,否则得到
+    // movie.zh.zh.srt / data.i18n.i18n.json。只看最后一段,文件名中间的
+    // .zh 不算(movie.zh.part2.srt 仍要注入)。不会制造同名:两个语种各自的
+    // 名字末段本就不同。
+    if (disambiguateLang && !/\{(?:lang|langName)\}/i.test(pattern)) {
       const dot = result.lastIndexOf(".");
-      result = dot > 0 ? `${result.slice(0, dot)}.${langCode}${result.slice(dot)}` : `${result}.${langCode}`;
+      const stem = dot > 0 ? result.slice(0, dot) : result;
+      if (!stem.toLowerCase().endsWith(`.${langCode.toLowerCase()}`)) {
+        result = dot > 0 ? `${result.slice(0, dot)}.${langCode}${result.slice(dot)}` : `${result}.${langCode}`;
+      }
     }
 
     return result;
