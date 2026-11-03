@@ -213,8 +213,15 @@ export const pickExportDir = async (toolKey: string): Promise<string | null> => 
     // AbortError = 用户取消 / 目录被 Chrome 拒；SecurityError = 手势失效（上面的
     // 补授权对话框停留超过 ~5s 就会烧掉 transient activation）。两者都不是故障，
     // 按「没选成」处理，别弹「无法设置导出目录」。
+    //
+    // NotAllowedError = Chromium 的「同一页面同时只许一个 picker」。桌面壳里那条是
+    // 【常规路径】不是故障：那个对话框是独立顶层窗口，会落在应用窗口后面，用户以为
+    // 没弹出来就又点一次。这里不许抛，否则调用方只能报「无法设置导出目录」——而用户
+    // 什么都没做错，第一个对话框还开着、选完就生效。
+    // ⚠ 别改成「加一个 in-flight 标志把按钮禁掉」：对话框可能在窗口隐藏时被销毁而
+    // 不回写完成状态（实测），那份标志会跟着永久卡住，把一个可点的控件换成点不动的。
     const name = (error as DOMException)?.name;
-    if (name === "AbortError" || name === "SecurityError") return null;
+    if (name === "AbortError" || name === "SecurityError" || name === "NotAllowedError") return null;
     throw error;
   }
   await set(keyFor(toolKey), handle, exportStore);
