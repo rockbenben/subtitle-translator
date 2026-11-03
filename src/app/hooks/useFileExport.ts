@@ -3,7 +3,7 @@
 import { useCallback } from "react";
 import { App } from "antd";
 import { useTranslations } from "next-intl";
-import { downloadFile, type DownloadResult } from "@/app/utils";
+import { downloadFile, describeExport } from "@/app/utils";
 
 /**
  * 「导出一个文件并如实汇报」—— 一次导出的完整动作，所有工具页共用一份。
@@ -21,17 +21,10 @@ import { downloadFile, type DownloadResult } from "@/app/utils";
  * ⚠ 分流本身在 downloadFile 里（见 utils/exportDir.ts），这里只负责【如实转述】
  * 它回传的落点：落进导出目录就报目录名与让路后的真实文件名，落进浏览器下载目录
  * 就维持原来那句 —— 那条路径有下载栏兜底，浏览器改的名用户看得见。
- */
-/**
- * 把一次导出的【实际落点】翻成一句话。落进导出目录就报目录名与让路后的真实文件名，
- * 落进浏览器下载目录就报文件名 —— 那条路径有下载栏兜底。
  *
- * 单独导出是因为批量路径（字幕 / JSON 的逐语言循环、ZIP）不走这个 hook，而"界面说的
- * 目录必须等于字节去的地方"这条判据不能在每个调用点各写一遍。`t` 传 common 命名空间。
+ * 措辞与判据的拆分见 utils/fileUtils.ts 的 describeExport（纯模块，不带
+ * "use client" —— 批量路径那边要 import 它）。
  */
-export const describeExport = (t: (key: string, values?: Record<string, string>) => string, result: DownloadResult): string =>
-  result.dir ? t("exportedToFolder", { dir: result.dir, fileName: result.fileName }) : t("fileExported", { fileName: result.fileName });
-
 export const useFileExport = () => {
   const t = useTranslations("common");
   const { message } = App.useApp();

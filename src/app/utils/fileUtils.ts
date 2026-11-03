@@ -41,6 +41,32 @@ export const downloadFile = async (content: string | Blob | ArrayBuffer, fileNam
 };
 
 /**
+ * 把一次导出的【实际落点】翻成一句话。落进导出目录就报目录名与让路后的真实文件名，
+ * 落进浏览器下载目录就报文件名 —— 那条路径有下载栏兜底。
+ *
+ * 单独导出是因为批量路径（字幕 / JSON 的逐语言循环、ZIP）不走 useFileExport 这个 hook，
+ * 而「界面说的目录必须等于字节去的地方」这条判据不能在每个调用点各写一遍。`t` 传
+ * common 命名空间。
+ *
+ * `overrides` 让调用方换掉【措辞】而不必重写【判据】：分流（落目录 / 落下载栏）
+ * 仍然只在这里判一次，否则调用点各写一遍 `result.dir ? … : …` 就会漂。
+ * 两句要一起给 —— 只换一句会造出一句没人用得上的半截话（判据只在一个地方，
+ * 措辞却是配套的一对）。
+ *
+ * ⚠ 住在这个纯模块里而不是 hooks/useFileExport.ts：那边带 "use client"，
+ * 普通模块（batchZip.ts）从那里 import 会把 antd / next-intl 一起拖进来，
+ * 服务端组件一旦 import 就是 client reference —— 纯函数没有理由背这个依赖。
+ */
+export const describeExport = (
+  t: (key: string, values?: Record<string, string>) => string,
+  result: DownloadResult,
+  overrides?: { browser: string; folder: string },
+): string =>
+  result.dir
+    ? (overrides?.folder ?? t("exportedToFolder", { dir: result.dir, fileName: result.fileName }))
+    : (overrides?.browser ?? t("fileExported", { fileName: result.fileName }));
+
+/**
  * 拆分「文件名 → 主名 + 后缀」的唯一规则。首字符的点不算后缀（`.backup` 是
  * 无后缀的文件名，不是扩展名），无后缀时回落到 `.txt`。
  *
