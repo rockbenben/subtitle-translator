@@ -242,6 +242,28 @@ export const extractTranslatedLinesWithNumbers = (response: string, expectedCoun
 };
 
 /**
+ * Wrap ONE line in the [TRANSLATE_n] marker form — the single-line companion of
+ * the batch call's inline marker block (see pipeline.ts translateWithContext).
+ * 单行【重试】请求也必须保持带标记的数据格式(#68):平文本单行(祈使句、
+ * 感叹词这类短句)在模型眼里像一句聊天,常换来对话体回复并被当作译文收下。
+ */
+export const wrapTranslateTaggedLine = (text: string, index = 0): string => `[TRANSLATE_${index}]${text}[/TRANSLATE_${index}]`;
+
+/**
+ * Extract the ONE translation a tagged single-line retry asked for. A reply
+ * without a parseable [TRANSLATE_0] tag — chat-style prose apologies, code
+ * fences, preambles — returns "" so the caller discards it and hands the slot
+ * back to its existing gap / soft-fill / retry machinery; tagless prose must
+ * NEVER be written into the subtitle as the translation (#68). Newlines are
+ * flattened to spaces, same convention as the chunk rescue: a stray newline
+ * inside a single line's translation breaks line-by-line reassembly.
+ */
+export const extractTaggedSingleLine = (response: string, sourceLine: string): string => {
+  const line = extractTranslatedLinesWithNumbers(response || "", 1, [sourceLine])[0];
+  return line && line.trim() ? line.replace(/\r?\n/g, " ") : "";
+};
+
+/**
  * Build context-aware translation prompt — wraps the batch instructions around
  * the user's template WITHOUT consuming the ${content} placeholder: the marker
  * block (user-controlled text) is inserted LAST by getAIModelPromptParts's
