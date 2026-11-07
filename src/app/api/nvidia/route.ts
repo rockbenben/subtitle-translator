@@ -90,6 +90,9 @@ export async function POST(req: NextRequest) {
     if (typeof model !== "string" || !model) {
       return NextResponse.json({ error: "Missing or invalid parameter: model must be a non-empty string" }, { status: 400 });
     }
+    if (apiKey != null && typeof apiKey !== "string") {
+      return NextResponse.json({ error: "Invalid parameter: apiKey must be a string" }, { status: 400 });
+    }
 
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
@@ -167,7 +170,8 @@ export async function POST(req: NextRequest) {
     // A 200 with no message content is a malformed upstream response — surface
     // it as a 502 (mirroring the non-JSON branch) instead of returning an empty
     // body the client would silently treat as a successful but blank translation.
-    if (!data.choices?.[0]?.message?.content) {
+    const message = data.choices?.[0]?.message;
+    if (typeof message?.content !== "string" || !message.content.trim()) {
       console.error("Nvidia API returned 200 with no message content:", JSON.stringify(data).substring(0, 500));
       return NextResponse.json({ error: "Nvidia API returned a response with no message content." }, { status: 502 });
     }
@@ -179,18 +183,10 @@ export async function POST(req: NextRequest) {
     // output alone to respect intent.
     // model is guaranteed string after the validation gate above
     if (model.toLowerCase().includes("minimax")) {
-      const choice = data.choices[0];
-      const content = choice?.message?.content;
-      if (choice?.message && content) {
-        // Strip <think>...</think> tags and everything inside them.
-        // Non-greedy regex matches correctly when multiple tags exist.
-        choice.message.content = content.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
-        // 内容只剩 <think> 块时剥完为空 —— 正是上面 502 闸门要拦的"成功但空白
-        // 翻译",必须复检(短输入下 MiniMax 偶发只回思考块)。
-        if (!choice.message.content) {
-          console.error("Nvidia API returned only a <think> block (empty after strip).");
-          return NextResponse.json({ error: "Nvidia API returned a response with no message content." }, { status: 502 });
-        }
+      message.content = message.content.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
+      if (!message.content) {
+        console.error("Nvidia API returned only a <think> block (empty after strip).");
+        return NextResponse.json({ error: "Nvidia API returned a response with no message content." }, { status: 502 });
       }
     }
 
