@@ -346,8 +346,8 @@ export const translateCore = async (params: TranslateTextParams, cache?: Pipelin
   }
 
   // Check cache
-  const cacheKey = generateCacheKey(text, cacheSuffix);
-  if (useCache && cache) {
+  const cacheKey = useCache && cache ? generateCacheKey(text, cacheSuffix) : undefined;
+  if (cacheKey && cache) {
     const cachedTranslation = await cache.get(cacheKey);
     if (cachedTranslation) return cachedTranslation;
   }
@@ -373,7 +373,7 @@ export const translateCore = async (params: TranslateTextParams, cache?: Pipelin
   // Fire-and-forget cache write — failures swallowed in the cache impl, and the
   // same key is next read only after the retry interval, so the write has time
   // to settle. Awaiting each write would park the translation loop behind IDB.
-  if (useCache && cache) {
+  if (cacheKey && cache) {
     void cache.set(cacheKey, cleanedText);
   }
 
@@ -1197,6 +1197,7 @@ const runTranslateLines = async (
       config,
       systemPrompt,
       userPrompt,
+      fullText: config.useCache === false ? undefined : fullText,
       // Full term set for the target language — the per-request filtered
       // block is a pure function of {text, this set}, so hashing the set
       // keeps the key deterministic while the wire prompt varies per line.
