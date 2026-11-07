@@ -16,7 +16,7 @@
 // 130 = cancelled.
 
 import { parseArgs } from "node:util";
-import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
+import { readFileSync, writeFileSync, mkdirSync, statSync } from "node:fs";
 import { basename, dirname, extname, join, resolve } from "node:path";
 import { homedir } from "node:os";
 
@@ -144,9 +144,16 @@ const makeFileCache = (file: string): PipelineCache & { flush: (force?: boolean)
       return { entries: new Map(), ok: false };
     }
     try {
-      return { entries: new Map(Object.entries(JSON.parse(raw) as Record<string, string>)), ok: true };
+      const parsed: unknown = JSON.parse(raw);
+      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error("expected an object of string translations");
+      const entries = new Map<string, string>();
+      for (const [key, value] of Object.entries(parsed)) {
+        if (typeof value !== "string") throw new Error("expected a string translation");
+        entries.set(key, value);
+      }
+      return { entries, ok: true };
     } catch (e) {
-      console.error(`warning: cache file ${file} is corrupt or being written by another process (${(e as Error).message}).`);
+      console.error(`warning: cache file ${file} is corrupt or has an incompatible format (${(e as Error).message}).`);
       return { entries: new Map(), ok: false };
     }
   };
@@ -212,7 +219,7 @@ const makeFileCache = (file: string): PipelineCache & { flush: (force?: boolean)
           // 基底读不出来 —— 可能是另一个进程正写到一半。此刻整份写出去会把
           // 它(和之前所有运行)付费译出的条目全抹掉。跳过这次,日志留着,
           // 下次 flush(或收尾的 force)再试;真是文件损坏,也留给用户处置。
-          console.error(`warning: skipping this cache write — ${file} could not be read, and overwriting it would discard entries other runs paid for. If it stays unreadable, delete it to start a fresh cache.`);
+          console.error(`warning: skipping this cache write — ${file} could not be read as a translation cache. To start a fresh cache, pass --cache-file with an unused path.`);
           // 时间戳照常推进:节流的目的是别把整份缓存反复 read+parse,而这条
           // 分支【已经读过一次】了。不推进的话 600 次 flush 全都做全量重读,
           // 还会把这段长警告打 600 遍(日志被淹没,真正的失败反而看不见)。
@@ -267,6 +274,19 @@ const makeFileCache = (file: string): PipelineCache & { flush: (force?: boolean)
  * 会被那里的显式检查响亮拦下,而不敏感卷上漏检是静默覆盖 —— 选前者。
  */
 const pathKey = (p: string) => (process.platform === "win32" || process.platform === "darwin" ? p.toLowerCase() : p);
+
+// Existing aliases (including hard links) may name the same file. Keep a
+// lexical key as well: a cache or output can be created during the run.
+const fileKeys = (file: string): string[] => {
+  const keys = [pathKey(resolve(file))];
+  try {
+    const stat = statSync(file, { bigint: true });
+    if (stat.ino) keys.push(`inode:${stat.dev}:${stat.ino}`);
+  } catch {
+    // The normal input/cache I/O paths report unreadable or missing files.
+  }
+  return keys;
+};
 
 /**
  * 读文本文件,编码自适应(decodeFileBytes:UTF-8 fatal 试解 → jschardet 检测)。
@@ -499,7 +519,20 @@ const main = async (): Promise<number> => {
   }
 
   // 缓存在所有快速出口之后才加载(--help/--list-* 不必付整份 JSON 的解析成本)。
-  const cache = args["no-cache"] ? undefined : makeFileCache(args["cache-file"] ?? join(homedir(), ".translate-cli-cache.json"));
+  const protectedFiles = new Map<string, string>();
+  for (const file of [...args.input, ...(args.settings ? [args.settings] : [])]) {
+    for (const key of fileKeys(file)) protectedFiles.set(key, file);
+  }
+  const cacheFile = args["no-cache"] ? undefined : args["cache-file"] ?? join(homedir(), ".translate-cli-cache.json");
+  if (cacheFile !== undefined) {
+    const keys = fileKeys(cacheFile);
+    if (keys.some((key) => protectedFiles.has(key))) {
+      console.error(`error: cache file ${cacheFile} is also an input or settings file. Choose a separate --cache-file.`);
+      return 2;
+    }
+    for (const key of keys) protectedFiles.set(key, cacheFile);
+  }
+  const cache = cacheFile === undefined ? undefined : makeFileCache(cacheFile);
 
   // Ctrl-C → abort the run (in-flight requests die, pipeline throws "Translation
   // aborted"), flush what the cache already holds — a re-run resumes from there.
@@ -752,6 +785,8 @@ const main = async (): Promise<number> => {
         const base = `${stem}.${lang}.${result.ext}`;
         const outName = result.bilingualSuffix ? appendBilingualSuffix(base) : base;
         const outPath = join(outDir, outName);
+        const protectedKey = fileKeys(outPath).find((key) => protectedFiles.has(key));
+        if (protectedKey) throw new Error(`would overwrite ${protectedFiles.get(protectedKey)}; choose a different output directory`);
         const firstWriter = writtenOutputs.get(pathKey(outPath));
         if (firstWriter && firstWriter !== fileName) {
           console.error(`✖ ${fileName} → ${lang}: would overwrite ${outName}, already written from "${firstWriter}" this run — outputs collide after extension normalization. Use separate -o directories.`);
