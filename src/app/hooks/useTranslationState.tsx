@@ -730,6 +730,9 @@ const useTranslationState = () => {
         setRunHadFailures(true);
         setFailedCount((prev) => prev + outcome.failures.length);
         setFailedLines((prev) => [...prev, ...outcome.failures]);
+        // 重试的文件维范围读的就是这些 file —— 行级软失败【不会】走 noteFileFailure
+        // (那个记的是"整个文件失败"),两路都记才凑得齐"哪些文件还需要再试"。
+        for (const f of outcome.failures) noteFailedFile(f.file);
         // 实时面板把已上屏的槽按 index 标记为「未译出」。绝大多数失败行压根
         // 没上过屏(引擎不发射失败行),markLiveLinesFailed 对它们是 no-op;
         // 真正要处理的是【先成功后作废】的槽 —— 上下文路径补发过缓存命中的
@@ -778,6 +781,11 @@ const useTranslationState = () => {
     // "succeeded earlier this cycle" (attempted, no failures) from "never ran"
     // (added by the user after the failed run).
     if (!retryTargetLangsRef.current) attemptedLangsRef.current = new Set();
+    // 文件维同一套规矩:失败集每个周期重数,而"跑过没有"的记忆要活过 scoped 重试
+    // —— 否则第二次重试会把上一轮成功的文件重新算成"从没跑过"，又全量下一遍。
+    failedFileNamesRef.current = new Set();
+    fileScopeBlindRef.current = false;
+    if (!retryTargetFilesRef.current) attemptedFilesRef.current = new Set();
   };
 
   // 语言配置变了，上一轮的完成/失败状态就不再对应当前设置。单语言切换由
@@ -827,8 +835,11 @@ const useTranslationState = () => {
   // 的信号,结果批量里第一个文件格式不支持时只 bump 了 ref,进度条照样打绿色「翻译完成
   // 100%」,正压在「已导出 (4/5)」上面。合成一个函数,漏不掉。
   const failedFilesRef = useRef(0);
-  const noteFileFailure = () => {
+  const noteFileFailure = (file?: string, langs: readonly string[] = []) => {
     failedFilesRef.current++;
+    noteFailedFile(file);
+    // ZIP 保存失败时，包内语言都没有产物；只记文件名会漏掉已译成功的那些语言。
+    if (langs.length > 0) setFailedLangs((prev) => Array.from(new Set([...prev, ...langs])));
     markRunHadFailures();
   };
 
@@ -838,11 +849,14 @@ const useTranslationState = () => {
    * 错误已掐断 controller,真正的错误由那个同伴抛出)不算失败,返回 false。
    * `detail` 覆盖默认正文「<错误> <语言> 翻译失败」(字幕双语产物用它换成双语提示);
    * 网络/超时这两种友好文案已经表达了"失败",不再拼后缀。
+   * `file` 是【当前正在跑的那个文件名】—— 重试的文件维范围靠它把「哪个文件需要重跑」
+   * 说清楚;不传则整个周期退回全量重跑(见 fileScopeBlindRef)。
    */
-  const reportLangFailure = (error: unknown, lang: string, detail?: string): boolean => {
+  const reportLangFailure = (error: unknown, lang: string, detail?: string, file?: string): boolean => {
     console.error(`Error translating to ${lang}:`, error);
     if (isCascadedAbort(error)) return false;
     markRunHadFailures();
+    noteFailedFile(file);
     setFailedLangs((prev) => (prev.includes(lang) ? prev : [...prev, lang]));
     const friendly = isNetworkError(error) ? t("networkUnavailable") : isAbortError(error) ? t("translationTimeout") : null;
     const langLabel = sourceOptions.find((o) => o.value === lang)?.label || lang;
@@ -864,6 +878,38 @@ const useTranslationState = () => {
   // all that's left. Null outside a runRetry()-wrapped retry, so the normal
   // translate button is completely unaffected.
   const retryTargetLangsRef = useRef<string[] | null>(null);
+
+  // ─── 重试的文件维范围（批量路径）────────────────────────────────────────
+  // 语言维管不住【文件】：390 个文件的批量里 2 行失败，重试仍会走完 390 个文件 ——
+  // 每个都读盘、回放缓存、装配并【重新下载一遍】，整份列表就在原文件旁边长成
+  // `x (1).srt`（同名让路是导出目录与浏览器共用的规矩，不改）。失败面板那句
+  // 「重试只重发它们」于是对请求为真、对产物为假，用户看到的是"重试把整个任务
+  // 重做了一遍"。
+  //
+  // 判据与语言维同构：本轮真会重跑的文件 = 有失败记录的文件 ∪ 失败之后才加进来、
+  // 还没跑过的文件。两边都按【文件名】匹配 —— FailedLine.file 与下面两个记录器
+  // 给的就是名字。
+  const retryTargetFilesRef = useRef<Set<string> | null>(null);
+
+  // 本轮记过名的失败文件集（retryTargetFilesRef 的输入，随 clearFailures 复位）。
+  const failedFileNamesRef = useRef<Set<string>>(new Set());
+
+  // 有失败记录【没带文件名】。此时无法判断哪些文件是安全的，整个重试周期退回全量：
+  // 宁可多导一遍（用户看得见、能删），也绝不能把没译好的文件说成不用管。
+  // 下游子仓的工具副本还没跟上时（同步只保证这份 hook）走的也是这条兜底 ——
+  // 退化成改动前的行为，而不是漏译。
+  const fileScopeBlindRef = useRef(false);
+
+  // 本周期已完成处理的文件名；有失败的仍由失败集重试，新文件与中途取消的待处理文件
+  // 则由这里的缺项纳入范围，不能把「曾派发过」当成「已经处理完」。
+  const attemptedFilesRef = useRef<Set<string>>(new Set());
+
+  // 记一笔「这个文件本轮有失败」，供重试的文件维范围读。缺省 = 判不出是哪个文件，
+  // 把整个周期标成盲（见 fileScopeBlindRef）。
+  const noteFailedFile = (file?: string) => {
+    if (file) failedFileNamesRef.current.add(file);
+    else fileScopeBlindRef.current = true;
+  };
 
   // Langs actually dispatched since the last fresh (non-retry) run — recorded by
   // getActiveTargetLangs, reset by clearFailures. Distinguishes "succeeded" (was
@@ -901,10 +947,24 @@ const useTranslationState = () => {
     return langs;
   };
 
-  // True while a runRetry-wrapped rerun is in flight. Tools use it to preserve
-  // instead of reset their previous results (result preview, per-lang exports) so
-  // a scoped retry only overwrites what it actually re-translates.
-  const isScopedRetry = () => retryTargetLangsRef.current !== null;
+  // True while a runRetry-wrapped rerun is in flight, on 【either】 dimension.
+  // Tools use it to preserve instead of reset their previous results (result
+  // preview, per-lang exports) and to name the retry ZIP — all of which are
+  // equally wrong on a file-scoped retry.
+  const isScopedRetry = () => retryTargetLangsRef.current !== null || retryTargetFilesRef.current !== null;
+
+  // 批量循环真正要走的文件:重试周期里只留有失败记录的 + 还没跑过的。非重试运行
+  // (用户直接点「翻译」)原样全走 —— 那是显式意图,重下一遍说得通。
+  //
+  // ⚠ 这里【不】套用语言维那条「筛空了就退回全集」的兜底。筛空意味着失败那个文件
+  // 已经被用户从列表里删掉了,退回全集等于把 390 个文件重新下一遍 —— 正是本函数要
+  // 消灭的行为。跑零个才是对的:失败面板随本轮 clearFailures 一起消失,那件事已经不
+  // 在列表里了(有意不给「没有需要重试的文件」这类提示,19 语种换不来一次误解)。
+  const scopeRetryFiles = (files: File[]): File[] => {
+    const scope = retryTargetFilesRef.current;
+    if (!scope) return files;
+    return files.filter((f) => scope.has(f.name) || !attemptedFilesRef.current.has(f.name));
+  };
 
   // Wrap the failure panel's retry so only languages that still need work re-run:
   // the failed set plus anything never attempted this cycle (langs the user added
@@ -918,10 +978,14 @@ const useTranslationState = () => {
     const base = multiLanguageMode ? targetLanguages : [targetLanguage];
     const scope = base.filter((lang) => failed.includes(lang) || !attemptedLangsRef.current.has(lang));
     retryTargetLangsRef.current = scope.length > 0 ? scope : null;
+    // 文件维同一处钉死(跑起来以后失败集会被本轮清零,再算就读到空集了)。
+    // 盲周期或一条失败都没记到名字时置 null = 不缩范围,保持全量。
+    retryTargetFilesRef.current = !fileScopeBlindRef.current && failedFileNamesRef.current.size > 0 ? new Set(failedFileNamesRef.current) : null;
     try {
       await retryFn();
     } finally {
       retryTargetLangsRef.current = null;
+      retryTargetFilesRef.current = null;
     }
   };
 
@@ -1003,6 +1067,10 @@ const useTranslationState = () => {
       message.error(noFileMessage);
       return;
     }
+    // 先筛再跑，而不是跑到一半 skip:进度分母、逐文件的 {current,total}、末尾的
+    // 「已导出 (n/m)」全部跟着 pending 走,才会与用户实际拿到的文件数一致。
+    const pending = scopeRetryFiles(files);
+    if (pending.length === 0) return;
     // validate 不自管 isTranslating,这里 try/finally 兜底,进度条在 test ping → 文件循环之间保持连续可见。
     setIsTranslating(true);
     // resetProgress 而非裸 setProgressPercent(0):progressInfo 的 {current,total} 不清,投影弹窗会在
@@ -1015,26 +1083,35 @@ const useTranslationState = () => {
     clearFailures();
     try {
       if (!(await validate())) return;
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
+      // 本轮选中的文件处理完才记回，取消时尚未处理完的仍会进入下一次重试。
+      for (const file of pending) attemptedFilesRef.current.delete(file.name);
+      for (let i = 0; i < pending.length; i++) {
+        const file = pending[i];
         await new Promise<void>((resolve) => {
           readFile(
             file,
             async (text) => {
-              await performTranslation(text, file.name, i, files.length);
+              await performTranslation(text, file.name, i, pending.length);
+              if (!cancelRequestedRef.current && !disposedRef.current) attemptedFilesRef.current.add(file.name);
               await delay(1500);
               resolve();
             },
             // 解码/读取失败:记一次文件失败(succeeded = total - failed 才准)并放行循环。
+            // 带上文件名,重试的文件维范围才知道这个文件还要不要再试。
             () => {
-              noteFileFailure();
+              noteFileFailure(file.name);
+              attemptedFilesRef.current.add(file.name);
               resolve();
             },
           );
         });
         // 中途导航离开:后续文件只会逐个快速级联失败,汇总 toast 也会弹在用户切去的页面上 ——
         // 直接收工。取消同理:requestCancel 已弹过提示,「已导出 (n/m)」只会把主动喊停说成半失败。
-        if (disposedRef.current || cancelRequestedRef.current) return;
+        if (disposedRef.current || cancelRequestedRef.current) {
+          // 待处理文件可能失败在别的语言，文件范围留下时语言范围也必须留下。
+          for (const lang of scopeTargetLangs(multiLanguageMode ? targetLanguages : [targetLanguage])) attemptedLangsRef.current.delete(lang);
+          return;
+        }
       }
       // 非取消结束时把进度钉到 100%,与 runTranslation 的单文件钉【同一条规则】:批量里有文件在
       // 发请求前就失败(格式不支持 / 解码失败)时进度只走到 (成功/总数)*100,进度条会据
@@ -1044,9 +1121,9 @@ const useTranslationState = () => {
       // 只在有成功时汇总;行级软失败也算(provider 故障时文件是原文副本,绿色成功会跟失败面板对冲)。
       // 全失败:per-file 的错误 toast 已显示,不再叠加。
       const failed = failedFilesRef.current;
-      const succeeded = files.length - failed;
+      const succeeded = pending.length - failed;
       if (failed === 0 && !runHadFailuresRef.current) message.success(t("translationExported"), 10);
-      else if (succeeded > 0) message.warning(`${t("translationExported")} (${succeeded}/${files.length})`, 10);
+      else if (succeeded > 0) message.warning(`${t("translationExported")} (${succeeded}/${pending.length})`, 10);
     } finally {
       setIsTranslating(false);
     }
