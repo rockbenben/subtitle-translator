@@ -6,8 +6,7 @@ import { normalizeNewlines, readTextFile, getErrorMessage } from "@/app/utils";
 import { useLocalStorage } from "@/app/hooks/useLocalStorage";
 import type { UploadFile, UploadProps } from "antd";
 
-// Shared dedup predicate: match by name + size
-const isDuplicateFile = (a: { name: string; size?: number }, b: { name: string; size?: number }): boolean => a.name === b.name && a.size === b.size;
+const fileKey = (file: { name: string; size?: number }) => `${file.size}:${file.name}`;
 
 // toolKey = 调用方的工具 slug,只用来给 singleFileMode 分键(同 useExportFilename)。
 // 16 个调用方里只有 4 个渲染那个开关,其余传不传都一样。
@@ -27,7 +26,7 @@ const useFileUpload = (toolKey?: string) => {
   // 不传 toolKey 的调用方都不渲染这个开关(useTranslationState 只取 readFile),
   // 落在共用兜底键上无人读写。
   const [singleFileMode, setSingleFileMode] = useLocalStorage<boolean>(`${toolKey ?? "upload"}-singleFileMode`, false);
-  const [isFileProcessing, setIsFileProcessing] = useState<boolean>(false);
+  const [pendingReads, setPendingReads] = useState(0);
   // 读取序号守卫:FileReader.onload / decodeFileBytes 都是异步,一次读取尚未完成时
   // 又发起新读取(连续换文件)或清空(resetUpload),旧读的回调若晚到会用旧内容
   // 覆盖新状态 —— 用户看到的正文与文件列表不符,或清空后内容又冒回来。每次读取/
@@ -42,7 +41,7 @@ const useFileUpload = (toolKey?: string) => {
   // Without it the success `callback` (which usually calls resolve()) never runs, so a
   // single bad file hangs the whole batch loop forever.
   const readFile = (file: File, callback: (text: string) => void, onError?: () => void) => {
-    setIsFileProcessing(true);
+    setPendingReads((count) => count + 1);
     // 编码自适应解码(UTF-8 fatal 试解 → jschardet 检测)在共享的 readTextFile /
     // decodeFileBytes 里 —— 词汇表/保护规则导入同此管线,策略说明见 encoding.ts。
     readTextFile(file)
@@ -59,7 +58,7 @@ const useFileUpload = (toolKey?: string) => {
         message.warning(`${t("fileProcessFailed")}: ${getErrorMessage(error)}`);
         onError?.();
       })
-      .finally(() => setIsFileProcessing(false));
+      .finally(() => setPendingReads((count) => count - 1));
   };
 
   // 把「写入共享 sourceText」的回调用当前读取序号封一层:换文件 / 清空会自增序号,
@@ -89,10 +88,17 @@ const useFileUpload = (toolKey?: string) => {
       originFileObj: f.originFileObj,
     }));
 
-    const uniqueFileList = updatedFileList.filter((value, index, self) => index === self.findIndex((t) => isDuplicateFile(t, value)));
+    const seen = new Set<string>();
+    const uniqueFileList = updatedFileList.filter((file) => {
+      const key = fileKey(file);
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
     setFileList(uniqueFileList);
 
     if (uniqueFileList.length > 1 && uploadMode === "single") {
+      loadSeq.current++;
       setSourceText("");
       setUploadMode("multiple");
     } else if (uniqueFileList.length === 0) {
@@ -107,7 +113,8 @@ const useFileUpload = (toolKey?: string) => {
       readFile(uploadedFile, latestSourceWriter());
     } else {
       setMultipleFiles((prevFiles) => {
-        if (prevFiles.some((f) => isDuplicateFile(f, uploadedFile))) return prevFiles;
+        const key = fileKey(uploadedFile);
+        if (prevFiles.some((f) => fileKey(f) === key)) return prevFiles;
         return [...prevFiles, uploadedFile];
       });
     }
@@ -119,23 +126,22 @@ const useFileUpload = (toolKey?: string) => {
 
   const handleUploadRemove: UploadProps["onRemove"] = (file: UploadFile) => {
     const updatedFileList = fileList.filter((f) => f.uid !== file.uid);
+    if (updatedFileList.length === 0) {
+      resetUpload();
+      return;
+    }
     setFileList(updatedFileList);
-
-    setMultipleFiles((prevFiles) => {
-      const updatedMultipleFiles = prevFiles.filter((f) => !isDuplicateFile(f, file));
-
-      // Down to one file → flip back to single mode + load its content.
-      if (updatedMultipleFiles.length === 1 && uploadMode === "multiple") {
-        setUploadMode("single");
-        readFile(updatedMultipleFiles[0], latestSourceWriter());
-      }
-
-      return updatedMultipleFiles;
-    });
+    const removedKey = fileKey(file);
+    setMultipleFiles((prevFiles) => prevFiles.filter((f) => fileKey(f) !== removedKey));
+    const remainingFile = updatedFileList[0].originFileObj;
+    if (updatedFileList.length === 1 && remainingFile && uploadMode === "multiple") {
+      setUploadMode("single");
+      readFile(remainingFile, latestSourceWriter());
+    }
   };
 
   return {
-    isFileProcessing,
+    isFileProcessing: pendingReads > 0,
     fileList,
     multipleFiles,
     readFile,
