@@ -448,7 +448,7 @@
     },
     "jsonTranslate": {
       "title": "i18n JSON-Übersetzer",
-      "description": "i18n-Sprachdateien im Batch übersetzen, mit JSONPath-Abgleich und Schlüssel-Mapping"
+      "description": "i18n-Sprachdateien im Batch übersetzen, mit JSONPath-Abgleich und Feld-Mapping"
     },
     "mdTranslator": {
       "title": "Markdown-Übersetzer",
@@ -491,7 +491,7 @@
       "description": "Feldwert-Mapping und Migration mit JSONPath"
     },
     "jsonValueSwapper": {
-      "title": "JSON-Wertetauscher",
+      "title": "JSON-Feldwertetauscher",
       "description": "Werte zweier Felder per Klick tauschen"
     },
     "jsonNodeInserter": {
@@ -520,7 +520,7 @@
     },
     "braceExpander": {
       "title": "Klammer-Expander",
-      "description": "Aus einer Vorlage die vollständige Liste erzeugen – Bash-Brace-Expansion"
+      "description": "Aus einer Vorlage die vollständige Liste erzeugen – kompatibel mit Bash-Brace-Expansion"
     }
   },
   "navigation": {
@@ -639,6 +639,8 @@
     "as": "Assamesisch",
     "gom": "Konkani",
     "sa": "Sanskrit",
+    "dv": "Dhivehi",
+    "or": "Oriya",
     "th": "Thailändisch",
     "lo": "Laotisch",
     "my": "Birmanisch",
@@ -665,6 +667,15 @@
     "ts": "Tsonga",
     "mg": "Madagassisch",
     "ln": "Lingala",
+    "aa": "Afar",
+    "ff": "Fulfulde",
+    "rw": "Kinyarwanda",
+    "lg": "Luganda",
+    "rn": "Kirundi",
+    "sn": "Schona",
+    "so": "Somali",
+    "tw": "Twi",
+    "yo": "Yoruba",
     "ht": "Haitianisches Kreol",
     "qu": "Quechua",
     "ay": "Aymara",

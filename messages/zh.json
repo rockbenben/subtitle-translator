@@ -448,7 +448,7 @@
     },
     "jsonTranslate": {
       "title": "JSON 多语言翻译",
-      "description": "批量翻译 i18n 语言包，支持 JSONPath 匹配和键名映射"
+      "description": "批量翻译 i18n 语言包，支持 JSONPath 匹配和字段映射"
     },
     "mdTranslator": {
       "title": "Markdown 翻译",
@@ -495,7 +495,7 @@
       "description": "字段值映射和迁移，支持 JSONPath 定位"
     },
     "jsonValueSwapper": {
-      "title": "JSON 键值互换",
+      "title": "JSON 字段值互换",
       "description": "一键交换两个字段的值"
     },
     "jsonNodeInserter": {
@@ -520,7 +520,7 @@
     },
     "braceExpander": {
       "title": "格式批量生成",
-      "description": "一行模板批量展开成完整清单，语法照抄 bash 花括号展开"
+      "description": "一行模板批量展开成完整清单，语法兼容 Bash 花括号展开"
     }
   },
   "navigation": {
@@ -639,6 +639,8 @@
     "as": "阿萨姆语",
     "gom": "孔卡尼语",
     "sa": "梵语",
+    "dv": "迪维希语",
+    "or": "奥里亚语",
     "th": "泰语",
     "lo": "老挝语",
     "my": "缅甸语",
@@ -665,6 +667,15 @@
     "ts": "聪加语",
     "mg": "马拉加西语",
     "ln": "林加拉语",
+    "aa": "阿法尔语",
+    "ff": "富拉语",
+    "rw": "卢旺达语",
+    "lg": "卢干达语",
+    "rn": "隆迪语",
+    "sn": "绍纳语",
+    "so": "索马里语",
+    "tw": "契维语",
+    "yo": "约鲁巴语",
     "ht": "海地克里奥尔语",
     "qu": "克丘亚语",
     "ay": "艾马拉语",

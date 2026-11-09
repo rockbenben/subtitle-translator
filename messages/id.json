@@ -448,7 +448,7 @@
     },
     "jsonTranslate": {
       "title": "Penerjemah JSON i18n",
-      "description": "Terjemahan file bahasa i18n batch, dengan pencocokan JSONPath dan pemetaan kunci"
+      "description": "Terjemahan file bahasa i18n batch, dengan pencocokan JSONPath dan pemetaan bidang"
     },
     "mdTranslator": {
       "title": "Penerjemah Markdown",
@@ -491,7 +491,7 @@
       "description": "Pemetaan dan migrasi nilai dengan JSONPath"
     },
     "jsonValueSwapper": {
-      "title": "Penukar Nilai JSON",
+      "title": "Penukar Nilai Bidang JSON",
       "description": "Tukar nilai dua bidang dengan satu klik"
     },
     "jsonNodeInserter": {
@@ -520,7 +520,7 @@
     },
     "braceExpander": {
       "title": "Ekspander Kurung Kurawal",
-      "description": "Kembangkan satu templat menjadi daftar lengkap, sintaks brace bash"
+      "description": "Kembangkan satu templat menjadi daftar lengkap, kompatibel dengan ekspansi kurung kurawal Bash"
     }
   },
   "navigation": {
@@ -639,6 +639,8 @@
     "as": "Assam",
     "gom": "Konkani",
     "sa": "Sanskerta",
+    "dv": "Bahasa Divehi",
+    "or": "Bahasa Oriya",
     "th": "Thailand",
     "lo": "Bahasa Laos",
     "my": "Bahasa Burma",
@@ -665,6 +667,15 @@
     "ts": "Tsonga",
     "mg": "Malagasi",
     "ln": "Lingala",
+    "aa": "Bahasa Afar",
+    "ff": "Bahasa Fulani",
+    "rw": "Bahasa Kinyarwanda",
+    "lg": "Bahasa Luganda",
+    "rn": "Bahasa Kirundi",
+    "sn": "Bahasa Shona",
+    "so": "Bahasa Somali",
+    "tw": "Bahasa Twi",
+    "yo": "Bahasa Yoruba",
     "ht": "Kreol Haiti",
     "qu": "Quechua",
     "ay": "Aymara",

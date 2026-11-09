@@ -448,7 +448,7 @@
     },
     "jsonTranslate": {
       "title": "Tradutor JSON i18n",
-      "description": "Tradução em lote de arquivos de idioma i18n, com correspondência JSONPath e mapeamento de chaves"
+      "description": "Tradução em lote de arquivos de idioma i18n, com correspondência JSONPath e mapeamento de campos"
     },
     "mdTranslator": {
       "title": "Tradutor Markdown",
@@ -491,7 +491,7 @@
       "description": "Mapeamento e migração de valores com JSONPath"
     },
     "jsonValueSwapper": {
-      "title": "Trocador Valor JSON",
+      "title": "Trocador de Valores de Campos JSON",
       "description": "Trocar valores de dois campos em um clique"
     },
     "jsonNodeInserter": {
@@ -520,7 +520,7 @@
     },
     "braceExpander": {
       "title": "Expansor de chaves",
-      "description": "Expande um modelo em uma lista completa, sintaxe do bash"
+      "description": "Expande um modelo em uma lista completa, compatível com a expansão de chaves do Bash"
     }
   },
   "navigation": {
@@ -639,6 +639,8 @@
     "as": "Assamês",
     "gom": "Concani",
     "sa": "Sânscrito",
+    "dv": "Divehi",
+    "or": "Oriya",
     "th": "Tailandês",
     "lo": "Laosiano",
     "my": "Birmanês",
@@ -665,6 +667,15 @@
     "ts": "Tsonga",
     "mg": "Malgaxe",
     "ln": "Lingala",
+    "aa": "Afar",
+    "ff": "Fulani",
+    "rw": "Kinyarwanda",
+    "lg": "Luganda",
+    "rn": "Kirundi",
+    "sn": "Shona",
+    "so": "Somali",
+    "tw": "Twi",
+    "yo": "Iorubá",
     "ht": "Crioulo haitiano",
     "qu": "Quéchua",
     "ay": "Aimara",

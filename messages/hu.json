@@ -448,7 +448,7 @@
     },
     "jsonTranslate": {
       "title": "JSON többnyelvű fordító",
-      "description": "i18n nyelvi fájlok kötegelt fordítása JSONPath egyezéssel és kulcsleképezéssel"
+      "description": "i18n nyelvi fájlok kötegelt fordítása JSONPath egyezéssel és mezőleképezéssel"
     },
     "mdTranslator": {
       "title": "Markdown fordító",
@@ -491,7 +491,7 @@
       "description": "Mezőértékek leképezése és migrálása JSONPath használatával"
     },
     "jsonValueSwapper": {
-      "title": "JSON értékcsere",
+      "title": "JSON mezőérték-felcserélő",
       "description": "Két mezőérték egykattintásos felcserélése"
     },
     "jsonNodeInserter": {
@@ -520,7 +520,7 @@
     },
     "braceExpander": {
       "title": "Zárójel-kiterjesztő",
-      "description": "Egy sablont teljes listává bontása, bash brace szintaxissal"
+      "description": "Egyetlen sablon kibontása teljes listává, Bash kapcsos zárójel-kifejtéssel kompatibilis"
     }
   },
   "navigation": {
@@ -639,6 +639,8 @@
     "as": "Asszámi",
     "gom": "Konkani",
     "sa": "Szaniszkrit",
+    "dv": "Divehi",
+    "or": "Orija",
     "th": "Thaiföldi",
     "lo": "Lao",
     "my": "Burmai",
@@ -665,6 +667,15 @@
     "ts": "Congá",
     "mg": "Malgas",
     "ln": "Lingala",
+    "aa": "Afar",
+    "ff": "Fulani",
+    "rw": "Kinyarwanda",
+    "lg": "Luganda",
+    "rn": "Kirundi",
+    "sn": "Sona",
+    "so": "Szomáli",
+    "tw": "Twi",
+    "yo": "Joruba",
     "ht": "Haiti kreol",
     "qu": "Kecsua",
     "ay": "Ajmara",
