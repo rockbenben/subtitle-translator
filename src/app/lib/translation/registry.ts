@@ -2427,6 +2427,30 @@ export const PROVIDERS = {
       { label: "Gemini 3.8 Flash", value: "google/gemini-3.8-flash" },
     ],
   },
+  uberllm: {
+    kind: "openai-compat",
+    category: "aggregator",
+    label: "UberLLM",
+    endpoint: "https://api.uberllm.dev/v1/chat/completions",
+    defaultModel: "deepseek/deepseek-v4.1-flash",
+    defaultTemperature: 0.7,
+    docs: "https://uberllm.dev/models",
+    apiKeyUrl: "https://uberllm.dev/signup",
+    // One key for ~260 chat models from many vendors. Same as atlascloud: keep
+    // thinking controls hidden, the request shape varies by upstream model.
+    // Browser-direct works (preflight allows Authorization from any origin, checked
+    // 2026-11-10), so no defaultUseRelay: the built-in Worker has no /api/uberllm
+    // route yet, and a relay toggle with nothing behind it would only fail.
+    // Every id below is listed by the keyless GET https://api.uberllm.dev/v1/models.
+    models: [
+      { label: "DeepSeek V4.1 Flash", value: "deepseek/deepseek-v4.1-flash" },
+      { label: "GLM-5.3", value: "z-ai/glm-5.3" },
+      { label: "Kimi K3", value: "moonshotai/kimi-k3" },
+      { label: "Gemini 3.8 Flash", value: "google/gemini-3.8-flash" },
+      { label: "Claude Sonnet 5.5", value: "anthropic/claude-sonnet-5.5" },
+      { label: "GPT 6.1 Sol", value: "openai/gpt-6.1-sol" },
+    ],
+  },
   // GitHub Models(models.github.ai) 已整家退役 —— 2026-07-30 官方 changelog
   // 「GitHub Models is now retired. The playground, model catalog, inference API,
   // and bring your own key (BYOK) are no longer available to any customer」,
