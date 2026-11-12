@@ -334,6 +334,8 @@
     "deeplxUrlExtra": "İsteğe bağlı, halka açık sunucumuzu kullanmak için boş bırakın",
     "urlOptionalExtra": "İsteğe bağlı — varsayılan uç noktayı kullanmak için boş bırakın",
     "customApiHelp": "Herhangi bir OpenAI uyumlu API uç noktasıyla çalışır — yerel sunucular (Ollama / LM Studio / vLLM) veya bulut hizmetleri (Together AI / Fireworks AI / vb).",
+    "opencodeConsoleHelp": "Console ve OpenCode Go aynı OpenCode hesabının iki planıdır ve aynı API anahtarını kullanır: burada bakiyenizden kullanıma göre ücret alınır, Go ise aylık aboneliktir. Kullanılabilir modeller de farklıdır.",
+    "opencodeGoHelp": "Go ve OpenCode Console aynı OpenCode hesabının iki planıdır ve aynı API anahtarını kullanır: burada aylık abonelik kotanız olur, Console ise bakiyenizden kullanıma göre ücret alır. Kullanılabilir modeller de farklıdır.",
     "urlAutoCompleted": "URL otomatik olarak tamamlandı",
     "modelExtra": "LLM model adı, API belgelerine bakın",
     "temperatureExtra": "Sıcaklık (0-2): Daha yüksek = daha rastgele, daha düşük = daha belirleyici. Önerilen: 0.2-0.8",
@@ -396,9 +398,9 @@
   "tools": {
     "subtitleTranslator": {
       "title": "Altyazı Çevirici",
-      "description": "Toplu SRT, ASS, SSA, VTT, SBV, LRC çevirisi. 120+ dil.",
+      "description": "Toplu SRT, ASS, SSA, VTT, SBV, LRC çevirisi. 130+ dil.",
       "metaTitle": "Ücretsiz Altyazı Çevirici | Toplu SRT/VTT/ASS + İki Dilli",
-      "metaDescription": "SRT, ASS, SSA, VTT, SBV, LRC altyazı çevirmeni. 30+ motor: DeepSeek, Claude, GPT, DeepL, Google. 120+ dil, zaman kodları, çift dilli.",
+      "metaDescription": "SRT, ASS, SSA, VTT, SBV, LRC altyazı çevirmeni. 30+ motor: DeepSeek, Claude, GPT, DeepL, Google. 130+ dil, zaman kodları, çift dilli.",
       "faq": [
         {
           "q": "Hangi altyazı formatları destekleniyor? SRT, ASS, SSA, VTT, SBV ve LRC çevrilebilir mi?",

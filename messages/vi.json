@@ -334,6 +334,8 @@
     "deeplxUrlExtra": "Tùy chọn, để trống để dùng máy chủ công cộng của chúng tôi",
     "urlOptionalExtra": "Tùy chọn — để trống để dùng endpoint mặc định",
     "customApiHelp": "Hoạt động với mọi điểm cuối API tương thích OpenAI — máy chủ cục bộ (Ollama / LM Studio / vLLM) hoặc dịch vụ đám mây (Together AI / Fireworks AI / v.v.).",
+    "opencodeConsoleHelp": "Console và OpenCode Go là hai gói trong cùng một tài khoản OpenCode và dùng chung một API key: ở đây tính phí theo mức dùng trừ vào số dư, còn Go là thuê bao hằng tháng. Các mô hình khả dụng cũng khác nhau.",
+    "opencodeGoHelp": "Go và OpenCode Console là hai gói trong cùng một tài khoản OpenCode và dùng chung một API key: ở đây có hạn mức thuê bao hằng tháng, còn Console tính phí theo mức dùng trừ vào số dư. Các mô hình khả dụng cũng khác nhau.",
     "urlAutoCompleted": "URL được tự động hoàn thành",
     "modelExtra": "Tên mô hình LLM, xem tài liệu API",
     "temperatureExtra": "Nhiệt độ (0-2): Cao hơn = ngẫu nhiên hơn, thấp hơn = xác định hơn. Khuyên dùng: 0.2-0.8",
@@ -396,9 +398,9 @@
   "tools": {
     "subtitleTranslator": {
       "title": "Trình Dịch Phụ Đề",
-      "description": "Dịch hàng loạt SRT, ASS, SSA, VTT, SBV, LRC. 120+ ngôn ngữ.",
+      "description": "Dịch hàng loạt SRT, ASS, SSA, VTT, SBV, LRC. 130+ ngôn ngữ.",
       "metaTitle": "Dịch Phụ Đề Miễn Phí | Hàng Loạt SRT/VTT/ASS + Song Ngữ",
-      "metaDescription": "Trình dịch phụ đề SRT, ASS, SSA, VTT, SBV, LRC. 30+ engine: DeepSeek, Claude, GPT, DeepL, Google. 120+ ngôn ngữ, timecode, song ngữ.",
+      "metaDescription": "Trình dịch phụ đề SRT, ASS, SSA, VTT, SBV, LRC. 30+ engine: DeepSeek, Claude, GPT, DeepL, Google. 130+ ngôn ngữ, timecode, song ngữ.",
       "faq": [
         {
           "q": "Hỗ trợ những định dạng phụ đề nào? SRT, ASS, SSA, VTT, SBV và LRC đều dịch được chứ?",

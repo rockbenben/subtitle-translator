@@ -334,6 +334,8 @@
     "deeplxUrlExtra": "اختياري، اتركه فارغًا لاستخدام خادمنا العام",
     "urlOptionalExtra": "اختياري — اتركه فارغًا لاستخدام نقطة النهاية الافتراضية",
     "customApiHelp": "يعمل مع أي نقطة نهاية API متوافقة مع OpenAI — خوادم محلية (Ollama / LM Studio / vLLM) أو خدمات سحابية (Together AI / Fireworks AI / إلخ).",
+    "opencodeConsoleHelp": "Console و OpenCode Go هما خطتان في حساب OpenCode نفسه ويشتركان في مفتاح API واحد: هنا تُحسب التكلفة حسب الاستخدام من رصيدك، أما Go فهو اشتراك شهري. النماذج المتاحة مختلفة أيضًا.",
+    "opencodeGoHelp": "Go و OpenCode Console هما خطتان في حساب OpenCode نفسه ويشتركان في مفتاح API واحد: هنا تحصل على حصة اشتراك شهري، أما Console فيحسب التكلفة حسب الاستخدام من رصيدك. النماذج المتاحة مختلفة أيضًا.",
     "urlAutoCompleted": "تم إكمال URL تلقائيًا",
     "modelExtra": "اسم نموذج LLM، راجع وثائق API",
     "temperatureExtra": "درجة الحرارة (0-2): أعلى = أكثر عشوائية، أقل = أكثر تحديدًا. الموصى به: 0.2-0.8",
@@ -398,7 +400,7 @@
       "title": "مترجم ملفات الترجمة",
       "description": "ترجمة مجمعة SRT، ASS، SSA، VTT، SBV، LRC. أكثر من 120 لغة.",
       "metaTitle": "مترجم ترجمات مجاني | دفعات SRT/VTT/ASS + ثنائي اللغة",
-      "metaDescription": "مترجم ترجمات AI لـ SRT، ASS، SSA، VTT، SBV، LRC. 30+ محرك: DeepSeek، Claude، GPT، DeepL. 120+ لغة، حفظ التوقيت، ترجمة ثنائية.",
+      "metaDescription": "مترجم ترجمات AI لـ SRT، ASS، SSA، VTT، SBV، LRC. 30+ محرك: DeepSeek، Claude، GPT، DeepL. 130+ لغة، حفظ التوقيت، ترجمة ثنائية.",
       "faq": [
         {
           "q": "ما تنسيقات الترجمة المدعومة؟ هل يمكن ترجمة SRT و ASS و SSA و VTT و SBV و LRC؟",

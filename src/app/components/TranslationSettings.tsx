@@ -367,6 +367,14 @@ const ServiceSettingsForm = ({ service }: { service: string }) => {
           {t("customApiHelp")}
         </Text>
       )}
+      {/* Console 与 Go 是同账号同 key 的两个计划，选择器里挨着摆 ⇒ 不说一句就会被当成
+          重复条目。文案只讲关系，价格/档位交给 docs（官方订阅档会变）。 */}
+      {(service === "opencodeZen" || service === "opencodeGo") && (
+        <Text type="secondary" style={{ display: "block", marginBottom: 16, fontSize: 13 }}>
+          <InfoCircleOutlined style={{ marginInlineEnd: 6 }} />
+          {t(service === "opencodeZen" ? "opencodeConsoleHelp" : "opencodeGoHelp")}
+        </Text>
+      )}
       {/* llm provider-only preset picker — sits above the grouped sections */}
       {service === "llm" && (
         <div style={{ marginBottom: 0 }}>

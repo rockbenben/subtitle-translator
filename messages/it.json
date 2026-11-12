@@ -334,6 +334,8 @@
     "deeplxUrlExtra": "Opzionale, lascia vuoto per usare il nostro server pubblico",
     "urlOptionalExtra": "Opzionale — lascia vuoto per usare l'endpoint predefinito",
     "customApiHelp": "Funziona con qualsiasi endpoint API compatibile con OpenAI — server locali (Ollama / LM Studio / vLLM) o servizi cloud (Together AI / Fireworks AI / ecc).",
+    "opencodeConsoleHelp": "Console e OpenCode Go sono due piani dello stesso account OpenCode e usano la stessa chiave API: qui paghi in base all'uso attingendo al credito, mentre Go è un abbonamento mensile. Anche i modelli disponibili sono diversi.",
+    "opencodeGoHelp": "Go e OpenCode Console sono due piani dello stesso account OpenCode e usano la stessa chiave API: qui hai una quota di abbonamento mensile, mentre Console addebita in base all'uso attingendo al credito. Anche i modelli disponibili sono diversi.",
     "urlAutoCompleted": "URL completato automaticamente",
     "modelExtra": "Nome modello LLM, vedi documentazione API",
     "temperatureExtra": "Temperatura (0-2): Più alto = più casuale, più basso = più deterministico. Consigliato: 0.2-0.8",
@@ -396,9 +398,9 @@
   "tools": {
     "subtitleTranslator": {
       "title": "Traduttore Sottotitoli",
-      "description": "Traduzione in batch SRT, ASS, SSA, VTT, SBV, LRC. 120+ lingue.",
+      "description": "Traduzione in batch SRT, ASS, SSA, VTT, SBV, LRC. 130+ lingue.",
       "metaTitle": "Traduttore sottotitoli gratis | SRT/VTT/ASS IA bilingue",
-      "metaDescription": "Traduttore IA sottotitoli SRT, ASS, SSA, VTT, SBV, LRC. 30+ motori: DeepSeek, Claude, GPT, DeepL. 120+ lingue, timecode, bilingue.",
+      "metaDescription": "Traduttore IA sottotitoli SRT, ASS, SSA, VTT, SBV, LRC. 30+ motori: DeepSeek, Claude, GPT, DeepL. 130+ lingue, timecode, bilingue.",
       "faq": [
         {
           "q": "Quali formati di sottotitoli sono supportati? È possibile tradurre SRT, ASS, SSA, VTT, SBV e LRC?",

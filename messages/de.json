@@ -334,6 +334,8 @@
     "deeplxUrlExtra": "Optional, leer lassen, um unseren öffentlichen Server zu verwenden",
     "urlOptionalExtra": "Optional — leer lassen, um den Standard-Endpunkt zu verwenden",
     "customApiHelp": "Funktioniert mit jedem OpenAI-kompatiblen API-Endpunkt — lokale Server (Ollama / LM Studio / vLLM) oder Cloud-Dienste (Together AI / Fireworks AI / usw).",
+    "opencodeConsoleHelp": "Console und OpenCode Go sind zwei Tarife im selben OpenCode-Konto und nutzen denselben API-Schlüssel: hier wird nach Verbrauch vom Guthaben abgebucht, Go ist ein Monatsabo. Auch die verfügbaren Modelle unterscheiden sich.",
+    "opencodeGoHelp": "Go und OpenCode Console sind zwei Tarife im selben OpenCode-Konto und nutzen denselben API-Schlüssel: hier gilt ein monatliches Abo-Kontingent, Console rechnet nach Verbrauch vom Guthaben ab. Auch die verfügbaren Modelle unterscheiden sich.",
     "urlAutoCompleted": "URL automatisch ergänzt",
     "modelExtra": "LLM-Modellname, verfügbare Modelle siehe API-Dokumentation",
     "temperatureExtra": "Sampling-Temperatur (0-2): Höher ist zufälliger, niedriger ist deterministischer. Empfohlen: 0.2-0.8",
@@ -396,9 +398,9 @@
   "tools": {
     "subtitleTranslator": {
       "title": "Untertitel-Übersetzer",
-      "description": "Batch-Übersetzung für SRT, ASS, SSA, VTT, SBV, LRC. 120+ Sprachen.",
+      "description": "Batch-Übersetzung für SRT, ASS, SSA, VTT, SBV, LRC. 130+ Sprachen.",
       "metaTitle": "Untertitel-Übersetzer | SRT/VTT/ASS Batch KI zweisprachig",
-      "metaDescription": "KI-Untertitelübersetzer für SRT, ASS, SSA, VTT, SBV, LRC. 30+ Engines: DeepSeek, Claude, GPT, DeepL. 120+ Sprachen, zweisprachig.",
+      "metaDescription": "KI-Untertitelübersetzer für SRT, ASS, SSA, VTT, SBV, LRC. 30+ Engines: DeepSeek, Claude, GPT, DeepL. 130+ Sprachen, zweisprachig.",
       "faq": [
         {
           "q": "Welche Untertitelformate werden unterstützt? Können SRT, ASS, SSA, VTT, SBV und LRC übersetzt werden?",

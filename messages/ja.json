@@ -334,6 +334,8 @@
     "deeplxUrlExtra": "任意。空欄にすると当方の公開サーバーを使用します",
     "urlOptionalExtra": "任意。空欄にするとデフォルトのエンドポイントを使用します",
     "customApiHelp": "OpenAI 互換 API のエンドポイントが利用できます — ローカル (Ollama / LM Studio / vLLM) またはクラウド (Together AI / Fireworks AI など)",
+    "opencodeConsoleHelp": "Console と OpenCode Go は同じ OpenCode アカウントの 2 つのプランで、API キーは共通です。こちらは残高から使用量に応じて課金され、Go は月額サブスクリプションです。選べるモデルも異なります。",
+    "opencodeGoHelp": "Go と OpenCode Console は同じ OpenCode アカウントの 2 つのプランで、API キーは共通です。こちらは月額サブスクリプションの利用枠で、Console は残高から使用量に応じて課金されます。選べるモデルも異なります。",
     "urlAutoCompleted": "URL を自動補完しました",
     "modelExtra": "LLMモデル名、利用可能なモデルについてはAPIドキュメントを参照してください",
     "temperatureExtra": "サンプリング温度（0-2）：数値が高いほど出力はランダムに、低いほど確定的になります。推奨値：0.2-0.8",

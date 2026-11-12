@@ -334,6 +334,8 @@
     "deeplxUrlExtra": "선택 사항, 비워두면 저희가 제공하는 공용 서버를 사용합니다",
     "urlOptionalExtra": "선택 사항 — 비워두면 기본 엔드포인트를 사용합니다",
     "customApiHelp": "OpenAI 호환 API 엔드포인트를 모두 사용할 수 있습니다 — 로컬 (Ollama / LM Studio / vLLM) 또는 클라우드 (Together AI / Fireworks AI 등)",
+    "opencodeConsoleHelp": "Console과 OpenCode Go는 같은 OpenCode 계정의 두 가지 요금제이며 API 키를 함께 씁니다. 여기서는 잔액에서 사용량만큼 차감되고, Go는 월 구독입니다. 선택할 수 있는 모델도 다릅니다.",
+    "opencodeGoHelp": "Go와 OpenCode Console은 같은 OpenCode 계정의 두 가지 요금제이며 API 키를 함께 씁니다. 여기서는 월 구독 사용량이 제공되고, Console은 잔액에서 사용량만큼 차감됩니다. 선택할 수 있는 모델도 다릅니다.",
     "urlAutoCompleted": "URL이 자동 완성되었습니다",
     "modelExtra": "LLM 모델 이름, 사용 가능한 모델은 API 문서를 참조하세요",
     "temperatureExtra": "샘플링 온도 (0-2): 수치가 높을수록 출력이 무작위적이고, 낮을수록 확정적입니다. 권장 값: 0.2-0.8",

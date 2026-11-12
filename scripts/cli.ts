@@ -325,8 +325,8 @@ const main = async (): Promise<number> => {
     // 显式 -m 指定或设置文件里选中仍然可用(defaultConfigs 全量包含)。
     //
     // ⚠ 第二列必须打 label,不能只打 key —— 同一个厂商的两条产品线在这里会长得
-    // 很像:`opencodeZen`(Zen,余额按量)与 `opencodeGo`(订阅套餐线)。网页选择器
-    // 显示的是 label("OpenCode Zen" / "OpenCode Go"),一眼能分;CLI 若只打 key,
+    // 很像:`opencodeZen`(Console,余额按量)与 `opencodeGo`(订阅套餐线)。网页选择器
+    // 显示的是 label("OpenCode Console" / "OpenCode Go"),一眼能分;CLI 若只打 key,
     // 用户看到的就是「opencodeZen / opencodeGo」,得先知道内部命名才猜得出谁是谁。
     // key 放第一列(它是 -m 要传的值),与 --list-formats 的 `${id}\t…` 同形。
     //
@@ -334,7 +334,7 @@ const main = async (): Promise<number> => {
     // 下游目录的 key 字段),改名会打断已存档的设置 —— doubao/alibaba 换套餐时
     // 特意保住了旧 key,同一个判据。
     // 但 `opencode` → `opencodeZen` 是一次**明知故犯**的例外:那个 key 单独出现时
-    // 读不出是 Zen 还是 Go(正是它让人以为两条产品线该合成一个 provider),而
+    // 读不出是 Console 还是 Go(正是它让人以为两条产品线该合成一个 provider),而
     // ① 它的用户极少,② 过期值会优雅回落(getDefaultConfig 判不过就回 DEFAULT_API,
     // 且不写回 localStorage),③ 同一厂商的姊妹条目已经叫 opencodeGo。
     // 代价要说清:下游各 app(消费方清单见 sync-provider-catalog.ts 的 CONSUMERS)

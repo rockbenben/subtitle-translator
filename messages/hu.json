@@ -334,6 +334,8 @@
     "deeplxUrlExtra": "Opcionális, hagyd üresen a nyilvános szerverünk használatához",
     "urlOptionalExtra": "Opcionális — hagyd üresen az alapértelmezett végpont használatához",
     "customApiHelp": "Bármilyen OpenAI-kompatibilis API-végponttal működik — helyi szerverekkel (Ollama / LM Studio / vLLM) vagy felhőalapú aggregátorokkal (Together AI / Fireworks AI / stb.).",
+    "opencodeConsoleHelp": "A Console és az OpenCode Go ugyanazon OpenCode-fiók két csomagja, és közös API-kulcsot használnak: itt a díj a használat szerint az egyenlegből vonódik le, a Go pedig havi előfizetés. Az elérhető modellek is különböznek.",
+    "opencodeGoHelp": "A Go és az OpenCode Console ugyanazon OpenCode-fiók két csomagja, és közös API-kulcsot használnak: itt havi előfizetési keretet kapsz, a Console pedig a használat szerint az egyenlegből számol fel. Az elérhető modellek is különböznek.",
     "urlAutoCompleted": "Az URL-végpont kiegészítve",
     "modelExtra": "LLM modell neve, ellenőrizd az API dokumentációjában az elérhető modelleket",
     "temperatureExtra": "Hőmérséklet (0-2): A magasabb véletlenszerűbb, az alacsonyabb determinisztikusabb. Ajánlott: 0.2-0.8",
@@ -396,9 +398,9 @@
   "tools": {
     "subtitleTranslator": {
       "title": "Feliratfordító",
-      "description": "SRT, ASS, SSA, VTT, SBV, LRC feliratok kötegelt fordítása. 120+ nyelv.",
+      "description": "SRT, ASS, SSA, VTT, SBV, LRC feliratok kötegelt fordítása. 130+ nyelv.",
       "metaTitle": "Ingyenes Feliratfordító | Kötegelt SRT/VTT/ASS + Kétnyelvű",
-      "metaDescription": "AI feliratfordító SRT, ASS, SSA, VTT, SBV, LRC. 30+ motor: DeepSeek, Claude, GPT, DeepL. 120+ nyelv, időbélyegek, kétnyelvű.",
+      "metaDescription": "AI feliratfordító SRT, ASS, SSA, VTT, SBV, LRC. 30+ motor: DeepSeek, Claude, GPT, DeepL. 130+ nyelv, időbélyegek, kétnyelvű.",
       "faq": [
         {
           "q": "Milyen feliratformátumok támogatottak? Lehet SRT, ASS, SSA, VTT, SBV és LRC feliratokat fordítani?",

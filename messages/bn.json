@@ -334,6 +334,8 @@
     "deeplxUrlExtra": "ঐচ্ছিক, আমাদের সর্বজনীন সার্ভার ব্যবহার করতে খালি রাখুন",
     "urlOptionalExtra": "ঐচ্ছিক — ডিফল্ট endpoint ব্যবহার করতে খালি রাখুন",
     "customApiHelp": "যেকোনো OpenAI-সামঞ্জস্যপূর্ণ API এন্ডপয়েন্টের সাথে কাজ করে — স্থানীয় সার্ভার (Ollama / LM Studio / vLLM) বা ক্লাউড পরিষেবা (Together AI / Fireworks AI / ইত্যাদি)।",
+    "opencodeConsoleHelp": "Console ও OpenCode Go একই OpenCode অ্যাকাউন্টের দুটি প্ল্যান এবং একই API key চলে: এখানে ব্যালেন্স থেকে ব্যবহার অনুযায়ী খরচ হয়, আর Go হলো মাসিক সাবস্ক্রিপশন। পাওয়া যায় এমন মডেলও আলাদা।",
+    "opencodeGoHelp": "Go ও OpenCode Console একই OpenCode অ্যাকাউন্টের দুটি প্ল্যান এবং একই API key চলে: এখানে মাসিক সাবস্ক্রিপশনের সীমা পাওয়া যায়, আর Console ব্যালেন্স থেকে ব্যবহার অনুযায়ী খরচ নেয়। পাওয়া যায় এমন মডেলও আলাদা।",
     "urlAutoCompleted": "URL স্বয়ংক্রিয়ভাবে সম্পূর্ণ করা হয়েছে",
     "modelExtra": "LLM মডেলের নাম, API ডকুমেন্টেশন দেখুন",
     "temperatureExtra": "তাপমাত্রা (0-2): উচ্চ = আরও এলোমেলো, কম = আরও নির্দিষ্ট। সুপারিশকৃত: 0.2-0.8",
@@ -396,9 +398,9 @@
   "tools": {
     "subtitleTranslator": {
       "title": "সাবটাইটেল অনুবাদক",
-      "description": "ব্যাচ SRT, ASS, SSA, VTT, SBV, LRC অনুবাদ। 120+ ভাষা।",
+      "description": "ব্যাচ SRT, ASS, SSA, VTT, SBV, LRC অনুবাদ। 130+ ভাষা।",
       "metaTitle": "ফ্রি সাবটাইটেল অনুবাদক | ব্যাচ SRT/VTT/ASS + দ্বিভাষিক",
-      "metaDescription": "SRT, ASS, SSA, VTT, SBV, LRC এর জন্য AI সাবটাইটেল অনুবাদক। 30+ ইঞ্জিন: DeepSeek, Claude, GPT, DeepL। 120+ ভাষা, টাইমকোড অক্ষত।",
+      "metaDescription": "SRT, ASS, SSA, VTT, SBV, LRC এর জন্য AI সাবটাইটেল অনুবাদক। 30+ ইঞ্জিন: DeepSeek, Claude, GPT, DeepL। 130+ ভাষা, টাইমকোড অক্ষত।",
       "faq": [
         {
           "q": "কোন কোন সাবটাইটেল ফরম্যাট সাপোর্ট করে? SRT, ASS, SSA, VTT, SBV ও LRC সবগুলো অনুবাদ করা যায়?",
