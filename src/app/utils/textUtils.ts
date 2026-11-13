@@ -120,19 +120,59 @@ export const isSeparatorBar = (s: string): boolean => {
 // 通用：移除所有重复行（非相邻去重），支持 trim 比较
 // 曾有 exclude 选项（顺带删掉黑名单行）——那是 filterLines 的活，混在去重里只会
 // 让"点去重却少了不重复的行"变得无法解释，已移交 filterLines({ exact: true })
+
+/**
+ * 去重的空行策略。两种取值的差别**只在空行上**，非空行一律全局去重。
+ * `all` 是改版前的行为，保留它做默认值，别让老链静默换语义。
+ *
+ * ⚠ 折叠相邻空行**不是这里的事**，它是独立的 `collapseBlankLines` 原子操作：
+ * 一个管重复行、一个管空行数，两者正交。塞进同一个参数既说不清「这一档到底去没去重」，
+ * 也堵死了「只折叠、不去重」的用法；链上想要两者就串两步，或存成预设。
+ */
+export type DedupeMode = "all" | "keepBlank";
+
 export interface DedupeOptions {
   trim?: boolean;
+  /**
+   *  - `all`（默认）：空行也进 seen，全文只保留第一条 —— 第二处之后的段落分隔会消失；
+   *  - `keepBlank`：空行不进 seen、一律原样保留，只去重非空行。
+   *
+   * 空行判据是 `line.trim() === ""`（与 cleanLines 一致）：只含空格/制表符的行也算空行。
+   * 未知值（旧链残留）按 keepBlank 走 —— 宁可多留空行，也不能静默丢内容。
+   */
+  mode?: DedupeMode;
 }
 export const dedupeLines = (lines: string[], options: DedupeOptions = {}): string[] => {
-  const { trim = true } = options;
+  const { trim = true, mode = "all" } = options;
   const seen = new Set<string>();
   const out: string[] = [];
   for (const line of lines) {
+    // keepBlank：空行不参与去重判定，原样保留
+    if (mode !== "all" && line.trim() === "") {
+      out.push(line);
+      continue;
+    }
     const key = trim ? line.trim() : line;
     if (!seen.has(key)) {
       seen.add(key);
       out.push(line);
     }
+  }
+  return out;
+};
+
+/**
+ * 相邻多个空行折成一条，其余行（含首尾空白）原样保留。
+ *
+ * 与去重正交的独立原子操作：它不判断重复，只压缩空行密度。放在 `ops.ts` 里就是
+ * 一个独立 OpKey，链上「去重 → 折叠」由用户自己串，不再是某个去重的隐藏模式。
+ * 空行判据同为 `line.trim() === ""`，与 dedupeLines / cleanLines 一致。
+ */
+export const collapseBlankLines = (lines: string[]): string[] => {
+  const out: string[] = [];
+  for (const line of lines) {
+    if (line.trim() === "" && out.length > 0 && out[out.length - 1].trim() === "") continue;
+    out.push(line);
   }
   return out;
 };
@@ -439,3 +479,25 @@ export const hasPrecisionLossRisk = (input: string): boolean => {
   // 串)Number 后塌成小值,逐字比会把真值其实很小的串误报成丢精度。
   return runs?.some((run) => String(Number(run)) !== (run.replace(/^0+/, "") || "0")) ?? false;
 };
+
+
+interface WindowWithScheduler {
+  scheduler?: {
+    yield?: () => Promise<void>;
+  };
+}
+
+/**
+ * Modern Web Guidance: Yield control to the main thread to break up long tasks (>50ms)
+ * and prevent blocking user interactions (protecting Interaction to Next Paint - INP).
+ * Uses scheduler.yield() when available in modern browsers, falling back to setTimeout.
+ */
+export async function yieldToMain(): Promise<void> {
+  if (typeof window !== "undefined") {
+    const win = window as unknown as WindowWithScheduler;
+    if (typeof win.scheduler?.yield === "function") {
+      return await win.scheduler.yield();
+    }
+  }
+  return new Promise((resolve) => setTimeout(resolve, 0));
+}

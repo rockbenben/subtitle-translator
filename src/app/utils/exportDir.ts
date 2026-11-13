@@ -249,7 +249,7 @@ export const clearExportDir = async (toolKey: string): Promise<void> => {
 // 代价是重跑会攒 `(1) (2)`，但那跟丢原文不是一个量级。
 const MAX_UNIQUE_TRIES = 100;
 
-const uniqueFileName = async (dir: ExportDirHandle, fileName: string): Promise<string | null> => {
+const createUniqueFile = async (dir: ExportDirHandle, fileName: string) => {
   const dot = fileName.lastIndexOf(".");
   const base = dot > 0 ? fileName.slice(0, dot) : fileName;
   const ext = dot > 0 ? fileName.slice(dot) : "";
@@ -260,11 +260,25 @@ const uniqueFileName = async (dir: ExportDirHandle, fileName: string): Promise<s
     } catch (error) {
       // NotFoundError = 这个名字空着，用它。其他错误（名字对文件系统非法、权限
       // 刚被撤）说明探测本身不可靠 —— 交给调用方退回下载目录，别赌着写下去。
-      if ((error as DOMException)?.name === "NotFoundError") return candidate;
+      if ((error as DOMException)?.name === "NotFoundError") {
+        return { name: candidate, file: await dir.getFileHandle(candidate, { create: true }) };
+      }
       throw error;
     }
   }
   return null; // 100 个都占着：退回浏览器下载，也不悄悄盖掉第 100 个
+};
+
+// getFileHandle has no exclusive-create option. Reserve under one lock across
+// same-origin tabs and tools: "movie (1).srt" can also be a requested name.
+// Release once the entry exists, so large writes can still proceed in parallel.
+let pendingReservation = Promise.resolve();
+const reserveFile = (dir: ExportDirHandle, fileName: string) => {
+  const create = () => createUniqueFile(dir, fileName);
+  if (navigator.locks) return navigator.locks.request("tools-by-ai-export-reserve", create);
+  const reservation = pendingReservation.then(create);
+  pendingReservation = reservation.then(() => {}, () => {});
+  return reservation;
 };
 
 /**
@@ -294,9 +308,9 @@ export const writeToExportDir = async (blob: Blob, fileName: string): Promise<{ 
   if (!dir) return null;
   let created: string | null = null;
   try {
-    const name = await uniqueFileName(dir, fileName);
-    if (!name) return null;
-    const file = await dir.getFileHandle(name, { create: true });
+    const reserved = await reserveFile(dir, fileName);
+    if (!reserved) return null;
+    const { name, file } = reserved;
     created = name; // 文件此刻已经建出来了（0 字节），下面任何一步失败都要收拾
     const writable = await file.createWritable();
     await writable.write(blob);
@@ -305,7 +319,7 @@ export const writeToExportDir = async (blob: Blob, fileName: string): Promise<{ 
   } catch (error) {
     console.error("Export folder write failed — falling back to the download folder:", error);
     // 半成品必须清掉：0 字节的文件既像一份译文（用户点开才发现是空的，而真件已经
-    // 落在下载目录），又会把下次导出的让路顶到 (1)。这个名字是 uniqueFileName 刚
+    // 落在下载目录），又会把下次导出的让路顶到 (1)。这个名字是 reserveFile 刚
     // 验过【空着】的，删它碰不到用户原有的文件。
     if (created) await dir.removeEntry(created).catch(() => {});
     return null;

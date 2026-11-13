@@ -50,7 +50,6 @@ const ToolPage = ({ icon, toolKey, description, guideUrl, showExportFolder, chil
   // Registry index → 动态「NN / 工具总数」章节标记（总数取 TOOL_KEYS.length）。Tools not in the registry
   // (shouldn't happen — invariant-tested) just skip the crumb.
   // 描述能拼成纯字符串时才有「展开」；调用方传 ReactNode 时走下面的降级分支（只截断、无展开）。
-  const descriptionText = typeof description === "string" ? description : null;
 
   // ⚠ 页头【不放隐私说明】。它曾经在这里,每个工具页一字不差,而多数工具
   // (文本分割 / 文本对照 / 全部 JSON 工具)根本不收 API key —— 对它们那句
@@ -160,16 +159,9 @@ const ToolPage = ({ icon, toolKey, description, guideUrl, showExportFolder, chil
           </div>
         </div>
         <div aria-hidden style={{ height: 2, width: 40, background: "var(--accent)", marginTop: token.marginXS, marginBottom: token.marginSM }} />
-        {/* antd 只有在 children 是纯字符串时才会走 JS 量测、渲染「展开」链接;
-            混入 ReactNode 就退化成 CSS 截断 —— 3 行以外的内容直接消失且无从展开。
-            所以调用方传字符串描述时走上面那支,ReactNode 描述走下面的降级支。 */}
-        {descriptionText && (
-          <Paragraph ellipsis={{ rows: 3, expandable: true, symbol: t("expand") }} style={{ marginBottom: 0, color: "var(--ant-color-text-secondary)" }}>
-            {descriptionText}
-          </Paragraph>
-        )}
-        {!descriptionText && description && (
-          <Paragraph ellipsis={{ rows: 3 }} style={{ marginBottom: 0, color: "var(--ant-color-text-secondary)" }}>
+        {/* 工具描述直接渲染为静态段落，避免 antd ellipsis 的 JS 测量延迟首屏 LCP 渲染 */}
+        {description && (
+          <Paragraph style={{ marginBottom: 0, color: "var(--ant-color-text-secondary)" }}>
             {description}
           </Paragraph>
         )}

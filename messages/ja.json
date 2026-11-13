@@ -334,6 +334,8 @@
     "deeplxUrlExtra": "任意。空欄にすると当方の公開サーバーを使用します",
     "urlOptionalExtra": "任意。空欄にするとデフォルトのエンドポイントを使用します",
     "customApiHelp": "OpenAI 互換 API のエンドポイントが利用できます — ローカル (Ollama / LM Studio / vLLM) またはクラウド (Together AI / Fireworks AI など)",
+    "opencodeConsoleHelp": "Console と OpenCode Go は同じ OpenCode アカウントの 2 つのプランで、API キーは共通です。こちらは残高から使用量に応じて課金され、Go は月額サブスクリプションです。選べるモデルも異なります。",
+    "opencodeGoHelp": "Go と OpenCode Console は同じ OpenCode アカウントの 2 つのプランで、API キーは共通です。こちらは月額サブスクリプションの利用枠で、Console は残高から使用量に応じて課金されます。選べるモデルも異なります。",
     "urlAutoCompleted": "URL を自動補完しました",
     "modelExtra": "LLMモデル名、利用可能なモデルについてはAPIドキュメントを参照してください",
     "temperatureExtra": "サンプリング温度（0-2）：数値が高いほど出力はランダムに、低いほど確定的になります。推奨値：0.2-0.8",
@@ -448,7 +450,7 @@
     },
     "jsonTranslate": {
       "title": "i18n JSON翻訳",
-      "description": "i18n 言語ファイルを一括翻訳、JSONPath マッチとキー名マッピングに対応"
+      "description": "i18n 言語ファイルを一括翻訳、JSONPath マッチとフィールドマッピングに対応"
     },
     "mdTranslator": {
       "title": "Markdown翻訳",
@@ -491,7 +493,7 @@
       "description": "フィールド値のマッピングと移行、JSONPath位置特定に対応"
     },
     "jsonValueSwapper": {
-      "title": "JSONキー値交換",
+      "title": "JSONフィールド値交換",
       "description": "2つのフィールドの値をワンクリックで交換"
     },
     "jsonNodeInserter": {
@@ -520,7 +522,7 @@
     },
     "braceExpander": {
       "title": "ブレース展開",
-      "description": "1 行のテンプレートから完全なリストへ一括展開（bash のブレース展開と同じ構文）"
+      "description": "1 行のテンプレートから完全なリストへ一括展開（Bash のブレース展開に対応）"
     }
   },
   "navigation": {
@@ -639,6 +641,8 @@
     "as": "アッサム語",
     "gom": "コンカニ語",
     "sa": "サンスクリット語",
+    "dv": "ディベヒ語",
+    "or": "オリヤー語",
     "th": "タイ語",
     "lo": "ラオ語",
     "my": "ビルマ語",
@@ -665,6 +669,15 @@
     "ts": "ツォンガ語",
     "mg": "マダガスカル語",
     "ln": "リンガラ語",
+    "aa": "アファル語",
+    "ff": "フラニ語",
+    "rw": "ルワンダ語",
+    "lg": "ルガンダ語",
+    "rn": "ルンディ語",
+    "sn": "ショナ語",
+    "so": "ソマリ語",
+    "tw": "トウィ語",
+    "yo": "ヨルバ語",
     "ht": "ハイチクレオール語",
     "qu": "ケチュア語",
     "ay": "アイマラ語",

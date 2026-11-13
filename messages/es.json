@@ -334,6 +334,8 @@
     "deeplxUrlExtra": "Opcional, déjalo vacío para usar nuestro servidor público",
     "urlOptionalExtra": "Opcional — déjalo vacío para usar el endpoint predeterminado",
     "customApiHelp": "Funciona con cualquier endpoint de API compatible con OpenAI — servidores locales (Ollama / LM Studio / vLLM) o servicios en la nube (Together AI / Fireworks AI / etc).",
+    "opencodeConsoleHelp": "Console y OpenCode Go son dos planes de la misma cuenta de OpenCode y comparten una sola clave API: aquí se paga por uso con tu saldo, mientras que Go es una suscripción mensual. Los modelos disponibles también son distintos.",
+    "opencodeGoHelp": "Go y OpenCode Console son dos planes de la misma cuenta de OpenCode y comparten una sola clave API: aquí tienes una cuota de suscripción mensual, mientras que Console cobra por uso con tu saldo. Los modelos disponibles también son distintos.",
     "urlAutoCompleted": "URL completada automáticamente",
     "modelExtra": "Nombre modelo LLM, ver documentación API",
     "temperatureExtra": "Temperatura (0-2): Más alto = más aleatorio, más bajo = más determinista. Recomendado: 0.2-0.8",
@@ -396,9 +398,9 @@
   "tools": {
     "subtitleTranslator": {
       "title": "Traductor Subtítulos",
-      "description": "Traducción por lote SRT, ASS, SSA, VTT, SBV, LRC. 120+ idiomas.",
+      "description": "Traducción por lote SRT, ASS, SSA, VTT, SBV, LRC. 130+ idiomas.",
       "metaTitle": "Traductor subtítulos gratis | SRT/VTT/ASS IA bilingüe",
-      "metaDescription": "Traductor IA subtítulos SRT, ASS, SSA, VTT, SBV, LRC. 30+ motores: DeepSeek, Claude, GPT, DeepL. 120+ idiomas, timecodes, bilingüe.",
+      "metaDescription": "Traductor IA subtítulos SRT, ASS, SSA, VTT, SBV, LRC. 30+ motores: DeepSeek, Claude, GPT, DeepL. 130+ idiomas, timecodes, bilingüe.",
       "faq": [
         {
           "q": "¿Qué formatos de subtítulos son compatibles? ¿Se pueden traducir SRT, ASS, SSA, VTT, SBV y LRC?",
@@ -448,7 +450,7 @@
     },
     "jsonTranslate": {
       "title": "Traductor JSON i18n",
-      "description": "Traducción por lote de archivos de idioma i18n, con coincidencia JSONPath y mapeo de claves"
+      "description": "Traducción por lote de archivos de idioma i18n, con coincidencia JSONPath y mapeo de campos"
     },
     "mdTranslator": {
       "title": "Traductor Markdown",
@@ -491,7 +493,7 @@
       "description": "Mapeo y migración de valores con JSONPath"
     },
     "jsonValueSwapper": {
-      "title": "Intercambiador Valor JSON",
+      "title": "Intercambiador de Valores de Campos JSON",
       "description": "Intercambiar valores de dos campos en un clic"
     },
     "jsonNodeInserter": {
@@ -520,7 +522,7 @@
     },
     "braceExpander": {
       "title": "Expansor de llaves",
-      "description": "Expande una plantilla en una lista completa, sintaxis de bash"
+      "description": "Expande una plantilla en una lista completa, compatible con la expansión de llaves de Bash"
     }
   },
   "navigation": {
@@ -639,6 +641,8 @@
     "as": "Asamés",
     "gom": "Konkani",
     "sa": "Sánscrito",
+    "dv": "Divehi",
+    "or": "Oriya",
     "th": "Tailandés",
     "lo": "Laosiano",
     "my": "Birmano",
@@ -665,6 +669,15 @@
     "ts": "Tsonga",
     "mg": "Malgache",
     "ln": "Lingala",
+    "aa": "Afar",
+    "ff": "Fulani",
+    "rw": "Kinyarwanda",
+    "lg": "Luganda",
+    "rn": "Kirundi",
+    "sn": "Shona",
+    "so": "Somalí",
+    "tw": "Twi",
+    "yo": "Yoruba",
     "ht": "Criollo haitiano",
     "qu": "Quechua",
     "ay": "Aimara",

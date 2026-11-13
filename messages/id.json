@@ -334,6 +334,8 @@
     "deeplxUrlExtra": "Opsional, kosongkan untuk menggunakan server publik kami",
     "urlOptionalExtra": "Opsional — kosongkan untuk menggunakan endpoint default",
     "customApiHelp": "Bekerja dengan endpoint API kompatibel OpenAI mana pun — server lokal (Ollama / LM Studio / vLLM) atau layanan cloud (Together AI / Fireworks AI / dll).",
+    "opencodeConsoleHelp": "Console dan OpenCode Go adalah dua paket dalam akun OpenCode yang sama dan memakai satu API key: di sini biaya dipotong dari saldo sesuai pemakaian, sedangkan Go adalah langganan bulanan. Model yang tersedia juga berbeda.",
+    "opencodeGoHelp": "Go dan OpenCode Console adalah dua paket dalam akun OpenCode yang sama dan memakai satu API key: di sini Anda mendapat kuota langganan bulanan, sedangkan Console memotong saldo sesuai pemakaian. Model yang tersedia juga berbeda.",
     "urlAutoCompleted": "URL otomatis dilengkapi",
     "modelExtra": "Nama model LLM, lihat dokumentasi API",
     "temperatureExtra": "Suhu (0-2): Lebih tinggi = lebih acak, lebih rendah = lebih deterministik. Disarankan: 0.2-0.8",
@@ -396,9 +398,9 @@
   "tools": {
     "subtitleTranslator": {
       "title": "Penerjemah Subtitle",
-      "description": "Terjemahan batch SRT, ASS, SSA, VTT, SBV, LRC. 120+ bahasa.",
+      "description": "Terjemahan batch SRT, ASS, SSA, VTT, SBV, LRC. 130+ bahasa.",
       "metaTitle": "Penerjemah Subtitle Gratis | Batch SRT/VTT/ASS + Dwibahasa",
-      "metaDescription": "Penerjemah subtitle SRT, ASS, SSA, VTT, SBV, LRC. 30+ mesin: DeepSeek, Claude, GPT, DeepL, Google. 120+ bahasa, timecode, dwibahasa.",
+      "metaDescription": "Penerjemah subtitle SRT, ASS, SSA, VTT, SBV, LRC. 30+ mesin: DeepSeek, Claude, GPT, DeepL, Google. 130+ bahasa, timecode, dwibahasa.",
       "faq": [
         {
           "q": "Format subtitle apa saja yang didukung? Bisa menerjemahkan SRT, ASS, SSA, VTT, SBV, dan LRC?",
@@ -448,7 +450,7 @@
     },
     "jsonTranslate": {
       "title": "Penerjemah JSON i18n",
-      "description": "Terjemahan file bahasa i18n batch, dengan pencocokan JSONPath dan pemetaan kunci"
+      "description": "Terjemahan file bahasa i18n batch, dengan pencocokan JSONPath dan pemetaan bidang"
     },
     "mdTranslator": {
       "title": "Penerjemah Markdown",
@@ -491,7 +493,7 @@
       "description": "Pemetaan dan migrasi nilai dengan JSONPath"
     },
     "jsonValueSwapper": {
-      "title": "Penukar Nilai JSON",
+      "title": "Penukar Nilai Bidang JSON",
       "description": "Tukar nilai dua bidang dengan satu klik"
     },
     "jsonNodeInserter": {
@@ -520,7 +522,7 @@
     },
     "braceExpander": {
       "title": "Ekspander Kurung Kurawal",
-      "description": "Kembangkan satu templat menjadi daftar lengkap, sintaks brace bash"
+      "description": "Kembangkan satu templat menjadi daftar lengkap, kompatibel dengan ekspansi kurung kurawal Bash"
     }
   },
   "navigation": {
@@ -639,6 +641,8 @@
     "as": "Assam",
     "gom": "Konkani",
     "sa": "Sanskerta",
+    "dv": "Bahasa Divehi",
+    "or": "Bahasa Oriya",
     "th": "Thailand",
     "lo": "Bahasa Laos",
     "my": "Bahasa Burma",
@@ -665,6 +669,15 @@
     "ts": "Tsonga",
     "mg": "Malagasi",
     "ln": "Lingala",
+    "aa": "Bahasa Afar",
+    "ff": "Bahasa Fulani",
+    "rw": "Bahasa Kinyarwanda",
+    "lg": "Bahasa Luganda",
+    "rn": "Bahasa Kirundi",
+    "sn": "Bahasa Shona",
+    "so": "Bahasa Somali",
+    "tw": "Bahasa Twi",
+    "yo": "Bahasa Yoruba",
     "ht": "Kreol Haiti",
     "qu": "Quechua",
     "ay": "Aymara",

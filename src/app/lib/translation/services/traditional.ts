@@ -40,24 +40,32 @@ const getAzureRegion = (region: string | undefined): string => {
   return value;
 };
 
-// Azure Translator uses non-standard codes for some languages. Our master list
-// (languages-data.ts) uses BCP-47 / ISO-639 conventions; remap before sending.
+// Azure Translator's chosen codes differ from our persistent language IDs for
+// some languages. Remap only when sending; keep settings/filenames unchanged.
 //   ckb (Kurdish/Sorani) → Azure uses `ku`
 // See https://learn.microsoft.com/zh-cn/azure/ai-services/translator/language-support
 // for the canonical Azure code table.
 const AZURE_LANG_MAP: Record<string, string> = {
   ckb: "ku",
+  // Text Translation language table, rechecked 2026-11-09 (both directions).
+  lg: "lug",
+  rn: "run",
 };
 const toAzureCode = (lang: string): string => AZURE_LANG_MAP[lang] ?? lang;
 
 // Google's NMT backend uses non-standard codes for some languages. Our master
 // list uses `prs` for Dari; Google rejects it (400) but accepts `fa-AF` —
 // live-verified 2026-06-07 against translate.googleapis.com in BOTH directions.
-// Applied to gtxFreeAPI and the official google service (same backend).
+// Shared remaps for GTX and Cloud Translation. Their accepted codes differ:
+// translate-pa accepts both tw and ak (bidirectional live probe 2026-11-09),
+// while Cloud's documented Twi/Akan code is ak. Keep that override Cloud-only.
+// tw (Twi) and ak (Akan macrolanguage) are distinct registered subtags, so this
+// provider's broader grouping must not rename the internal Twi language ID.
 const GOOGLE_LANG_MAP: Record<string, string> = {
   prs: "fa-AF",
 };
 const toGoogleCode = (lang: string): string => GOOGLE_LANG_MAP[lang] ?? lang;
+const toGoogleCloudCode = (lang: string): string => lang === "tw" ? "ak" : toGoogleCode(lang);
 
 // translate-pa is the API gateway behind Google's own website-translation
 // widget (Translate Element / te_lib). The legacy translate_a/single?client=gtx
@@ -239,8 +247,8 @@ export const google: TranslationService = async (params) => {
   const key = requireApiKey("Google Translate", apiKey);
   const requestBody = {
     q: text,
-    target: toGoogleCode(targetLanguage),
-    ...(sourceLanguage !== "auto" && { source: toGoogleCode(sourceLanguage) }),
+    target: toGoogleCloudCode(targetLanguage),
+    ...(sourceLanguage !== "auto" && { source: toGoogleCloudCode(sourceLanguage) }),
   };
 
   const data = (await fetchJSON(`https://translation.googleapis.com/language/translate/v2?key=${key}`, {

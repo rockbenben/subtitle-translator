@@ -334,6 +334,8 @@
     "deeplxUrlExtra": "ไม่บังคับ เว้นว่างเพื่อใช้เซิร์ฟเวอร์สาธารณะของเรา",
     "urlOptionalExtra": "ไม่บังคับ — เว้นว่างเพื่อใช้ endpoint เริ่มต้น",
     "customApiHelp": "ใช้งานได้กับ endpoint API ที่เข้ากันได้กับ OpenAI ใดก็ได้ — เซิร์ฟเวอร์ภายในเครื่อง (Ollama / LM Studio / vLLM) หรือบริการคลาวด์ (Together AI / Fireworks AI / ฯลฯ)",
+    "opencodeConsoleHelp": "Console และ OpenCode Go เป็นสองแพ็กเกจในบัญชี OpenCode เดียวกัน ใช้ API key ร่วมกัน: ที่นี่หักจากยอดคงเหลือตามการใช้งาน ส่วน Go เป็นแบบสมาชิกรายเดือน โมเดลที่เลือกได้ก็ต่างกัน",
+    "opencodeGoHelp": "Go และ OpenCode Console เป็นสองแพ็กเกจในบัญชี OpenCode เดียวกัน ใช้ API key ร่วมกัน: ที่นี่ได้โควต้าสมาชิกรายเดือน ส่วน Console หักจากยอดคงเหลือตามการใช้งาน โมเดลที่เลือกได้ก็ต่างกัน",
     "urlAutoCompleted": "เติม URL อัตโนมัติแล้ว",
     "modelExtra": "ชื่อโมเดล LLM ดูเอกสาร API",
     "temperatureExtra": "อุณหภูมิ (0-2): สูง = สุ่มมากขึ้น ต่ำ = แน่นอนมากขึ้น แนะนำ: 0.2-0.8",
@@ -396,9 +398,9 @@
   "tools": {
     "subtitleTranslator": {
       "title": "ตัวแปลซับไตเติล",
-      "description": "แปล SRT, ASS, SSA, VTT, SBV, LRC เป็นชุด 120+ ภาษา",
+      "description": "แปล SRT, ASS, SSA, VTT, SBV, LRC เป็นชุด 130+ ภาษา",
       "metaTitle": "ตัวแปลซับไตเติลฟรี | แปลชุด SRT/VTT/ASS + สองภาษา",
-      "metaDescription": "ตัวแปลซับ AI สำหรับ SRT, ASS, SSA, VTT, SBV, LRC. 30+ เอ็นจิ้น: DeepSeek, Claude, GPT, DeepL. 120+ ภาษา รักษา ไทม์โค้ด สองภาษา",
+      "metaDescription": "ตัวแปลซับ AI สำหรับ SRT, ASS, SSA, VTT, SBV, LRC. 30+ เอ็นจิ้น: DeepSeek, Claude, GPT, DeepL. 130+ ภาษา รักษา ไทม์โค้ด สองภาษา",
       "faq": [
         {
           "q": "รองรับรูปแบบซับไตเติลอะไรบ้าง? แปล SRT, ASS, SSA, VTT, SBV, LRC ได้ไหม?",
@@ -448,7 +450,7 @@
     },
     "jsonTranslate": {
       "title": "ตัวแปล JSON i18n",
-      "description": "แปลไฟล์ภาษา i18n เป็นชุด พร้อมการจับคู่ JSONPath และแมปคีย์"
+      "description": "แปลไฟล์ภาษา i18n เป็นชุด พร้อมการจับคู่ JSONPath และแมปฟิลด์"
     },
     "mdTranslator": {
       "title": "ตัวแปล Markdown",
@@ -491,7 +493,7 @@
       "description": "แมปและย้ายค่าด้วย JSONPath"
     },
     "jsonValueSwapper": {
-      "title": "ตัวสลับค่า JSON",
+      "title": "ตัวสลับค่าฟิลด์ JSON",
       "description": "สลับค่าสองฟิลด์ได้ในคลิกเดียว"
     },
     "jsonNodeInserter": {
@@ -520,7 +522,7 @@
     },
     "braceExpander": {
       "title": "ตัวขยายวงเล็บวงปีกกา",
-      "description": "ขยายเทมเพลตหนึ่งบรรทัดเป็นรายการทั้งหมด ตามไวยากรณ์ brace ของ bash"
+      "description": "ขยายเทมเพลตหนึ่งบรรทัดเป็นรายการทั้งหมด รองรับไวยากรณ์การขยายวงเล็บปีกกาของ Bash"
     }
   },
   "navigation": {
@@ -639,6 +641,8 @@
     "as": "ภาษาอัสสัม",
     "gom": "ภาษากอนกานี",
     "sa": "ภาษาสันสกฤต",
+    "dv": "ภาษาดิเวฮี",
+    "or": "ภาษาโอริยา",
     "th": "ไทย",
     "lo": "ภาษาลาว",
     "my": "ภาษาพม่า",
@@ -665,6 +669,15 @@
     "ts": "ภาษาซองกา",
     "mg": "ภาษามาลากาซี",
     "ln": "ภาษาลิงกาลา",
+    "aa": "ภาษาอาฟาร์",
+    "ff": "ภาษาฟูลานี",
+    "rw": "ภาษาคินยาร์วันดา",
+    "lg": "ภาษาลูกันดา",
+    "rn": "ภาษาคิรุนดี",
+    "sn": "ภาษาโชนา",
+    "so": "ภาษาโซมาลี",
+    "tw": "ภาษาทวิ",
+    "yo": "ภาษาโยรูบา",
     "ht": "ภาษาครีโอลเฮติ",
     "qu": "ภาษาเกชวา",
     "ay": "ภาษาไอย์มารา",

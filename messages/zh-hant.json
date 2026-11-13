@@ -334,6 +334,8 @@
     "deeplxUrlExtra": "選填，留空使用我們提供的公共伺服器",
     "urlOptionalExtra": "選填，留空使用預設接口位址",
     "customApiHelp": "可填入任何 OpenAI 相容 API 的端點，包括本地 Ollama / LM Studio / vLLM 以及 Together AI / Fireworks AI 等雲服務。",
+    "opencodeConsoleHelp": "Console 與 OpenCode Go 是同一個 OpenCode 帳號下的兩種付費方式，API key 通用：這裡按用量從餘額扣費，Go 是按月訂閱。兩邊可選的模型也不一樣。",
+    "opencodeGoHelp": "Go 與 OpenCode Console 是同一個 OpenCode 帳號下的兩種付費方式，API key 通用：這裡是按月訂閱的額度，Console 按用量從餘額扣費。兩邊可選的模型也不一樣。",
     "urlAutoCompleted": "URL 已自動補全",
     "modelExtra": "LLM 模型名稱，請參考 API 文件選擇可用模型",
     "temperatureExtra": "採樣溫度（0-2）：數值越高輸出越隨機，越低輸出越確定。建議值：0.2-0.8",
@@ -396,7 +398,7 @@
   "tools": {
     "subtitleTranslator": {
       "title": "字幕翻譯器",
-      "description": "批次翻譯 SRT、ASS、SSA、VTT、SBV、LRC 字幕，支援 120+ 語言",
+      "description": "批次翻譯 SRT、ASS、SSA、VTT、SBV、LRC 字幕，支援 130+ 語言",
       "metaTitle": "字幕翻譯器 - SRT/ASS/VTT/SBV/LRC 批次 AI 翻譯與雙語字幕產生",
       "metaDescription": "AI 字幕翻譯，SRT/ASS/SSA/VTT/SBV/LRC 批次互轉，接入 DeepSeek、Claude、GPT 等 30+ 引擎，保留時間軸一鍵匯出雙語字幕。",
       "faq": [
@@ -448,7 +450,7 @@
     },
     "jsonTranslate": {
       "title": "JSON 多語言翻譯",
-      "description": "批次翻譯 i18n 語言包，支援 JSONPath 匹配和鍵名映射"
+      "description": "批次翻譯 i18n 語言包，支援 JSONPath 匹配和欄位映射"
     },
     "mdTranslator": {
       "title": "Markdown 翻譯",
@@ -491,7 +493,7 @@
       "description": "欄位值映射和遷移，支援 JSONPath 定位"
     },
     "jsonValueSwapper": {
-      "title": "JSON 鍵值互換",
+      "title": "JSON 欄位值互換",
       "description": "一鍵交換兩個欄位的值"
     },
     "jsonNodeInserter": {
@@ -520,7 +522,7 @@
     },
     "braceExpander": {
       "title": "格式批次生成",
-      "description": "一行範本批次展開成完整清單，語法照抄 bash 大括號展開"
+      "description": "一行範本批次展開成完整清單，語法相容 Bash 花括號展開"
     }
   },
   "navigation": {
@@ -639,6 +641,8 @@
     "as": "阿薩姆語",
     "gom": "孔卡尼語",
     "sa": "梵語",
+    "dv": "迪維希語",
+    "or": "奧里亞語",
     "th": "泰語",
     "lo": "老撾語",
     "my": "緬甸語",
@@ -665,6 +669,15 @@
     "ts": "聰加語",
     "mg": "馬拉加西語",
     "ln": "林加拉語",
+    "aa": "阿法爾語",
+    "ff": "富拉語",
+    "rw": "盧安達語",
+    "lg": "盧干達語",
+    "rn": "隆迪語",
+    "sn": "紹納語",
+    "so": "索馬利語",
+    "tw": "契維語",
+    "yo": "約魯巴語",
     "ht": "海地克里奧爾語",
     "qu": "克丘亞語",
     "ay": "艾馬拉語",

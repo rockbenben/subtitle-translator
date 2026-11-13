@@ -334,6 +334,8 @@
     "deeplxUrlExtra": "可选，留空使用我们提供的公共服务器",
     "urlOptionalExtra": "可选，留空使用默认接口地址",
     "customApiHelp": "可填入任何 OpenAI 兼容 API 的端点，包括本地 Ollama / LM Studio / vLLM 以及 Together AI / Fireworks AI 等云服务。",
+    "opencodeConsoleHelp": "Console 与 OpenCode Go 是同一个 OpenCode 账号下的两种付费方式，API key 通用：这里按用量从余额扣费，Go 是按月订阅。两边可选的模型也不一样。",
+    "opencodeGoHelp": "Go 与 OpenCode Console 是同一个 OpenCode 账号下的两种付费方式，API key 通用：这里是按月订阅的额度，Console 按用量从余额扣费。两边可选的模型也不一样。",
     "urlAutoCompleted": "URL 已自动补全",
     "modelExtra": "LLM 模型名称，请参考 API 文档选择可用模型",
     "temperatureExtra": "采样温度（0-2）：数值越高输出越随机，越低输出越确定。建议值：0.2-0.8",
@@ -396,7 +398,7 @@
   "tools": {
     "subtitleTranslator": {
       "title": "字幕翻译器",
-      "description": "批量翻译 SRT、ASS、SSA、VTT、SBV、LRC 字幕，支持 120+ 语言",
+      "description": "批量翻译 SRT、ASS、SSA、VTT、SBV、LRC 字幕，支持 130+ 语言",
       "metaTitle": "字幕翻译器 - SRT/ASS/VTT/SBV/LRC 批量 AI 翻译与双语字幕生成",
       "metaDescription": "AI 字幕翻译，SRT/ASS/SSA/VTT/SBV/LRC 批量互转，接入 DeepSeek、Claude、GPT 等 30+ 引擎，保留时间轴一键导出双语字幕。",
       "faq": [
@@ -448,7 +450,7 @@
     },
     "jsonTranslate": {
       "title": "JSON 多语言翻译",
-      "description": "批量翻译 i18n 语言包，支持 JSONPath 匹配和键名映射"
+      "description": "批量翻译 i18n 语言包，支持 JSONPath 匹配和字段映射"
     },
     "mdTranslator": {
       "title": "Markdown 翻译",
@@ -495,7 +497,7 @@
       "description": "字段值映射和迁移，支持 JSONPath 定位"
     },
     "jsonValueSwapper": {
-      "title": "JSON 键值互换",
+      "title": "JSON 字段值互换",
       "description": "一键交换两个字段的值"
     },
     "jsonNodeInserter": {
@@ -520,7 +522,7 @@
     },
     "braceExpander": {
       "title": "格式批量生成",
-      "description": "一行模板批量展开成完整清单，语法照抄 bash 花括号展开"
+      "description": "一行模板批量展开成完整清单，语法兼容 Bash 花括号展开"
     }
   },
   "navigation": {
@@ -639,6 +641,8 @@
     "as": "阿萨姆语",
     "gom": "孔卡尼语",
     "sa": "梵语",
+    "dv": "迪维希语",
+    "or": "奥里亚语",
     "th": "泰语",
     "lo": "老挝语",
     "my": "缅甸语",
@@ -665,6 +669,15 @@
     "ts": "聪加语",
     "mg": "马拉加西语",
     "ln": "林加拉语",
+    "aa": "阿法尔语",
+    "ff": "富拉语",
+    "rw": "卢旺达语",
+    "lg": "卢干达语",
+    "rn": "隆迪语",
+    "sn": "绍纳语",
+    "so": "索马里语",
+    "tw": "契维语",
+    "yo": "约鲁巴语",
     "ht": "海地克里奥尔语",
     "qu": "克丘亚语",
     "ay": "艾马拉语",

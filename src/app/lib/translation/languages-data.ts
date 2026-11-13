@@ -4,6 +4,20 @@ export interface LanguageOption {
   nativelabel: string;
 }
 
+// Language-code policy: BCP 47 / IANA language subtags, preferring ISO 639-1
+// two-letter codes where they identify the intended language; otherwise use
+// the registered three-letter code. Keep script/region distinctions explicit.
+// These values are persistent IDs (settings, presets, caches and filenames),
+// stored in lowercase for compatibility: zh means Simplified Chinese here;
+// zh-hant / pt-br / pt-pt retain their existing spelling. Do not rename them
+// merely to match a provider's wire format or conventional BCP 47 casing.
+// In particular, keep lg/rn/tw/fil/nb: Twi (tw) is narrower than Akan (ak),
+// Filipino (fil) differs from Tagalog (tl), and nb specifies Norwegian Bokmål.
+// Provider-specific equivalents belong at the request boundary in
+// services/traditional.ts, and must apply to both source and target languages.
+// References: https://www.w3.org/International/questions/qa-choosing-language-tags
+// https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry
+
 //autocorrect:false
 // Order mirrors LANGUAGE_GROUPS (below) — single-select dropdown reads master
 // order; multi-select popup reads LANGUAGE_GROUPS. Keeping them aligned means
@@ -96,7 +110,7 @@ export const languages: LanguageOption[] = [
   { value: "tt", name: "Tatar", nativelabel: "Татар теле" },
   { value: "ug", name: "Uyghur", nativelabel: "ئۇيغۇرچە" },
 
-  // ── SouthAsia (15) ──
+  // ── SouthAsia (17) ──
   { value: "bn", name: "Bengali", nativelabel: "বাংলা" },
   { value: "mr", name: "Marathi", nativelabel: "मराठी" },
   { value: "te", name: "Telugu", nativelabel: "తెలుగు" },
@@ -112,6 +126,8 @@ export const languages: LanguageOption[] = [
   { value: "as", name: "Assamese", nativelabel: "অসমীয়া" },
   { value: "gom", name: "Konkani", nativelabel: "कोंकणी" },
   { value: "sa", name: "Sanskrit", nativelabel: "संस्कृतम्" },
+  { value: "dv", name: "Dhivehi", nativelabel: "ދިވެހި" },
+  { value: "or", name: "Odia (Oriya)", nativelabel: "ଓଡ଼ିଆ" },
 
   // ── SeAsia (12) ──
   { value: "th", name: "Thai", nativelabel: "ไทย" },
@@ -127,7 +143,7 @@ export const languages: LanguageOption[] = [
   { value: "pam", name: "Kapampangan", nativelabel: "Kapampangan" },
   { value: "ceb", name: "Cebuano", nativelabel: "Cebuano" },
 
-  // ── Africa (14) ──
+  // ── Africa (23) ──
   { value: "sw", name: "Swahili", nativelabel: "Kiswahili" },
   { value: "ha", name: "Hausa", nativelabel: "هَرْشٜىٰن هَوْسَا" },
   { value: "am", name: "Amharic", nativelabel: "አማርኛ" },
@@ -142,6 +158,15 @@ export const languages: LanguageOption[] = [
   { value: "ts", name: "Tsonga", nativelabel: "Xitsonga" },
   { value: "mg", name: "Malagasy", nativelabel: "Malagasy" },
   { value: "ln", name: "Lingala", nativelabel: "Lingála" },
+  { value: "aa", name: "Afar", nativelabel: "Qafar af" },
+  { value: "ff", name: "Fulani", nativelabel: "Fulfulde" },
+  { value: "rw", name: "Kinyarwanda", nativelabel: "Ikinyarwanda" },
+  { value: "lg", name: "Luganda", nativelabel: "Oluganda" },
+  { value: "rn", name: "Rundi (Kirundi)", nativelabel: "Ikirundi" },
+  { value: "sn", name: "Shona", nativelabel: "ChiShona" },
+  { value: "so", name: "Somali", nativelabel: "Soomaali" },
+  { value: "tw", name: "Twi", nativelabel: "Twi" },
+  { value: "yo", name: "Yoruba", nativelabel: "Yorùbá" },
 
   // ── AmericasOceania (5) ──
   { value: "ht", name: "Haitian Creole", nativelabel: "Kreyòl ayisyen" },
@@ -167,14 +192,12 @@ export const languages: LanguageOption[] = [
 //
 // ── Verification sources (re-check ~yearly) ──
 //   DeepL:           https://developers.deepl.com/docs/getting-started/supported-languages
-//                    110+ languages; only kn/am/ug/si/lo/km from our master
-//                    list are unsupported.
+//                    Next-gen API table; see denylist for unsupported master
+//                    codes, including all 11 November additions.
 //   Google Cloud:    https://docs.cloud.google.com/translate/docs/languages
-//                    NMT model ~250 codes, LLM model ~100 codes. Same denylist
-//                    used for gtxFreeAPI (free public endpoint) since both route
-//                    through Google's translation backend. Only `an` from our
-//                    master is missing — established by live-probing every
-//                    master code, which is more reliable than the doc table.
+//                    Use the NMT table for the keyed service. GTX's free widget
+//                    endpoint is verified independently: it also accepts aa and
+//                    tw, which the Cloud table omits (Cloud uses ak for Twi).
 //   Qwen-MT:         https://help.aliyun.com/zh/model-studio/machine-translation
 //                    Plus/flash/turbo tiers cover 92 languages; lite is smaller
 //                    and not separately tracked here.
@@ -261,6 +284,10 @@ const AZURE_UNSUPPORTED = new Set([
   "oc", "om", "pag", "pam", "qu", "sa", "scn", "su", "ts", "wo", "yi",
   // 2026-05-26 additions (Transliterate-only, no Text Translation):
   "be", "tg",
+  // 2026-11-09: official Cloud Text Translation table supports dv/or/rw/
+  // lg→lug/rn→run/sn/so/yo. Only these three additions are absent.
+  // https://learn.microsoft.com/en-us/azure/ai-services/translator/language-support
+  "aa", "ff", "tw",
 ]);
 
 const UNSUPPORTED_LANGS: Record<string, Set<string>> = {
@@ -277,7 +304,13 @@ const UNSUPPORTED_LANGS: Record<string, Set<string>> = {
   //     拿小写裸码去探测也是 122 条全灭。
   // 判"能不能用"要认 HTTP 码：只有 400 才是厂商拒绝，网络异常(EXC)不是 —— 上一轮
   // 批量扫里 lmo/qu 各抖动一次，若按聚合读数直接扩容 denylist，就凭空封掉两种真能翻的语言。
-  deepl: new Set(["kn", "am", "ug", "si", "lo", "km"]),
+  deepl: new Set([
+    "kn", "am", "ug", "si", "lo", "km",
+    // 2026-11-09: all 11 absent from the official next-gen supported-language
+    // table (raw HTML's languageData; markdown extraction omits that table).
+    // https://developers.deepl.com/docs/getting-started/supported-languages
+    "dv", "or", "aa", "ff", "rw", "lg", "rn", "sn", "so", "tw", "yo",
+  ]),
   // DeepLX: derived from the live-probed classic allowlist above — NOT the
   // official DeepL list (see DEEPLX_SUPPORTED comment).
   deeplx: new Set(languages.map((l) => l.value).filter((v) => v !== "auto" && !DEEPLX_SUPPORTED.has(v))),
@@ -295,10 +328,20 @@ const UNSUPPORTED_LANGS: Record<string, Set<string>> = {
   // `prs` (Dari) is NOT denied — Google's code for it is `fa-AF`;
   // services/traditional.ts remaps before sending
   // (live-verified 2026-06-07: prs → 400, fa-AF → 200, both directions).
+  //
+  // 2026-11-09: all 11 additions live-probed through gtxFreeAPI (translate-pa):
+  // two sentences each, en/auto→X and X/auto→en; real translated text in both
+  // directions. Both tw and ak work and give identical forward translations;
+  // aa also works despite being absent from Cloud's documented NMT table.
+  // Controls: an returns 400; zz-invalid returns 200 echoing the source, which
+  // confirms HTTP success alone is not evidence of language support.
+  // Official keyed Cloud API is checked against its own NMT table instead:
+  // https://docs.cloud.google.com/translate/docs/languages
+  // aa is absent; Twi is documented as ak (Cloud-only remap in traditional.ts).
   gtxFreeAPI: new Set(["an"]),
-  google: new Set(["an"]),
+  google: new Set(["an", "aa"]),
 
-  // Azure Translator — 24 codes, verified 2026-07-28. Note `be` and `tg` are
+  // Azure Translator. Note `be` and `tg` are
   // denied because they appear only in Azure's Transliterate API table, NOT in
   // Text Translation, which is the API we hit.
   // Shared with edgeFreeAPI below — Edge 免费口现走 edge.microsoft.com/translatetext，
@@ -324,6 +367,10 @@ const UNSUPPORTED_LANGS: Record<string, Set<string>> = {
     "ht", "ig", "kmr", "la", "lmo", "ln", "mg", "mi", "om", "pam",
     "prs", "ps", "qu", "sa", "st", "su", "tn", "ts", "tt", "wo",
     "xh", "yi", "zu",
+    // 2026-11-09: official plus/flash/turbo 92-language table includes Odia
+    // (or), but none of the other additions. lite's 31-language table lacks
+    // all 11 (existing provider-level/model-level limitation described above).
+    "dv", "aa", "ff", "rw", "lg", "rn", "sn", "so", "tw", "yo",
   ]),
 
   // MiLMMT-46 (Xiaomi) — derived as master − MILMMT_SUPPORTED (see above).
@@ -350,6 +397,9 @@ const UNSUPPORTED_LANGS: Record<string, Set<string>> = {
     "ga", "gl", "gn", "gom", "ht", "ig", "kmr", "la", "lb", "lmo", "ln",
     "mai", "mg", "mi", "oc", "om", "pag", "pam", "prs", "ps", "qu", "sa",
     "scn", "st", "su", "tn", "ts", "tt", "wo", "xh", "yi",
+    // 2026-11-09: all 11 remain outside the official WMT24++ benchmark list;
+    // retain the existing conservative policy, not a claim of live failure.
+    "dv", "or", "aa", "ff", "rw", "lg", "rn", "sn", "so", "tw", "yo",
   ]),
 };
 
@@ -419,7 +469,7 @@ export const LANGUAGE_GROUPS: ReadonlyArray<{ key: string; labelKey: string; cod
     labelKey: "langGroupSouthAsia",
     // By speakers + translation demand: bn/mr top, te before ta (te has more
     // speakers), pa elevated for diaspora demand, classical sa at tail.
-    codes: ["bn", "mr", "te", "ta", "gu", "kn", "pa", "ml", "bho", "mai", "ne", "si", "as", "gom", "sa"],
+    codes: ["bn", "mr", "te", "ta", "gu", "kn", "pa", "ml", "bho", "mai", "ne", "si", "as", "gom", "sa", "dv", "or"],
   },
   {
     key: "seAsia",
@@ -431,7 +481,7 @@ export const LANGUAGE_GROUPS: ReadonlyArray<{ key: string; labelKey: string; cod
     labelKey: "langGroupAfrica",
     // af (Afrikaans) clusters with Southern African Bantu (xh/zu/st/tn/ts) —
     // moved here from europe because group is geographic, not linguistic.
-    codes: ["sw", "ha", "am", "ig", "wo", "xh", "zu", "af", "om", "st", "tn", "ts", "mg", "ln"],
+    codes: ["sw", "ha", "am", "ig", "wo", "xh", "zu", "af", "om", "st", "tn", "ts", "mg", "ln", "aa", "ff", "rw", "lg", "rn", "sn", "so", "tw", "yo"],
   },
   {
     key: "americasOceania",

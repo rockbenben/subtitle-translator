@@ -261,7 +261,7 @@ const SubtitleTranslator = () => {
     const detectedType = detectSubtitleFormat(rawLines);
     if (detectedType === "error") {
       message.error(tSubtitle("unsupportedSub"));
-      noteFileFailure();
+      noteFileFailure(fileNameSet);
       return;
     }
     // 非规范时间码(裸秒 / 省毫秒,可与规范 cue 混排)先归一成标准时间码,
@@ -275,7 +275,7 @@ const SubtitleTranslator = () => {
     // Early return if no content to translate
     if (contentLines.length === 0) {
       message.warning(tSubtitle("noExtractedText"));
-      noteFileFailure();
+      noteFileFailure(fileNameSet);
       return;
     }
 
@@ -283,7 +283,7 @@ const SubtitleTranslator = () => {
 
     if (multiLanguageMode && targetLangs.length === 0) {
       message.error(t("noTargetLanguage"));
-      noteFileFailure();
+      noteFileFailure(fileNameSet);
       return;
     }
 
@@ -464,11 +464,10 @@ const SubtitleTranslator = () => {
         }
       } catch (error: unknown) {
         // 双语产物失败时正文换成双语提示;级联中止不算失败(reportLangFailure 返回 false)。
-        if (reportLangFailure(error, currentTargetLang, needsBilingual ? `${describeError(error, t)} ${tSubtitle("bilingualError")}` : undefined)) hasFailedLang = true;
+        // 带上 fileName:整语言失败也要进重试的文件维范围,否则那个文件会被判成"没失败"而跳过。
+        if (reportLangFailure(error, currentTargetLang, needsBilingual ? `${describeError(error, t)} ${tSubtitle("bilingualError")}` : undefined, fileName)) hasFailedLang = true;
       }
     }
-
-    if (hasFailedLang) noteFileFailure();
 
     if (zipActive && zipEntries.length > 0 && !isDisposed()) {
       // 取消/有失败时仍把已完成部分导出（逐文件模式也是这个行为），但不用绿色
@@ -481,10 +480,15 @@ const SubtitleTranslator = () => {
         t,
         message,
       });
+      if (!zipWritten) {
+        noteFileFailure(fileName, zipLangs);
+        return;
+      }
       // 记账放在【落盘成功】之后：打包失败时「已导出：xx、yy」不该与
       // 「ZIP 打包失败」同屏出现（界面声称的状态必须与真实状态一致）。
-      if (zipWritten) zipLangs.forEach((lang) => recordExportedLang(lang));
+      zipLangs.forEach((lang) => recordExportedLang(lang));
     }
+    if (hasFailedLang) noteFileFailure(fileName);
 
     // Show success message after all languages completed (for single file multi-language mode);
     // 有任何 lang 失败时跳过此消息(per-lang error toast 已显示,避免红+绿对冲)

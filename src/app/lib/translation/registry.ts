@@ -9,9 +9,30 @@
 //   专属 MT 只属于 category: "machine-translation" 的那几个 provider（qwenMt /
 //   translategemma / milmmt / deepl / google …）—— 它们是按 MT 的调用契约【单独实现】的
 //   （固定提示词、关掉上下文与术语表开关、逐 SKU 的语种支持表）。挂在 llm 类 provider 下
-//   只是"多一个能选的 id"，却拿不到那套契约，而且会误导人：本工具支持 100+ 语种，这类
+//   只是"多一个能选的 id"，却拿不到那套契约，而且会误导人：本工具支持 130+ 语种，这类
 //   模型的覆盖面小得多（实测 command-a-translate 只有 23 种、上下文 8K、官方还要求生产
 //   使用先联系销售）。要 MT 质量 → 让用户去选 machine-translation 类。
+//
+// ⚠ 收 provider 的门槛（2026-11-11 与维护者定）—— 管【这家在不在表里】，与下面
+//   「收型号的三条判据」（管【这家收哪些 SKU】）是两层，别互相顶替。
+//   收：① 模型厂商官方平台；② 有真实主体 + 自有/租用推理算力（GPU、RDU 等专用
+//      加速器）的推理平台，含官方合作聚合；③ 不转售模型 API 的工具平台
+//      （llm Custom 属这类：它只把用户自己的端点接进来）。
+//   不收：无自研模型、又无自有/租用算力，纯转售上游模型 API（尤其 Claude / GPT /
+//      Gemini 等闭源模型）的转售商。四类红旗：匿名主体或新注册账号、远低于官方的
+//      价格、空投 / 签到 / 轮盘等羊毛机制、白标分销（reseller storefront）。
+//   ⚠ 【从宽判据：只放给【知名】的官方合作聚合】openrouter / opencodeZen / opencodeGo
+//      同样不自有算力，但它们是业内广泛使用、可公开查证的知名聚合平台，且按上游官方
+//      标价【平价】转售、主体可查（公司名 + 管辖地）、四类红旗一条不中 ⇒ 按「官方合作
+//      聚合」收。别按字面把这三家删了。
+//      ⚠ 知名是【硬条件】：平价 + 主体可查 + 零红旗只是必要条件，不知名的新站三条全中
+//      也不收 —— 「官方合作」这层关系无从机械核实，知名度是唯一能从外部查证的门槛，
+//      用来把口子限定在少数可辨认的平台上。重心仍是红旗，不是"有没有自己的机房"：
+//      算力那条是用来挡匿名低价羊毛分销的，不是要求每家自建数据中心。
+//      反例：atlascloud 四类全中，已整家删除（取证见 PROVIDERS 里那条删除说明）。
+//   ⚠ 这条门槛【没有机械闸，也别加】：「有没有自有/租用算力」「主体是否匿名」不是能
+//      从代码或免 key 目录里算出来的东西，写测试只会假绿。靠一手取证（厂商自己的
+//      about / pricing / credits 页 + 目录实拉）逐轮人判。
 //
 // ⚠ 每次更新模型清单，除了加/删 SKU，必须逐条确认这三件事：
 //   ① defaultModel 仍在 models[] 里（registry.test 会拦，但别等测试）；
@@ -19,10 +40,19 @@
 //      开箱即坏。实例见 nvidia 条目（当时的默认模型挂着 `DEPRECATION: 09/19/2026`，
 //      两天后死；只有实拉 /v1/models 才看得见）；
 //   ③ 该条目的 docs 链接仍指向在售型号（下架常伴随文档改版，链接会先 404）。
+//   ④ **挂任何退役/弃用日期的型号一律先清，也不新收**（2026-11-04 与维护者定为标准）：
+//      官方写了 "Deprecation date" / "Retirement" / "available until" /「计划 X 月底下线」
+//      这类日期 ⇒ 当下拉项【当场撤】，不等它真归零、不保留"带日期的在册项"、
+//      不因某个网关的目录里还列着它就留下（网关表不标退役日期，退役以模型方页面为准）。
+//      同族有退役日期的整族一起清 —— 例：Kimi「12 月底下线所有 K2 系列」一次性带走了
+//      moonshot / openrouter / opencodeZen / tokenhub 的 k2.6 与 k2.7-code、
+//      volcengine 的 k2.8-preview。存档里选过这些 id 的人会拿到明确报错并自行改选
+//      （与「模型 id 退役不迁移、报错可见可自救」的定案一致，不做静默迁移）。
 //   厂商事实怎么核（哪些端点不带 key 也能实拉、弃用标记藏在页面哪一段）见各条目
 //   注释里的先例：nvidia（/v1/models 实拉 + 页面内嵌 isDeprecated/DEPRECATION）、
-//   opencodeZen / opencodeGo / atlascloud（官方 /v1/models 不带 key 即返回全量目录）、
-//   以及官方文档里的「即将下线 / deprecated」标记。
+//   opencodeZen / opencodeGo（官方 /v1/models 不带 key 即返回全量目录）、
+//   以及官方文档里的「即将下线 / deprecated」标记。判据工具见 `yarn provider:facts`
+//   （退役信号命中在册型号 ⇒ 报告直接列成【必删清单】，不是"参考"）。
 
 import type { ReasoningEffort, ThinkingDirective, TranslationConfig, TranslationProvider } from "./types";
 // 纯 URL 工具，放在零依赖的 services/shared 里 —— 端点解析 (拼 ?endpoint=) 与
@@ -221,7 +251,7 @@ export type OpenAICompatProviderSpec = BaseProvider & {
 // `base.url = ""`)。这里曾有一条派生规则 acceptsCustomUrl(allowCustomUrl ||
 // 有中转路由),已连同 allowCustomUrl 字段一起删除 —— 那套机制把「用户有没有
 // 逃生口」交给两个与之无关的标志决定，结果 qianfan/cohere/openrouter/groq/
-// siliconflow/atlascloud 六家零退路，不是谁判断过，是漏了。而 DeepSeek 判例
+// siliconflow 等多家零退路，不是谁判断过，是漏了。而 DeepSeek 判例
 // (探测全绿、真实用户仍被上游按 origin 拦 403，见 services/llm.ts 的 403 重写)
 // 证明「谁会被拦」无法预判 —— 无法预判的风险就不该用"逐条记得写"的 opt-in
 // 分配退路，默认人人有才是与之匹配的设计。
@@ -276,24 +306,26 @@ export type OpenAICompatProviderSpec = BaseProvider & {
 //      gemini 走 /v1beta/models + `x-goog-api-key` 头（不是 Bearer）。
 //   ❌ 拉不通：阿里 token-plan 域用 dashscope 那把 key 回 401（两家的 key 不通用）；
 //      Yandex foundationModels 那条路径 Bearer 与 Api-Key 都 404（见 yandex 条目）。
-//   🔓 这几家【根本不用 key】就能拉全目录，别再去找维护者要凭证：atlascloud
-//      (api.atlascloud.ai/v1/models, 118 条)、nvidia (integrate.api.nvidia.com/v1/models,
-//      80 条)、cerebras (api.cerebras.ai/public/v1/models)、opencode zen 与 go
+//   🔓 这几家【根本不用 key】就能拉全目录，别再去找维护者要凭证：nvidia
+//      (integrate.api.nvidia.com/v1/models, 80 条)、cerebras
+//      (api.cerebras.ai/public/v1/models)、opencode console 与 go
 //      (/zen/v1/models、/zen/go/v1/models)、openrouter、integrate 那批同理。
-//   ✋ 本轮本机【没有】这几家的 key，别再假设拉得到：claude、mistral、moonshot、zhipu、
-//      minimax、doubao/volcengine、grok、cohere、tokenhub、cerebras、atlascloud、azureopenai。
-//      其中两处最值得下次要 key：claude 的 GET /v1/models 会逐条回
+//   ✋ 本机【没有】这几家的 key，别再假设拉得到：claude、mistral、moonshot、zhipu、
+//      minimax、doubao/volcengine、grok、cohere、tokenhub、cerebras、azureopenai。
+//      其中最值得下次要 key 的是 claude：它的 GET /v1/models 会逐条回
 //      `capabilities.thinking.types.disabled.supported`（能不能关思考的机器可读版，
-//      现在全靠手抄文档矩阵）；atlascloud 那两条 404 的 Claude slug 悬案也只有它的
-//      /v1/models 能一锤定音。
+//      现在全靠手抄文档矩阵）。
 // ⚠ 目录回答不了协议与形态：OpenCode 五条 Claude/Gemini/Grok 全在 /v1/models 里，
 //   实际打 chat/completions 回 400 ModelProtocolUnsupported（见 opencodeZen 条目）。
 //   判"能不能用"仍是探针 + 一手文档，目录只判"在不在册"。
+// ⚠ 反过来，【逐型号文档页缺页也不是下架信号】：文档页会 404、会分片渲染、会只带出
+//   表格一截，而目录实拉是字面在册。判在册以目录为准，文档页只作正文证据 —— 据缺页
+//   删条目造过假红（siliconflow 的 pricing 页缺行、公开 model 卡拼不出 slug 同形）。
 // ⚠ 另一条【二手】状态源：`models.dev/api.json`（~460KB，228 个 provider，逐模型带
 //   `status: active|deprecated|beta`）。它的用法是【起疑清单】——一轮扫下来只该拿到
 //   "这些条去看一眼一手"，不该直接照它改：2026-10-13 全仓对账时它给的 4 类信号里
 //   只有 1 类经得起一手复核（opencodeGo 的 kimi-k2.6 标 deprecated，而 Go 页三张表、
-//   Zen 的 Deprecated 表、实拉目录与探针四条一手证据都不认 ⇒ 留着）。
+//   Console 的 Deprecated 表、实拉目录与探针四条一手证据都不认 ⇒ 留着）。
 //   ⚠ 用它之前先把 provider 对对干净：同族有多条产品线（alibaba vs alibaba-token-plan、
 //   volcengine vs volcengine-coding-plan、opencode vs opencode-go），按【端点 host 猜】
 //   会匹配错兄弟、把"人家目录没这条"当成失效（本轮第一版就这么误报过 mistral/tokenhub
@@ -311,7 +343,7 @@ export type OpenAICompatProviderSpec = BaseProvider & {
 //   "previous-generation / legacy / newer" 措辞；数字序只能当线索，不能当结论。
 //   ⚠ 也别把"同族有更新的型号"一律当成该换：本表多处是【刻意】留旧代或留便宜档的
 //   （stepfun 默认 3.5-flash 是语言向旗舰而 3.7 是多模态向；opencodeZen 收
-//   deepseek-v4-flash 是为了成本梯度而不是追新）。改之前先读那条自己写的判据。
+//   deepseek-v4.1-flash 是为了成本梯度而不是追新）。改之前先读那条自己写的判据。
 
 // ─── 收型号的三条判据（全表通用，条目只写"本家属于哪条 + 一手依据"）──────────
 //
@@ -322,7 +354,7 @@ export type OpenAICompatProviderSpec = BaseProvider & {
 //    与 qwen3.8-27b:free 都还挂着，却分别是旧世代 pinned SKU 与 0 endpoints）。
 // ② 【地域可达性不是收型号的判据】。Anthropic 的 API 不对中国大陆开放、OpenRouter 对
 //    Anthropic 型号按地区限制 —— 但本站受众含大量海外用户。曾据"国内用不了"删掉
-//    openrouter / atlascloud 上的 Claude 系，那是拿【我们的用户能否调用】顶替【该 slug
+//    openrouter 上的 Claude 系，那是拿【我们的用户能否调用】顶替【该 slug
 //    是否在册】，与既定口径不符。判形态（①）与判在册，不掺受众。
 // ③ 【老型号不留、默认必须是当下最稳的那支】。默认档烂掉等于整个 provider 开箱即坏
 //    （nvidia 的默认模型曾挂着 DEPRECATION 标记两天后就死；siliconflow 的默认曾指向
@@ -873,13 +905,18 @@ export const PROVIDERS = {
     // 存量配置与中转路由全部失效，而 API host 官方【未】迁移 (见下方注释)。
     label: "Kimi (Moonshot)",
     endpoint: "https://api.moonshot.cn/v1/chat/completions",
-    // 默认 k2.6：$0.95/$4 只有 k3($3/$15) 的三分之一，而字幕翻译是高频碎请求、
-    // 逐行改写，262K 上下文完全够用；要旗舰质量选 k3。
+    // 默认 2026-11-04 从 kimi-k2.6 换到 kimi-k3 —— 依据是头部判据②「默认模型近期没有
+    //   下架计划」。官方 platform.kimi.com/docs/models.md 的【已下线模型】段逐字：
+    //   「K2 系列模型将于 2026 年 10 月 31 日起停止向新注册用户开放，已注册用户不受
+    //   影响；我们计划在 12 月底下线所有 K2 系列模型，请提前做好迁移准备」—— K2 系全线
+    //   （含 k2.7-code）都在退役通路上，而在售的非 K2 只有 k3 ⇒ 默认只能落它。
+    //   ⚠ 代价说清楚：k3 是 $3/$15，k2.6 是 $0.95/$4，字幕翻译这种高频碎请求换默认档
+    //   【不是】省钱的选择，是用「默认必须还活着」换来的。想省钱的用户在 k2.6 真下线前
+    //   仍可自己选回它（仍在册，行内注释带着日期）。
     // ⚠ k3 声明了 thinkingLevels，canDisableThinking("moonshot") 因此是 false，界面把
-    // 【整个 provider】的关闭档标成 Min —— 这个保守标签也落在默认的 k2.6 上（它其实真能
-    // 关，wire 上发的就是 thinking:{type:"disabled"}）。标 Min 而实际关掉了不骗人，
-    // 标 Off 却关不掉才是计费的谎，所以这个方向可以接受。
-    defaultModel: "kimi-k2.6",
+    // 【整个 provider】的关闭档标成 Min —— 换成 k3 当默认之后这个标签才名实相符
+    // （从前落在 k2.6 上时它其实真能关，标 Min 只是偏保守，不骗人的方向没变）。
+    defaultModel: "kimi-k3",
     // ⚠ 这一家的思考形态【默认是二元的】：k2.x 用扁平 thinking:{type}（只有开/关，
     //   档位被丢掉），只有 k3 走顶层 reasoning_effort（真分级，它声明了档位表）。
     //   档位下拉【按型号】给（2026-10-21 起四个仓同一口径）：k2.6 只给 [On/Off]，
@@ -925,22 +962,26 @@ export const PROVIDERS = {
     // （逐字：「`kimi-k2.5` 将于 2026 年 8 月 31 日期退役」，早过期），上面那条
     // 「k2.5 已停服下线」的判据因此成立。
     models: [
+      // 官方对 K3.1 Pro 的逐字口径（platform.kimi.com/docs/guide/use-reasoning-effort.md）：
+      // 「Kimi K3.1 Pro 【始终进行推理】，并通过请求顶层 reasoning_effort 配置推理强度。
+      //   该字段支持 "low" / "high" / "max"，默认 "max"」⇒ 与 K3 同一形态：没有关闭值 ⇒
+      //   走【逐 SKU 档位表】，关闭态发最低档 low（发禁用 = 确定性 400）。levels 只列
+      //   low/high 是既有取舍：ReasoningEffort 只有三档，max 这类顶档要按型号裁剪才能开。
+      // 它是官方在每条下线公告里点名的接班档（「请使用最新模型 kimi-k3.1-pro」），
+      // 2026-11-04 实读 platform.kimi.com/docs/models.md 在册 ⇒ 收，并排在最前。
+      { label: "Kimi K3.1 Pro", value: "kimi-k3.1-pro", thinking: true, thinkingLevels: ["low", "high"] },
       // K3 的 reasoning_effort 取值，官方逐字（platform.kimi.com/docs/models.md +
       // guide/use-reasoning-effort.md）：「K3 的顶层推理强度字段，支持 "low" / "high" /
-      // "max"，默认 "max"」。下面 levels 只列 low/high 是【既有取舍】：我方
-      // ReasoningEffort 只有三档，max/xhigh 这类顶档要按型号裁剪才能开（见 AGENTS.md
-      // 「推理档位有两处硬编码」），不是漏项。
-      // 官方在售另有 kimi-k2.7-code / kimi-k2.7-code-highspeed（thinking.type 仅 enabled，
-      // 传 "disabled" 直接报错，且不支持 reasoning_effort）⇒ 它们【没有可用的关闭形态】，
-      // 所以既不打 thinking 也不给档位控件；怎么收录 k2.7-code、为什么 -highspeed 不列，
-      // 见下面那两条行内注释。
+      // "max"，默认 "max"」。同样只列 low/high（同上）。官方现称它「上一代旗舰模型」，
+      // 但【没有挂任何退役日期】⇒ 按标准留着，且它仍是当前默认档（见上面 defaultModel 注释）。
       { label: "Kimi K3", value: "kimi-k3", thinking: true, thinkingLevels: ["low", "high"] },
-      // k2.7-code 不给思考控件：官方对照表把它列在「thinking.type 仅 enabled，
-      // 始终思考，传 "disabled" 报错」且 reasoning_effort 一栏「不支持」—— 它既没有关闭值也没有
-      // 档位，打标后关闭态发的 disabled 是确定性 400，不打标（gated 省略参数）才是安全的一侧。
-      // -highspeed 是同代高速细分档，按「细分档不收」不列。
-      { label: "Kimi K2.7 Code", value: "kimi-k2.7-code" },
-      { label: "Kimi K2.6", value: "kimi-k2.6", thinking: true },
+      // ⚠ kimi-k2.6 / kimi-k2.7-code 已删（2026-11-04）：官方 models.md 的「已下线模型」段
+      //   逐字「K2 系列模型将于 2026 年 10 月 31 日起停止向新注册用户开放…我们计划在 12 月底
+      //   下线所有 K2 系列模型」—— 这是【挂退役日期的整族】，按审核标准（见文件头判据④）
+      //   一律先清，不等它真归零、也不留「带日期的在册项」。同一条标准同时清掉了
+      //   openrouter / opencodeZen / tokenhub 的 kimi-k2.6、volcengine 的 kimi-k2.8-preview。
+      //   存档里选过这些 id 的用户会拿到明确报错并可自救（改选 k3 / k3.1-pro），
+      //   不做静默迁移 —— 与本仓「模型 id 退役不迁移」的定案一致。
     ],
   },
   doubao: {
@@ -1349,7 +1390,13 @@ export const PROVIDERS = {
     //     档位上被静默计费 —— 与本仓「标称能力与真实行为要一致」冲突 ⇒ 撤。
     //     要用 Large 3 手填 `mistral-large-2512`(官方 API names 里的 pinned 写法)。
     models: [
-      { label: "Mistral Medium 3.5", value: "mistral-medium-3-5", thinking: true },
+      // ⚠ mistral-medium-3-5 已删（2026-11-04）：官方生命周期表 + 模型卡两处逐字
+      //   「This model is deprecated. Use Mistral Large 4 for new integrations.
+      //   Deprecation date 10/31/2026 / Retirement 4/30/2027」—— 弃用日【已过】。
+      //   按审核标准（文件头判据④：挂退役日期的一律先清）不等它真归零就撤下拉项，
+      //   手填仍能调（官方说迁移前照常服务）。接班档 `mistral-large-4` 是 Public
+      //   Preview，按上面「preview 不进下拉」的取向不收；要 Large 能力手填 pinned 的
+      //   `mistral-large-2512`（官方 API names 那一行，GA）。
       { label: "Mistral Small 4", value: "mistral-small-latest", thinking: true },
       // 模型卡的 "API names" 行只列 `ministral-14b-2512` / `ministral-14b-latest`，
       // `ministral-3-14b-25-12` 那个写法只存在于 URL。同族 8B 的卡
@@ -1367,7 +1414,7 @@ export const PROVIDERS = {
     docs: "https://docs.x.ai/developers/models",
     apiKeyUrl: "https://console.x.ai/",
     defaultUseRelay: false,
-    // Grok 4.7 是当前 frontier 档（4.7 与 4.6 同价 $2/$6 —— Zen 公开价目核对）。4.6
+    // Grok 4.7 是当前 frontier 档（4.7 与 4.6 同价 $2/$6 —— Console 公开价目核对）。4.6
     // 降为上一代删出清单，手填仍可调。
     // ⚠ grok-4.20-0309 那三条目【仍在官方价目表上】但【不收编】—— 它们是旧世代 pinned
     // SKU（$1.25/$2.50、1M 上下文，与 grok-4.3 同档，不是 4.7 那一档）。本仓清目录时就是
@@ -1511,8 +1558,11 @@ export const PROVIDERS = {
       { label: "Alice AI LLM Flash", value: "aliceai-llm-flash" },
       { label: "DeepSeek V4.1 Flash", value: "deepseek-v4.1-flash" },
       { label: "Qwen3.6 35B", value: "qwen3.6-35b-a3b" },
-      { label: "GPT-OSS 120B", value: "gpt-oss-120b" },
-      { label: "GPT-OSS 20B", value: "gpt-oss-20b" },
+      // ⚠ gpt-oss-120b / gpt-oss-20b 已删（2026-11-04）：官方型号页给它们标的是
+      //   「available until 2026-10-30」（2026-10-02 真实浏览器逐条对齐时读到），日期已过。
+      //   本轮 aistudio.yandex.ru 连浏览器都只回 443 字（验证码墙）⇒ 【无法复核】，
+      //   而标准是「挂退役日期的一律先清」，所以按已记录的那个日期撤下，不等页面。
+      //   要恢复：用 render.py 读到那一页、确认日期被延后，再加回来。
     ],
   },
 
@@ -1522,21 +1572,23 @@ export const PROVIDERS = {
     category: "aggregator",
     label: "OpenRouter",
     endpoint: "https://openrouter.ai/api/v1/chat/completions",
-    // ⚠ 默认档 2026-10-21 从 nvidia/nemotron-3-super-120b-a12b:free 换成
-    //   minimax/minimax-m3.1-flash:free:前者的【唯一】provider 槽位 status=-5
-    //   (实测 GET /api/v1/models/{slug}/endpoints),而抽样的 25 个 slug(官方全部
-    //   :free 档 + 我们在册的)里只有 4 个「有 endpoint 却一个 status=0 都没有」——
-    //   它是其中之一 ⇒ 那个免费档眼下【没有健康 provider 可路由】。
-    //   官方没定义 -5 是什么(OpenAPI 只给 EndpointStatus: [0,-1,-2,-3,-5,-10]),
-    //   但它【逐槽位】成立:健康模型(kimi-k3 28 个 endpoint)里 -5 与 status 0 并存
-    //   ⇒ -5 = 某个槽位降级;槽位只有它一个时就没有可路由的了。
-    //   换的这支:1 个 endpoint 且 status=0 ✓、1M 上下文、官方档位 max/xhigh/high/
-    //   medium/low(我们的三档 low/medium/high 全部原样命中,不用钳)。
-    //   ⚠ 免费档天然单点(本仓老教训:「单点供应 = 随时归零」)—— 这支同样只有 1 个
-    //   provider,哪天归零就换下一支,别默认它稳。
-    defaultModel: "minimax/minimax-m3.1-flash:free",
+    // ⚠ 判一支 free SKU 能不能用只有一条路：GET /api/v1/models/{slug}/endpoints，
+    //   数其中 status=0 的槽位。官方没定义 -5 是什么（OpenAPI 只给
+    //   EndpointStatus: [0,-1,-2,-3,-5,-10]），但它【逐槽位】成立：健康模型
+    //   （kimi-k3 28 个 endpoint）里 -5 与 0 并存 ⇒ -5 = 那个槽位降级；整支只剩
+    //   一个降级槽位 = 没有可路由的供应方。/api/v1/models 全量里【有对象】≠ 能调用。
+    // 默认档 2026-11-04 换到 nvidia/nemotron-3.5-lightning:free（同批实拉
+    //   1 个 endpoint 且 status=0 ✓，1M 上下文）——上一支
+    //   minimax/minimax-m3.1-flash:free 此刻在 454 条全量目录里【整条消失】且
+    //   endpoints=0；再上一支 nemotron-3-super-120b-a12b:free（2026-10-21 因全槽位
+    //   -5 撤默认）此刻也已从目录消失。两支一并从 models[] 删除。
+    //   ⚠ 免费档天然单点（本仓老教训：「单点供应 = 随时归零」）—— 这支同样只有
+    //   1 个 provider，哪天归零就换下一支，别默认它稳。
+    defaultModel: "nvidia/nemotron-3.5-lightning:free",
     defaultTemperature: 0.7,
-    docs: "https://openrouter.ai/docs/use-cases/reasoning-tokens",
+    // docs 跟着官方 308 挪过一次（2026-11-04 实拉：旧 use-cases/ 路径永久重定向到
+    // guides/best-practices/，本仓规则③要求 docs 直接指到在售型号的页面，别留一跳）
+    docs: "https://openrouter.ai/docs/guides/best-practices/reasoning-tokens",
     apiKeyUrl: "https://openrouter.ai/settings/keys",
     defaultUseRelay: false,
     extraHeaders: { "HTTP-Referer": "https://aishort.top", "X-Title": "AIShort" },
@@ -1571,19 +1623,19 @@ export const PROVIDERS = {
       //   逐条 supported_efforts 见注释;xhigh/max 我们发不出(UI 只有三档),按既有取舍不列。
       // ⚠ effortLevels(逐型号 effort 清单,2026-10-20):官方 supported_efforts 逐型号不同,
       //   声明它 = 界面只列该型号真有的档位 —— 用户不会拨到一个官方没有的档。
-      //   官方原句(逐型号 supported_efforts):
-      //     deepseek/deepseek-v4.1-flash = max,high,low,none   → 我们的三档里没有 medium
-      //     tencent/hy3                   = high,low,none        → 同上
-      //     nvidia/nemotron-3-super-120b-a12b:free = medium,low,none → 没有 high
-      //     moonshotai/kimi-k3            = max,high,low,none    → 没有 medium
+      //   官方原句(逐型号 supported_efforts)：在册那几支逐条写在自己的行上；
+      //   deepseek-v4.1-flash = max,high,low,none / hy3 = high,low,none（都无 medium）、
+      //   kimi-k3 = max,high,low,none（无 medium）。
       //   其余几支要么收 none(关得掉)、要么 mandatory(关不掉,已用 thinkingLevels 表达)。
-      { label: "Nemotron 3 Super 120B (free)", value: "nvidia/nemotron-3-super-120b-a12b:free", thinking: true, effortLevels: ["low", "medium"] },
+      // ⚠ nvidia/nemotron-3-super-120b-a12b:free 已删（2026-11-04）：454 条全量目录里
+      //   整条消失 + endpoints 端点回 0 个 provider = 真不可调用（不是 expiration_date
+      //   到点那类「先撤默认再等删」）。它的【非 free 同名支】仍在售，需要的人手填；
+      //   那条的 supported_efforts = medium,low,none（无 high），手填时按它钳档。
       // ⚠ poolside Laguna 全家 4 条(付费+free)在官方目录里的 expiration_date 都是
       //   2026-10-31(官方 schema 逐字:"The date after which the model may be removed")
       //   ⇒ 两条 free 档按「到点即撤」删掉;官方没有替代的 poolside 型号。
       //   ⚠ 2026-10-21 复测:这两条【各有 1 个活 endpoint】(status 0)—— 撤它们靠的是
       //   expiration_date(10 天后),不是「现在调不了」;真判「调不了」看的是 endpoints=0。
-      //   免费档因此从 4 条降到 3 条(新补的 minimax-m3.1-flash:free 抵掉一条)。
       // 官方 supported_efforts = high/low/none(无 medium)→ effortLevels 只给 low/high。
       { label: "DeepSeek V4.1 Flash", value: "deepseek/deepseek-v4.1-flash", thinking: true, effortLevels: ["low", "high"] },
       // Hy3 正式版（8-31 到期前就从 hy3-preview 换了过来 —— 教训：单点供应的
@@ -1612,11 +1664,18 @@ export const PROVIDERS = {
       { label: "GLM-5.3", value: "z-ai/glm-5.3", thinking: true, thinkingLevels: ["low", "high"] },
       // 同样 mandatory:true(supported_efforts = xhigh/high/medium/low)→ 声明档位表。
       { label: "Grok 4.7", value: "x-ai/grok-4.7", thinking: true, thinkingLevels: ["low", "medium", "high"] },
-      { label: "Kimi K2.6", value: "moonshotai/kimi-k2.6", thinking: true },
       // ⚠ kimi-k3 原先不打 thinking 的理由是「k3 仅思考、不收关闭参数」—— 官方逐模型表
       // 与它冲突:mandatory:false 且 supported_efforts 含 none ⇒ 关得掉。按表改。
       // effortLevels = low/high(官方 supported_efforts = max/high/low/none,没有 medium)。
       { label: "Kimi K3", value: "moonshotai/kimi-k3", thinking: true, effortLevels: ["low", "high"] },
+      // 2026-11-04 从免 key 目录的 reasoning 对象逐条读出（不是照 k3 推的）：
+      // moonshotai/kimi-k3.1-pro = mandatory:false、default_enabled:true、
+      // supported_efforts = [max, high, low, none]、default_effort = max
+      // ⇒ 与 kimi-k3 完全同形态：收 none ⇒ 关得掉（发显式禁用合法），
+      //   且【没有 medium】⇒ 声明 effortLevels 把界面收窄到 low/high。
+      { label: "Kimi K3.1 Pro", value: "moonshotai/kimi-k3.1-pro", thinking: true, effortLevels: ["low", "high"] },
+      // ⚠ moonshotai/kimi-k2.6 已删（2026-11-04）：K2 系整族挂着官方退役日期
+      //   （12 月底下线），按文件头判据④一律先清 —— 换网关不改变它的结局。
       // ⚠ qwen3.8-27b:free 已撤 —— endpoints 实拉【0 个 provider】= 实际
       // 不可调用，正是本条上方「model 存在 ≠ 能调用」那条判据的第二次应验。
       // 同批实拉 13 个免费档，绝大多数已归零（gemma-3-30b-it 直接 404；
@@ -1624,9 +1683,10 @@ export const PROVIDERS = {
       // qwen3-235b-a22b / tencent-hy3 全是 0 endpoints）⇒ 免费池收缩很快，
       // 「在免费榜上」根本不能当可用性证据，只能打 endpoints 端点。
       { label: "Nemotron 3.5 Lightning (free)", value: "nvidia/nemotron-3.5-lightning:free" },
-      // Verified live route: /api/v1/models/minimax/minimax-m3.1-flash:free/endpoints.
-      // mandatory:true(关不掉)→ 声明档位表,关闭态发最低档 effort。
-      { label: "MiniMax M3.1 Flash (free)", value: "minimax/minimax-m3.1-flash:free", thinking: true, thinkingLevels: ["low", "medium", "high"] },
+      // ⚠ minimax/minimax-m3.1-flash:free 已删（2026-11-04）：全量目录整条消失 +
+      //   endpoints 回 0 个 provider。它前一天还是本 provider 的默认档 —— 这就是
+      //   「默认烂掉 = 开箱即坏」（头部判据②）的现行实例，别把默认留在没验过的支上。
+      //   同族的付费支 minimax/minimax-m3.1-flash 仍在售，需要的人手填。
       // M3 上游默认 adaptive thinking(可关)→ 打标签让 off 态经 OpenRouter
       // 统一参数发 reasoning:{enabled:false},否则默认烧推理 token。
       { label: "MiniMax M3", value: "minimax/minimax-m3", thinking: true },
@@ -1635,18 +1695,28 @@ export const PROVIDERS = {
   opencodeZen: {
     kind: "openai-compat",
     category: "aggregator",
-    label: "OpenCode Zen",
+    label: "OpenCode Console",
     endpoint: "https://opencode.ai/zen/v1/chat/completions",
-    // key 带 Zen 后缀是【有意的】:同一个账号下有两条产品线(Zen 余额按量 / Go 订阅),
-    // 光写 `opencode` 读不出是哪条 —— 这正是让人以为两者该合成一个 provider 的原因。
+    // ⚠ 上游产品名已由 Zen 改成 Console（2026-11-11 复核：官方 Models 页与 Inference API
+    //   页通篇零 "Zen"，原 /docs/zen/ 308 到 /v2/docs/console/models/，API base 由 /zen
+    //   改成 /inference，逐家族落点是 /inference/openai/v1/chat/completions）。
+    //   label 跟着官方改，【key 与 endpoint 刻意不动】：
+    //   · key 是存档键（下游按服务商分存 API key），改名要迁存档 + 重部署 Worker 路由；
+    //   · 旧路径仍是活别名 —— 实测 /zen/v1/chat/completions 与
+    //     /inference/openai/v1/chat/completions 同回 401 Invalid credential，两条
+    //     /v1/models 的目录 id 集合逐条相同。切落点必须与 Worker 的端点白名单【同批
+    //     重部署】，否则线上白名单拒掉新地址，把一个本来能用的 provider 打成 400。
+    // key 带 Zen 后缀是【有意的】:Zen 是上游旧产品名,同一账号下有两条产品线
+    // (Console 余额按量 / Go 订阅),光写 `opencode` 读不出是哪条 —— 这正是让人以为
+    // 两者该合成一个 provider 的原因。
     // 姊妹条目叫 opencodeGo,这里对称。改名代价已知并接受:旧的存档值会优雅回落
     // (getDefaultConfig 判不过 → DEFAULT_API,且不写回),Worker 需重新部署
-    // (/api/opencode → /api/opencodeZen),下游三个 app 目录需重跑 yarn sync:providers。
+    // (/api/opencode → /api/opencodeZen),下游各 app 目录需重跑 yarn sync:providers。
     // ⚠ 别把它"简化"回 opencode —— 那会把这条产品线重新藏进厂商名里。
-    // ⚠ 也【不要】把 Zen 与 Go 合并成 endpoints[] 变体:变体只共享 provider 级
-    // models[]，而两家在售集合不同(交集从早期 4/31 涨到 26/42，
-    // 但 Go 仍有 16 条 Zen 没有的选品，如 muse-spark/longcat/mimo-2.6/免费档)，
-    // 何况计费形态不同 —— 合并后总有一份清单对当前端点是错的(见 opencodeGo 条目)。
+    // ⚠ 也【不要】把 Console 与 Go 合并成 endpoints[] 变体 —— 结构性判据只写在
+    //   opencodeGo 条目那一份(Go 的默认档不在 Console 目录里 + 变体装不下逐变体的
+    //   models[] / sessionHeader / extraHeaders)。这里【别再抄一份交集数字】:
+    //   那种数每轮复核都腐烂,而判据不会。
     // ⚠ 需要 apiKey。**匿名这条路已被上游关掉**（实测、复测稳定）：
     //   无 key → 403 FreeTierError「OpenCode's free tier can only be used from
     //   within OpenCode」；带【任意】key（哪怕是假 key）→ **付费档**才过闸变 401
@@ -1673,7 +1743,7 @@ export const PROVIDERS = {
     //   复测更正了旧结论:免费闸在【凭证校验之前】触发,所以「带任意 key 就过闸」只对
     //   【付费档】成立(付费档带假 key → 401 "Invalid credential")。免费档带(假)key
     //   仍是 403 ⇒ 「默认烂掉 = 开箱即坏」(本文件判据③)。
-    //   换付费档的另一个理由:它是官方 Zen 型号表/计费表都在册的 DeepSeek V4.1 Flash
+    //   换付费档的另一个理由:它是官方 Console 型号表/计费表都在册的 DeepSeek V4.1 Flash
     //   (输入价 $0.14/1M,付费档里最便宜的一档),与姊妹产品 opencodeGo 的默认
     //   (mimo-v2.6-flash,同为 flash 档)同类。
     //   ⚠ 免费档仍留在清单里(官方在售,本仓规则是「没证伪就不撤」),但它们对
@@ -1684,11 +1754,13 @@ export const PROVIDERS = {
     // 换谁都要 key。默认档与「匿名能不能用」这条判据就此脱钩。
     defaultModel: "deepseek-v4.1-flash",
     defaultTemperature: 0.7,
-    docs: "https://opencode.ai/docs/zen/",
-    apiKeyUrl: "https://opencode.ai/auth",
+    // docs 2026-11-04 跟到最终落点：/docs/zen/ 现在 308 → /v2/docs/console/models/
+    // （官方把文档搬进 v2 console 路径；旧地址仍通，本文件规矩是写落点、不白送一跳）
+    docs: "https://opencode.ai/v2/docs/console/models/",
+    apiKeyUrl: "https://opencode.ai/console/login",
     // 上游【完全不发 CORS 头】,且 OPTIONS 预检返回站点 404 HTML(OPTIONS → 404 且零
     // CORS 头；带 Origin 的 POST → 401 且无 ACAO)
-    // —— 浏览器直连必死在预检，这也是 Custom(llm) 填 zen 地址走不通的原因。
+    // —— 浏览器直连必死在预检，这也是 Custom(llm) 填 console 地址走不通的原因。
     // 故默认开 relay;开关保留，上游补 CORS 后用户可自行切回直连。
     // ⚠ 别被 `/v1/models` 误导:那个端点【是】开放 CORS 的(OPTIONS 200 +
     //   Access-Control-Allow-Origin: *),只有 chat/completions 不发 —— 所以
@@ -1698,7 +1770,7 @@ export const PROVIDERS = {
     // 全量一百来条不列（目录实拉八十来条、docs 的 Model list 89 条，两者不等 ——
     // 见下方「在册与否也不是判据」）—— model 字段可自由输入，冷门 SKU 自己填。排除四类：
     //   ① GPT-5.x / gpt-6 线：该线在 OpenAI 侧拒 temperature（见 openai spec 省略
-    //      defaultTemperature 的理由），而 zen 是否代为剥离无法在无 key 下验证 ——
+    //      defaultTemperature 的理由），而 console 是否代为剥离无法在无 key 下验证 ——
     //      收进来等于把一个未验证的 400 风险摆到默认下拉里。
     //   ② 代码 / 视觉特化：kimi-k2.7-code、gpt-5.x-codex、deepseek-v4-flash-vision-exp。
     //   ③ 隐身 / preview / 实测不可用：union-alpha（实测 500 后已彻底消失：
@@ -1715,7 +1787,7 @@ export const PROVIDERS = {
     //      fields" 讲，端点在 /inference/v1/systemone），属 ② 特化；
     //      muse-spark-1.3-contributor-free 【不收】—— 官方表把它标在 /inference/v1/responses。
     // ⚠⚠ 免费档的探针**读不出协议**，这条是本条目最容易踩的判据坑（曾误加过一次
-    //    muse 1.3 free，当日撤回）：Zen 的闸门顺序按付费/免费分岔 ——
+    //    muse 1.3 free，当日撤回）：Console 的闸门顺序按付费/免费分岔 ——
     //      付费档：协议 → 凭证，所以 claude/gemini/gpt/grok 直接回 400 ModelProtocolUnsupported，
     //              deepseek-v4-flash 回 401（= 过了协议闸）⇒ 【付费档的探针结论可信】。
     //      免费档：FreeTierError 抢在前面，所有 *-free 一律 403，包括 docs 标 /responses 的
@@ -1731,7 +1803,7 @@ export const PROVIDERS = {
     // deepseek-v4.1-flash 比在收的 v4-flash 贵一倍而同族已在列 —— 都不改变成本梯度，
     // 收了只是让下拉变长；要它们照样能手填。
     // 不标 thinking —— 理由是一手实测，不是"没验证"：
-    //   · 官方 /docs/zen 与 /docs/go 全文【零提及】reasoning / effort / thinking 控制参数。
+    //   · 官方 Console Models 与 Go 文档全文【零提及】reasoning / effort / thinking 控制参数。
     //   · 端点确实会【透传并校验】reasoning_effort，不是静默忽略：space-bunny-free 上
     //     `none` → 400 invalid_request_error「Upstream request failed」；`minimal/low/high`
     //     → 200；未知字段 `zzz_bogus` → 200 被忽略。⇒ 与 openrouter/cerebras 同属
@@ -1758,14 +1830,18 @@ export const PROVIDERS = {
     //   ⚠ 早前记录里的 '… is not supported' / '… for format X' 两种文案已被上面这两条取代，
     //     别再按旧字面 grep 判下架（上游换过错误词汇表）。
     // ⚠ 【/v1/models 在册 ≠ 未弃用】：docs
-    // (opencode.ai/docs/zen) 的 "Deprecated models" 表与 /v1/models 并存冲突 ——
+    // (opencode.ai/v2/docs/console/models/) 的 "Deprecated models" 表与 /v1/models 并存冲突 ——
     // minimax-m2.5 / glm-5 / kimi-k2.5 在弃用表里(8-05/5-14/8-05)却仍留在目录里。
     // 反向也成立:表里的 Claude Opus 4.1 已从目录消失。判弃用必须以 docs 表 + 探针
     // 交叉为准，只拉目录会把死 SKU 当活的收进来。
     // ⚠ 【在册与否本身也不是判据】：docs 的 Model list 比 /v1/models 多 8 条，差的那几条里
-    // exo-free / mimo-v2.5-free / ling-3.0-flash-fin-free 是【真死】(410/400)，
-    // 而 nemotron-3-ultra-free 探针 403 = 照样能路由。
+    // exo-free / mimo-v2.5-free / ling-3.0-flash-fin-free 是【真死】(410/400)。
     // ⇒ 目录缺失既可能是下架也可能是漏列，一律回到探针。
+    // ⚠ 探针词汇表 2026-11-04 再校准（同一批带上乱写的 id 当对照）：
+    //   免费档活着时回的是 `429 FreeUsageLimitError`（旧记录写的 403 FreeTierError 已换词），
+    //   而 `400 server_error "Upstream request failed: Model is unavailable."` 与乱写 id
+    //   同回 ⇒ 它证【查无此模型】。nemotron-3-ultra-free 早年那条「探针 403 = 照样能路由」
+    //   就是靠这条词汇表立的，此刻目录缺 + 探针 400 ⇒ 已按查无此模型处理（见 models[]）。
     models: [
       // 免费档（条款见上第 ④ 条。⚠ 2026-10-20 复测：全部 *-free 档探针都是
       // 403 FreeTierError —— 官方口径「free tier can only be used from within
@@ -1775,24 +1851,29 @@ export const PROVIDERS = {
       // 那条同判据：目录里查不到 + 探针有明确弃用响应 = 硬证据，不留。
       { label: "Big Pickle (free)", value: "big-pickle" },
       { label: "MiMo V2.6 Flash (free)", value: "mimo-v2.6-flash-free" },
-      // ⚠ 本 provider 的默认档(2026-10-20):space-bunny-free 被上游弃用(410)后,
-      //   官方在 410 响应里点名的替代品就是它 —— 官方型号表/计费表/Free models 段
-      //   都在册,探针 403(= 档在、仅匿名被拒)。
-      { label: "MiniMax M3.1 Flash (free)", value: "minimax-m3.1-flash-free" },
+      // ⚠ minimax-m3.1-flash-free 已删（2026-11-04）：/zen/v1/models 80 条目录里没有它，
+      //   探针回 400 "Model is unavailable"（与乱写的 id 同回 = 查无此模型）。
+      //   它曾是默认档（2026-10-20 那条注释记的换档理由全部作废：档没了）。
+      //   替代品不自动补：同族 minimax-m3 在册（付费档，探针过凭证闸）已足够表达成本梯度。
       // ⚠ ling-3.1-flash-free 已删：探针 400 "Model is unavailable"（乱写的 id 回同一条
-      // = 查无此模型），官方 Zen 型号表也 0 命中。官方免费档里现在是「LL Alpha Free」
+      // = 查无此模型），官方 Console 型号表也 0 命中。官方免费档里现在是「LL Alpha Free」
       // (ll-alpha-free)，但它探针同样 410 ModelDeprecated ⇒ 也不收。
-      { label: "Nemotron 3 Ultra (free)", value: "nemotron-3-ultra-free" },
+      // ⚠ nemotron-3-ultra-free 已删（2026-11-04）：目录缺 + 探针 400 = 查无此模型。
+      //   docs 的 Endpoints 表【还挂着它】—— 那是文档滞后，不是它能用的证据；
+      //   本条目既有判据就是「docs 表与目录冲突时以目录 + 探针为准」。
+      //   同族还活着的是 nemotron-3.5-lightning-free（下一行）与 nemotron-3.5-super-vl-free。
       { label: "Nemotron 3.5 Lightning (free)", value: "nemotron-3.5-lightning-free" },
-      // 付费档，输入价升序（$0.14 → $4.00 / 1M，Zen 价格页核对）
-      // ⚠ deepseek-v4-flash → deepseek-v4.1-flash(2026-10-20)：旧的 v4 在官方 Zen
+      // 付费档，输入价升序（$0.14 → $4.00 / 1M，Console 价格页核对）
+      // ⚠ deepseek-v4-flash → deepseek-v4.1-flash(2026-10-20)：旧的 v4 在官方 Console
       // 型号表与计费表里都已查不到（只剩 v4.1），探针 401 = 还能调，属于【旧代残留】。
       { label: "DeepSeek V4.1 Flash", value: "deepseek-v4.1-flash" },
       { label: "Qwen3.8 Flash", value: "qwen3.8-flash" },
       { label: "GLM 5.3 Flash", value: "glm-5.3-flash" },
       { label: "MiniMax M3", value: "minimax-m3" },
       { label: "Qwen3.6 Plus", value: "qwen3.6-plus" },
-      { label: "Kimi K2.6", value: "kimi-k2.6" },
+      // ⚠ kimi-k2.6 已删（2026-11-04）：K2 系整族挂官方退役日期（12 月底下线）⇒ 判据④先清。
+      //   本条是 opencode Console：它的目录【没有】k3.1-pro（免 key 实拉 80 条 0 命中），
+      //   所以这里不补接班档，要 K3.1 请走 opencodeGo / openrouter / moonshot 直连。
       { label: "GLM 5.3", value: "glm-5.3" },
       { label: "DeepSeek V4 Pro", value: "deepseek-v4-pro" },
       { label: "Kimi K3", value: "kimi-k3" },
@@ -1815,14 +1896,25 @@ export const PROVIDERS = {
     category: "aggregator",
     label: "OpenCode Go",
     endpoint: "https://opencode.ai/zen/go/v1/chat/completions",
-    // 与上方 opencodeZen(Zen)【同 host、同账号、同一把 key】,只有三处不同:路径
-    // (/zen/go/v1 vs /zen/v1)、在售 SKU 集合、计费形态 —— 所以这里是【独立条目】,
-    // 不是 opencodeZen 的 endpoints[] 变体。变体机制只共享 provider 级 models[],
-    // 而两边在售集合不同(交集已涨到 26/42，但 Go 仍有 16 条 Zen
-    // 没有的选品 —— muse-spark/longcat/mimo-2.6 系/免费档),计费形态更不同。
-    // 「填了 key」在两边含义不同:Go 是 $10/月的订阅额度(官方按每模型月限额换算:
-    // 5 小时 = 20%、周 = 50%、月 = 100%),Zen 是充值余额 —— UI 文案里别把 Go
-    // 写成"充值即用"。官方限定一个 workspace 只能有一人订阅 Go。
+    // 与上方 opencodeZen(Console)【同 host、同账号、同一把 key】—— 官方 Go 文档第 1 步
+    // 逐字:"Sign in to the OpenCode Console, subscribe to Go, Go Plus, or Go Teams,
+    // add your billing details, and copy your API key."(复核 2026-11-11,
+    // opencode.ai/v2/docs/console/go/;Console 那页的第 1 步同样是登录 console 复制 key)。
+    // 只有三处不同:路径(/zen/go/v1 vs /zen/v1)、在售 SKU 集合、计费形态 ——
+    // 所以这里是【独立条目】,不是 opencodeZen 的 endpoints[] 变体。
+    // ⚠ 判据是【结构】,不是两边交集有多大(那种数字每轮复核都腐烂,别再写回来):
+    //   ① 变体只共享 provider 级 models[],而 Go 的默认档 mimo-v2.6-flash 在 Console
+    //      目录里【没有】(Console 只有同名的 -free 档,别 grep 到它就以为在)⇒ 合并后
+    //      Console 用户会拿到一个每请求必 400 的默认模型;
+    //   ② 变体也装不下逐变体的 sessionHeader / extraHeaders —— Go 要 x-opencode-session
+    //      与自定义 User-Agent(见下),Console 两者都不要。
+    // 「填了 key」在两边含义不同:Go 是【按月订阅】的额度,Console 是按用量扣的充值余额
+    // —— UI 文案里别把 Go 写成"充值即用"(两条 provider 说明见 TranslationSettings)。
+    // ⚠ 计费这两句旧断言已被官方文档推翻(复核 2026-11-11),别再写回来:
+    //   「$10/月」只是最低档,官方 Go 页现在列 Go / Go Plus / Go Teams 三档(价格与成员数
+    //   限制看 docs,别抄进注释);「一个 workspace 只能有一人订阅」只对 Go / Go Plus 成立,
+    //   Go Teams 按成员覆盖整个 workspace。另外 Go 页的 Extra Usage 开启后,超额会回落到
+    //   Console 的按量余额 ⇒ 两者不是互斥的付费方式,别把 Go 说成"只能用完额度就停"。
     //
     // ⚠ 官方定位是【编程 agent】:"designed for OpenCode and other coding agents
     // that produce similar types of requests. Traffic is monitored for abuse that
@@ -1831,8 +1923,11 @@ export const PROVIDERS = {
     // 收紧,这家是最先被砍的。用户付的是自己的订阅钱,这句话留在这里让他知情。
     defaultModel: "mimo-v2.6-flash",
     defaultTemperature: 0.7,
-    docs: "https://opencode.ai/docs/go/",
-    apiKeyUrl: "https://opencode.ai/auth",
+    // docs 跟官方 v2 console 搬家的最终落点（同 opencodeZen；2026-11-04 实测 200）。
+    // ⚠ 这页【没有】下架表 —— 退役信息只写在 Console 那页，Go 线的在册型号要靠
+    //   /zen/go/v1/models 目录判（免 key 全量 28 条），别照着这页判下架。
+    docs: "https://opencode.ai/v2/docs/console/go/",
+    apiKeyUrl: "https://opencode.ai/console/login",
     // 默认取 mimo-v2.6-flash：它在 Go 的 chat/completions 集合里【三条价格轴同时最低】
     // (输入 $0.14、输出 $0.28、缓存读 $0.0028 每 1M),月限额又落在最高的 $60 档。
     // 由 mimo-v2.5 换代而来：官方 Go 价格表里 2.6-flash 与 2.5 三条价格轴
@@ -1841,7 +1936,7 @@ export const PROVIDERS = {
     // 质量排序这里无法验证,别把它当结论 —— 要更强的模型在下拉里换即可
     // (glm-5.3-flash 同为 $60 档、输入 $0.15)。
     //
-    // 上游与 Zen 同 host,CORS 状况逐字一致:OPTIONS 预检返回站点 404 HTML、
+    // 上游与 Console 同 host,CORS 状况逐字一致:OPTIONS 预检返回站点 404 HTML、
     // 一个 CORS 头都不发,浏览器直连必死 —— 故默认开 relay。
     //
     // ⚠ 【必须重新部署 Worker,否则网页端仍 400】。路由已在本仓库声明:
@@ -1894,7 +1989,7 @@ export const PROVIDERS = {
     //     官方公告 + 多个独立用户的实测（其中一人的可用配置就是硬编码一个 UUID 填这个头，
     //     说明要求是【存在】而非"每轮稳定"—— 稳定只影响缓存收益，所以我们发每轮 id 是
     //     它的超集：既满足存在，又拿到 routing / prompt caching）。
-    //   ⚠ Zen 文档**完全没提**任何请求头 —— 这是 Go 线的事。
+    //   ⚠ Console 文档**完全没提**任何请求头 —— 这是 Go 线的事。
     //   ⚠ PR #70 里同时加的 `x-opencode-client`：**两份文档都没有这个头**，别跟着发
     //     （那份可用的社区配置里也只设了 session 一个头，是这条判断的旁证）。
     //     客户端标识官方要求的是 User-Agent（上面 extraHeaders 已经发了）。
@@ -1923,14 +2018,14 @@ export const PROVIDERS = {
     // `400 MissingSessionID "Request is missing x-opencode-session and cannot be routed
     // efficiently"` ⇒ 对本仓这种没有原生会话头的通用客户端，声明仍然是必需的。
     // 要动这一行，先拿"不带头"的请求打一次，看还是不是 400。
-    // 不标 thinking:与 Zen 同理(同一 host、同一 key、同一透传语义) —— 一手 /docs/go
-    // 零提及 reasoning 控制；端点会透传并校验 reasoning_effort(实测证据见 Zen 条目),
+    // 不标 thinking:与 Console 同理(同一 host、同一 key、同一透传语义) —— 一手 /docs/go
+    // 零提及 reasoning 控制；端点会透传并校验 reasoning_effort(实测证据见 Console 条目),
     // 但 Go 的付费档无 key 全 401、逐 SKU 关闭语义证不了,故照旧不发。改标的护栏(别用
-    // 会发 `none` 的 shape)一并见 Zen 条目。
+    // 会发 `none` 的 shape)一并见 Console 条目。
     //
     // 模型清单：**按输入价升序**（一眼看出成本档位），每个家族只留最新一代。
     // 官方把目录按"主推协议"分成几张表（docs/go 的 Endpoints 表逐条标 /v1/chat/completions、
-    // /v1/responses、/v1/messages），但那**不是排他约束**（同一列在 Zen 上就被实测推翻过：
+    // /v1/responses、/v1/messages），但那**不是排他约束**（同一列在 Console 上就被实测推翻过：
     // 标 messages 的 qwen3.6-plus 照样走 chat/completions）。Go 侧的协议可达性【无凭证量不了】：
     // 「id 死活」：无 key 时 Go 的闸门顺序是 会话头 → id 存在 → 凭证 → 协议，能分辨的
     // 只有前两级：乱写/已下架的 id 回 400 "Model is unavailable."，在册的一律先撞
@@ -1938,16 +2033,16 @@ export const PROVIDERS = {
     // ⚠ grok-4.5 已删（探针 400 "Model is unavailable"、/zen/go/v1/models 里也没有它）
     // —— 家族里最后一个 chat/completions 成员没了，所以 grok 整族从 Go 清单退出。
     // 【不要拿 grok-4.6/4.7 顶位】：两条都在目录里（探针 401 档闸），但 docs/go 的 Endpoints 表
-    // 把它们标在 /inference/go/v1/responses，而 Zen 同族今天已经被 400 ModelProtocolUnsupported
-    // 拒掉（见 Zen 条目）—— 无凭证证不了 Go 这边还能走 chat/completions，收进来就是把一个
+    // 把它们标在 /inference/go/v1/responses，而 Console 同族今天已经被 400 ModelProtocolUnsupported
+    // 拒掉（见 Console 条目）—— 无凭证证不了 Go 这边还能走 chat/completions，收进来就是把一个
     // 可能必 400 的选项摆进默认下拉。要收必须先带 Go 订阅实测一次。
     // 这条文案仍是判据的一部分：带 "for format X"/ModelProtocolUnsupported = SKU 在但协议不通；
     // "Model is unavailable" = 查无此模型。
-    // 排除：gpt-5.6-luna / gpt-6-luna（GPT-5.x 拒 temperature，同 Zen；且 docs 标 responses）、
+    // 排除：gpt-5.6-luna / gpt-6-luna（GPT-5.x 拒 temperature，同 Console；且 docs 标 responses）、
     // 代码/视觉/全模态特化（kimi-k2.7-code、
     // deepseek-v4-flash-vision-exp、mimo-v2-omni）、preview / stealth / 定价表里没有的
     // （hy3-preview、hy4-preview、omen-alpha、union-alpha、deepseek-flash、glm-5、
-    // kimi-k2.5、mimo-v2-pro、qwen3.5-plus —— 会像 Zen 的 hy3-free 那样无声消失）。
+    // kimi-k2.5、mimo-v2-pro、qwen3.5-plus —— 会像 Console 的 hy3-free 那样无声消失）。
     // ⚠ `muse-spark-1.3-contributor` 的「条款允许拿输入训练」**不是**排除理由：字幕正文不是
     // 个人文档，被信息收集可以接受（用户明确确认）。所以 1.3 收，1.2 只是
     // 同族旧代才不收。
@@ -1965,7 +2060,7 @@ export const PROVIDERS = {
     models: [
       // 免费档（官方 Go 价格表标 Free / Unlimited；免 key 探针过格式校验）
       // ⚠ space-bunny-free 已删：实拉 /zen/go/v1/models 已无此 id，
-      // 而 Zen 的 /zen/v1/models 里它仍在 ⇒ 是 Go 这条产品线下架，不是全站下架。
+      // 而 Console 的 /zen/v1/models 里它仍在 ⇒ 是 Go 这条产品线下架，不是全站下架。
       // 再次印证两条产品线的在售集合各自独立（见本条目头段「不是 endpoints[] 变体」）。
       // 它在 Go 里本来也不是默认（默认 mimo-v2.6-flash），删除不影响开箱体验。
       { label: "Muse Spark 1.3 Contributor", value: "muse-spark-1.3-contributor" },
@@ -1976,8 +2071,8 @@ export const PROVIDERS = {
       { label: "DeepSeek V4.1 Flash", value: "deepseek-v4.1-flash" },
       { label: "LongCat 2.0", value: "longcat-2.0" },
       { label: "MiniMax M3", value: "minimax-m3" },
-      // 换代收口：Go 的目录同时在售 qwen3.6-plus 与 3.7-plus（Zen 只有 3.6-plus，
-      // 所以 Zen 那条留着），而官方价目表里 3.7-plus 又新又便宜（$0.40/$1.60 vs 3.6-plus
+      // 换代收口：Go 的目录同时在售 qwen3.6-plus 与 3.7-plus（Console 只有 3.6-plus，
+      // 所以 Console 那条留着），而官方价目表里 3.7-plus 又新又便宜（$0.40/$1.60 vs 3.6-plus
       // $0.50/$3.00）⇒ 按本条目「每族只留最新一代 / 同价或更贵的旧代不留」删掉 3.6-plus。
       { label: "Qwen3.7 Plus", value: "qwen3.7-plus" },
       { label: "MiMo V2.6 Pro", value: "mimo-v2.6-pro" },
@@ -1995,6 +2090,9 @@ export const PROVIDERS = {
       { label: "GLM 5.3", value: "glm-5.3" },
       { label: "Qwen3.8 Max", value: "qwen3.8-max" },
       { label: "Kimi K3", value: "kimi-k3" },
+      // Go 线的免 key 目录实拉有 kimi-k3.1-pro ⇒ 收。同 opencodeGo 一贯取向：
+      // 不标 thinking（自家文档零提及 reasoning 控制，逐 SKU 语义无 key 证不了）。
+      { label: "Kimi K3.1 Pro", value: "kimi-k3.1-pro" },
     ],
   },
   tokenhub: {
@@ -2080,7 +2178,7 @@ export const PROVIDERS = {
     //
     // TokenHub 是【聚合网关】,除自研 hy3 外还转售 deepseek / glm / kimi / minimax /
     // qwen / mimo，所以按本表其他聚合网关 (openrouter / opencodeZen / siliconflow /
-    // atlascloud / nvidia) 的一贯做法把主流型号列出来 —— 一个 key 一份额度就能用到
+    // nvidia) 的一贯做法把主流型号列出来 —— 一个 key 一份额度就能用到
     // 这些模型，正是聚合网关的价值所在;"那几家各自有一手 provider" 不构成不列的
     // 理由 (否则 openrouter 那份清单也不该存在)。
     // 未收录的:hy3-preview(8-31 下线)、hy-mt2-*(见上)、glm-5v-turbo(视觉)、
@@ -2156,7 +2254,12 @@ export const PROVIDERS = {
       // 关闭态发最低档 low(发 disabled 是那族不收的值)。
       { label: "GLM-5.3", value: "glm-5.3", thinking: true, thinkingLevels: ["low", "high"] },
       { label: "Kimi K3", value: "kimi-k3", thinking: true, thinkingLevels: ["low", "high"] },
-      { label: "Kimi K2.6", value: "kimi-k2.6", thinking: true },
+      // TokenHub 的型号参数表逐行有 kimi-k3.1-pro（与 kimi-k3 同排，思考列同为 ✅）
+      // ⇒ 同形态处理：没有关闭值，档位表用官方 low/high/max 里我们发得出的两档。
+      { label: "Kimi K3.1 Pro", value: "kimi-k3.1-pro", thinking: true, thinkingLevels: ["low", "high"] },
+      // ⚠ kimi-k2.6 已删（2026-11-04）：K2 系整族挂官方退役日期（12 月底下线）⇒ 判据④先清。
+      //   TokenHub 的表里它还带行，但那张表不标退役日期 —— 退役事实以 Kimi 官方
+      //   models.md 的「已下线模型」段为准，网关在册 ≠ 可长期依赖。
       { label: "MiniMax M3", value: "minimax-m3", thinking: true },
       { label: "MiMo V2.6 Pro", value: "mimo-v2.6-pro" },
     ],
@@ -2321,50 +2424,17 @@ export const PROVIDERS = {
       { label: "Qwen3.8 27B", value: "Qwen/Qwen3.8-27B" },
     ],
   },
-  atlascloud: {
-    kind: "openai-compat",
-    category: "aggregator",
-    label: "Atlas Cloud",
-    endpoint: "https://api.atlascloud.ai/v1/chat/completions",
-    // 默认接同族最新代 v4.1-flash（在册；v4 裸代仍在清单作便宜档）。
-    defaultModel: "deepseek-ai/deepseek-v4.1-flash",
-    defaultTemperature: 0.7,
-    docs: "https://www.atlascloud.ai/docs",
-    apiKeyUrl: "https://www.atlascloud.ai/console/api-keys",
-    defaultUseRelay: false,
-    // Atlas Cloud exposes a shared OpenAI-compatible endpoint for its hosted
-    // text models. Keep thinking controls hidden because support and request
-    // shape vary by the selected upstream model.
-    // ⚠ 目录的 `is_ready` 字段【不可】当下架信号（实拉全目录 78 false /
-    // 46 undefined / 0 true —— 它根本不是可用性语义；复拉 117 条仍然全 false）。
-    // 判在册以 /v1/models 字面为准。
-    // 在册新增三条（带 -aws/-az/-ccmax/-coding 后缀的镜像/渠道变体一律不收）:
-    // deepseek v4.1-flash 同族最新代、kimi-k3、claude-sonnet-5。
-    // 再补三条本家族此前没有的旗舰（逐条查过 output_modalities=["text"]、
-    // 上下文与标价都正常）:claude-opus-5.5 / gpt-6.1-sol / gemini-3.8-flash。
-    // ⚠ Sonnet 一侧【不动】：官方目录里 5.5 只有 `claude-sonnet-5.5-ccmax` 这一种写法，
-    // 带 -ccmax 后缀 = 渠道变体，按上面那条规则不收；裸 id 仍只有 sonnet-5，留着不是漏。
-    //
-    // ⚠ 逐型号文档页 `atlascloud.ai/models/{provider}/{model}/llms.txt` 会对某些型号 404
-    //   （llms.txt 里原文自称「Prefer this over scraping the HTML model page」）——
-    //   但 `/v1/models` 【免 key】可实拉（118 条），在册 8 条【全部命中】，包括那些
-    //   llms.txt 404 的 anthropic/claude-sonnet-5 与 anthropic/claude-opus-5.5。
-    //   ⇒ 逐型号文档页缺页**不是**下架信号，别据此删条目。教训：目录实拉 > 逐型号文档页。
-    //   那两条曾据"地区不可用"被删过一次又撤回——判据见头部「收型号的三条判据」②。
-    //   顺带答上"该不该换代"那一问：Atlas 的 sonnet 线在售最新裸 id 就是 `claude-sonnet-5`，
-    //   5.5 只有 `claude-sonnet-5.5-ccmax`（渠道后缀，按本条目既有规则不收），
-    //   opus 线则 `claude-opus-5.5` 是裸 id 在册 ⇒ 两条都不是滞后项，不换。
-    models: [
-      { label: "DeepSeek V4 Flash", value: "deepseek-ai/deepseek-v4-flash" },
-      { label: "DeepSeek V4.1 Flash", value: "deepseek-ai/deepseek-v4.1-flash" },
-      { label: "Kimi K3", value: "moonshotai/kimi-k3" },
-      { label: "Claude Sonnet 5", value: "anthropic/claude-sonnet-5" },
-      { label: "Qwen3.8 Max", value: "qwen/qwen3.8-max" },
-      { label: "Claude Opus 5.5", value: "anthropic/claude-opus-5.5" },
-      { label: "GPT 6.1 Sol", value: "openai/gpt-6.1-sol" },
-      { label: "Gemini 3.8 Flash", value: "google/gemini-3.8-flash" },
-    ],
-  },
+  // Atlas Cloud(atlascloud.ai) 已整家删除 —— 2026-11-11 按头部「收 provider 的门槛」
+  // 判为转售商，四类红旗全中。取证全是它自己官网上的原文:
+  //   · about 页自称 "Authorized U.S. Reseller" + "inference aggregation"；
+  //   · pricing 页并列 Our vs Official，折扣标到 -50% / -60% / -70%；
+  //   · credits 文档写着兑换码 / 推荐奖励 / 活动赠送 + 加密货币充值 + 365 天过期；
+  //   · 营销文案里的 GPU cloud 路径(/gpu-cloud、/gpu、/devpods、/serverless-gpu)
+  //     全部 404 ⇒ 「自有算力」只存在于文案；免 key 目录里过半是 Claude/GPT/Gemini
+  //     闭源系，还带 -aws / -az / -ccmax / -coding 渠道后缀。
+  // 与 openrouter / opencodeZen / opencodeGo 的区别不在"有没有机房"，而在那三家是
+  // 知名聚合平台、且平价 + 主体可查 + 零红旗（见头部门槛的从宽判据）。删的是整家不是
+  // 几个型号：它没有任何自研模型，留着就是给用户一个羊毛分销入口。
   // GitHub Models(models.github.ai) 已整家退役 —— 2026-07-30 官方 changelog
   // 「GitHub Models is now retired. The playground, model catalog, inference API,
   // and bring your own key (BYOK) are no longer available to any customer」,
@@ -2404,15 +2474,21 @@ export const PROVIDERS = {
     // 默认 deepseek-ai/deepseek-v4.1-flash：NIM 在本表的存在理由
     // 就是「DeepSeek 通道」，此前退到 gemma-4-31b-it 纯粹因为 v4-pro/v4-flash 双双
     // 失效、目录里没活的 DeepSeek；如今 v4.1-flash 在册无弃用 → 回归本位。
-    // 新收的三条：kimi-k3（目录里唯一在售的 Kimi 旗舰）、
-    // nemotron-3.5-lightning-30b-a3b（Nemotron 3.5 新代）、glm-5.3-flash（补 GLM 通道）。
+    // 在册的非 DeepSeek 档：nemotron-3-ultra-550b-a55b / nemotron-3.5-lightning-30b-a3b
+    // （Nemotron 两代）、gpt-oss-20b、gemma-4-31b-it、glm-5.3-flash（补 GLM 通道）。
+    // 曾经收过又撤的两条都记在下面 models[] 的行内注释里（kimi-k2.6、
+    // nemotron-3-super-120b-a12b —— 撤因都是「不在免费端点面」，不是目录缺席）。
     //
-    // 计费口径：NIM 公共端点【就是免费节点】(限额/限速，不按 token 收费) ——
-    // developer.nvidia.com 官方博客 2024-07-29
-    // 「Access to NVIDIA NIM Now Available Free to Developer Program Members」
-    // (托管端点发放 free credits)；官方开发者论坛回复原文
-    // 「Many of you are using free tier API access to NVIDIA NIMs」，默认限速
-    // 40 RPM。OpenRouter 上 NVIDIA 托管节点标 $0 为第三方旁证。
+    // 计费口径（2026-11-04 实测改写过，别照旧文理解）：以前这里写着「NIM 公共端点【就是】
+    // 免费节点」，依据是 2024-07-29 官方博客与论坛回复。那句话现在【不准确】：
+    // 免 key 目录 integrate.api.nvidia.com/v1/models 有 85 条，而【带免费端点的只有 45 条】
+    // （官方筛选口径 nimType=nim_type_preview，页面筛选项写作 "Free Endpoint / 45"）——
+    // 目录里其余的是自带部署/付费档，公共免费端点根本不承载。
+    // ⇒ 本 provider 的选品规则跟着改成【只留免费端点】：型号必须出现在
+    //   https://build.nvidia.com/models?filters=nimType%3Anim_type_preview&pageSize=96 上。
+    //   判据分工别忘了：/v1/models 只有 id/created/owned_by，【看不出免费与否】，
+    //   两件事不能互相当证据；而卡面的 slug 用连字符写 GLM（glm-5-3-flash），
+    //   api id 是 z-ai/glm-5.3-flash —— 按字面比对会把在售免费档判成缺席（本轮差点误删）。
     // 免费 ⇒ 默认选品只看译文质量不看成本，flash 档是最优解；
     // 清单里的 Nemotron/Gemma 仍是能力/延迟对照档。
     //
@@ -2433,22 +2509,24 @@ export const PROVIDERS = {
     //   （BINARY_EFFORT_VENDORS），界面只给 [Off/On]，不摆一个发不出去的档位。
     //   ⚠ 这个形状是【推断 + 未带 key 实测】—— 下次带 key 实测出可用的形态后，
     //   按实测同时改 llm.ts 的形态与这里的行（形态 + 档位表）。
+    // 选品规则（2026-11-04 与维护者定）：**只从免费端点面里选，取质量与名气最大的 10 个**。
+    // 品池判据：build.nvidia.com 的免费筛选页（nimType=nim_type_preview，页面计数 45 张卡）
+    // ∩ 免 key 目录 integrate.api.nvidia.com/v1/models（85 条，代表【公共端点真能调】）
+    // = 25 条；拼写要归一（GLM 卡面 glm-5-3-flash，api id z-ai/glm-5.3-flash）。
+    // 从 25 条里筛掉三类：① 专属翻译 NIM（riva-translate-4b-instruct-v2 —— 本文件头部
+    // 「AI provider 不放专属翻译模型」那条规则，它只有 37 语种，误导远大于收益）；
+    // ② 非对话特化（3 条 embed、3 条 safety/guard、bolt 投机解码、ising-calibration 量子）；
+    // ③ 官方标 Public Preview 的档（mistral-large-4-1t-a52b、step-5-preview —— 与 mistral
+    // 条目撤 large-4-0 同一取向，preview 随时可能被撤，而下拉是给人默认用的）。
+    // 剩 10 条按「家族旗舰 → 快速档 → 名气对照档」排。⚠ 质量排序按上游家族的公开定位，
+    // 【不是逐档实测译文质量】—— 真要按质量重排得带 key 逐条跑一遍，那是另一件事。
     models: [
       { label: "Nemotron 3 Ultra 550B", value: "nvidia/nemotron-3-ultra-550b-a55b" },
-      // gpt-oss / kimi / glm / nemotron 都不打 thinking:nvidia 的注入是 DeepSeek 专属
-      // chat_template_kwargs 嵌套，发给非 DeepSeek 型号是错误形状;gpt-oss 推理本就
-      // 默认开 (medium),其余按上游自己的默认走。三条新收型号同此判据。
-      { label: "GPT-OSS 20B", value: "openai/gpt-oss-20b" },
-      { label: "Gemma 4 31B IT", value: "google/gemma-4-31b-it" },
-      { label: "Nemotron Super 120B", value: "nvidia/nemotron-3-super-120b-a12b" },
+      // Nemotron 3.5 的强档（120B/12B active，带视觉输入）—— 目录与免费面都在，
+      // 补它是因为删掉 super-120b-a12b(非免费) 后 Nemotron 3.5 只剩 lightning 一档。
+      { label: "Nemotron 3.5 Super VL 120B", value: "nvidia/nemotron-3.5-super-vl-120b-a12b" },
       { label: "Nemotron 3.5 Lightning 30B", value: "nvidia/nemotron-3.5-lightning-30b-a3b" },
-      // ⚠ 2026-10-20 实拉 NIM 官方型号清单(GET https://integrate.api.nvidia.com/v1/models,
-      //   免 key,81 条)逐条对过:上面七条在册,唯独 Kimi 那条写错了 —— NIM 只提供
-      //   moonshotai/kimi-k2.6,**没有 kimi-k3**(k3 只在 NIM 之外的线上有)。
-      //   原先写的 moonshotai/kimi-k3 选下去必然取不到模型 ⇒ 改为官方在册的 k2.6。
-      { label: "Kimi K2.6", value: "moonshotai/kimi-k2.6" },
-      { label: "GLM-5.3 Flash", value: "z-ai/glm-5.3-flash" },
-      // NIM 上唯一在册的 DeepSeek 对话新代，
+      // NIM 上唯一在册的 DeepSeek 对话新代（= 本 provider 的默认档），
       // 打 thinking 标签（NIM 默认关思考，见上面那段）。
       // ⚠ NIM 侧【表达不了档位】：官方卡片只提到参考实现的 1~100 数字档，而
       //   chat_template_kwargs 里没有档位那个字段（我们以前把 reasoning_effort 塞
@@ -2457,6 +2535,35 @@ export const PROVIDERS = {
       //   线格式只发 {chat_template_kwargs:{thinking:true}}。
       //   ⚠ 那个形状是【推断 + 未带 key 实测】（卡片本身零旋钮）。
       { label: "DeepSeek V4.1 Flash", value: "deepseek-ai/deepseek-v4.1-flash", thinking: true },
+      // 1M 上下文的名气档，免费面上标 Frontier Coding / agentic；同样不打 thinking
+      // —— nvidia 的思考注入是 DeepSeek 专属模板键，发给非 DeepSeek 型号是错误形状。
+      { label: "MiniMax M3.1 Flash", value: "minimaxai/minimax-m3.1-flash" },
+      // gpt-oss 推理本就默认开 (medium)，其余按上游自己的默认走 ⇒ 都不打 thinking 标签。
+      { label: "GPT-OSS 20B", value: "openai/gpt-oss-20b" },
+      { label: "Gemma 4 31B IT", value: "google/gemma-4-31b-it" },
+      // Google 的扩散式对话档（26B/4B active）。收它是因为品池里【名气大且免费】的
+      // 文本档就这些；翻译质量未实测，与 gemma-4-31b-it 构成同门对照。
+      { label: "DiffusionGemma 26B A4B", value: "google/diffusiongemma-26b-a4b-it" },
+      // ⚠ 代际上的取舍，留给下次复核：meta/llama-3.2-90b-vision-instruct 是品池里唯一
+      //   在册的 Llama，代际偏老（2024 代），靠「Llama」的名气进榜；同族没有更新的在
+      //   免费面上，所以不算违反「同族只留最新一代」。
+      // GLM 能用（2026-11-04 免 key POST 探针逐条实测，别被两个假象骗了）：
+      //   · 卡面 slug 是连字符形态 glm-5-3-flash，但【那个不是 api id】—— POST 打它回
+      //     404 "page not found"；点号形态 z-ai/glm-5.3-flash 回 401（路由在、卡在鉴权）。
+      //     NVIDIA 的闸顺序是【先查模型路由、后鉴权】⇒ 401 = 在册能调，404 = 查无此模型。
+      //     ⚠ 这与 opencode 相反（它先鉴权，无 key 判不了协议），两家的探针词汇表别混用。
+      //   · 此处原先写的「卡上挂着 PREVIEW=true / AVAILABLE=false」是【误读】：payload 里
+      //     attributes 与 resourceId 用扁平正则配对会整体错一格，那对属性属于上一条卡；
+      //     GLM 卡自己的徽章只有 Free Endpoint（没有 Preview / Downloadable）。
+      { label: "Llama 3.2 90B Vision", value: "meta/llama-3.2-90b-vision-instruct" },
+      { label: "GLM-5.3 Flash", value: "z-ai/glm-5.3-flash" },
+      // ⚠ nvidia/nemotron-3-super-120b-a12b 已删（2026-11-04）：型号还在免 key 目录里，
+      //   但【不在免费端点面】—— 免费筛选页整份 dump 里连一次都没出现（对照：在册的
+      //   deepseek/lightning 各出现 15 次）。按「只留免费端点」撤下拉项；
+      //   要用它的人手填 nvidia/nemotron-3-super-120b-a12b 仍打通（目录在册）。
+      // ⚠ moonshotai/kimi-k2.6 已删（同上）：同样不在免费端点面（"kimi" 零出现）。
+      //   不是改名问题：2026-10-20 那次实拉目录把 kimi-k3 纠成 k2.6 是对的，目录里
+      //   k2.6 至今在册 —— 撤它的理由只有【公共端点不免费】。要 Kimi 通道请选 moonshot。
     ],
   },
   azureopenai: {
@@ -2596,7 +2703,9 @@ export const PROVIDERS = {
       // （它的 README 示例却写 20128，与源码矛盾，以源码为准）；OmniRoute 是 `${PORT:-20128}`。
       // 模型名各自填：9Router 形如 `cc/claude-opus-4-6`（前缀/模型），OmniRoute 可用 `auto` 走零配置路由。
       { label: "9Router", url: "http://127.0.0.1:20127/v1/chat/completions", docs: "https://github.com/decolua/9router" },
-      { label: "OmniRoute", url: "http://127.0.0.1:20128/v1/chat/completions", docs: "https://github.com/diegosouzapw/OmniRoute" },
+      // OmniRoute 仓 2026-11 从 diegosouzapw/ 迁到 cheaper-inference/（旧地址 301 过去，
+      // 本文件按「写最终落点」的规矩直接改成新 owner，别白送一跳）
+      { label: "OmniRoute", url: "http://127.0.0.1:20128/v1/chat/completions", docs: "https://github.com/cheaper-inference/OmniRoute" },
       // ⚠ 2026-10-21 复核更正:主机 api.together.xyz → api.together.ai。官方 OpenAI 兼容页逐字
       //   「base_url to https://api.together.ai/v1」,docs/together.ai/llms.txt 全文 0 次提 .xyz;
       //   .xyz 实测仍活着(401 = 主机在),但已非官方主机,随时可能停 ⇒ 用官方那个。
@@ -2705,11 +2814,16 @@ export const PROVIDERS = {
       { label: "DeepSeek V4.1 Flash", value: "deepseek-v4.1-flash", thinking: true },
       { label: "DeepSeek V4 Flash", value: "deepseek-v4-flash", thinking: true },
       { label: "DeepSeek V4 Pro", value: "deepseek-v4-pro", thinking: true },
-      { label: "Kimi K2.8 Preview", value: "kimi-k2.8-preview" },
+      // ⚠ kimi-k2.8-preview 已删（2026-11-04）：K2 系整族挂官方退役日期（12 月底下线）
+      //   ⇒ 判据④先清；它同时也是 preview 档（「preview 不进下拉」第二条理由）。
       // 撤 thinking 标:火山概览页原文「默认开启思考，不支持关闭思考」。
       // 证据分歧留痕:阿里直供文档称其 kimi-k3 可传 enable_thinking false ——
       // 不同通道不同 wire，按火山自家页面处理。
       { label: "Kimi K3", value: "kimi-k3" },
+      // 火山 Coding Plan 的套餐型号表逐条有 kimi-k3.1-pro（2026-11-04 实拉该页），
+      // 按同 provider 的 kimi-k3 惯例不打 thinking 标 —— 火山侧的关闭语义要按火山页面证，
+      // 不能从 Kimi 官方口径推。
+      { label: "Kimi K3.1 Pro", value: "kimi-k3.1-pro" },
     ],
   },
   alibaba: {
@@ -2888,8 +3002,8 @@ export const URL_IS_PRIMARY_CRED: ReadonlySet<string> = new Set(["llm", "transla
  *   - deeplx: empty URL falls back to our public THIRD_PARTY_ENDPOINTS.deeplx
  *
  * ⚠ 不是「上游有免费档」就能进来 —— 判据是【浏览器里那条零配置路径真的能跑】，
- * 而且要能稳定地跑。opencodeZen 曾短暂进过这个集合:zen 的 *-free SKU 匿名直连实测
- * 200(2026-08-06),看起来完美符合。但 zen 的免费档本来就很容易 429(实测撞到过
+ * 而且要能稳定地跑。opencodeZen 曾短暂进过这个集合:console 的 *-free SKU 匿名直连实测
+ * 200(2026-08-06),看起来完美符合。但 console 的免费档本来就很容易 429(实测撞到过
  * FreeUsageLimitError、Retry-After 77681 秒 ≈21.6 小时),而这个集合的语义是
  * 「零配置也能直接用」—— 一次成功的探测不等于这条路可依赖。
  * 三个留下的成员没有这个问题：各自要么公共端点无额度概念，要么按请求放行。
@@ -3678,7 +3792,7 @@ export const classifyEndpointUrl = (service: string, url: string | undefined): E
  *       9Router / OmniRoute,全是 127.0.0.1):结构上【永远】不能中转,远端够不着,
  *       转发过去就是把请求变成探测 Worker 自身内网的探针;
  *     · 两个第三方聚合(Together AI / Fireworks AI):固定、公开、HTTPS,与
- *       siliconflow / atlascloud / groq / cerebras 同型,理应和它们一样拿到逃生口
+ *       siliconflow / groq / cerebras 同型,理应和它们一样拿到逃生口
  *       路由(origin 层封禁不可预测,deepseek WAF-403 就是先例)。
  *   所以判定不写死"llm 在/不在",而是交给 getBuiltinRelayAllowlist 逐条过滤 ——
  *   芯片增删时它自己是对的那一份,不需要人来同步这张名单。

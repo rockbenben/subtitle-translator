@@ -334,6 +334,8 @@
     "deeplxUrlExtra": "선택 사항, 비워두면 저희가 제공하는 공용 서버를 사용합니다",
     "urlOptionalExtra": "선택 사항 — 비워두면 기본 엔드포인트를 사용합니다",
     "customApiHelp": "OpenAI 호환 API 엔드포인트를 모두 사용할 수 있습니다 — 로컬 (Ollama / LM Studio / vLLM) 또는 클라우드 (Together AI / Fireworks AI 등)",
+    "opencodeConsoleHelp": "Console과 OpenCode Go는 같은 OpenCode 계정의 두 가지 요금제이며 API 키를 함께 씁니다. 여기서는 잔액에서 사용량만큼 차감되고, Go는 월 구독입니다. 선택할 수 있는 모델도 다릅니다.",
+    "opencodeGoHelp": "Go와 OpenCode Console은 같은 OpenCode 계정의 두 가지 요금제이며 API 키를 함께 씁니다. 여기서는 월 구독 사용량이 제공되고, Console은 잔액에서 사용량만큼 차감됩니다. 선택할 수 있는 모델도 다릅니다.",
     "urlAutoCompleted": "URL이 자동 완성되었습니다",
     "modelExtra": "LLM 모델 이름, 사용 가능한 모델은 API 문서를 참조하세요",
     "temperatureExtra": "샘플링 온도 (0-2): 수치가 높을수록 출력이 무작위적이고, 낮을수록 확정적입니다. 권장 값: 0.2-0.8",
@@ -448,7 +450,7 @@
     },
     "jsonTranslate": {
       "title": "i18n JSON 번역",
-      "description": "i18n 언어 파일 일괄 번역, JSONPath 매칭 및 키 이름 매핑 지원"
+      "description": "i18n 언어 파일 일괄 번역, JSONPath 매칭 및 필드 매핑 지원"
     },
     "mdTranslator": {
       "title": "Markdown 번역",
@@ -491,7 +493,7 @@
       "description": "필드 값 매핑 및 마이그레이션, JSONPath 위치 지정 지원"
     },
     "jsonValueSwapper": {
-      "title": "JSON 키 값 교환",
+      "title": "JSON 필드 값 교환",
       "description": "두 필드의 값 원클릭 교환"
     },
     "jsonNodeInserter": {
@@ -520,7 +522,7 @@
     },
     "braceExpander": {
       "title": "중괄호 확장",
-      "description": "템플릿 한 줄로 완전한 목록을 일괄 생성 — bash 중괄호 확장 문법 그대로"
+      "description": "템플릿 한 줄로 완전한 목록을 일괄 생성 — Bash 중괄호 확장과 호환"
     }
   },
   "navigation": {
@@ -639,6 +641,8 @@
     "as": "아삼어",
     "gom": "콘카니어",
     "sa": "산스크리트어",
+    "dv": "디베히어",
+    "or": "오리야어",
     "th": "태국어",
     "lo": "라오어",
     "my": "미얀마어",
@@ -665,6 +669,15 @@
     "ts": "총가어",
     "mg": "말라가시어",
     "ln": "링갈라어",
+    "aa": "아파르어",
+    "ff": "풀라니어",
+    "rw": "르완다어",
+    "lg": "루간다어",
+    "rn": "룬디어",
+    "sn": "쇼나어",
+    "so": "소말리어",
+    "tw": "트위어",
+    "yo": "요루바어",
     "ht": "아이티 크리올어",
     "qu": "케추아어",
     "ay": "아이마라어",

@@ -334,6 +334,8 @@
     "deeplxUrlExtra": "Opcional, deixe vazio para usar nosso servidor público",
     "urlOptionalExtra": "Opcional — deixe vazio para usar o endpoint padrão",
     "customApiHelp": "Funciona com qualquer endpoint de API compatível com OpenAI — servidores locais (Ollama / LM Studio / vLLM) ou serviços em nuvem (Together AI / Fireworks AI / etc).",
+    "opencodeConsoleHelp": "Console e OpenCode Go são dois planos da mesma conta OpenCode e usam a mesma chave de API: aqui você paga pelo uso com o seu saldo, enquanto Go é uma assinatura mensal. Os modelos disponíveis também são diferentes.",
+    "opencodeGoHelp": "Go e OpenCode Console são dois planos da mesma conta OpenCode e usam a mesma chave de API: aqui você tem uma cota de assinatura mensal, enquanto Console cobra pelo uso com o seu saldo. Os modelos disponíveis também são diferentes.",
     "urlAutoCompleted": "URL completada automaticamente",
     "modelExtra": "Nome modelo LLM, ver documentação API",
     "temperatureExtra": "Temperatura (0-2): Mais alto = mais aleatório, mais baixo = mais determinístico. Recomendado: 0.2-0.8",
@@ -396,9 +398,9 @@
   "tools": {
     "subtitleTranslator": {
       "title": "Tradutor Legendas",
-      "description": "Tradução em lote SRT, ASS, SSA, VTT, SBV, LRC. 120+ idiomas.",
+      "description": "Tradução em lote SRT, ASS, SSA, VTT, SBV, LRC. 130+ idiomas.",
       "metaTitle": "Tradutor de Legendas | Lote SRT/VTT/ASS + Bilíngue",
-      "metaDescription": "Tradutor IA de legendas SRT, ASS, SSA, VTT, SBV, LRC. 30+ motores: DeepSeek, Claude, GPT, DeepL. 120+ idiomas, timecodes, bilíngue.",
+      "metaDescription": "Tradutor IA de legendas SRT, ASS, SSA, VTT, SBV, LRC. 30+ motores: DeepSeek, Claude, GPT, DeepL. 130+ idiomas, timecodes, bilíngue.",
       "faq": [
         {
           "q": "Quais formatos de legenda são suportados? É possível traduzir SRT, ASS, SSA, VTT, SBV e LRC?",
@@ -448,7 +450,7 @@
     },
     "jsonTranslate": {
       "title": "Tradutor JSON i18n",
-      "description": "Tradução em lote de arquivos de idioma i18n, com correspondência JSONPath e mapeamento de chaves"
+      "description": "Tradução em lote de arquivos de idioma i18n, com correspondência JSONPath e mapeamento de campos"
     },
     "mdTranslator": {
       "title": "Tradutor Markdown",
@@ -491,7 +493,7 @@
       "description": "Mapeamento e migração de valores com JSONPath"
     },
     "jsonValueSwapper": {
-      "title": "Trocador Valor JSON",
+      "title": "Trocador de Valores de Campos JSON",
       "description": "Trocar valores de dois campos em um clique"
     },
     "jsonNodeInserter": {
@@ -520,7 +522,7 @@
     },
     "braceExpander": {
       "title": "Expansor de chaves",
-      "description": "Expande um modelo em uma lista completa, sintaxe do bash"
+      "description": "Expande um modelo em uma lista completa, compatível com a expansão de chaves do Bash"
     }
   },
   "navigation": {
@@ -639,6 +641,8 @@
     "as": "Assamês",
     "gom": "Concani",
     "sa": "Sânscrito",
+    "dv": "Divehi",
+    "or": "Oriya",
     "th": "Tailandês",
     "lo": "Laosiano",
     "my": "Birmanês",
@@ -665,6 +669,15 @@
     "ts": "Tsonga",
     "mg": "Malgaxe",
     "ln": "Lingala",
+    "aa": "Afar",
+    "ff": "Fulani",
+    "rw": "Kinyarwanda",
+    "lg": "Luganda",
+    "rn": "Kirundi",
+    "sn": "Shona",
+    "so": "Somali",
+    "tw": "Twi",
+    "yo": "Iorubá",
     "ht": "Crioulo haitiano",
     "qu": "Quéchua",
     "ay": "Aimara",

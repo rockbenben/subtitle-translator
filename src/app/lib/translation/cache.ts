@@ -21,6 +21,8 @@ export type CacheSuffixInput = {
    * give every line a unique key and effectively disable caching.
    */
   userPrompt?: string;
+  /** Document supplied to an LLM prompt that references ${fullText}. */
+  fullText?: string;
   /**
    * Active glossary terms for the run's target language. They alter upstream
    * output two ways: LLMs get a per-request prompt block (a deterministic
@@ -43,7 +45,7 @@ const hashableTerms = (terms?: GlossaryTerm[]): string[][] | undefined => {
  * config affects output (LLM-style and Qwen-MT), hashes the relevant fields
  * into the suffix so config changes invalidate stale entries automatically.
  */
-export const generateCacheSuffix = ({ sourceLanguage, targetLanguage, translationMethod, config, systemPrompt, userPrompt, glossaryTerms }: CacheSuffixInput): string => {
+export const generateCacheSuffix = ({ sourceLanguage, targetLanguage, translationMethod, config, systemPrompt, userPrompt, fullText, glossaryTerms }: CacheSuffixInput): string => {
   const base = `${targetLanguage}_${sourceLanguage}_${translationMethod}`;
   const terms = hashableTerms(glossaryTerms);
 
@@ -53,6 +55,7 @@ export const generateCacheSuffix = ({ sourceLanguage, targetLanguage, translatio
       temperature: config?.temperature ?? 1.0,
       systemPrompt: normalizePrompt(systemPrompt, DEFAULT_SYSTEM_PROMPT),
       userPrompt: normalizePrompt(userPrompt, DEFAULT_USER_PROMPT),
+      fullText,
       // Effort goes into the hash only when deriveThinkingParams says it'll
       // actually be sent (tagged model + user picked an effort). Stale entries
       // for untagged SKUs don't bloat the cache key. JSON.stringify drops the
