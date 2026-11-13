@@ -36,7 +36,7 @@ import { getRetryConfig, rateLimitGate, abortableSleep, isAuthError, isRetryable
 // 两份名单分在两个文件里，下一个自托管 provider 志必只加一处，而漏掉这一
 // 处只会让错误提示退化（静默）。PREFLIGHT_PROBE_METHODS 同类，已记在 AGENTS.md。
 import { URL_IS_PRIMARY_CRED } from "./registry";
-import { extractTranslatedLinesWithNumbers, findAdjacentDuplicateSlots, buildContextPrompt, isBlankLine, prefillFromLineCache } from "./contextTranslation";
+import { extractTranslatedLinesWithNumbers, wrapTranslateTaggedLine, extractTaggedSingleLine, findAdjacentDuplicateSlots, buildContextPrompt, isBlankLine, prefillFromLineCache } from "./contextTranslation";
 import { isAbortError, formatErrorWithCause } from "@/app/utils/errorUtils";
 
 // Caps context window padding around a batch — without this, a large
@@ -588,6 +588,52 @@ const translateSingle = async (text: string, cacheSuffix: string, config: Pipeli
   }
 };
 
+// 单行【重试】的统一入口(dupSlots 营救 + 术语严格重译共用,#68):请求必须
+// 保持批处理的 [TRANSLATE_n] 标记数据格式 —— 平文本单行(祈使句、感叹词这类
+// 短句)在模型眼里像一句聊天,常换来对话体回复("I don't see any SRT file
+// content...")并被整段当作译文写进字幕。这里沿用与批请求相同的包装与上下文
+// 提示词,并只认标记提取:无标记的闲聊一律丢弃(空串 → 调用方的缺口/软填/
+// 重试机制接管),绝不当作译文入库。
+const translateTaggedSingleLineRetry = async (
+  sourceLine: string,
+  cacheSuffix: string,
+  config: PipelineRuntimeConfig,
+  ctx: RunCtx,
+  documentType: "subtitle" | "markdown" | "generic" = "subtitle",
+  fullText?: string,
+): Promise<string> => {
+  // The exact request text this retry goes out as — also the cache key's text
+  // half (translateCore keys on params.text + cacheSuffix), needed below to
+  // purge the entry a discarded reply left behind.
+  const taggedRequest = wrapTranslateTaggedLine(sourceLine);
+  const raw = await translateSingle(
+    taggedRequest,
+    cacheSuffix,
+    {
+      ...config,
+      // 与上下文批请求同一形状:构造出的提示词保留字面 ${content} 占位符 ——
+      // 标记块(params.text)由服务层最后插入(getAIModelPromptParts)。
+      userPrompt: buildContextPrompt(config.userPrompt ?? DEFAULT_USER_PROMPT, 1, documentType),
+    },
+    ctx,
+    fullText,
+  );
+  const extracted = extractTaggedSingleLine(raw || "", sourceLine);
+  // 丢弃的闲聊回复【必须】从缓存里清掉(#68 review)。translateCore 在提取之前
+  // 就把服务原始输出写进了缓存 —— 每个 200 都是它的"成功",提取发生在这之后的
+  // 调用方。不清的话下一次重试同一句时(重跑、下一层缺口重试、术语重译)会直接
+  // 读回这条坏回复:零请求、同样提取失败、同样软填,用户看到的是"重跑多少次都
+  // 翻不出这一行",只能手动清 IndexedDB / 删缓存文件。与批级 hasRealGap、
+  // chunk 路径 mismatch 的既有纪律一致:凡是"响应拿回来了但不可用"都要清缓存。
+  //
+  // 只在确实启用缓存时清(useCache:false 的运行根本没写这条,别去误删上一轮
+  // 带缓存运行留下的条目)。
+  if (!extracted && config.useCache !== false && ctx.cache) {
+    await ctx.cache.delete(generateCacheKey(taggedRequest, cacheSuffix));
+  }
+  return extracted;
+};
+
 // 错译校验 + 一次定向重试(仅 LLM)。Leak-through 只能修「漏翻」(术语原文
 // 残留);当源行含术语、而 leak-through 后的译文里仍没有指定译法时,模型把
 // 术语译成了别的词 —— 用只列违规术语的 STRICT 块单行重译一次,二者取违规
@@ -604,8 +650,11 @@ const enforceGlossaryOnLine = async (sourceLine: string, rawTranslated: string, 
     // 重试键按违规集哈希分流:不能与首次请求同键(否则缓存只会重放刚才的
     // 违规响应),不同违规集(首译输出非确定)也不互相串。
     const retrySuffix = `${cacheSuffix}_gv${SparkMD5.hash(JSON.stringify(violations.map((v) => [v.source, v.target])))}`;
-    const retried = await translateSingle(sourceLine, retrySuffix, { ...config, strictGlossaryTerms: violations }, ctx, fullText);
-    const second = applyGlossary(ctx, retried ?? "", config.targetLanguage);
+    const retried = await translateTaggedSingleLineRetry(sourceLine, retrySuffix, { ...config, strictGlossaryTerms: violations }, ctx, "subtitle", fullText);
+    // 无标记回复已被提取层丢弃(空串)= 重试失败,保留首译 —— 别把空串当成
+    // "零违规的更优译文"收下(能走到重试说明源行有内容,空译不可能是合法产出)。
+    if (!retried) return first;
+    const second = applyGlossary(ctx, retried, config.targetLanguage);
     if (findGlossaryViolations(sourceLine, second, terms).length < violations.length) return second;
     return first;
   } catch (error) {
@@ -790,9 +839,11 @@ const translateWithContext = async (
           const j = dupSlots[d];
           if (run?.signal.aborted) throw new Error("Translation aborted");
           try {
-            const one = await translateSingle(batchSources[j], cacheSuffix, runtimeConfig, ctx, fullText);
-            // 换行拍平成空格,同 chunk 营救:单行译文里混进换行会破坏逐行装配。
-            translatedBatch[j] = one && one.trim() ? one.replace(/\r?\n/g, " ") : "";
+            // 带标记重试(#68):无标记的闲聊回复在提取层就被丢弃,这里拿到
+            // 的要么是可装配的译文,要么是空串(→ 下方缺口机制)。
+            const one = await translateTaggedSingleLineRetry(batchSources[j], cacheSuffix, runtimeConfig, ctx, documentType, fullText);
+            // 换行已由提取层拍平成空格,同 chunk 营救;空/缺失 → "" 落进缺口机制。
+            translatedBatch[j] = one && one.trim() ? one : "";
           } catch (err) {
             if (isAuthError(err)) throw err;
             ctx.noteError(err);
