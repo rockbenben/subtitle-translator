@@ -602,8 +602,12 @@ const translateTaggedSingleLineRetry = async (
   documentType: "subtitle" | "markdown" | "generic" = "subtitle",
   fullText?: string,
 ): Promise<string> => {
+  // The exact request text this retry goes out as — also the cache key's text
+  // half (translateCore keys on params.text + cacheSuffix), needed below to
+  // purge the entry a discarded reply left behind.
+  const taggedRequest = wrapTranslateTaggedLine(sourceLine);
   const raw = await translateSingle(
-    wrapTranslateTaggedLine(sourceLine),
+    taggedRequest,
     cacheSuffix,
     {
       ...config,
@@ -614,7 +618,20 @@ const translateTaggedSingleLineRetry = async (
     ctx,
     fullText,
   );
-  return extractTaggedSingleLine(raw || "", sourceLine);
+  const extracted = extractTaggedSingleLine(raw || "", sourceLine);
+  // 丢弃的闲聊回复【必须】从缓存里清掉(#68 review)。translateCore 在提取之前
+  // 就把服务原始输出写进了缓存 —— 每个 200 都是它的"成功",提取发生在这之后的
+  // 调用方。不清的话下一次重试同一句时(重跑、下一层缺口重试、术语重译)会直接
+  // 读回这条坏回复:零请求、同样提取失败、同样软填,用户看到的是"重跑多少次都
+  // 翻不出这一行",只能手动清 IndexedDB / 删缓存文件。与批级 hasRealGap、
+  // chunk 路径 mismatch 的既有纪律一致:凡是"响应拿回来了但不可用"都要清缓存。
+  //
+  // 只在确实启用缓存时清(useCache:false 的运行根本没写这条,别去误删上一轮
+  // 带缓存运行留下的条目)。
+  if (!extracted && config.useCache !== false && ctx.cache) {
+    await ctx.cache.delete(generateCacheKey(taggedRequest, cacheSuffix));
+  }
+  return extracted;
 };
 
 // 错译校验 + 一次定向重试(仅 LLM)。Leak-through 只能修「漏翻」(术语原文
