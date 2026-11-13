@@ -842,7 +842,7 @@ const translateWithContext = async (
             // 带标记重试(#68):无标记的闲聊回复在提取层就被丢弃,这里拿到
             // 的要么是可装配的译文,要么是空串(→ 下方缺口机制)。
             const one = await translateTaggedSingleLineRetry(batchSources[j], cacheSuffix, runtimeConfig, ctx, documentType, fullText);
-            // 换行已由提取层拍平成空格,同 chunk 营救;空/缺失 → "" 落进缺口机制。
+            // 提取保留正文换行,字幕装配时再处理;空/缺失 → "" 落进缺口机制。
             translatedBatch[j] = one && one.trim() ? one : "";
           } catch (err) {
             if (isAuthError(err)) throw err;

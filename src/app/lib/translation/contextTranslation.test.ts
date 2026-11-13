@@ -19,10 +19,10 @@ test("wrapTranslateTaggedLine wraps with index 0 by default", () => {
   expect(wrapTranslateTaggedLine("Hello", 3)).toBe("[TRANSLATE_3]Hello[/TRANSLATE_3]");
 });
 
-test("extractTaggedSingleLine keeps the tagged translation and flattens newlines", () => {
+test("extractTaggedSingleLine keeps the tagged translation and preserves newlines", () => {
   expect(extractTaggedSingleLine("[TRANSLATE_0]别乱来[/TRANSLATE_0]", "Don't mess around")).toBe("别乱来");
-  // 换行拍平成空格,同 chunk 营救:单行译文里混进换行会破坏逐行装配。
-  expect(extractTaggedSingleLine("[TRANSLATE_0]好的\n行[/TRANSLATE_0]", "OK")).toBe("好的 行");
+  // JSON 和 Markdown 共用提取器,内部换行由格式装配器处理。
+  expect(extractTaggedSingleLine("[TRANSLATE_0]好的\n行[/TRANSLATE_0]", "OK")).toBe("好的\n行");
 });
 
 test("extractTaggedSingleLine discards tagless prose and whitespace-only tags", () => {

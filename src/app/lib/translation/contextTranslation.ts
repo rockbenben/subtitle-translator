@@ -254,13 +254,12 @@ export const wrapTranslateTaggedLine = (text: string, index = 0): string => `[TR
  * without a parseable [TRANSLATE_0] tag — chat-style prose apologies, code
  * fences, preambles — returns "" so the caller discards it and hands the slot
  * back to its existing gap / soft-fill / retry machinery; tagless prose must
- * NEVER be written into the subtitle as the translation (#68). Newlines are
- * flattened to spaces, same convention as the chunk rescue: a stray newline
- * inside a single line's translation breaks line-by-line reassembly.
+ * NEVER be written into the subtitle as the translation (#68). Embedded
+ * newlines are preserved here; subtitle assembly handles physical line layout.
  */
 export const extractTaggedSingleLine = (response: string, sourceLine: string): string => {
   const line = extractTranslatedLinesWithNumbers(response || "", 1, [sourceLine])[0];
-  return line && line.trim() ? line.replace(/\r?\n/g, " ") : "";
+  return line && line.trim() ? line : "";
 };
 
 /**

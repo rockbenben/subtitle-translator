@@ -47,14 +47,14 @@ const makeTranslate = (cache: PipelineCache, scripted: (params: TranslateTextPar
     // 探针:本文件只关心单行标记重试写进缓存的那条键。批请求也写缓存(引擎自己的
     // 单行缓存回填会读),但这里不需要断言它们。
     const text = params.text ?? "";
-    const reply = scripted(params, call);
-    if (params.useCache !== false) {
+    const key = params.useCache !== false ? generateCacheKey(text, params.cacheSuffix) : undefined;
+    if (key) {
       // 与 translateCore 一致:命中即返回,未命中才写。
-      const key = generateCacheKey(text, params.cacheSuffix);
       const hit = await cache.get(key);
       if (hit) return hit;
-      await cache.set(key, reply);
     }
+    const reply = scripted(params, call);
+    if (key) await cache.set(key, reply);
     return reply;
   };
   return { translate, calls: () => call };
@@ -129,4 +129,29 @@ test("the eviction key is the wrapped tagged request text", () => {
   const wrapped = wrapTranslateTaggedLine(SOURCE[0]);
   const key = generateCacheKey(wrapped, "suffix");
   expect(key).toBe(generateCacheKey(`[TRANSLATE_0]${SOURCE[0]}[/TRANSLATE_0]`, "suffix"));
+});
+
+test("a discarded strict glossary retry preserves the first result and is not replayed on the next run", async () => {
+  const cache = makeCache();
+  const source = "Hello, commander\nGet ready";
+  const first = "你好，司令\n准备好";
+  const expected = "你好，指挥官\n准备好";
+  let strictCalls = 0;
+  const { translate } = makeTranslate(cache, (params) => {
+    if (!params.glossaryBlock?.includes("STRICT GLOSSARY")) return first;
+    strictCalls++;
+    return strictCalls === 1 ? TAGLESS_PROSE : wrapTranslateTaggedLine(expected);
+  });
+  const config = { ...runtimeConfig(), independent: true };
+  const deps = { cache, translate, getGlossaryTerms: () => [{ source: "commander", target: "指挥官", targetLang: "Simplified Chinese" }] };
+
+  const discarded = await translateLines([source], config, deps);
+  expect(strictCalls).toBe(1);
+  expect(discarded.lines).toEqual([first]);
+  expect([...cache.store.values()]).not.toContain(TAGLESS_PROSE);
+
+  const retried = await translateLines([source], config, deps);
+  expect(strictCalls).toBe(2);
+  expect(retried.lines).toEqual([expected]);
+  expect(retried.failures).toEqual([]);
 });

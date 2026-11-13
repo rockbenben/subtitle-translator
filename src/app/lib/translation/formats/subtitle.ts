@@ -787,7 +787,7 @@ export const restoreAssAfterTranslation = (translatedLines: string[], tagMaps: A
     if (map.verbatim !== undefined) return map.verbatim;
 
     // 1. 将真实换行转回 ASS 硬换行 \N(LLM 自己插的换行也走这条)
-    let restored = line.replace(/\n/g, "\\N");
+    let restored = line.replace(/\r\n?|\n/g, "\\N");
 
     // 2. 回填行内保护槽。只在该行确实有槽时才跑,免得动到正文里的 "#1#" 之类。
     //    先按精确形态 ###n### 回填 —— 宽松网先跑会把「正文字面 #1 紧贴 token」
@@ -1378,7 +1378,9 @@ export const assembleSubtitleOutput = (input: {
    */
   assAutoWrap?: boolean;
 }): string => {
-  const { lines, contentIndices, contentLines, translatedLines, fileType, assContentStartIndex, tagMaps, isBilingual, isOriginalFirst, bilingualFormat, assNativeRebuild, assStyle, sourceLanguage, exportLang, softFilledIndices: softFilled, emptiedIndices: emptied, assAutoWrap } = input;
+  const { lines, contentIndices, contentLines, fileType, assContentStartIndex, tagMaps, isBilingual, isOriginalFirst, bilingualFormat, assNativeRebuild, assStyle, sourceLanguage, exportLang, softFilledIndices: softFilled, emptiedIndices: emptied, assAutoWrap } = input;
+  // 每个槽位装配为一个物理行;ASS 的硬换行已由 restore 转成字面 \\N。
+  const translatedLines = input.translatedLines.map((line) => line.replace(/\r\n?|\n/g, " "));
   // 双语 ASS 两条路径共用的包折回调:译文/原文按各自字号独立估宽(29 vs 38 字)。
   const wrapText = assAutoWrap
     ? (text: string, role: "translation" | "original") => wrapAssDialogueText(text, assStyle[role].fontSize)
