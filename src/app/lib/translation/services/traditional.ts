@@ -618,34 +618,9 @@ const localCompletionsTranslate = async (opts: { serviceName: string; params: Tr
   return results.join("\n");
 };
 
-// NOTE: the former GET /models health check was removed deliberately — some
-// LM Studio builds don't route GET /v1/models at all ("Unexpected endpoint or
-// method... Returning 200 anyway", with no CORS headers on the fallback), so
-// the probe hard-blocked translation while the server and Test both worked.
-// translategemma now goes through the same runReachabilityProbe as every other
-// probed method (a real /v1/completions request — identical wire path to the
-// Test button).
-//
-// ⚠️ DO NOT switch this to /v1/chat/completions with structured `content`.
-//
-// Empirically tested 2026-05-06 against LM Studio + translategemma-4b-it:
-// even though the request body is correctly received (LM Studio's debug log
-// shows `content` as our [{type, source_lang_code, target_lang_code, text}]
-// array intact), the chat template's first validator still rejects with:
-//   "User role must provide `content` as an iterable with exactly one item.
-//    That item must be a `mapping(type:'text' | 'image', source_lang_code,
-//    target_lang_code, text:string|none, image:string|none)`."
-//
-// Likely cause: LM Studio's OpenAI-compat layer flattens multimodal `content`
-// arrays into a single string before invoking the chat template (text-only-
-// model back-compat — OpenAI spec says non-vision models receive string
-// content). The string IS iterable in jinja/minja, but its length is the
-// character count (e.g. "Hello, world!" → 13), failing `length != 1`.
-// Adding `image: null` doesn't help — also tested.
-//
-// /v1/completions bypasses the chat template entirely: we pre-render the
-// prompt (buildTranslategemmaPrompt) and the runtime tokenizes it as-is.
-// Works uniformly in LM Studio, llama.cpp server, vLLM, HF TGI.
+// 采用预渲染 prompt POST 到 /v1/completions：
+// 避免本地运行时（如 LM Studio）将结构化 content 展平成字符串导致 chat template 校验失败，
+// 统一兼容 LM Studio、llama.cpp、vLLM、HF TGI 等运行时。
 export const translategemma: TranslationService = async (params) => {
   const sourceInfo = getTranslategemmaLangInfo(params.sourceLanguage);
   const targetInfo = getTranslategemmaLangInfo(params.targetLanguage);

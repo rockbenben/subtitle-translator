@@ -233,41 +233,15 @@ export const languages: LanguageOption[] = [
 // 3. Update the appropriate Set below and the verification date.
 // 4. Run `yarn test` — registry.test.ts will catch any obvious mismatch.
 // ════════════════════════════════════════════════════════════════════════════
-// DeepLX (community free endpoint) — the JSONRPC backend speaks ONLY classic
-// DeepL's language set, NOT the next-gen 110+ list the official API gained in
-// 2025. The old assumption "DeepLX ≡ DeepL coverage" was empirically false:
-// live-probed every master code against the shipped default endpoint
-// (THIRD_PARTY_ENDPOINTS.deeplx) — everything outside this allowlist is rejected
-// with HTTP 400. ⚠ 但 400 文案不统一:hi 回 {code:-32600,data.what:
-// "Invalid target_lang."},vi/he 回 {code:1156049,message:"Invalid Request"}(无 data.what)
-// —— 拦不拦由本 allowlist 决定,不靠解析错误体。
-// 全量重打这台镜像（122 条 master code）：31 条【全部】照旧回真译文，allowlist 外
-// 全部被拒 ⇒ 这张表没有漂移。zh-hant 也照旧：回 200 但响应里 `to` 被归一成 "ZH"（见下）。
-// ⚠ 这台 Cloudflare Worker 镜像【按 UA 拦人】：python-urllib 默认的 UA 会让 122 条
-// 全回 403，看起来像"镜像挂了/整家不能用"，而 curl 不带 UA 与带浏览器 UA 都是 200。
-// 下次批量探它必须显式设一个正常 UA，并把 403 当成"探测方式的问题"而不是厂商事实。
-// ⚠ 上游已改版:官方 deeplx 自 v1.2 起走 oneshot 端点(oneshot-free.www.deepl.com)、接受
-//   38 码(含 vi/he/es-419/en-gb/en-us)、alternatives 恒 null。但我们默认镜像【仍是 legacy
-//   JSONRPC 面】(响应带 jsonrpc 字段、alternatives 非 null),且实测【照样拒 vi/he】。⇒ 这份
-//   31 码表是按【该 legacy 后端】校准的,不按上游文档;用户自建 v1.2+ 会更宽,但新码先拦、
-//   probed 后才放(安全侧)。
-// zh-hant 仍故意排除:ZH-HANT 回 200 但给简体(逐字节等于 ZH-HANS),
-// silently-wrong 比 upfront block 差;source_lang=auto 实测可用。denylist = master − 本 allowlist。
+// DeepLX (community free endpoint) — 默认镜像为经典 DeepL 语言集（JSONRPC 后端，共 31 门语言）。
+// 不支持官方 110+ 扩展集；zh-hant 故意排除（返回简体文本）。
 const DEEPLX_SUPPORTED: ReadonlySet<string> = new Set([
   "en", "zh", "es", "fr", "de", "ja", "ko", "ar", "ru", "pt-br", "pt-pt", "id", "it",
   "pl", "uk", "nl", "ro", "el", "hu", "sv", "cs", "bg", "da", "fi", "nb", "sk", "lt",
   "sl", "lv", "et", "tr",
 ]);
 
-// MiLMMT-46 allowlist — Xiaomi's 46-language MT model (Gemma3-12B derivative,
-// self-hosted like TranslateGemma). Transcribed from the model card's
-// "Supported Languages" list (2026-08-22); the card names 46 LANGUAGES, which
-// map to 47 master codes because "Portuguese" covers both our pt-br and pt-pt.
-// Same allowlist→denylist derivation as DeepLX: a new master code defaults to
-// blocked until someone checks it against the card, which is the safe side —
-// the model card warns performance "is not guaranteed" outside these 46.
-// Notable absences for subtitle users: uk (Ukrainian), sr (Serbian), the Baltic
-// three (lt/lv/et), and most Indic beyond bn/hi/ta/ur.
+// MiLMMT-46 allowlist — Xiaomi's 46-language MT model (Gemma3-12B derivative).
 const MILMMT_SUPPORTED: ReadonlySet<string> = new Set([
   "ar", "az", "bg", "bn", "ca", "cs", "da", "de", "el", "en", "es", "fa", "fi", "fr",
   "he", "hi", "hr", "hu", "id", "it", "ja", "kk", "km", "ko", "lo", "ms", "my", "nb",
@@ -275,90 +249,40 @@ const MILMMT_SUPPORTED: ReadonlySet<string> = new Set([
   "ur", "uz", "vi", "yue", "zh", "zh-hant",
 ]);
 
-// Azure Translator denylist — used by both `azure` (official, keyed) and
-// `edgeFreeAPI` (Edge's free front to the same engine). One Set, two entries.
+// Azure Translator 与 Edge Free API 不支持列表。
+// 两者底层同为 Azure Translator 引擎，但 Edge 免费端点对 be / lb 支持文本翻译。
 const AZURE_UNSUPPORTED = new Set([
   "jv",
   // 2026-05 additions:
   "ace", "an", "ay", "br", "ceb", "eo", "gn", "la", "lb", "lmo",
   "oc", "om", "pag", "pam", "qu", "sa", "scn", "su", "ts", "wo", "yi",
-  // 2026-05-26 additions (Transliterate-only, no Text Translation):
+  // Transliterate-only, no Text Translation:
   "be", "tg",
-  // 2026-11-09: official Cloud Text Translation table supports dv/or/rw/
-  // lg→lug/rn→run/sn/so/yo. Only these three additions are absent.
-  // https://learn.microsoft.com/en-us/azure/ai-services/translator/language-support
+  // Cloud Text Translation 未支持:
   "aa", "ff", "tw",
 ]);
 
+const EDGE_UNSUPPORTED = new Set([...AZURE_UNSUPPORTED].filter((c) => c !== "be" && c !== "lb"));
+
 const UNSUPPORTED_LANGS: Record<string, Set<string>> = {
-  // Official DeepL API (next-gen, 110+ languages via the project proxy).
-  // These 6 are the only master codes absent from DeepL's supported-languages
-  // table; confirmed by live-probing EVERY master code against the API with a
-  // real key: 114 accept, exactly these 6 reject (`an`/`yue`/`fil→TL` all
-  // translate fine).
-  // ⚠ 下次这样测，两个坑都踩过（都会把"能用"报成"不能用"）：
-  //   · 裸 HTTP 的 `text` 必须是【数组】—— 传字符串整批回 400 "Value for 'text' not
-  //     supported."，122 条全灭看着像 DeepL 挂了。我们走 deepl-node SDK，SDK 自己
-  //     把字符串包成数组（services/traditional.ts 传 string 是对的，别去"修"它）。
-  //   · 语言码要先过 toDeepLTarget 再发（en→EN-US、zh→ZH-HANS、fil→TL，其余大写）——
-  //     拿小写裸码去探测也是 122 条全灭。
-  // 判"能不能用"要认 HTTP 码：只有 400 才是厂商拒绝，网络异常(EXC)不是 —— 上一轮
-  // 批量扫里 lmo/qu 各抖动一次，若按聚合读数直接扩容 denylist，就凭空封掉两种真能翻的语言。
+  // Official DeepL API: 官方最新支持 110+ 语言，排除以下未支持的 master 语言码。
   deepl: new Set([
     "kn", "am", "ug", "si", "lo", "km",
-    // 2026-11-09: all 11 absent from the official next-gen supported-language
-    // table (raw HTML's languageData; markdown extraction omits that table).
-    // https://developers.deepl.com/docs/getting-started/supported-languages
     "dv", "or", "aa", "ff", "rw", "lg", "rn", "sn", "so", "tw", "yo",
   ]),
-  // DeepLX: derived from the live-probed classic allowlist above — NOT the
-  // official DeepL list (see DEEPLX_SUPPORTED comment).
+  // DeepLX: 由上述 31 门经典语言集合派生。
   deeplx: new Set(languages.map((l) => l.value).filter((v) => v !== "auto" && !DEEPLX_SUPPORTED.has(v))),
 
-  // Google Cloud Translation / GTX (Free). Both go through Google's NMT backend.
-  // `an` (Aragonese) is the only master code Google rejects: live-probing every
-  // master code against the shipped endpoint (translate-pa, en→X, 2026-07-28)
-  // returned real translations for all of them except `an`, which 400s with
-  // "invalid argument". Note Google DOES translate Wolof (`wo`) despite older
-  // sources attributing it to Meta NLLB only.
-  // 免 key 全量重跑 translate-pa 后结论一字未变 —— 只有 `an` 回 400；这口活着、`sl=auto`
-  // 照样回检测语言。emoji【原样保留】（16 个语种实测：旗帜、肤色修饰符、ZWJ 连字族都在），
-  // 此前这里记的「emoji 被换成 `？？`」已经不成立，两条免费口都不再出现那种降级。
-  //
-  // `prs` (Dari) is NOT denied — Google's code for it is `fa-AF`;
-  // services/traditional.ts remaps before sending
-  // (live-verified 2026-06-07: prs → 400, fa-AF → 200, both directions).
-  //
-  // 2026-11-09: all 11 additions live-probed through gtxFreeAPI (translate-pa):
-  // two sentences each, en/auto→X and X/auto→en; real translated text in both
-  // directions. Both tw and ak work and give identical forward translations;
-  // aa also works despite being absent from Cloud's documented NMT table.
-  // Controls: an returns 400; zz-invalid returns 200 echoing the source, which
-  // confirms HTTP success alone is not evidence of language support.
-  // Official keyed Cloud API is checked against its own NMT table instead:
-  // https://docs.cloud.google.com/translate/docs/languages
-  // aa is absent; Twi is documented as ak (Cloud-only remap in traditional.ts).
+  // Google Cloud Translation / GTX (Free)：基于 Google NMT 后端。
+  // an (Aragonese) 为 Google 不支持语言；Cloud API 另未收录 aa。
+  // prs (Dari) 通过 services/traditional.ts 重映射为 fa-AF。
   gtxFreeAPI: new Set(["an"]),
   google: new Set(["an", "aa"]),
 
-  // Azure Translator. Note `be` and `tg` are
-  // denied because they appear only in Azure's Transliterate API table, NOT in
-  // Text Translation, which is the API we hit.
-  // Shared with edgeFreeAPI below — Edge 免费口现走 edge.microsoft.com/translatetext，
-  // 底下仍是同一台 Azure Translator 引擎（免 key、免 auth），所以语言覆盖与 azure 一致。
   azure: AZURE_UNSUPPORTED,
-  edgeFreeAPI: AZURE_UNSUPPORTED,
+  edgeFreeAPI: EDGE_UNSUPPORTED,
 
-  // Qwen-MT (阿里百炼,需 key ⇒ 不像 gtx/deeplx 能 live-probe;规则就是"不在官方表内 ⇒ deny")。
-  // 官方 machine-translation 页有【两张表】(逐字复核两次，三档对比表始终是
-  // plus 92 / flash 92 / lite 31，92 语种那张表的标题也还写着
-  // 「qwen-mt-plus/flash/turbo 支持的语言 (92种)」—— 所以 92 口径对 turbo 照样成立):
-  //   · plus / flash / turbo 各 92 语种 —— 下面这份 denylist 按 92 表推,对这三支成立;
-  //   · 【qwen-mt-lite 只有 31 语种】,另有一张 lite 专表。
-  // ⚠ 已知缺口:本 map 按 provider 键控、不分模型(见 isMethodSupportedForLanguage),
-  //   92 口径套到 lite 上会多放行一批 lite 其实不支持的码 —— 后果只是选到不支持语种时
-  //   出劣质/兜底译文,不是崩。真修要把 language gate 改成 model-aware、再给 lite 叠一层
-  //   deny(牵动 UI 语言下拉随选中模型变),是否为这一个模型值当机制留给维护者裁。
+  // Qwen-MT: 阿里百炼机器翻译（按官方 92 语种表配置不支持集合）。
   // Official: https://help.aliyun.com/zh/model-studio/machine-translation
   qwenMt: new Set([
     "ky", "tk", "tg", "mn", "ml", "pa", "bho", "ha", "am", "ug",
