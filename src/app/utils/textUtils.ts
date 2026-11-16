@@ -445,7 +445,10 @@ export const escapeRegExp = (str: string): string => str.replace(/[.*+?^${}()|[\
 
 // 大小写转换：CJK 字符无大小写区分，\w/\b 天然只命中拉丁字母数字，中英混排安全。
 // title/sentence 先整体转小写再逐词/逐句首字母大写，确保 "HELLO world" 这类混合大小写也能规整。
-export type CaseConvertMode = "upper" | "lower" | "title" | "sentence";
+// Simple English title rules, applied independently to each line.
+const TITLE_SMALL_WORDS = /^(a|an|and|as|at|but|by|en|for|if|in|nor|of|on|or|per|the|to|up|v|vs|via|with)$/;
+
+export type CaseConvertMode = "upper" | "lower" | "title" | "sentence" | "titleize";
 export const convertCase = (text: string, mode: CaseConvertMode): string => {
   switch (mode) {
     case "upper":
@@ -454,6 +457,18 @@ export const convertCase = (text: string, mode: CaseConvertMode): string => {
       return text.toLowerCase();
     case "title":
       return text.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
+    case "titleize":
+      return text.split(/(\r\n|\r|\n)/).map((line) => {
+        const words = [...line.matchAll(/\S+/g)].filter((match) => /[\p{L}\p{N}]/u.test(match[0]));
+        const first = words[0]?.index;
+        const last = words.at(-1)?.index;
+        return line.replace(/\S+/g, (token, offset: number) => {
+          const lower = token.replace(/[A-Z]/g, (letter) => letter.toLowerCase());
+          const word = lower.replace(/^[\p{P}\p{S}]+|[\p{P}\p{S}]+$/gu, "");
+          if (offset !== first && offset !== last && TITLE_SMALL_WORDS.test(word)) return lower;
+          return lower.replace(/[a-z]/, (letter) => letter.toUpperCase());
+        });
+      }).join("");
     case "sentence":
       // 句首 = 文本/行开头，或 . ! ? 之后的空白
       return text.toLowerCase().replace(/(^\s*\w|[.!?]\s+\w)/gm, (c) => c.toUpperCase());
