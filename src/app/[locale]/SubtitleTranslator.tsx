@@ -351,7 +351,8 @@ const SubtitleTranslator = () => {
         // 译文的东西,而失败面板同屏正说着"失败的行已保留原文"。
         // 规则与 CLI 共用同一份实现:lib/translation/softFill。
         const softFilled = new Set<number>();
-        const rawTranslatedLines = await translateBatch(cleanLines, translationMethod, currentTargetLang, fileIndex, totalFiles, contextAware ? "subtitle" : undefined, {
+        const rawTranslatedLines = await translateBatch(cleanLines, translationMethod, currentTargetLang, fileIndex, totalFiles, "subtitle", {
+          contextAware,
           lineNumbers: sourceLineNumbers,
           fileName,
           collectSoftFilled: softFilled,
@@ -583,7 +584,7 @@ const SubtitleTranslator = () => {
                 style={{ whiteSpace: "normal", height: "auto", minHeight: 40 }}
                 onClick={() => {
                   setExportedLangs([]);
-                  return uploadMode === "single" ? runTranslation(performTranslation, sourceText, contextAware ? "subtitle" : undefined) : runBatchTranslation(performTranslation, multipleFiles, readFile, tSubtitle("noFileUploaded"));
+                  return uploadMode === "single" ? runTranslation(performTranslation, sourceText) : runBatchTranslation(performTranslation, multipleFiles, readFile, tSubtitle("noFileUploaded"));
                 }}
                 disabled={isTranslating}
                 loading={isTranslating}>
@@ -822,7 +823,7 @@ const SubtitleTranslator = () => {
         failedLangs={failedLangs}
         reason={failedReason}
         disabled={isTranslating}
-        onRetry={() => runRetry(() => (uploadMode === "single" ? runTranslation(performTranslation, sourceText, contextAware ? "subtitle" : undefined) : runBatchTranslation(performTranslation, multipleFiles, readFile, tSubtitle("noFileUploaded"))))}
+        onRetry={() => runRetry(() => (uploadMode === "single" ? runTranslation(performTranslation, sourceText) : runBatchTranslation(performTranslation, multipleFiles, readFile, tSubtitle("noFileUploaded"))))}
       />
 
       {/* Results Section */}

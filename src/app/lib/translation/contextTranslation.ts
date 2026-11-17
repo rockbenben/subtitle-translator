@@ -36,7 +36,7 @@ export const isBlankLine = (line: string | undefined): boolean => !(line ?? "").
  * that had succeeded.) Mutates `translatedLines` in place, write-once: only a
  * still-`undefined` slot whose source line is non-blank can be filled, so blank
  * pre-fills and already-decided slots are never clobbered. `cacheGetMany` reads
- * the cached translations for a batch of source lines IN ONE transaction
+ * the cached translations for source lines and their positions in one transaction
  * (result order matches input; null = miss) — a rejected batch lookup is
  * treated as all-miss so those lines just translate normally. Reading all
  * lookups through one transaction (vs one `get` per line) is what keeps a
@@ -45,7 +45,7 @@ export const isBlankLine = (line: string | undefined): boolean => !(line ?? "").
 export const prefillFromLineCache = async (
   contentLines: string[],
   translatedLines: (string | undefined)[],
-  cacheGetMany: (texts: string[]) => Promise<(string | null)[]>,
+  cacheGetMany: (texts: string[], indices: number[]) => Promise<(string | null)[]>,
   /**
    * 命中项落盘【前】的加工。必须传术语表 enforcement:同一批缓存键里混着两种
    * 内容 —— 上下文路径存的是已 enforce 的成品,而 translateCore(逐行/chunk
@@ -74,7 +74,7 @@ export const prefillFromLineCache = async (
 
   let hits: (string | null)[];
   try {
-    hits = await cacheGetMany(pending.map((i) => contentLines[i]));
+    hits = await cacheGetMany(pending.map((i) => contentLines[i]), pending);
   } catch {
     return; // treat a failed batch lookup as all-miss — the lines translate normally
   }
@@ -261,6 +261,33 @@ export const extractTaggedSingleLine = (response: string, sourceLine: string): s
   const line = extractTranslatedLinesWithNumbers(response || "", 1, [sourceLine])[0];
   return line && line.trim() ? line : "";
 };
+
+const NUMBERED_MARKER_RE = /\[\/?(?:TRANSLATE|TRANSLTranslate)_(\d+)\]/gi;
+
+/** Keep the outer marker distinct from any numbered markers quoted in the dialogue. */
+export const getStandaloneSubtitleIndex = (sourceLine: string): number => {
+  const used = new Set(Array.from(sourceLine.matchAll(NUMBERED_MARKER_RE), (match) => Number(match[1])));
+  let index = 0;
+  while (used.has(index)) index++;
+  return index;
+};
+
+/** Standalone requests have one target. Multiple complete blocks are ambiguous. */
+export const extractStandaloneSubtitleLine = (response: string, index: number): string => {
+  const matches = (response || "").matchAll(NUMBERED_TRANSLATE_RE);
+  const first = matches.next().value;
+  if (!first || Number(first[1]) !== index || !matches.next().done) return "";
+  // The validated outer pair is the protocol. Marker-like dialogue inside it
+  // is literal content, so stripping those tokens would corrupt the cue.
+  const line = first[2].trim();
+  return isBlankLine(line) ? "" : line;
+};
+
+export const buildTaggedSubtitlePrompt = (baseUserPrompt: string): string =>
+  baseUserPrompt.replace(
+    "${content}",
+    () => `Translate the single subtitle line below. Return [TRANSLATE_X]translation[/TRANSLATE_X], keeping the number from the input tags. Apply any other output instructions to the text inside the tags. Do not add text outside the tags.\n\n\${content}`,
+  );
 
 /**
  * Build context-aware translation prompt — wraps the batch instructions around

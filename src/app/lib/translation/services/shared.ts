@@ -520,11 +520,13 @@ export const fetchJSON = async (url: string, init?: RequestInit): Promise<unknow
 // 思考时第二段会原样进译文。仍锚定串首:正文里合法的字面 "<think>" 永不被碰。
 const LEADING_THINK_BLOCK_RE = /^(?:\s*<think>[\s\S]*?<\/think>)+\s*/i;
 
+export class InvalidTranslationResponseError extends Error {}
+
 export const getOpenAICompatContent = (data: unknown, serviceName: string): string => {
   const choice = (data as { choices?: Array<{ message?: { content?: string }; finish_reason?: string }> } | null)?.choices?.[0];
   const content = choice?.message?.content;
   if (typeof content !== "string") {
-    throw new Error(`Invalid response format from ${serviceName} API`);
+    throw new InvalidTranslationResponseError(`Invalid response format from ${serviceName} API`);
   }
   // finish_reason==="length" = truncated at max_tokens. content is a half
   // translation; returning it would silently poison the cache. Throw with
@@ -539,7 +541,7 @@ export const getClaudeContent = (data: unknown): string => {
   const response = data as { content?: Array<{ type?: string; text?: string }>; stop_reason?: string } | null;
   const contentArray = response?.content;
   if (!Array.isArray(contentArray) || contentArray.length === 0) {
-    throw new Error("Invalid response format from Claude API");
+    throw new InvalidTranslationResponseError("Invalid response format from Claude API");
   }
   // Anthropic's equivalent of finish_reason==="length". Claude's max_tokens is
   // hardcoded in the service (Anthropic API requires it); long inputs can still
@@ -552,7 +554,7 @@ export const getClaudeContent = (data: unknown): string => {
   // guarantee block order — positional [0] is only safe on plain responses.
   const textBlock = contentArray.find((block) => block.type === "text");
   if (!textBlock || typeof textBlock.text !== "string") {
-    throw new Error("Invalid response format from Claude API (no text block found)");
+    throw new InvalidTranslationResponseError("Invalid response format from Claude API (no text block found)");
   }
   return textBlock.text.trim();
 };

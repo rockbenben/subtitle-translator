@@ -30,8 +30,8 @@ import { softFilledIndices, transformSkippingSoftFilled, mapSkippingSoftFilled, 
 /** CLI 驱动提供给 handler 的能力(翻译、清理、命令行开关)。 */
 export interface CliFormatContext {
   /**
-   * 把一组文本送进翻译流水线。documentType 传 "subtitle"/"markdown" 走上下文
-   * 批处理;传 undefined 走非上下文路径。opts.independent 标记这组文本是
+   * 把一组文本送进翻译流水线。documentType 传 "subtitle"/"markdown" 默认走上下文
+   * 批处理;meta.contextAware 可关闭上下文而保留文档类型。opts.independent 标记这组文本是
    * 互相独立的单元(JSON 值)而非连续文档 —— 组装线据此剥掉 chunkSize、引擎
    * 据此否决 LLM 上下文 marker 批(【两条】批处理路径都要压住,详见
    * PipelineRuntimeConfig.independent),强制逐条往返:chunk 路径的「内嵌换行
@@ -131,7 +131,7 @@ const subtitleHandler: CliFormatHandler = {
     // --no-context 显式关闭。contentIndices 把 cue 文本映射回物理行 ——
     // 失败报告指向用户在文件里能找到的行号,而不是「第 N 条可译行」。
     const useContext = triState(ctx.flags.context, ctx.flags["no-context"], SUBTITLE_DEFAULTS.contextAware);
-    const outcome = await ctx.translate(cleanLines, useContext ? "subtitle" : undefined, { lineNumbers: contentIndices.map((i) => i + 1), fileName: ctx.fileName });
+    const outcome = await ctx.translate(cleanLines, "subtitle", { contextAware: useContext, lineNumbers: contentIndices.map((i) => i + 1), fileName: ctx.fileName });
 
     // removeChars 只作用于【原始译文】,且必须在 ASS 标签还原【之前】——
     // 还原之后再清理会损坏 \N 硬换行、{\anX} 标签与绘图坐标行。

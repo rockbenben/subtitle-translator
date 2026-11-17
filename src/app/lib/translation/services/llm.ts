@@ -29,7 +29,7 @@ import {
 import { getAIModelPromptParts } from "../utils";
 import { isNetworkError } from "@/app/utils/errorUtils";
 
-import { fetchJSON, normalizeNumber, normalizePrompt, requireApiKey, requireUrl, completeOpenAICompatUrl, PROXY_ENDPOINTS, getOpenAICompatContent, getClaudeContent, RELAY_HINT_MARKER } from "./shared";
+import { fetchJSON, normalizeNumber, normalizePrompt, requireApiKey, requireUrl, completeOpenAICompatUrl, PROXY_ENDPOINTS, getOpenAICompatContent, getClaudeContent, InvalidTranslationResponseError, RELAY_HINT_MARKER } from "./shared";
 
 // Prepare prompts common to all LLM services. The user prompt comes back both
 // joined (`prompt`) and split at ${content} (`promptPrefix` / `promptSuffix`):
@@ -402,9 +402,9 @@ export const gemini: TranslationService = async (params) => {
       throw Object.assign(error as Error, { errorHintKey: "errorHintGeminiKey" });
     }
     throw error;
-  })) as { candidates?: Array<{ content?: { parts?: Array<{ text?: string; thought?: boolean }> }; finishReason?: string }> };
+  })) as { candidates?: Array<{ content?: { parts?: Array<{ text?: string; thought?: boolean }> }; finishReason?: string }> } | null;
 
-  const candidate = data.candidates?.[0];
+  const candidate = data?.candidates?.[0];
   // Gemini's equivalent of finish_reason==="length". Server default
   // maxOutputTokens (~8192) can overflow on long inputs. Same "max_tokens
   // reached" marker → non-retryable in retry.ts.
@@ -422,7 +422,7 @@ export const gemini: TranslationService = async (params) => {
   const parts = candidate?.content?.parts;
   const text = Array.isArray(parts) ? parts.filter((p) => p.thought !== true && typeof p.text === "string").map((p) => p.text).join("") : undefined;
   if (typeof text !== "string" || (!text && !parts?.length)) {
-    throw new Error("Invalid response format from Gemini API");
+    throw new InvalidTranslationResponseError("Invalid response format from Gemini API");
   }
   return text.trim();
 };

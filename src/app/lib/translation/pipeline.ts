@@ -23,11 +23,12 @@ import SparkMD5 from "spark-md5";
 import type { RuntimeGlobals, TranslateTextParams, TranslationConfig, TranslationMethod } from "./types";
 import { LLM_MODELS, deriveThinkingParams } from "./registry";
 import { translationServices } from "./services";
+import { InvalidTranslationResponseError } from "./services/shared";
 import { generateCacheKey, generateCacheSuffix } from "./cache";
 import { cleanTranslatedText, splitTextIntoChunks } from "./utils";
 import { DEFAULT_SYSTEM_PROMPT, DEFAULT_USER_PROMPT } from "./config";
 import { applyGlossaryToText, buildGlossaryPromptBlock, buildStrictGlossaryPromptBlock, filterTermsMatchingText, findGlossaryViolations, type GlossaryTerm } from "./glossary";
-import { getRetryConfig, rateLimitGate, abortableSleep, isAuthError, isRetryableError, DEFAULT_BATCH_SIZE, DEFAULT_RETRY_COUNT, DEFAULT_RETRY_TIMEOUT } from "./retry";
+import { getRetryConfig, rateLimitGate, abortableSleep, isAuthError, DEFAULT_BATCH_SIZE, DEFAULT_RETRY_COUNT, DEFAULT_RETRY_TIMEOUT } from "./retry";
 // 自托管的那几家（llm / translategemma / milmmt）跑在本地运行时上，超时的主导
 // 原因不是网络/云服务，而是请求在单槽服务器上排队、或模型卡在复读循环，
 // 所以给专门的提示而不是通用的“服务慢，换一个”。
@@ -36,7 +37,7 @@ import { getRetryConfig, rateLimitGate, abortableSleep, isAuthError, isRetryable
 // 两份名单分在两个文件里，下一个自托管 provider 志必只加一处，而漏掉这一
 // 处只会让错误提示退化（静默）。PREFLIGHT_PROBE_METHODS 同类，已记在 AGENTS.md。
 import { URL_IS_PRIMARY_CRED } from "./registry";
-import { extractTranslatedLinesWithNumbers, wrapTranslateTaggedLine, extractTaggedSingleLine, findAdjacentDuplicateSlots, buildContextPrompt, isBlankLine, prefillFromLineCache } from "./contextTranslation";
+import { extractTranslatedLinesWithNumbers, wrapTranslateTaggedLine, extractTaggedSingleLine, getStandaloneSubtitleIndex, extractStandaloneSubtitleLine, findAdjacentDuplicateSlots, buildContextPrompt, buildTaggedSubtitlePrompt, isBlankLine, prefillFromLineCache } from "./contextTranslation";
 import { isAbortError, formatErrorWithCause } from "@/app/utils/errorUtils";
 
 // Caps context window padding around a batch — without this, a large
@@ -126,6 +127,8 @@ export interface FailedLine {
 export type TranslateBatchMeta = {
   lineNumbers?: number[];
   fileName?: string;
+  /** Disable context batching while retaining the document type. Defaults to enabled when a type is supplied. */
+  contextAware?: boolean;
   /**
    * 本批的实时结果 streamer —— 引擎每定稿一行就推一个事件,网页壳据此在整批
    * 返回【之前】逐行上屏。通过 meta 传入而非 PipelineDeps:它是「这一行的
@@ -329,6 +332,7 @@ const newSessionId = (): string =>
 
 // Skip translation if text has no translatable characters
 const HAS_TRANSLATABLE_CONTENT = /[a-zA-Z\p{L}]/u;
+const needsTranslation = (text: string, source: string, target: string): boolean => HAS_TRANSLATABLE_CONTENT.test(text) && source !== target;
 
 // Services whose responses HTML-encode characters (Google NMT backends) —
 // the only ones whose output should be entity-unescaped. See translateCore.
@@ -341,7 +345,7 @@ const HTML_ENCODING_METHODS: ReadonlySet<string> = new Set(["gtxFreeAPI", "googl
 export const translateCore = async (params: TranslateTextParams, cache?: PipelineCache): Promise<string> => {
   const { text, cacheSuffix, translationMethod, targetLanguage, sourceLanguage, useCache = true } = params;
 
-  if (!HAS_TRANSLATABLE_CONTENT.test(text) || sourceLanguage === targetLanguage) {
+  if (!needsTranslation(text, sourceLanguage, targetLanguage)) {
     return text;
   }
 
@@ -361,7 +365,7 @@ export const translateCore = async (params: TranslateTextParams, cache?: Pipelin
   const translatedText = await service(params);
 
   if (!translatedText) {
-    throw new Error(`No translation result received for method: ${translationMethod}`);
+    throw new InvalidTranslationResponseError(`No translation result received for method: ${translationMethod}`);
   }
 
   // HTML-entity unescape ONLY for Google's NMT-backed services — they encode
@@ -393,7 +397,7 @@ const applyGlossary = (ctx: RunCtx, text: string, targetLang: string): string =>
 // controller, pass the liveness check, fire real API requests for the
 // discarded run, and on re-hitting the auth error abort the HEALTHY new run
 // (which then exported blank lines with a success toast).
-const translateSingle = async (text: string, cacheSuffix: string, config: PipelineRuntimeConfig, ctx: RunCtx, fullText?: string): Promise<string> => {
+const translateSingle = async (text: string, cacheSuffix: string, config: PipelineRuntimeConfig, ctx: RunCtx, fullText?: string, taggedSubtitle?: "initial" | "glossary"): Promise<string> => {
   const run = ctx.run;
   // Check if already aborted (e.g., by auth error in another concurrent request).
   // shouldStop:provider 已卸载(浏览器后退)—— 这里是所有翻译路径(含
@@ -402,6 +406,23 @@ const translateSingle = async (text: string, cacheSuffix: string, config: Pipeli
   // (isCascadedAbort → 各工具静默)。
   if (ctx.shouldStop() || run?.signal.aborted) {
     throw new Error("Translation aborted");
+  }
+
+  // Check the original line: the letters in the protocol tags must not make
+  // punctuation-only or ASS placeholder-only lines translatable.
+  if (taggedSubtitle && !needsTranslation(text, config.sourceLanguage, config.targetLanguage)) return text;
+
+  const subtitleIndex = taggedSubtitle ? getStandaloneSubtitleIndex(text) : 0;
+  const taggedCache = taggedSubtitle && config.useCache !== false ? ctx.cache : undefined;
+  const taggedCacheKey = taggedCache && generateCacheKey(text, cacheSuffix);
+  if (taggedCache && taggedCacheKey) {
+    const cached = await taggedCache.get(taggedCacheKey);
+    if (ctx.shouldStop() || run?.signal.aborted) throw new Error("Translation aborted");
+    if (cached !== null) {
+      const extracted = extractStandaloneSubtitleLine(cached, subtitleIndex);
+      if (extracted) return extracted;
+      await taggedCache.delete(taggedCacheKey);
+    }
   }
 
   const retryCount = config.retryCount ?? DEFAULT_RETRY_COUNT;
@@ -440,6 +461,7 @@ const translateSingle = async (text: string, cacheSuffix: string, config: Pipeli
       extras[key] = configRecord[key];
     }
   }
+  if (taggedSubtitle) extras.userPrompt = buildTaggedSubtitlePrompt(config.userPrompt ?? DEFAULT_USER_PROMPT);
   // Single-point gate: deriveThinkingParams checks (a) thinkingEffort entry
   // exists AND (b) model is tagged in registry. Services key off
   // params.reasoningEffort presence (Moonshot K2.6 + Gemini also re-check
@@ -475,12 +497,14 @@ const translateSingle = async (text: string, cacheSuffix: string, config: Pipeli
   }
 
   const translateParams: TranslateTextParams = {
-    text,
+    text: taggedSubtitle ? wrapTranslateTaggedLine(text, subtitleIndex) : text,
     cacheSuffix,
     translationMethod: config.translationMethod,
     targetLanguage: config.targetLanguage,
     sourceLanguage: config.sourceLanguage,
     ...extras,
+    // This path owns its cache: translateCore caches before marker extraction.
+    ...(taggedSubtitle ? { useCache: false } : undefined),
   } as TranslateTextParams;
 
   // 实际发出的尝试次数(≠ retryCount 上限)。非重试类错误(401/403、CORS、
@@ -488,6 +512,11 @@ const translateSingle = async (text: string, cacheSuffix: string, config: Pipeli
   // 「快停正常工作」和「快停被改坏、真重试了 N 次」打印得一模一样,
   // 排查凭据/限流问题时还会误导成"用坏 key 打了 3 次"。
   let attemptsMade = 0;
+  // Format and transport failures draw from the same retry budget. Glossary
+  // correction already has a usable result to fall back to on a format error.
+  let formatFailures = 0;
+  const maxFormatFailures = taggedSubtitle === "glossary" ? 1 : 2;
+  const shouldRetry = ({ error }: { error: unknown }) => formatFailures < maxFormatFailures && (retryConfig.shouldRetry?.({ error }) ?? true);
   try {
     return await pRetry(
       async () => {
@@ -509,12 +538,12 @@ const translateSingle = async (text: string, cacheSuffix: string, config: Pipeli
 
         const { controller, cleanup } = createTimeoutController();
 
+        let result: string;
         try {
-          const result = await ctx.translate({ ...translateParams, signal: controller.signal });
-          cleanup();
-          return result;
+          result = await ctx.translate({ ...translateParams, signal: controller.signal });
         } catch (error) {
           cleanup();
+          if (taggedSubtitle && error instanceof InvalidTranslationResponseError) formatFailures++;
 
           // Local-model timeout → attach a method-specific hint via the
           // explicit errorHintKey channel (describeError honors it). Gate on a
@@ -547,9 +576,20 @@ const translateSingle = async (text: string, cacheSuffix: string, config: Pipeli
           }
           throw error;
         }
+        cleanup();
+        if (!taggedSubtitle) return result;
+
+        const extracted = extractStandaloneSubtitleLine(result, subtitleIndex);
+        if (!extracted) {
+          formatFailures++;
+          throw new Error(`Invalid subtitle translation: expected exactly one non-empty ${wrapTranslateTaggedLine("…", subtitleIndex)} block.`);
+        }
+        if (taggedCache && taggedCacheKey) void taggedCache.set(taggedCacheKey, result);
+        return extracted;
       },
       {
         ...retryConfig,
+        shouldRetry,
         // 取消/级联中止要能穿透 pRetry 的退避 sleep(gtx 最长 60s):不接 signal,
         // 取消后这一行还要睡满剩余退避才轮到入口守卫抛出。p-retry 会在 signal
         // abort 时直接 reject 整个重试链。
@@ -559,7 +599,7 @@ const translateSingle = async (text: string, cacheSuffix: string, config: Pipeli
           // retriesLeft 是【预算】,不是承诺:不可重试的错误(401/403、CORS 提示、
           // max_tokens…)当场就停。说清哪一种,否则"还剩 3 次"后面直接终结,
           // 读日志的人会以为重试链断了。
-          const willRetry = retriesLeft > 0 && isRetryableError(error);
+          const willRetry = retriesLeft > 0 && shouldRetry({ error });
           console.warn(`Translation attempt ${attemptNumber} failed for "${textPreview}": ${(error as Error).message}` + (willRetry ? ` (${retriesLeft} retries left)` : " (not retryable — giving up)"));
         },
       },
@@ -588,7 +628,7 @@ const translateSingle = async (text: string, cacheSuffix: string, config: Pipeli
   }
 };
 
-// 单行【重试】的统一入口(dupSlots 营救 + 术语严格重译共用,#68):请求必须
+// 上下文营救与其他格式的单行术语重译共用这一入口(#68):请求必须
 // 保持批处理的 [TRANSLATE_n] 标记数据格式 —— 平文本单行(祈使句、感叹词这类
 // 短句)在模型眼里像一句聊天,常换来对话体回复("I don't see any SRT file
 // content...")并被整段当作译文写进字幕。这里沿用与批请求相同的包装与上下文
@@ -639,7 +679,7 @@ const translateTaggedSingleLineRetry = async (
 // 术语译成了别的词 —— 用只列违规术语的 STRICT 块单行重译一次,二者取违规
 // 更少的(平手保留首译:它来自带上下文的批次请求)。MT 直接返回 leak-through
 // 结果(同请求重发只会得到同样的输出;qwenMt 的防错译靠原生 terms)。
-const enforceGlossaryOnLine = async (sourceLine: string, rawTranslated: string, cacheSuffix: string, config: PipelineRuntimeConfig, ctx: RunCtx, fullText?: string): Promise<string> => {
+const enforceGlossaryOnLine = async (sourceLine: string, rawTranslated: string, cacheSuffix: string, config: PipelineRuntimeConfig, ctx: RunCtx, fullText?: string, taggedSubtitle = false): Promise<string> => {
   const first = applyGlossary(ctx, rawTranslated ?? "", config.targetLanguage);
   if (!LLM_MODELS.includes(config.translationMethod)) return first;
   const terms = ctx.getGlossaryTerms(config.targetLanguage);
@@ -650,7 +690,10 @@ const enforceGlossaryOnLine = async (sourceLine: string, rawTranslated: string, 
     // 重试键按违规集哈希分流:不能与首次请求同键(否则缓存只会重放刚才的
     // 违规响应),不同违规集(首译输出非确定)也不互相串。
     const retrySuffix = `${cacheSuffix}_gv${SparkMD5.hash(JSON.stringify(violations.map((v) => [v.source, v.target])))}`;
-    const retried = await translateTaggedSingleLineRetry(sourceLine, retrySuffix, { ...config, strictGlossaryTerms: violations }, ctx, "subtitle", fullText);
+    const strictConfig = { ...config, strictGlossaryTerms: violations };
+    const retried = taggedSubtitle
+      ? await translateSingle(sourceLine, `${retrySuffix}_standalone`, strictConfig, ctx, fullText, "glossary")
+      : await translateTaggedSingleLineRetry(sourceLine, retrySuffix, strictConfig, ctx, "subtitle", fullText);
     // 无标记回复已被提取层丢弃(空串)= 重试失败,保留首译 —— 别把空串当成
     // "零违规的更优译文"收下(能走到重试说明源行有内容,空译不可能是合法产出)。
     if (!retried) return first;
@@ -679,9 +722,9 @@ const enforceGlossaryOnLine = async (sourceLine: string, rawTranslated: string, 
 // ⚠ index 是【contentLines 下标】,必填。曾经是 `index?` + 发射时 `index ?? 0`:
 // 漏传的调用方不会报错,而是把每一行都发成 index 0,面板里永远只有一行在原地
 // 被覆盖 —— 一个静默到极点的失效。必填让漏传变成编译错误。
-const translateSingleWithGlossary = async (text: string, cacheSuffix: string, config: PipelineRuntimeConfig, ctx: RunCtx, index: number, fullText?: string): Promise<string> => {
-  const raw = await translateSingle(text, cacheSuffix, config, ctx, fullText);
-  const final = await enforceGlossaryOnLine(text, raw ?? "", cacheSuffix, config, ctx, fullText);
+const translateSingleWithGlossary = async (text: string, cacheSuffix: string, config: PipelineRuntimeConfig, ctx: RunCtx, index: number, fullText?: string, taggedSubtitle = false): Promise<string> => {
+  const raw = await translateSingle(text, cacheSuffix, config, ctx, fullText, taggedSubtitle ? "initial" : undefined);
+  const final = await enforceGlossaryOnLine(text, raw ?? "", cacheSuffix, config, ctx, fullText, taggedSubtitle);
   // 实时流:术语表处理完毕后的【最终】译文在此可见。失败行不在此发射 ——
   // 它们走 failure 面板的统一呈现(catch 在调用方,到不了这里)。
   ctx.emitLine?.({ index, original: text, translation: final });
@@ -711,6 +754,13 @@ const translateWithContext = async (
   // task from a dead run must not resurrect under the next run's controller).
   const run = ctx.run;
   const cache = runtimeConfig.useCache !== false ? ctx.cache : undefined;
+  const isSubtitle = documentType === "subtitle";
+  const buildBatchPrompt = (size: number) => buildContextPrompt(runtimeConfig.userPrompt ?? DEFAULT_USER_PROMPT, size, documentType);
+  // A legacy marked key contained only the base template and request text, so
+  // Markdown batches and even literal JSON values could share it. Scope all
+  // subtitle reads, writes and evictions to the actual generated template.
+  const markedRequestSuffix = (prompt: string) => isSubtitle ? `${cacheSuffix}_subtitleContextV2_${SparkMD5.hash(JSON.stringify(prompt))}` : cacheSuffix;
+  const singleLineRequestSuffix = isSubtitle ? markedRequestSuffix(buildBatchPrompt(1)) : cacheSuffix;
   const updateProgress = ctx.onProgress ?? (() => {});
   // Clamp to >= 1: `|| 20` only catches 0/null/undefined, not negatives.
   // A negative contextWindow (from corrupted localStorage or bad migration)
@@ -719,6 +769,12 @@ const translateWithContext = async (
   // (先保底再 min)会在 contentLines 为空时得到步长 0 —— 循环虽不会进入,但
   // 步长为 0 是个不该存在的状态。
   const initialContextWindow = Math.max(1, Math.min(positiveInt(runtimeConfig.contextWindow, 20), contentLines.length));
+  // Keep partial successes for a resume of the same subtitle and window.
+  // Identical dialogue at two positions can have different translations.
+  const finalizedLineSuffix = isSubtitle && cache
+    ? `${singleLineRequestSuffix}_lines_${SparkMD5.hash(JSON.stringify([initialContextWindow, contentLines]))}`
+    : cacheSuffix;
+  const finalizedLineKey = (text: string, index: number) => generateCacheKey(text, isSubtitle ? `${finalizedLineSuffix}_${index}` : finalizedLineSuffix);
   const translatedLines = new Array(contentLines.length);
   const MAX_CONTEXT_RETRIES = 2; // Maximum times to reduce context window
 
@@ -740,14 +796,13 @@ const translateWithContext = async (
   // lines instead of re-rolling whole batches whose batch-cache was purged
   // after a partial failure (issue#44 purge). Write-once inside the helper.
   if (cache) {
-    // 第四个参数【不能省】:回填的是缓存原样,而 translateCore 存进去的是服务
-    // 原始输出(未过术语表)。所有其它读路径都在读之后 enforce 一遍,这里漏掉
-    // 就等于用户切一次上下文开关,已缓存的行就悄悄不再守术语表。
+    // 第四个参数给仍共用裸键的 Markdown/generic 回放补上术语。字幕使用
+    // finalizedLineSuffix，只回放已通过批次校验并应用术语的行。
     // 但它必须是【同步纯函数】——理由见 prefillFromLineCache 的参数注释。
     await prefillFromLineCache(
       contentLines,
       translatedLines,
-      (texts) => cache.getMany(texts.map((text) => generateCacheKey(text, cacheSuffix))),
+      (texts, indices) => cache.getMany(texts.map((text, i) => finalizedLineKey(text, indices[i]))),
       // 只做 leak-through(纯替换),【不】走 enforceGlossaryOnLine ——
       // 那里面的严格重译会在这个串行循环里逐条发请求,见 postProcess 的注释。
       (_source, cached) => applyGlossary(ctx, cached, runtimeConfig.targetLanguage),
@@ -795,16 +850,18 @@ const translateWithContext = async (
       })
       .join("\n");
 
+    const userPrompt = buildBatchPrompt(batchEnd - batchStart);
+    const requestCacheSuffix = markedRequestSuffix(userPrompt);
     try {
       const result = await translateSingle(
         contextWithMarkers,
-        cacheSuffix,
+        requestCacheSuffix,
         {
           ...runtimeConfig,
           // The built prompt retains the literal ${content} placeholder — the
           // marker block (params.text) is inserted LAST by getAIModelPromptParts's
           // function-form replacement, after all template variables resolved.
-          userPrompt: buildContextPrompt(runtimeConfig.userPrompt ?? DEFAULT_USER_PROMPT, batchEnd - batchStart, documentType),
+          userPrompt,
         },
         ctx,
         fullText,
@@ -834,14 +891,14 @@ const translateWithContext = async (
             `adjacent duplicate translations at lines ${dupSlots.map((j) => batchStart + j + 1).join(", ")} (sources differ) — the model likely merged lines; re-translating each independently.`,
           ),
         );
-        if (cache) await cache.delete(generateCacheKey(contextWithMarkers, cacheSuffix));
+        if (cache) await cache.delete(generateCacheKey(contextWithMarkers, requestCacheSuffix));
         for (let d = 0; d < dupSlots.length; d++) {
           const j = dupSlots[d];
           if (run?.signal.aborted) throw new Error("Translation aborted");
           try {
             // 带标记重试(#68):无标记的闲聊回复在提取层就被丢弃,这里拿到
             // 的要么是可装配的译文,要么是空串(→ 下方缺口机制)。
-            const one = await translateTaggedSingleLineRetry(batchSources[j], cacheSuffix, runtimeConfig, ctx, documentType, fullText);
+            const one = await translateTaggedSingleLineRetry(batchSources[j], singleLineRequestSuffix, runtimeConfig, ctx, documentType, fullText);
             // 提取保留正文换行,字幕装配时再处理;空/缺失 → "" 落进缺口机制。
             translatedBatch[j] = one && one.trim() ? one : "";
           } catch (err) {
@@ -862,7 +919,7 @@ const translateWithContext = async (
       // short file permanently untranslatable until the cache is cleared.
       const hasRealGap = translatedBatch.some((r, j) => r === "" && !isBlankLine(batchSources[j]));
       if (hasRealGap && cache) {
-        await cache.delete(generateCacheKey(contextWithMarkers, cacheSuffix));
+        await cache.delete(generateCacheKey(contextWithMarkers, requestCacheSuffix));
       }
       for (let j = 0; j < translatedBatch.length; j++) {
         // `!== ""` not truthiness — a line legitimately translated to "0" must
@@ -875,14 +932,12 @@ const translateWithContext = async (
           // slots get soft-filled with the raw source later (see "Final
           // soft-fail"), so a fully-failed line stays the untouched original
           // instead of a half-localized mix like "斯派克, hi".
-          const enforced = await enforceGlossaryOnLine(batchSources[j], translatedBatch[j], cacheSuffix, runtimeConfig, ctx, fullText);
+          const enforced = await enforceGlossaryOnLine(batchSources[j], translatedBatch[j], singleLineRequestSuffix, runtimeConfig, ctx, fullText);
           translatedLines[batchStart + j] = enforced;
           // 实时流:这一槽立刻可见,不等整批请求全部回来。
           ctx.emitLine?.({ index: batchStart + j, original: batchSources[j], translation: enforced });
-          // Cache the finalized line by its source text so a future run skips
-          // it (see prefillFromLineCache above). Survives the batch-level purge
-          // because it's keyed by the single line, not the batch window.
-          if (cache) void cache.set(generateCacheKey(batchSources[j], cacheSuffix), translatedLines[batchStart + j]);
+          // Cache the finalized line separately so it survives a batch purge.
+          if (cache) void cache.set(finalizedLineKey(batchSources[j], batchStart + j), enforced);
         }
       }
 
@@ -1226,9 +1281,14 @@ const runTranslateLines = async (
   // Effective prompts: empty/whitespace input falls back to defaults — same
   // trim-fallback the hook applies before building its runtime config.
   const systemPrompt = config.systemPrompt?.trim() ? config.systemPrompt : DEFAULT_SYSTEM_PROMPT;
-  const userPrompt = config.userPrompt?.trim() ? config.userPrompt : DEFAULT_USER_PROMPT;
-  // systemPrompt stays the BASE prompt — translateSingle appends the
-  // per-request glossary block (filtered to the terms each text contains).
+  const baseUserPrompt = config.userPrompt?.trim() ? config.userPrompt : DEFAULT_USER_PROMPT;
+  const isLlm = LLM_MODELS.includes(config.translationMethod);
+  const isLlmSubtitle = isLlm && documentType === "subtitle";
+  const contextBatch = documentType && meta?.contextAware !== false && !config.independent && isLlm && contentLines.length > 1;
+  const taggedSubtitle = isLlmSubtitle && !contextBatch;
+  // The subtitle protocol needs a slot for the marked source even when the
+  // custom template only contains instructions or ${fullText}.
+  const userPrompt = isLlmSubtitle && !baseUserPrompt.includes("${content}") ? `${baseUserPrompt}\n\n\${content}` : baseUserPrompt;
   const runtimeConfig: PipelineRuntimeConfig = { ...config, systemPrompt, userPrompt };
 
   // floor:同 batchConcurrency —— p-limit 对非整数并发直接抛 TypeError。
@@ -1238,7 +1298,8 @@ const runTranslateLines = async (
   const cache = runtimeConfig.useCache !== false ? deps.cache : undefined;
 
   try {
-    // Only create fullText if the prompt uses ${fullText} variable
+    // ${fullText} explicitly opts into the complete document. The context
+    // switch controls automatic batching and neighbor markers only.
     const fullText = userPrompt.includes("${fullText}") ? contentLines.join("\n") : undefined;
 
     const cacheSuffix = generateCacheSuffix({
@@ -1254,26 +1315,26 @@ const runTranslateLines = async (
       // keeps the key deterministic while the wire prompt varies per line.
       glossaryTerms: ctx.getGlossaryTerms(config.targetLanguage),
     });
-
     // Context-aware translation with LLM. Glossary is applied per-line inside
     // translateWithContext (success-only), so no blanket pass here.
     // ⚠ independent 一票否决:上下文批把多个单元拼进一个 marker 请求,对
     // 「必须逐单元往返」的调用方(JSON 值)是静默数据损坏。这条判据【必须】
     // 排在 documentType 之前的位置生效 —— 它比下面的 chunkSize 分支早,
     // 所以只剥 chunkSize 压不住它(见 PipelineRuntimeConfig.independent)。
-    if (documentType && !config.independent && LLM_MODELS.includes(config.translationMethod) && contentLines.length > 1) {
+    if (contextBatch) {
       const result = await translateWithContext(contentLines, runtimeConfig, cacheSuffix, ctx, documentType, fullText, meta);
       failures.push(...result.failures);
       return { lines: result.lines, failures, lastError: state.lastError, rateLimited: state.rateLimited };
     }
 
-    if (config.chunkSize === undefined) {
+    if (taggedSubtitle || config.chunkSize === undefined) {
       // Line-by-line concurrent translation. Soft-fail mirrors LLM context
       // mode (translateWithContext above): a single line's failure fills the
       // slot with the original text and tracks it for the TranslateFailurePanel,
       // letting peers finish. Auth errors (and post-abort cascades) still
       // propagate so Promise.all rejects and the caller's catch can route.
       const translatedLines = new Array(contentLines.length);
+      const lineCacheSuffix = taggedSubtitle ? `${cacheSuffix}_subtitleLineV1` : cacheSuffix;
       let completedCount = 0;
 
       const progressStep = Math.max(1, Math.floor(contentLines.length / 100));
@@ -1287,12 +1348,15 @@ const runTranslateLines = async (
       // per-line cache check inside translateSingleWithGlossary still runs).
       const cacheHitIndices = new Set<number>();
       if (cache) {
-        const hits = await cache.getMany(contentLines.map((line) => generateCacheKey(line, cacheSuffix)));
+        const hits = await cache.getMany(contentLines.map((line) => generateCacheKey(line, lineCacheSuffix)));
         // truthy 而非 `!= null` —— 与 translateCore / prefillFromLineCache 的
         // 命中判据【必须一致】(它们都把空串当未命中并真去翻译)。判成命中的话,
         // 这些行会跳过 abortableSleep(baseDelay) 却仍然发出真实请求:整批以满
         // batchSize 并发、零间隔打向那个本来要限速的端点,换来一波 429。
-        for (let i = 0; i < contentLines.length; i++) if (hits[i]) cacheHitIndices.add(i);
+        for (let i = 0; i < contentLines.length; i++) {
+          const hit = hits[i];
+          if (hit && (!taggedSubtitle || extractStandaloneSubtitleLine(hit, getStandaloneSubtitleIndex(contentLines[i])))) cacheHitIndices.add(i);
+        }
       }
 
       const promises = contentLines.map((line, index) =>
@@ -1306,7 +1370,7 @@ const runTranslateLines = async (
           if (runController.signal.aborted) throw new Error("Translation aborted");
           try {
             // Glossary on success only; the catch below soft-fills the raw source.
-            translatedLines[index] = await translateSingleWithGlossary(line, cacheSuffix, runtimeConfig, ctx, index, fullText);
+            translatedLines[index] = await translateSingleWithGlossary(line, lineCacheSuffix, runtimeConfig, ctx, index, fullText, taggedSubtitle);
           } catch (error) {
             // Auth error already tripped THIS run's controller inside translateSingle.
             // It must propagate raw so Promise.all kills the batch and the caller's
